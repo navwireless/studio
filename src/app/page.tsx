@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useActionState } from 'react';
-// Removed useFormState from 'react-dom' as it's now useActionState from 'react'
 import InputForm from '@/components/fso/input-form';
 import ResultsDisplay from '@/components/fso/results-display';
 import InteractiveMapPlaceholder from '@/components/fso/interactive-map-placeholder';
 import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult } from '@/types';
+import type { AnalysisResult, PointCoordinates } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package } from 'lucide-react'; // Using Package as a generic logo icon
@@ -24,15 +23,10 @@ export default function Home() {
   const handleFormSubmit = async (formData: FormData) => {
     setIsLoading(true);
     setClientError(null);
-    setAnalysisResult(null);
+    // Do not clear analysisResult immediately, allow map to show previous points if desired
+    // setAnalysisResult(null); 
     setFormErrors(undefined);
-    // The formAction will be called by useActionState automatically.
-    // We just need to ensure the form's action attribute points to it or it's called via handleSubmit.
-    // Since InputForm uses react-hook-form, it calls its onSubmit which then calls this.
-    // This function essentially wraps the call to trigger the server action correctly.
     await formAction(formData); 
-    // Note: useActionState's `state` will update after formAction completes.
-    // We rely on the useEffect below to handle the result.
   };
   
   useEffect(() => {
@@ -43,10 +37,11 @@ export default function Home() {
         if (state.fieldErrors) {
           setFormErrors(state.fieldErrors as Record<string, string[] | undefined>);
         } else {
-          setFormErrors(undefined); // Clear previous field errors if only a general error occurred
+          setFormErrors(undefined);
         }
-        setAnalysisResult(null);
-      } else if (!('error' in state)) { // Check if it's a valid AnalysisResult
+        // Keep previous analysisResult for the map if an error occurs, unless it's a field error invalidating points
+        if (state.fieldErrors) setAnalysisResult(null); 
+      } else if (!('error' in state)) { 
         setAnalysisResult(state as AnalysisResult);
         setClientError(null);
         setFormErrors(undefined);
@@ -72,7 +67,7 @@ export default function Home() {
         <section className="md:col-span-2 flex flex-col gap-6">
           <InputForm onSubmit={handleFormSubmit} isLoading={isLoading} initialErrors={formErrors} />
           
-          {clientError && !analysisResult && (
+          {clientError && !analysisResult && ( // Only show general error if no results are displayed
              <Card className="shadow-lg border-destructive">
                 <CardHeader>
                     <CardTitle className="text-destructive">Error</CardTitle>
@@ -82,7 +77,7 @@ export default function Home() {
                 </CardContent>
              </Card>
           )}
-          {isLoading && !analysisResult && (
+          {isLoading && !analysisResult && ( // Skeleton for results only if no results yet
             <Card className="shadow-lg">
                 <CardHeader><CardTitle>Analysis Results</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -98,7 +93,10 @@ export default function Home() {
 
         {/* Right Column: Map and Chart */}
         <section className="md:col-span-3 flex flex-col gap-6">
-          <InteractiveMapPlaceholder />
+          <InteractiveMapPlaceholder 
+            pointA={analysisResult?.pointA} 
+            pointB={analysisResult?.pointB} 
+          />
           
           {isLoading && (
              <Card className="shadow-lg">
@@ -109,6 +107,7 @@ export default function Home() {
           {!isLoading && analysisResult && analysisResult.profile.length > 0 && (
             <ElevationProfileChart profile={analysisResult.profile} />
           )}
+          {/* Adjusted condition for empty state of chart */}
           {!isLoading && (!analysisResult || analysisResult.profile.length === 0) && (
              <Card className="shadow-lg">
                 <CardHeader>
@@ -130,3 +129,4 @@ export default function Home() {
     </div>
   );
 }
+

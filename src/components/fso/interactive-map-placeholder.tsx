@@ -3,8 +3,14 @@
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
+import type { PointCoordinates } from '@/types';
 
-export default function InteractiveMapPlaceholder() {
+interface InteractiveMapPlaceholderProps {
+  pointA?: (PointCoordinates & { towerHeight?: number }) | null;
+  pointB?: (PointCoordinates & { towerHeight?: number }) | null;
+}
+
+export default function InteractiveMapPlaceholder({ pointA, pointB }: InteractiveMapPlaceholderProps) {
   return (
     <Card className="shadow-lg w-full">
       <CardHeader>
@@ -22,10 +28,19 @@ export default function InteractiveMapPlaceholder() {
           height={600}
           className="object-cover w-full h-full rounded-md"
           data-ai-hint="map terrain"
-          priority
         />
-         <p className="mt-2 text-sm text-muted-foreground">Interactive map will be displayed here.</p>
+        {pointA && pointB ? (
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            Showing placeholder for Point A (Lat: {pointA.lat.toFixed(4)}, Lng: {pointA.lng.toFixed(4)}) 
+            and Point B (Lat: {pointB.lat.toFixed(4)}, Lng: {pointB.lng.toFixed(4)}).
+            <br />
+            Interactive map feature is pending.
+          </p>
+        ) : (
+         <p className="mt-2 text-sm text-muted-foreground">Interactive map will be displayed here when analysis is run.</p>
+        )}
       </CardContent>
     </Card>
   );
 }
+

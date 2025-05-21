@@ -53,6 +53,8 @@ export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampl
       additionalHeightNeeded: null,
       profile: [],
       message: "Insufficient elevation data for analysis.",
+      pointA: params.pointA, // Pass through pointA for context even in error
+      pointB: params.pointB, // Pass through pointB for context even in error
     };
   }
 
@@ -112,5 +114,8 @@ export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampl
     additionalHeightNeeded: additionalHeightNeeded !== null ? parseFloat(additionalHeightNeeded.toFixed(2)) : null,
     profile,
     message: "Analysis complete.",
+    pointA: params.pointA,
+    pointB: params.pointB,
   };
 }
+

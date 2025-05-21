@@ -42,4 +42,7 @@ export type AnalysisResult = {
   additionalHeightNeeded: number | null;
   profile: LOSPoint[];
   message: string; // For any specific messages, e.g., about mock data
+  pointA?: PointCoordinates & { towerHeight: number }; // Added: Original Point A
+  pointB?: PointCoordinates & { towerHeight: number }; // Added: Original Point B
 };
+
