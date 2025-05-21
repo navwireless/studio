@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect, useActionState } from 'react';
 import InputForm from '@/components/fso/input-form';
 import ResultsDisplay from '@/components/fso/results-display';
-import InteractiveMapPlaceholder from '@/components/fso/interactive-map-placeholder';
+import InteractiveMap from '@/components/fso/interactive-map'; // Updated import
 import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, PointCoordinates } from '@/types';
@@ -93,9 +94,10 @@ export default function Home() {
 
         {/* Right Column: Map and Chart */}
         <section className="md:col-span-3 flex flex-col gap-6">
-          <InteractiveMapPlaceholder 
+          <InteractiveMap 
             pointA={analysisResult?.pointA} 
-            pointB={analysisResult?.pointB} 
+            pointB={analysisResult?.pointB}
+            losPossible={analysisResult?.losPossible} // Pass losPossible status
           />
           
           {isLoading && (
@@ -124,9 +126,8 @@ export default function Home() {
       </main>
 
       <footer className="mt-auto pt-8 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} FSO LOS Analyzer. All rights reserved. For demonstration purposes using mock data.</p>
+        <p>&copy; {new Date().getFullYear()} FSO LOS Analyzer. All rights reserved. For demonstration purposes using Google Elevation API.</p>
       </footer>
     </div>
   );
 }
-
