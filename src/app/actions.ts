@@ -1,8 +1,17 @@
+
 "use server";
 
 import { z } from 'zod';
 import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI } from '@/types';
-import { analyzeLOS, calculateDistanceKm } from '@/lib/los-calculator';
+import { analyzeLOS } from '@/lib/los-calculator'; // Removed calculateDistanceKm as it's used in los-calculator
+
+// --- Google Elevation API Configuration ---
+// WARNING: Storing API keys directly in code is insecure for production. 
+// Consider using environment variables and restricting API key usage.
+const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
+const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
+// --- End Google Elevation API Configuration ---
+
 
 // Define Zod schema for form validation
 const PointInputSchema = z.object({
@@ -18,37 +27,55 @@ const AnalysisFormSchema = z.object({
 });
 
 
-// Mock Google Elevation API call
-// In a real application, this would fetch data from Google's Elevation API
-// https://maps.googleapis.com/maps/api/elevation/json?path=[pointA_lat],[pointA_lng]|[pointB_lat],[pointB_lng]&samples=100&key=[YOUR_API_KEY]
-async function getMockElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  const data: ElevationSampleAPI[] = [];
-  const startElevation = 50; // meters
-  const endElevation = 70; // meters
-  
-  // Determine if we should create an obstruction
-  // This is a very simple way to vary results for testing.
-  // If pointA latitude is an even integer, create an obstruction.
-  const hasObstruction = Math.floor(pointA.lat) % 2 === 0;
-
-  for (let i = 0; i < samples; i++) {
-    const fraction = samples > 1 ? i / (samples - 1) : 0;
-    const lat = pointA.lat + fraction * (pointB.lat - pointA.lat);
-    const lng = pointA.lng + fraction * (pointB.lng - pointA.lng);
-    
-    let elevation = startElevation + fraction * (endElevation - startElevation);
-    
-    // Add a hill: increases elevation up to midpoint, then decreases
-    const peakHeight = hasObstruction ? 60 : 20; // 60m hill if obstructed, 20m otherwise
-    elevation += peakHeight * Math.sin(Math.PI * fraction); 
-    
-    data.push({ location: { lat, lng }, elevation });
+/**
+ * Fetches elevation data from Google Elevation API.
+ */
+async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
+  if (!GOOGLE_ELEVATION_API_KEY) {
+    throw new Error("Google Elevation API key is not configured.");
   }
-  return data;
+
+  const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+  const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("Google Elevation API request failed:", response.status, errorBody);
+      throw new Error(`Google Elevation API request failed with status ${response.status}.`);
+    }
+
+    const data = await response.json();
+
+    if (data.status !== 'OK') {
+      console.error("Google Elevation API error:", data.status, data.error_message);
+      throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
+    }
+
+    if (!data.results || data.results.length === 0) {
+      throw new Error("Google Elevation API returned no results.");
+    }
+    
+    // Ensure the results match the ElevationSampleAPI structure
+    return data.results.map((sample: any) => ({
+        elevation: sample.elevation,
+        location: {
+            lat: sample.location.lat,
+            lng: sample.location.lng,
+        },
+        resolution: sample.resolution,
+    }));
+
+  } catch (error) {
+    console.error("Error fetching elevation data:", error);
+    if (error instanceof Error) {
+        throw error; // Re-throw known errors
+    }
+    throw new Error("An unexpected error occurred while fetching elevation data.");
+  }
 }
+
 
 export async function performLosAnalysis(prevState: any, formData: FormData): Promise<AnalysisResult | { error: string; fieldErrors?: any }> {
   const rawFormData = {
@@ -89,15 +116,19 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
   };
 
   try {
-    // In a real app, call Google Elevation API here. For now, use mock data.
-    const elevationData = await getMockElevationData(params.pointA, params.pointB, 100);
+    const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
     
     const result = analyzeLOS(params, elevationData);
-    return { ...result, message: `${result.message} Using mock elevation data.` };
+    // Update message to reflect real data usage
+    return { ...result, message: `${result.message} Using Google Elevation API data.` };
 
   } catch (err) {
     console.error("Error during LOS analysis:", err);
     const errorMessage = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
+    // Provide more specific error if it's from the API key check
+    if (errorMessage.includes("API key is not configured")) {
+        return { error: "Elevation service is not configured. Please contact support."};
+    }
     return { error: `Analysis failed: ${errorMessage}` };
   }
 }
