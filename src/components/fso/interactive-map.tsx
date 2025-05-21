@@ -10,6 +10,7 @@ import { Skeleton } from '../ui/skeleton';
 
 // WARNING: Storing API keys directly in code is insecure for production.
 // Consider using environment variables and restricting API key usage.
+// IMPORTANT: Ensure this API key is enabled for the "Maps JavaScript API" in your Google Cloud Console.
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
 
 interface InteractiveMapProps {
@@ -100,7 +101,7 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
           googleMapsApiKey={GOOGLE_MAPS_API_KEY}
           onLoad={() => setScriptLoaded(true)}
           onError={() => {
-            console.error("Google Maps script could not be loaded.");
+            console.error("Google Maps script could not be loaded. Check API Key, enabled APIs (Maps JavaScript API), billing, and restrictions in Google Cloud Console.");
             setScriptError(true);
             setScriptLoaded(true); // Treat as loaded to show error message
           }}
@@ -110,9 +111,13 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
             <div className="h-[400px] flex flex-col items-center justify-center bg-muted/20 p-4 text-center">
                 <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
                 <p className="text-destructive font-semibold">Could not load Google Maps.</p>
-                <p className="text-sm text-muted-foreground">Please check your internet connection and API key configuration.</p>
+                <p className="text-sm text-muted-foreground">
+                    Please check your internet connection and API key configuration in Google Cloud Console.
+                    Ensure "Maps JavaScript API" is enabled and billing is active for your project.
+                    See the browser console for more specific errors from Google.
+                </p>
             </div>
-          ) : scriptLoaded && typeof google !== 'undefined' ? (
+          ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? ( // Added check for google.maps
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
               center={defaultCenter}
