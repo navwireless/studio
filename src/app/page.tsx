@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import React, { useState, useEffect, useActionState } from 'react';
+// Removed useFormState from 'react-dom' as it's now useActionState from 'react'
 import InputForm from '@/components/fso/input-form';
 import ResultsDisplay from '@/components/fso/results-display';
 import InteractiveMapPlaceholder from '@/components/fso/interactive-map-placeholder';
@@ -14,7 +14,7 @@ import { Package } from 'lucide-react'; // Using Package as a generic logo icon
 
 export default function Home() {
   const initialState: (AnalysisResult | { error: string; fieldErrors?: any }) = { error: "No analysis performed yet." };
-  const [state, formAction] = useFormState(performLosAnalysis, initialState);
+  const [state, formAction] = useActionState(performLosAnalysis, initialState);
   
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -26,12 +26,12 @@ export default function Home() {
     setClientError(null);
     setAnalysisResult(null);
     setFormErrors(undefined);
-    // The formAction will be called by useFormState automatically.
+    // The formAction will be called by useActionState automatically.
     // We just need to ensure the form's action attribute points to it or it's called via handleSubmit.
     // Since InputForm uses react-hook-form, it calls its onSubmit which then calls this.
     // This function essentially wraps the call to trigger the server action correctly.
     await formAction(formData); 
-    // Note: useFormState's `state` will update after formAction completes.
+    // Note: useActionState's `state` will update after formAction completes.
     // We rely on the useEffect below to handle the result.
   };
   
