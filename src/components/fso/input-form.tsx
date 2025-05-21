@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { SubmitHandler } from 'react-hook-form';
@@ -33,8 +34,8 @@ export default function InputForm({ onSubmit, isLoading, initialErrors }: InputF
   const { register, handleSubmit, formState: { errors } } = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchemaClient),
     defaultValues: {
-      pointA: { lat: '34.0522', lng: '-118.2437', height: '20' }, // Los Angeles
-      pointB: { lat: '34.0550', lng: '-118.2300', height: '20' }, // Near LA
+      pointA: { lat: '32.23085', lng: '76.144608', height: '20' }, // Updated Point A
+      pointB: { lat: '32.231875', lng: '76.151969', height: '20' }, // Updated Point B
       clearanceThreshold: '10',
     },
   });
