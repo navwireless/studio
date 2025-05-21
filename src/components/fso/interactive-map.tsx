@@ -3,15 +3,12 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, LoadScript, Marker, Polyline } from '@react-google-maps/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card'; // Removed Header/Description
 import { MapPin, AlertTriangle } from 'lucide-react';
 import type { PointCoordinates } from '@/types';
 import { Skeleton } from '../ui/skeleton';
 
-// WARNING: Storing API keys directly in code is insecure for production.
-// Consider using environment variables and restricting API key usage.
-// IMPORTANT: Ensure this API key is enabled for the "Maps JavaScript API" in your Google Cloud Console.
-const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
+const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Ensure this key is for Maps JavaScript API
 
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { towerHeight?: number }) | null;
@@ -21,13 +18,15 @@ interface InteractiveMapProps {
 
 const mapContainerStyle = {
   width: '100%',
-  height: '400px', // Match skeleton height
+  height: '100%', // Changed to fill container
 };
 
 const defaultCenter = {
-  lat: 0,
-  lng: 0,
+  lat: 32.2313625, // Centered roughly between default points
+  lng: 76.1482885,
 };
+
+const defaultZoom = 15; // Zoom closer for typical FSO links
 
 export default function InteractiveMap({ pointA, pointB, losPossible }: InteractiveMapProps) {
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -36,6 +35,8 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
 
   const onLoad = useCallback((mapInstance: google.maps.Map) => {
     setMap(mapInstance);
+    // Set map type to satellite
+    mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -49,14 +50,20 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
       bounds.extend(new google.maps.LatLng(pointB.lat, pointB.lng));
       map.fitBounds(bounds);
       
-      // Add a bit of padding if points are very close
-      if (map.getZoom() && map.getZoom() > 15) {
-        map.setZoom(map.getZoom() -1);
-      }
+      const listener = google.maps.event.addListenerOnce(map, 'idle', () => {
+        if (map.getZoom() && map.getZoom() > 17) { // Don't zoom out too much if points are very close
+            map.setZoom(17);
+        } else if (map.getZoom() && map.getZoom() < 3) { // Basic sanity zoom
+            map.setZoom(3);
+        }
+      });
+      return () => {
+        google.maps.event.removeListener(listener);
+      };
+
     } else if (map) {
-        // Reset to default if points are cleared
         map.setCenter(defaultCenter);
-        map.setZoom(2);
+        map.setZoom(defaultZoom);
     }
   }, [map, pointA, pointB]);
 
@@ -65,83 +72,86 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
     { lat: pointB.lat, lng: pointB.lng },
   ] : [];
 
-  let polylineColor = "hsl(var(--muted-foreground))"; // Default color
+  let polylineColor = "hsl(var(--muted-foreground))"; 
   if (losPossible === true) {
-    polylineColor = "hsl(var(--accent))"; // Soft Green for success
+    polylineColor = "hsl(var(--app-accent))"; // Use app-accent for success (green)
   } else if (losPossible === false) {
     polylineColor = "hsl(var(--destructive))"; // Red for failure
   }
   
   const polylineOptions = {
     strokeColor: polylineColor,
-    strokeOpacity: 0.8,
-    strokeWeight: 4,
+    strokeOpacity: 1, // More visible
+    strokeWeight: 5, // Thicker line
     clickable: false,
     draggable: false,
     editable: false,
     visible: true,
     zIndex: 1,
+    icons: [{
+        icon: {
+          path: 'M 0,-1 0,1',
+          strokeOpacity: 1,
+          scale: 4,
+          strokeColor: polylineColor === "hsl(var(--app-accent))" || polylineColor === "hsl(var(--destructive))" ? '#FFFFFF' : polylineColor, // White dots on colored lines
+        },
+        offset: '0',
+        repeat: '20px'
+      }],
   };
 
   return (
-    <Card className="shadow-lg w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <MapPin className="mr-2 h-5 w-5 text-primary" />
-          Site Map
-        </CardTitle>
-        <CardDescription>
-          {pointA && pointB 
-            ? "Interactive map showing Point A, Point B, and the path." 
-            : "Enter analysis parameters to view sites on the map."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="p-0 rounded-b-md overflow-hidden">
-        <LoadScript
-          googleMapsApiKey={GOOGLE_MAPS_API_KEY}
-          onLoad={() => setScriptLoaded(true)}
-          onError={() => {
-            console.error("Google Maps script could not be loaded. Check API Key, enabled APIs (Maps JavaScript API), billing, and restrictions in Google Cloud Console.");
-            setScriptError(true);
-            setScriptLoaded(true); // Treat as loaded to show error message
-          }}
-          loadingElement={<Skeleton className="w-full h-[400px]" />}
-        >
-          {scriptError ? (
-            <div className="h-[400px] flex flex-col items-center justify-center bg-muted/20 p-4 text-center">
-                <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
-                <p className="text-destructive font-semibold">Could not load Google Maps.</p>
-                <p className="text-sm text-muted-foreground">
-                    Please check your internet connection and API key configuration in Google Cloud Console.
-                    Ensure "Maps JavaScript API" is enabled and billing is active for your project.
-                    See the browser console for more specific errors from Google.
-                </p>
-            </div>
-          ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? ( // Added check for google.maps
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              center={defaultCenter}
-              zoom={2}
-              onLoad={onLoad}
-              onUnmount={onUnmount}
-              options={{
-                streetViewControl: false,
-                mapTypeControl: false,
-                fullscreenControl: false,
-                gestureHandling: 'cooperative' 
-              }}
-            >
-              {pointA && <Marker position={{ lat: pointA.lat, lng: pointA.lng }} label="A" />}
-              {pointB && <Marker position={{ lat: pointB.lat, lng: pointB.lng }} label="B" />}
-              {pointA && pointB && pathCoordinates.length > 0 && (
-                <Polyline path={pathCoordinates} options={polylineOptions} />
-              )}
-            </GoogleMap>
-          ) : (
-             <Skeleton className="w-full h-[400px]" />
-          )}
-        </LoadScript>
-      </CardContent>
-    </Card>
+    // The Card component is removed from here, as the map itself will fill the container
+    // Styling for borders/shadows will be on the parent container in page.tsx if needed
+    <div className="w-full h-full">
+      <LoadScript
+        googleMapsApiKey={GOOGLE_MAPS_API_KEY}
+        onLoad={() => setScriptLoaded(true)}
+        onError={() => {
+          console.error("Google Maps script could not be loaded. Check API Key (Maps JavaScript API), billing, and restrictions in Google Cloud Console.");
+          setScriptError(true);
+          setScriptLoaded(true); 
+        }}
+        loadingElement={<Skeleton className="w-full h-full rounded-none" />} // Ensure skeleton fills space
+      >
+        {scriptError ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-muted/50 p-4 text-center">
+              <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
+              <p className="text-destructive font-semibold">Could not load Google Maps.</p>
+              <p className="text-sm text-muted-foreground">
+                  Check internet connection and API key configuration. Ensure "Maps JavaScript API" is enabled and billing is active. See browser console for details.
+              </p>
+          </div>
+        ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? (
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={(pointA && pointB) ? undefined : defaultCenter} // Let fitBounds handle center if points exist
+            zoom={(pointA && pointB) ? undefined : defaultZoom} // Let fitBounds handle zoom if points exist
+            onLoad={onLoad}
+            onUnmount={onUnmount}
+            options={{
+              streetViewControl: false,
+              mapTypeControl: true, // Enable map type control (satellite, map)
+              mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                position: google.maps.ControlPosition.TOP_RIGHT,
+              },
+              fullscreenControl: true,
+              zoomControl: true,
+              gestureHandling: 'cooperative',
+              mapTypeId: google.maps.MapTypeId.SATELLITE, // Default to satellite
+            }}
+          >
+            {pointA && <Marker position={{ lat: pointA.lat, lng: pointA.lng }} label={{text: "A", color: "white", fontWeight: "bold"}} />}
+            {pointB && <Marker position={{ lat: pointB.lat, lng: pointB.lng }} label={{text: "B", color: "white", fontWeight: "bold"}} />}
+            {pointA && pointB && pathCoordinates.length > 0 && (
+              <Polyline path={pathCoordinates} options={polylineOptions} />
+            )}
+          </GoogleMap>
+        ) : (
+           <Skeleton className="w-full h-full rounded-none" />
+        )}
+      </LoadScript>
+    </div>
   );
 }

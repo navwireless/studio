@@ -4,12 +4,15 @@ export type PointCoordinates = {
   lng: number;
 };
 
+// Updated to include name, used in page.tsx form
 export type PointInput = {
+  name: string; // Added name
   lat: string;
   lng: string;
   height: string;
 };
 
+// Updated to reflect new form structure in page.tsx
 export type AnalysisFormValues = {
   pointA: PointInput;
   pointB: PointInput;
@@ -17,22 +20,22 @@ export type AnalysisFormValues = {
 };
 
 export type AnalysisParams = {
-  pointA: PointCoordinates & { towerHeight: number };
-  pointB: PointCoordinates & { towerHeight: number };
+  pointA: PointCoordinates & { towerHeight: number; name?: string }; // name is optional here for backend
+  pointB: PointCoordinates & { towerHeight: number; name?: string }; // name is optional here for backend
   clearanceThreshold: number;
 };
 
 export type ElevationSampleAPI = {
   elevation: number;
   location: PointCoordinates;
-  resolution?: number; // Optional, as per Google API docs
+  resolution?: number; 
 };
 
 export type LOSPoint = {
-  distance: number; // Distance from Point A in km
-  terrainElevation: number; // Terrain elevation at this point in meters
-  losHeight: number; // Line of Sight height (corrected for curvature) at this point in meters
-  clearance: number; // Clearance at this point in meters
+  distance: number; 
+  terrainElevation: number; 
+  losHeight: number; 
+  clearance: number; 
 };
 
 export type AnalysisResult = {
@@ -41,8 +44,7 @@ export type AnalysisResult = {
   minClearance: number | null;
   additionalHeightNeeded: number | null;
   profile: LOSPoint[];
-  message: string; // For any specific messages, e.g., about mock data
-  pointA?: PointCoordinates & { towerHeight: number }; // Added: Original Point A
-  pointB?: PointCoordinates & { towerHeight: number }; // Added: Original Point B
+  message: string; 
+  pointA?: PointCoordinates & { towerHeight: number; name?: string }; 
+  pointB?: PointCoordinates & { towerHeight: number; name?: string }; 
 };
-

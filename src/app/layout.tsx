@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'FSO LOS Analyzer',
-  description: 'Free Space Optics Line-of-Sight Analyzer',
+  title: 'UISP FSO LOS Analyzer',
+  description: 'Free Space Optics Line-of-Sight Analyzer inspired by UISP Design Center',
 };
 
 export default function RootLayout({
@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+    <html lang="en" className="dark"> {/* Default to dark theme */}
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground`}>
         {children}
         <Toaster />
       </body>

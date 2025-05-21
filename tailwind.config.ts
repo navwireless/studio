@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
-    darkMode: ["class"],
+    darkMode: ["class"], // App will default to dark, class "dark" will be on html/body
     content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -32,13 +32,13 @@ export default {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'
   			},
-  			accent: { // This is ShadCN's accent, should map to --ui-accent
-  				DEFAULT: 'hsl(var(--ui-accent))',
-  				foreground: 'hsl(var(--ui-accent-foreground))'
+  			accent: { // General UI accent (e.g. hovers), should be UISP blue
+  				DEFAULT: 'hsl(var(--accent))',
+  				foreground: 'hsl(var(--accent-foreground))'
   			},
-        appAccent: { // Custom application accent (green)
-          DEFAULT: 'hsl(var(--accent))', // Maps to the green accent in globals.css
-          foreground: 'hsl(var(--accent-foreground))'
+        appAccent: { // Specific application accent (e.g. green for LOS success)
+          DEFAULT: 'hsl(var(--app-accent))',
+          foreground: 'hsl(var(--app-accent-foreground))'
         },
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
@@ -54,16 +54,11 @@ export default {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-  			sidebar: { // Keeping sidebar for completeness, though not used extensively
-  				DEFAULT: 'hsl(var(--sidebar-background))',
-  				foreground: 'hsl(var(--sidebar-foreground))',
-  				primary: 'hsl(var(--sidebar-primary))',
-  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-  				accent: 'hsl(var(--sidebar-accent))',
-  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-  				border: 'hsl(var(--sidebar-border))',
-  				ring: 'hsl(var(--sidebar-ring))'
-  			}
+        // Sidebar specific colors (can be simplified if they match general theme)
+        sidebar: {
+          DEFAULT: 'hsl(var(--card))', // Example: Sidebar bg same as card
+          foreground: 'hsl(var(--card-foreground))',
+        }
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

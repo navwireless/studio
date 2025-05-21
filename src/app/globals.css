@@ -8,93 +8,132 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 96.1%; /* #F5F5F5 Light Gray */
-    --foreground: 240 10% 3.9%; /* Dark Gray for text */
+    /* Light theme (reference, but app will default to dark) */
+    --background-light: 0 0% 96.1%; /* #F5F5F5 */
+    --foreground-light: 240 10% 3.9%;
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 240 10% 3.9%;
+    --card-light: 0 0% 100%;
+    --card-foreground-light: 240 10% 3.9%;
 
-    --popover: 0 0% 100%; /* White */
-    --popover-foreground: 240 10% 3.9%;
+    --popover-light: 0 0% 100%;
+    --popover-foreground-light: 240 10% 3.9%;
 
-    --primary: 231 48% 48%; /* #3F51B5 Deep Blue */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary-light: 221 83% 53%; /* A vibrant blue for light mode */
+    --primary-foreground-light: 0 0% 100%;
 
-    --secondary: 231 48% 90%; /* Lighter Blue */
-    --secondary-foreground: 231 48% 20%; /* Darker Blue for text on Lighter Blue */
+    --secondary-light: 220 10% 92%; 
+    --secondary-foreground-light: 220 10% 20%;
 
-    --muted: 0 0% 90%; /* Slightly darker gray than background */
-    --muted-foreground: 240 5% 35%; /* Darker gray text for muted elements */
+    --muted-light: 0 0% 90%;
+    --muted-foreground-light: 240 5% 35%;
 
-    --accent: 88 50% 55%; /* #8BC34A Soft Green for LOS success */
-    --accent-foreground: 0 0% 100%; /* White text on Soft Green */
+    --accent-light: 220 80% 95%; /* Lighter blue for general UI accents */
+    --accent-foreground-light: 220 80% 40%;
+
+    --app-accent-light: 120 60% 50%; /* Green for specific app highlights (LOS success) */
+    --app-accent-foreground-light: 0 0% 100%;
     
-    /* Shadcn general accent, used for hovers etc. - can be different from specific app accent */
-    --ui-accent: 231 48% 92%; /* Very light blue, for subtle hovers */
-    --ui-accent-foreground: 231 48% 30%;
+    --destructive-light: 0 84.2% 60.2%;
+    --destructive-foreground-light: 0 0% 98%;
 
-
-    --destructive: 0 84.2% 60.2%; /* Default Red */
-    --destructive-foreground: 0 0% 98%; /* White */
-
-    --border: 0 0% 85%; /* Gray border */
-    --input: 0 0% 89.8%; /* Slightly lighter gray for input borders */
-    --ring: 231 48% 48%; /* Primary color for focus rings */
+    --border-light: 0 0% 85%;
+    --input-light: 0 0% 89.8%;
+    --ring-light: 221 83% 53%;
 
     --radius: 0.5rem;
 
-    --chart-1: 231 48% 48%; /* Primary blue */
-    --chart-2: 88 50% 55%;  /* Accent green */
-    --chart-3: 197 37% 24%; /* Example dark teal */
-    --chart-4: 43 74% 66%;  /* Example orange */
-    --chart-5: 27 87% 67%;  /* Example coral */
+    --chart-1-light: 221 83% 53%;
+    --chart-2-light: 120 60% 50%;
+    --chart-3-light: 30 80% 55%;
+    --chart-4-light: 280 70% 60%;
+    --chart-5-light: 190 70% 50%;
+
+    --los-success-text-light: 120 60% 30%;
+    --los-failure-text-light: 0 70% 40%;
+
+    /* Default to dark theme variables */
+    --background: 222 47% 11%; /* Dark Slate Blue/Charcoal */
+    --foreground: 210 40% 98%; /* Light Gray/Off-white */
+
+    --card: 222 47% 15%; /* Slightly Lighter Dark Slate */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 10%; /* Darker for popovers */
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%; /* Bright Blue (UISP style) */
+    --primary-foreground: 210 40% 98%; /* White/Light Gray */
+
+    --secondary: 217 33% 25%; /* Muted Blue/Gray */
+    --secondary-foreground: 210 40% 90%;
+
+    --muted: 217 33% 18%; /* Darker Muted Blue/Gray */
+    --muted-foreground: 210 20% 60%; /* Softer Gray */
+
+    --accent: 217 91% 50%; /* Slightly darker blue for general UI accents (hovers etc.) */
+    --accent-foreground: 210 40% 98%;
+
+    --app-accent: 140 60% 50%; /* Green for specific app highlights (LOS success) */
+    --app-accent-foreground: 0 0% 100%; /* White text on Green */
     
-    /* Custom variable for LOS success text color */
-    --los-success-text: 88 60% 35%; /* Darker Green for text */
-    /* Custom variable for LOS failure text color */
-    --los-failure-text: 0 70% 45%; /* Darker Red for text */
+    --destructive: 0 72% 51%; /* Vivid Red */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 217 33% 25%; /* Muted Blue/Gray border */
+    --input: 217 33% 22%; /* Slightly lighter input background */
+    --ring: 217 91% 65%; /* Lighter blue for focus rings */
+
+    --chart-1: 217 91% 60%; /* Primary blue */
+    --chart-2: 140 60% 50%;  /* App accent green */
+    --chart-3: 30 80% 60%;   /* Example orange */
+    --chart-4: 280 70% 65%;  /* Example purple */
+    --chart-5: 190 70% 55%;  /* Example teal */
+
+    --los-success-text: 140 70% 75%; /* Lighter Green for text on dark bg */
+    --los-failure-text: 0 80% 75%; /* Lighter Red for text on dark bg */
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 96.1%;
+    /* Dark theme is default, these are identical to :root but kept for explicitness */
+    --background: 222 47% 11%; 
+    --foreground: 210 40% 98%; 
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 96.1%;
+    --card: 222 47% 15%; 
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 96.1%;
+    --popover: 222 47% 10%; 
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 231 48% 55%; /* Slightly lighter blue for dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 217 91% 60%; 
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 231 48% 25%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 217 33% 25%;
+    --secondary-foreground: 210 40% 90%;
 
-    --muted: 240 5% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 210 20% 60%;
 
-    --accent: 88 50% 60%; /* Slightly lighter green for dark mode */
-    --accent-foreground: 0 0% 0%; /* Black text on green accent */
+    --accent: 217 91% 50%; 
+    --accent-foreground: 210 40% 98%;
 
-    --ui-accent: 231 48% 15%;
-    --ui-accent-foreground: 231 48% 80%;
+    --app-accent: 140 60% 50%; 
+    --app-accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5% 20%;
-    --input: 240 5% 20%;
-    --ring: 231 48% 55%;
+    --border: 217 33% 25%;
+    --input: 217 33% 22%;
+    --ring: 217 91% 65%;
 
-    --chart-1: 231 48% 55%;
-    --chart-2: 88 50% 60%;
-    --chart-3: 197 37% 34%;
-    --chart-4: 43 74% 70%;
-    --chart-5: 27 87% 72%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 140 60% 50%;
+    --chart-3: 30 80% 60%;
+    --chart-4: 280 70% 65%;
+    --chart-5: 190 70% 55%;
 
-    --los-success-text: 88 50% 70%; 
-    --los-failure-text: 0 70% 65%;
+    --los-success-text: 140 70% 75%; 
+    --los-failure-text: 0 80% 75%;
   }
 }
 
@@ -115,22 +154,22 @@ body {
   color: hsl(var(--los-failure-text));
 }
 .bg-los-success {
-  background-color: hsl(var(--accent)); /* Uses main accent green */
-  color: hsl(var(--accent-foreground));
+  background-color: hsl(var(--app-accent)); /* Uses main app-accent green */
+  color: hsl(var(--app-accent-foreground));
 }
 .bg-los-failure {
   background-color: hsl(var(--destructive));
   color: hsl(var(--destructive-foreground));
 }
 
-/* Re-mapping ShadCN accent to ui-accent for general UI elements */
-@layer base {
-  :root {
-    --accent: var(--ui-accent); /* Overwrite ShadCN's accent to use our --ui-accent */
-    --accent-foreground: var(--ui-accent-foreground);
-  }
-  .dark {
-    --accent: var(--ui-accent);
-    --accent-foreground: var(--ui-accent-foreground);
-  }
+/* Ensure ShadCN general accent uses our primary blue for dark theme */
+/* This might need adjustment based on how --accent is used in ShadCN components */
+/* For now, mapping it to the primary blue for strong visual cues */
+.dark {
+    --accent: hsl(var(--primary)); /* Shadcn general accent to UISP blue */
+    --accent-foreground: hsl(var(--primary-foreground));
+}
+:root { /* For light theme, if ever used, provide a sensible default */
+    --accent: hsl(var(--accent-light));
+    --accent-foreground: hsl(var(--accent-foreground-light));
 }

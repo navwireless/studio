@@ -2,132 +2,252 @@
 "use client";
 
 import React, { useState, useEffect, useActionState } from 'react';
-import InputForm from '@/components/fso/input-form';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+import AppHeader from '@/components/layout/app-header';
+import AppSidebar from '@/components/layout/app-sidebar';
 import ResultsDisplay from '@/components/fso/results-display';
-import InteractiveMap from '@/components/fso/interactive-map'; // Updated import
+import InteractiveMap from '@/components/fso/interactive-map';
 import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, PointCoordinates } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { AnalysisResult, PointInput, AnalysisFormValues } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package } from 'lucide-react'; // Using Package as a generic logo icon
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Loader2, Zap, Target, Settings2, Info, ChevronUp, ChevronDown } from 'lucide-react';
+
+// Zod schema for individual point, including Name
+const StationPointSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  lat: z.string().min(1, "Latitude is required").refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Must be -90 to 90"),
+  lng: z.string().min(1, "Longitude is required").refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Must be -180 to 180"),
+  height: z.string().min(1, "Tower height is required").refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Must be >= 0"),
+});
+
+// Updated Zod schema for the whole form
+const PageAnalysisFormSchema = z.object({
+  pointA: StationPointSchema,
+  pointB: StationPointSchema,
+  clearanceThreshold: z.string().min(1, "Clearance is required").refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Must be >= 0"),
+});
+
+type PageAnalysisFormValues = z.infer<typeof PageAnalysisFormSchema>;
 
 export default function Home() {
-  const initialState: (AnalysisResult | { error: string; fieldErrors?: any }) = { error: "No analysis performed yet." };
-  const [state, formAction] = useActionState(performLosAnalysis, initialState);
+  const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
+  const [serverState, formAction] = useActionState(performLosAnalysis, initialState);
   
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
 
-  const handleFormSubmit = async (formData: FormData) => {
+  const [isPointACollapsed, setIsPointACollapsed] = useState(false);
+  const [isPointBCollapsed, setIsPointBCollapsed] = useState(false);
+
+  const { register, handleSubmit, control, formState: { errors: clientFormErrors } } = useForm<PageAnalysisFormValues>({
+    resolver: zodResolver(PageAnalysisFormSchema),
+    defaultValues: {
+      pointA: { name: 'Site A', lat: '32.23085', lng: '76.144608', height: '20' },
+      pointB: { name: 'Site B', lat: '32.231875', lng: '76.151969', height: '20' },
+      clearanceThreshold: '10',
+    },
+  });
+
+  const processSubmit = async (data: PageAnalysisFormValues) => {
     setIsLoading(true);
     setClientError(null);
-    // Do not clear analysisResult immediately, allow map to show previous points if desired
-    // setAnalysisResult(null); 
     setFormErrors(undefined);
-    await formAction(formData); 
+
+    const formData = new FormData();
+    formData.append('pointA.name', data.pointA.name); // Though name is not used by backend yet
+    formData.append('pointA.lat', data.pointA.lat);
+    formData.append('pointA.lng', data.pointA.lng);
+    formData.append('pointA.height', data.pointA.height);
+    formData.append('pointB.name', data.pointB.name); // Though name is not used by backend yet
+    formData.append('pointB.lat', data.pointB.lat);
+    formData.append('pointB.lng', data.pointB.lng);
+    formData.append('pointB.height', data.pointB.height);
+    formData.append('clearanceThreshold', data.clearanceThreshold);
+    
+    await formAction(formData);
   };
   
   useEffect(() => {
-    setIsLoading(false); // Action has completed
-    if (state) {
-      if ('error' in state && state.error) {
-        setClientError(state.error);
-        if (state.fieldErrors) {
-          setFormErrors(state.fieldErrors as Record<string, string[] | undefined>);
+    setIsLoading(false);
+    if (serverState) {
+      if ('error' in serverState && serverState.error) {
+        setClientError(serverState.error);
+        if (serverState.fieldErrors) {
+          setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
         } else {
           setFormErrors(undefined);
         }
-        // Keep previous analysisResult for the map if an error occurs, unless it's a field error invalidating points
-        if (state.fieldErrors) setAnalysisResult(null); 
-      } else if (!('error' in state)) { 
-        setAnalysisResult(state as AnalysisResult);
+        if (serverState.fieldErrors) setAnalysisResult(null);
+      } else if (!('error' in serverState)) {
+        setAnalysisResult(serverState as AnalysisResult);
         setClientError(null);
         setFormErrors(undefined);
       }
     }
-  }, [state]);
+  }, [serverState]);
 
+  const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
+    if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
+    return clientFieldError?.message;
+  };
+
+  const stationInputCard = (id: 'pointA' | 'pointB', title: string, isCollapsed: boolean, toggleCollapse: () => void) => (
+    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border w-[350px] max-h-[90vh] overflow-y-auto">
+      <CardHeader className="py-3 px-4">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg flex items-center">
+            <Target className="mr-2 h-5 w-5 text-primary" /> {title}
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={toggleCollapse} className="text-muted-foreground hover:text-foreground">
+            {isCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+          </Button>
+        </div>
+      </CardHeader>
+      {!isCollapsed && (
+        <CardContent className="px-4 pb-4 space-y-3">
+          <div>
+            <Label htmlFor={`${id}.name`} className="text-xs">Name</Label>
+            <Input id={`${id}.name`} {...register(`${id}.name`)} placeholder="e.g. Main Site" className="mt-1 bg-input/70" />
+            {(clientFormErrors[id]?.name || formErrors?.[`${id}.name`]) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors[id]?.name, formErrors?.[`${id}.name`])}</p>}
+          </div>
+          <div>
+            <Label htmlFor={`${id}.lat`} className="text-xs">Latitude</Label>
+            <Input id={`${id}.lat`} {...register(`${id}.lat`)} placeholder="-90 to 90" className="mt-1 bg-input/70" />
+            {(clientFormErrors[id]?.lat || formErrors?.[`${id}.lat`]) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors[id]?.lat, formErrors?.[`${id}.lat`])}</p>}
+          </div>
+          <div>
+            <Label htmlFor={`${id}.lng`} className="text-xs">Longitude</Label>
+            <Input id={`${id}.lng`} {...register(`${id}.lng`)} placeholder="-180 to 180" className="mt-1 bg-input/70" />
+            {(clientFormErrors[id]?.lng || formErrors?.[`${id}.lng`]) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors[id]?.lng, formErrors?.[`${id}.lng`])}</p>}
+          </div>
+          <div>
+            <Label htmlFor={`${id}.height`} className="text-xs">Tower Height (m)</Label>
+            <Input id={`${id}.height`} type="number" step="any" {...register(`${id}.height`)} placeholder="e.g., 20" className="mt-1 bg-input/70" />
+            {(clientFormErrors[id]?.height || formErrors?.[`${id}.height`]) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors[id]?.height, formErrors?.[`${id}.height`])}</p>}
+          </div>
+          <div className="text-xs text-muted-foreground space-y-1 pt-2">
+            <p>Azimuth: N/A</p>
+            <p>Tilt: N/A</p>
+            <p>Expected Signal: N/A</p>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
 
   return (
-    <div className="flex flex-col min-h-screen p-4 md:p-8 bg-background text-foreground">
-      <header className="mb-8 text-center md:text-left">
-        <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-          <Package className="h-10 w-10 text-primary" />
-          <h1 className="text-3xl md:text-4xl font-bold text-primary">FSO Line-of-Sight Analyzer</h1>
-        </div>
-        <p className="text-muted-foreground text-sm md:text-base">
-          Analyze terrain profiles to determine Free Space Optics (FSO) viability between two points.
-        </p>
-      </header>
-
-      <main className="flex-grow grid grid-cols-1 md:grid-cols-5 gap-6">
-        {/* Left Column: Form and Results */}
-        <section className="md:col-span-2 flex flex-col gap-6">
-          <InputForm onSubmit={handleFormSubmit} isLoading={isLoading} initialErrors={formErrors} />
-          
-          {clientError && !analysisResult && ( // Only show general error if no results are displayed
-             <Card className="shadow-lg border-destructive">
-                <CardHeader>
-                    <CardTitle className="text-destructive">Error</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p>{clientError}</p>
-                </CardContent>
-             </Card>
-          )}
-          {isLoading && !analysisResult && ( // Skeleton for results only if no results yet
-            <Card className="shadow-lg">
-                <CardHeader><CardTitle>Analysis Results</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-4 w-1/2" />
-                </CardContent>
-            </Card>
-          )}
-          {analysisResult && <ResultsDisplay result={analysisResult} />}
-        </section>
-
-        {/* Right Column: Map and Chart */}
-        <section className="md:col-span-3 flex flex-col gap-6">
-          <InteractiveMap 
-            pointA={analysisResult?.pointA} 
+    <div className="flex flex-col h-screen overflow-hidden">
+      <AppHeader />
+      <div className="flex flex-1 overflow-hidden">
+        <AppSidebar />
+        <main className="flex-1 relative overflow-hidden">
+          <InteractiveMap
+            pointA={analysisResult?.pointA}
             pointB={analysisResult?.pointB}
-            losPossible={analysisResult?.losPossible} // Pass losPossible status
+            losPossible={analysisResult?.losPossible}
           />
+
+          {/* Point A Configuration Overlay */}
+          <div className="absolute top-4 left-4 z-10">
+            {stationInputCard('pointA', "Site A Configuration", isPointACollapsed, () => setIsPointACollapsed(!isPointACollapsed))}
+          </div>
+
+          {/* Point B Configuration Overlay */}
+          <div className="absolute top-4 right-4 z-10">
+            {stationInputCard('pointB', "Site B Configuration", isPointBCollapsed, () => setIsPointBCollapsed(!isPointBCollapsed))}
+          </div>
           
-          {isLoading && (
-             <Card className="shadow-lg">
-                <CardHeader><CardTitle>Elevation Profile</CardTitle></CardHeader>
-                <CardContent><Skeleton className="h-[400px] w-full rounded-md" /></CardContent>
+          {/* Global Settings & Action Overlay */}
+          <Card className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 bg-card/80 backdrop-blur-sm border-border shadow-xl p-3 flex items-end gap-3">
+            <div>
+              <Label htmlFor="clearanceThreshold" className="text-xs">Clearance Threshold (m)</Label>
+              <Input id="clearanceThreshold" type="number" step="any" {...register('clearanceThreshold')} placeholder="e.g., 10" className="mt-1 w-32 bg-input/70" />
+              {(clientFormErrors.clearanceThreshold || formErrors?.clearanceThreshold) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors.clearanceThreshold, formErrors?.clearanceThreshold)}</p>}
+            </div>
+            <Button onClick={handleSubmit(processSubmit)} disabled={isLoading} className="h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
+              {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
+              Analyze LOS
+            </Button>
+          </Card>
+
+          {/* Results Display Overlay */}
+          {analysisResult && !clientError && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px]">
+              <ResultsDisplay result={analysisResult} />
+            </div>
+          )}
+          {clientError && (
+             <Card className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px] shadow-lg border-destructive bg-card/80 backdrop-blur-sm">
+                <CardHeader className="py-3 px-4">
+                    <CardTitle className="text-destructive text-base flex items-center"><Info className="mr-2 h-5 w-5" /> Error</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3">
+                    <p className="text-sm">{clientError}</p>
+                </CardContent>
              </Card>
           )}
-          {!isLoading && analysisResult && analysisResult.profile.length > 0 && (
-            <ElevationProfileChart profile={analysisResult.profile} />
+          {isLoading && !analysisResult && !clientError && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px]">
+                <Card className="shadow-lg bg-card/80 backdrop-blur-sm">
+                    <CardHeader className="py-3 px-4"><CardTitle className="text-base">Analysis Results</CardTitle></CardHeader>
+                    <CardContent className="px-4 pb-3 space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                </Card>
+            </div>
           )}
-          {/* Adjusted condition for empty state of chart */}
-          {!isLoading && (!analysisResult || analysisResult.profile.length === 0) && (
-             <Card className="shadow-lg">
-                <CardHeader>
-                    <CardTitle>Elevation Profile</CardTitle>
+
+          {/* Elevation Profile Chart Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 z-10 p-1 pb-0 md:p-2 md:pb-0">
+            {isLoading && (!analysisResult || analysisResult.profile.length === 0) && (
+              <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
+                  <CardHeader className="py-2 px-4"><CardTitle className="text-base">Elevation Profile</CardTitle></CardHeader>
+                  <CardContent className="px-4 pb-2"><Skeleton className="h-[150px] w-full rounded-md" /></CardContent>
+              </Card>
+            )}
+            {!isLoading && analysisResult && analysisResult.profile.length > 0 && (
+              <ElevationProfileChart profile={analysisResult.profile} />
+            )}
+            {!isLoading && (!analysisResult || analysisResult.profile.length === 0) && !clientError && (
+              <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
+                  <CardHeader className="py-2 px-4">
+                      <CardTitle className="text-base">Elevation Profile</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[150px] flex items-center justify-center px-4 pb-2">
+                      <p className="text-muted-foreground text-sm">
+                          Submit an analysis to view the elevation profile.
+                      </p>
+                  </CardContent>
+              </Card>
+            )}
+             {!isLoading && clientError && (!analysisResult || analysisResult.profile.length === 0) && (
+               <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
+                <CardHeader className="py-2 px-4">
+                    <CardTitle className="text-base">Elevation Profile</CardTitle>
                 </CardHeader>
-                <CardContent className="h-[400px] flex items-center justify-center">
-                    <p className="text-muted-foreground">
-                        {clientError && !formErrors ? "Analysis could not be completed." : "Submit an analysis to view the elevation profile."}
+                <CardContent className="h-[150px] flex items-center justify-center px-4 pb-2">
+                    <p className="text-muted-foreground text-sm">
+                        Analysis could not be completed. Profile not available.
                     </p>
                 </CardContent>
-             </Card>
-          )}
-        </section>
-      </main>
+               </Card>
+             )}
+          </div>
 
-      <footer className="mt-auto pt-8 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} FSO LOS Analyzer. All rights reserved. For demonstration purposes using Google Elevation API.</p>
-      </footer>
+        </main>
+      </div>
     </div>
   );
 }
