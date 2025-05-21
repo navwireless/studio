@@ -32,10 +32,14 @@ export default {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'
   			},
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
+  			accent: { // This is ShadCN's accent, should map to --ui-accent
+  				DEFAULT: 'hsl(var(--ui-accent))',
+  				foreground: 'hsl(var(--ui-accent-foreground))'
   			},
+        appAccent: { // Custom application accent (green)
+          DEFAULT: 'hsl(var(--accent))', // Maps to the green accent in globals.css
+          foreground: 'hsl(var(--accent-foreground))'
+        },
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
@@ -50,7 +54,7 @@ export default {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-  			sidebar: {
+  			sidebar: { // Keeping sidebar for completeness, though not used extensively
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',
   				primary: 'hsl(var(--sidebar-primary))',
@@ -66,6 +70,10 @@ export default {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
+  		fontFamily: {
+        sans: ['var(--font-geist-sans)'],
+        mono: ['var(--font-geist-mono)'],
+      },
   		keyframes: {
   			'accordion-down': {
   				from: {
