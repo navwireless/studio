@@ -3,7 +3,7 @@
 
 import type { LOSPoint } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Minus, Maximize } from 'lucide-react';
+import { BarChart3, Minus, Maximize, Info } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -54,9 +54,9 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
 
   const chartData = profile.map(p => ({
     distance: p.distance, 
-    terrainElevation: p.terrainElevation,
-    losHeight: p.losHeight,
-    clearance: p.clearance,
+    terrainElevation: parseFloat(p.terrainElevation.toFixed(1)), // Keep one decimal for display
+    losHeight: parseFloat(p.losHeight.toFixed(1)),
+    clearance: parseFloat(p.clearance.toFixed(1)),
   }));
   
   const allElevations = profile.flatMap(p => [p.terrainElevation, p.losHeight]);
@@ -65,6 +65,10 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
 
   const pointAData = chartData[0];
   const pointBData = chartData[chartData.length - 1];
+  const totalDistanceKm = pointBData.distance;
+  const displayDistance = totalDistanceKm < 1 
+    ? `${(totalDistanceKm * 1000).toFixed(1)} m` 
+    : `${totalDistanceKm.toFixed(2)} km`;
 
   return (
     <Card className="shadow-xl w-full bg-card/80 backdrop-blur-sm border-border">
@@ -74,6 +78,10 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
             <BarChart3 className="mr-2 h-5 w-5 text-primary" />
             Elevation Profile
           </CardTitle>
+          <div className="text-xs text-muted-foreground text-right">
+            <div>Aerial Distance</div>
+            <div className="font-semibold text-foreground">{displayDistance}</div>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-2 pb-0"> 
@@ -104,18 +112,40 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
                 backgroundColor: "hsl(var(--popover))",
                 borderColor: "hsl(var(--border))",
                 borderRadius: "var(--radius)",
-                padding: "4px 8px",
-                fontSize: "10px"
+                padding: "6px 10px", // Increased padding
+                fontSize: "11px", // Slightly larger font
+                boxShadow: "0 4px 12px hsla(var(--shadow, 0 0% 0% / 0.1))" // Added subtle shadow
               }}
-              labelStyle={{ color: "hsl(var(--foreground))", marginBottom: "2px" }}
-              itemStyle={{padding: "0px"}}
+              labelStyle={{ display: 'none' }} // Hide default label, we'll make our own
               formatter={(value: number, name: string, props) => {
-                 const item = props.payload as LOSPoint & { losHeight: number; terrainElevation: number };
-                 if (name === 'terrainElevation') return [`${item.terrainElevation.toFixed(1)} m`, chartConfig.terrainElevation.label];
-                 if (name === 'losHeight') return [`${item.losHeight.toFixed(1)} m (${item.clearance.toFixed(1)}m clear)`, chartConfig.losHeight.label];
-                 return [`${value.toFixed(1)} m`, name];
+                 // This formatter is okay but the custom content below is better for structure
+                 return [value, name];
               }}
-              labelFormatter={(label) => `Dist: ${parseFloat(label as string).toFixed(1)} km`}
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload as typeof chartData[0];
+                  return (
+                    <div className="p-1.5 bg-popover border border-border rounded-md shadow-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Dist: {data.distance.toFixed(1)} km</p>
+                      {payload.map((entry) => {
+                        let entryName = "";
+                        if (entry.name === 'terrainElevation') entryName = chartConfig.terrainElevation.label;
+                        else if (entry.name === 'losHeight') entryName = chartConfig.losHeight.label;
+                        
+                        return (
+                          <p key={entry.name} style={{ color: entry.color }} className="text-xs">
+                            {entryName}: {entry.value?.toFixed(1)} m
+                          </p>
+                        );
+                      })}
+                       <p className="text-xs" style={{color: chartConfig.losHeight.color}}>
+                        Clearance to LOS: {data.clearance.toFixed(1)} m
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
             <Area
               type="monotone"
@@ -132,7 +162,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
               type="monotone"
               dataKey="losHeight"
               stroke={chartConfig.losHeight.color}
-              strokeWidth={3} // Increased strokeWidth to 3px
+              strokeWidth={3} 
               name={chartConfig.losHeight.label}
               dot={false}
               isAnimationActive={false}
@@ -169,3 +199,4 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
     </Card>
   );
 }
+
