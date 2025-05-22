@@ -2,15 +2,24 @@
 "use client";
 
 import React from 'react';
-import { MapPin, Waypoints, Laptop, Calculator, Settings, HelpCircle } from 'lucide-react';
+import { MapPin, Waypoints, Laptop, Calculator, Settings, HelpCircle, Files, Crosshair } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
-const sidebarItems = [
-  { icon: MapPin, label: "Sites" },
-  { icon: Waypoints, label: "Links" },
-  { icon: Laptop, label: "Devices" },
-  { icon: Calculator, label: "Coverage" },
+export type ActiveTool = 'singleLink' | 'bulkAnalysis' | 'sites' | 'links' | 'devices' | 'coverage';
+
+interface AppSidebarProps {
+  activeTool: ActiveTool;
+  onToolChange: (tool: ActiveTool) => void;
+}
+
+const mainTools: { tool: ActiveTool; icon: React.ElementType; label: string }[] = [
+  { tool: 'singleLink', icon: Crosshair, label: "Single Link Analysis" },
+  { tool: 'bulkAnalysis', icon: Files, label: "Bulk Analysis" },
+  { tool: 'sites', icon: MapPin, label: "Sites (Placeholder)" },
+  { tool: 'links', icon: Waypoints, label: "Links (Placeholder)" },
+  { tool: 'devices', icon: Laptop, label: "Devices (Placeholder)" },
+  { tool: 'coverage', icon: Calculator, label: "Coverage (Placeholder)" },
 ];
 
 const bottomSidebarItems = [
@@ -18,22 +27,21 @@ const bottomSidebarItems = [
  { icon: HelpCircle, label: "Help" },
 ];
 
-export default function AppSidebar() {
-  const [activeIndex, setActiveIndex] = React.useState(0);
-
+export default function AppSidebar({ activeTool, onToolChange }: AppSidebarProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <aside className="bg-card text-card-foreground w-16 flex flex-col items-center py-4 space-y-3 border-r border-border shadow-md">
         <div className="flex-grow space-y-3">
-          {sidebarItems.map((item, index) => (
+          {mainTools.map((item) => (
             <Tooltip key={item.label}>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => onToolChange(item.tool)}
                   className={cn(
                     "p-3 rounded-lg hover:bg-primary/20 hover:text-primary transition-colors duration-150",
-                    activeIndex === index ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                    activeTool === item.tool ? "bg-primary/10 text-primary" : "text-muted-foreground"
                   )}
+                  aria-label={item.label}
                 >
                   <item.icon className="h-6 w-6" />
                   <span className="sr-only">{item.label}</span>
@@ -51,6 +59,7 @@ export default function AppSidebar() {
               <TooltipTrigger asChild>
                 <button
                   className="p-3 rounded-lg text-muted-foreground hover:bg-primary/20 hover:text-primary transition-colors duration-150"
+                  aria-label={item.label}
                 >
                   <item.icon className="h-6 w-6" />
                   <span className="sr-only">{item.label}</span>

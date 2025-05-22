@@ -2,23 +2,24 @@
 "use client";
 
 import React, { useState, useEffect, useActionState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import AppHeader from '@/components/layout/app-header';
-import AppSidebar from '@/components/layout/app-sidebar';
+import AppSidebar, { type ActiveTool } from '@/components/layout/app-sidebar';
 import ResultsDisplay from '@/components/fso/results-display';
 import InteractiveMap from '@/components/fso/interactive-map';
 import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
+import BulkAnalysisView from '@/components/fso/bulk-analysis-view'; // New component
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, PointInput, AnalysisFormValues } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import type { AnalysisResult, AnalysisFormValues } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Zap, Target, Settings2, Info, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, Zap, Target, Info, ChevronUp, ChevronDown } from 'lucide-react';
 
 // Zod schema for individual point, including Name
 const StationPointSchema = z.object({
@@ -48,8 +49,9 @@ export default function Home() {
 
   const [isPointACollapsed, setIsPointACollapsed] = useState(false);
   const [isPointBCollapsed, setIsPointBCollapsed] = useState(false);
+  const [activeTool, setActiveTool] = useState<ActiveTool>('singleLink');
 
-  const { register, handleSubmit, control, formState: { errors: clientFormErrors } } = useForm<PageAnalysisFormValues>({
+  const { register, handleSubmit, formState: { errors: clientFormErrors } } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: {
       pointA: { name: 'Site A', lat: '32.23085', lng: '76.144608', height: '20' },
@@ -62,13 +64,14 @@ export default function Home() {
     setIsLoading(true);
     setClientError(null);
     setFormErrors(undefined);
+    setAnalysisResult(null); // Clear previous results immediately
 
     const formData = new FormData();
-    formData.append('pointA.name', data.pointA.name); // Though name is not used by backend yet
+    formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', data.pointA.lat);
     formData.append('pointA.lng', data.pointA.lng);
     formData.append('pointA.height', data.pointA.height);
-    formData.append('pointB.name', data.pointB.name); // Though name is not used by backend yet
+    formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', data.pointB.lat);
     formData.append('pointB.lng', data.pointB.lng);
     formData.append('pointB.height', data.pointB.height);
@@ -87,7 +90,7 @@ export default function Home() {
         } else {
           setFormErrors(undefined);
         }
-        if (serverState.fieldErrors) setAnalysisResult(null); // Clear results if there are field errors
+        setAnalysisResult(null); 
       } else if (!('error' in serverState)) {
         setAnalysisResult(serverState as AnalysisResult);
         setClientError(null);
@@ -102,8 +105,8 @@ export default function Home() {
   };
 
   const stationInputCard = (id: 'pointA' | 'pointB', title: string, isCollapsed: boolean, toggleCollapse: () => void) => (
-    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border w-[350px] max-h-[90vh] overflow-y-auto">
-      <CardHeader className="py-3 px-4">
+    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border w-[350px] max-h-[calc(90vh-80px)] overflow-y-auto">
+      <CardHeader className="py-3 px-4 sticky top-0 bg-card/90 backdrop-blur-sm z-10">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg flex items-center">
             <Target className="mr-2 h-5 w-5 text-primary" /> {title}
@@ -144,106 +147,127 @@ export default function Home() {
     <div className="flex flex-col h-screen overflow-hidden">
       <AppHeader />
       <div className="flex flex-1 overflow-hidden">
-        <AppSidebar />
+        <AppSidebar activeTool={activeTool} onToolChange={setActiveTool} />
         <main className="flex-1 relative overflow-hidden">
-          <InteractiveMap
-            pointA={analysisResult?.pointA}
-            pointB={analysisResult?.pointB}
-            losPossible={analysisResult?.losPossible}
-          />
+          {activeTool === 'singleLink' && (
+            <>
+              <InteractiveMap
+                pointA={analysisResult?.pointA}
+                pointB={analysisResult?.pointB}
+                losPossible={analysisResult?.losPossible}
+              />
 
-          {/* Point A Configuration Overlay */}
-          <div className="absolute top-4 left-4 z-10">
-            {stationInputCard('pointA', "Site A Configuration", isPointACollapsed, () => setIsPointACollapsed(!isPointACollapsed))}
-          </div>
+              {/* Point A Configuration Overlay */}
+              <div className="absolute top-4 left-4 z-10">
+                {stationInputCard('pointA', "Site A Configuration", isPointACollapsed, () => setIsPointACollapsed(!isPointACollapsed))}
+              </div>
 
-          {/* Point B Configuration Overlay */}
-          <div className="absolute top-4 right-4 z-10">
-            {stationInputCard('pointB', "Site B Configuration", isPointBCollapsed, () => setIsPointBCollapsed(!isPointBCollapsed))}
-          </div>
-          
-          {/* Global Settings & Action Overlay */}
-          <Card className="absolute bottom-52 left-1/2 -translate-x-1/2 z-20 bg-card/80 backdrop-blur-sm border-border shadow-xl p-3 flex items-end gap-3">
-            <div>
-              <Label htmlFor="clearanceThreshold" className="text-xs">Clearance Threshold (m)</Label>
-              <Input id="clearanceThreshold" type="number" step="any" {...register('clearanceThreshold')} placeholder="e.g., 10" className="mt-1 w-32 bg-input/70" />
-              {(clientFormErrors.clearanceThreshold || formErrors?.clearanceThreshold) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors.clearanceThreshold, formErrors?.clearanceThreshold)}</p>}
-            </div>
-            <Button onClick={handleSubmit(processSubmit)} disabled={isLoading} className="h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
-              {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
-              Analyze LOS
-            </Button>
-          </Card>
+              {/* Point B Configuration Overlay */}
+              <div className="absolute top-4 right-4 z-10">
+                {stationInputCard('pointB', "Site B Configuration", isPointBCollapsed, () => setIsPointBCollapsed(!isPointBCollapsed))}
+              </div>
+              
+              {/* Global Settings & Action Overlay */}
+              <Card className="absolute bottom-52 left-1/2 -translate-x-1/2 z-20 bg-card/80 backdrop-blur-sm border-border shadow-xl p-3 flex items-end gap-3">
+                <div>
+                  <Label htmlFor="clearanceThreshold" className="text-xs">Fresnel Clearance (m)</Label>
+                  <Input id="clearanceThreshold" type="number" step="any" {...register('clearanceThreshold')} placeholder="e.g., 10" className="mt-1 w-32 bg-input/70" />
+                  {(clientFormErrors.clearanceThreshold || formErrors?.clearanceThreshold) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors.clearanceThreshold, formErrors?.clearanceThreshold)}</p>}
+                </div>
+                <Button onClick={handleSubmit(processSubmit)} disabled={isLoading} className="h-10 bg-primary hover:bg-primary/90 text-primary-foreground">
+                  {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
+                  Analyze LOS
+                </Button>
+              </Card>
 
-          {/* Results Display Overlay */}
-          {analysisResult && !clientError && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px]">
-              <ResultsDisplay result={analysisResult} />
-            </div>
-          )}
-          {clientError && (
-             <Card className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px] shadow-lg border-destructive bg-card/80 backdrop-blur-sm">
-                <CardHeader className="py-3 px-4">
-                    <CardTitle className="text-destructive text-base flex items-center"><Info className="mr-2 h-5 w-5" /> Error</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-3">
-                    <p className="text-sm">{clientError}</p>
-                </CardContent>
-             </Card>
-          )}
-          {isLoading && !analysisResult && !clientError && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px]">
-                <Card className="shadow-lg bg-card/80 backdrop-blur-sm">
-                    <CardHeader className="py-3 px-4"><CardTitle className="text-base">Analysis Results</CardTitle></CardHeader>
-                    <CardContent className="px-4 pb-3 space-y-2">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                        <Skeleton className="h-4 w-2/3" />
+              {/* Results Display Overlay */}
+              {analysisResult && !clientError && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px]">
+                  <ResultsDisplay result={analysisResult} />
+                </div>
+              )}
+              {clientError && (
+                 <Card className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px] shadow-lg border-destructive bg-card/80 backdrop-blur-sm">
+                    <CardHeader className="py-3 px-4">
+                        <CardTitle className="text-destructive text-base flex items-center"><Info className="mr-2 h-5 w-5" /> Error</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-3">
+                        <p className="text-sm">{clientError}</p>
+                        {formErrors && Object.keys(formErrors).length > 0 && (
+                           <ul className="list-disc list-inside mt-2 text-xs">
+                               {Object.entries(formErrors).map(([field, errors]) => 
+                                   errors?.map((error, index) => <li key={`${field}-${index}`}>{`${field.replace('pointA.','A: ').replace('pointB.','B: ')}: ${error}`}</li>)
+                               )}
+                           </ul>
+                        )}
                     </CardContent>
-                </Card>
+                 </Card>
+              )}
+              {isLoading && !analysisResult && !clientError && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[400px]">
+                    <Card className="shadow-lg bg-card/80 backdrop-blur-sm">
+                        <CardHeader className="py-3 px-4"><CardTitle className="text-base">Analysis Results</CardTitle></CardHeader>
+                        <CardContent className="px-4 pb-3 space-y-2">
+                            <Skeleton className="h-5 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <Skeleton className="h-4 w-2/3" />
+                        </CardContent>
+                    </Card>
+                </div>
+              )}
+
+              {/* Elevation Profile Chart Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 z-10 p-1 md:p-2">
+                {isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && (
+                  <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
+                      <CardHeader className="py-2 px-4"><CardTitle className="text-base">Elevation Profile</CardTitle></CardHeader>
+                      <CardContent className="px-4 pb-2"><Skeleton className="h-[150px] w-full rounded-md" /></CardContent>
+                  </Card>
+                )}
+                {!isLoading && analysisResult && analysisResult.profile && analysisResult.profile.length > 0 && (
+                  <ElevationProfileChart profile={analysisResult.profile} />
+                )}
+                {!isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && !clientError && (
+                  <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
+                      <CardHeader className="py-2 px-4">
+                          <CardTitle className="text-base">Elevation Profile</CardTitle>
+                      </CardHeader>
+                      <CardContent className="h-[150px] flex items-center justify-center px-4 pb-2">
+                          <p className="text-muted-foreground text-sm">
+                              Submit an analysis to view the elevation profile.
+                          </p>
+                      </CardContent>
+                  </Card>
+                )}
+                 {!isLoading && clientError && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && (
+                   <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
+                    <CardHeader className="py-2 px-4">
+                        <CardTitle className="text-base">Elevation Profile</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-[150px] flex items-center justify-center px-4 pb-2">
+                        <p className="text-muted-foreground text-sm">
+                            Analysis could not be completed. Profile not available.
+                        </p>
+                    </CardContent>
+                   </Card>
+                 )}
+              </div>
+            </>
+          )}
+          {activeTool === 'bulkAnalysis' && (
+            <BulkAnalysisView />
+          )}
+          {/* Placeholder for other tools */}
+          {(activeTool === 'sites' || activeTool === 'links' || activeTool === 'devices' || activeTool === 'coverage') && (
+            <div className="p-8">
+              <h2 className="text-2xl font-semibold mb-4">
+                {activeTool.charAt(0).toUpperCase() + activeTool.slice(1)} (Placeholder)
+              </h2>
+              <p>This section is a placeholder for the '{activeTool}' functionality.</p>
             </div>
           )}
-
-          {/* Elevation Profile Chart Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 p-1 md:p-2">
-            {isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && (
-              <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
-                  <CardHeader className="py-2 px-4"><CardTitle className="text-base">Elevation Profile</CardTitle></CardHeader>
-                  <CardContent className="px-4 pb-2"><Skeleton className="h-[150px] w-full rounded-md" /></CardContent>
-              </Card>
-            )}
-            {!isLoading && analysisResult && analysisResult.profile && analysisResult.profile.length > 0 && (
-              <ElevationProfileChart profile={analysisResult.profile} />
-            )}
-            {!isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && !clientError && (
-              <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
-                  <CardHeader className="py-2 px-4">
-                      <CardTitle className="text-base">Elevation Profile</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[150px] flex items-center justify-center px-4 pb-2">
-                      <p className="text-muted-foreground text-sm">
-                          Submit an analysis to view the elevation profile.
-                      </p>
-                  </CardContent>
-              </Card>
-            )}
-             {!isLoading && clientError && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && (
-               <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
-                <CardHeader className="py-2 px-4">
-                    <CardTitle className="text-base">Elevation Profile</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[150px] flex items-center justify-center px-4 pb-2">
-                    <p className="text-muted-foreground text-sm">
-                        Analysis could not be completed. Profile not available.
-                    </p>
-                </CardContent>
-               </Card>
-             )}
-          </div>
-
         </main>
       </div>
     </div>
   );
 }
-

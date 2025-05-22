@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'UISP FSO LOS Analyzer',
-  description: 'Free Space Optics Line-of-Sight Analyzer inspired by UISP Design Center',
+  title: 'LiFi Feasibility Checker',
+  description: 'Line-of-Sight Analyzer for LiFi links by Nav Wireless Technologies Pvt. Ltd.',
 };
 
 export default function RootLayout({
