@@ -12,14 +12,14 @@ export default function AppHeader() {
   return (
     <header className="bg-card text-card-foreground p-3 flex items-center justify-between border-b border-border shadow-md">
       <div className="flex items-center gap-3">
-        {/* Placeholder for the logo */}
         <Image 
-            src="https://placehold.co/150x40.png?text=Logo" // Replace with your actual logo URL
-            alt="Nav Wireless Logo" 
-            width={120} // Adjust as needed
-            height={32} // Adjust as needed
+            src="https://storage.googleapis.com/project-fabrica-chat-agent-test-assets/images/ZepPjV2n7N_nav_wireless_logo.png" 
+            alt="Nav Wireless Technologies Pvt. Ltd. Logo" 
+            width={150} 
+            height={40} 
             className="object-contain"
-            data-ai-hint="logo nav wireless"
+            data-ai-hint="company logo"
+            priority // To load the logo faster
         />
         <div>
           <h1 className="text-xl font-semibold text-foreground">LiFi Feasibility Checker</h1>
