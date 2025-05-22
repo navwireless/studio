@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useActionState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
@@ -12,6 +12,7 @@ import ResultsDisplay from '@/components/fso/results-display';
 import InteractiveMap from '@/components/fso/interactive-map';
 import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
 import BulkAnalysisView from '@/components/fso/bulk-analysis-view';
+import ProductCatalog from '@/components/fso/product-catalog'; // New import
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,14 +20,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Zap, Target, Info, ChevronUp, ChevronDown } from 'lucide-react';
+import { Slider } from '@/components/ui/slider'; // New import
+import { Loader2, Zap, Target, Info, ChevronUp, ChevronDown, ShoppingCart } from 'lucide-react';
 
 // Zod schema for individual point, including Name
 const StationPointSchema = z.object({
   name: z.string().min(1, "Name is required"),
   lat: z.string().min(1, "Latitude is required").refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Must be -90 to 90"),
   lng: z.string().min(1, "Longitude is required").refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Must be -180 to 180"),
-  height: z.string().min(1, "Tower height is required").refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Must be >= 0"),
+  height: z.string().min(1, "Tower height is required")
+    .refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 10 && parseFloat(val) <= 200, "Must be between 10 and 200"),
 });
 
 // Updated Zod schema for the whole form
@@ -49,9 +52,10 @@ export default function Home() {
 
   const [isPointACollapsed, setIsPointACollapsed] = useState(false);
   const [isPointBCollapsed, setIsPointBCollapsed] = useState(false);
+  const [isProductCatalogCollapsed, setIsProductCatalogCollapsed] = useState(true); // New state
   const [activeTool, setActiveTool] = useState<ActiveTool>('singleLink');
 
-  const { register, handleSubmit, formState: { errors: clientFormErrors }, getValues } = useForm<PageAnalysisFormValues>({
+  const { register, handleSubmit, formState: { errors: clientFormErrors }, getValues, control } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: {
       pointA: { name: 'Site A', lat: '32.23085', lng: '76.144608', height: '20' },
@@ -93,14 +97,13 @@ export default function Home() {
         setAnalysisResult(null); 
       } else if (!('error' in serverState)) {
         const resultData = serverState as AnalysisResult;
-        // Ensure pointA and pointB names from the form are carried into the result if not returned by server
         const formValues = getValues();
         setAnalysisResult({
             ...resultData,
             pointA: { 
                 ...resultData.pointA, 
                 name: formValues.pointA.name,
-                lat: parseFloat(formValues.pointA.lat), // ensure types match
+                lat: parseFloat(formValues.pointA.lat),
                 lng: parseFloat(formValues.pointA.lng),
                 towerHeight: parseFloat(formValues.pointA.height)
             },
@@ -124,7 +127,7 @@ export default function Home() {
   };
 
   const stationInputCard = (id: 'pointA' | 'pointB', title: string, isCollapsed: boolean, toggleCollapse: () => void) => (
-    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border w-[350px] max-h-[calc(90vh-120px)] overflow-y-auto"> {/* Reduced max-h further */}
+    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border w-[350px] max-h-[calc(90vh-120px)] overflow-y-auto">
       <CardHeader className="py-3 px-4 sticky top-0 bg-card/90 backdrop-blur-sm z-10">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg flex items-center">
@@ -153,8 +156,51 @@ export default function Home() {
             {(clientFormErrors[id]?.lng || formErrors?.[`${id}.lng`]) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors[id]?.lng, formErrors?.[`${id}.lng`])}</p>}
           </div>
           <div>
-            <Label htmlFor={`${id}.height`} className="text-xs">Tower Height (m)</Label>
-            <Input id={`${id}.height`} type="number" step="any" {...register(`${id}.height`)} placeholder="e.g., 20" className="mt-1 bg-input/70" />
+            <Label htmlFor={`${id}.height-input`} className="text-xs">Tower Height (m)</Label>
+            <Controller
+              name={`${id}.height`}
+              control={control}
+              render={({ field }) => (
+                <div className="mt-1 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id={`${id}.height-input`}
+                      type="number"
+                      min="10"
+                      max="200"
+                      step="1"
+                      className="w-24 bg-input/70"
+                      value={field.value}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        // Allow empty input for typing, or valid numbers
+                        if (val === "" || (Number(val) >= 10 && Number(val) <= 200)) {
+                           field.onChange(val);
+                        } else if (Number(val) < 10) {
+                           field.onChange("10");
+                        } else if (Number(val) > 200) {
+                           field.onChange("200");
+                        }
+                      }}
+                      onBlur={(e) => { // Ensure value is valid on blur
+                        const numValue = parseFloat(field.value);
+                        if (isNaN(numValue) || numValue < 10) field.onChange("10");
+                        else if (numValue > 200) field.onChange("200");
+                      }}
+                    />
+                    <Slider
+                      value={[parseFloat(field.value) || 10]}
+                      onValueChange={(value) => field.onChange(String(value[0]))}
+                      min={10}
+                      max={200}
+                      step={1}
+                      className="flex-1"
+                      aria-labelledby={`label-${id}-height`}
+                    />
+                  </div>
+                </div>
+              )}
+            />
             {(clientFormErrors[id]?.height || formErrors?.[`${id}.height`]) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors[id]?.height, formErrors?.[`${id}.height`])}</p>}
           </div>
         </CardContent>
@@ -184,6 +230,31 @@ export default function Home() {
               {/* Point B Configuration Overlay */}
               <div className="absolute top-4 right-4 z-10">
                 {stationInputCard('pointB', "Site B Configuration", isPointBCollapsed, () => setIsPointBCollapsed(!isPointBCollapsed))}
+              </div>
+
+              {/* Product Catalog Overlay */}
+              <div className="absolute top-[calc(4rem+20px+280px)] left-4 z-10 md:top-auto md:bottom-4 md:left-4 w-[350px]"> 
+                {/* Position adjusted, might need further refinement based on actual Point A card height */}
+                <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border max-h-[calc(90vh-120px-300px)] overflow-y-auto"> {/* Max height adjusted */}
+                  <CardHeader 
+                    className="py-3 px-4 sticky top-0 bg-card/90 backdrop-blur-sm z-10 cursor-pointer"
+                    onClick={() => setIsProductCatalogCollapsed(!isProductCatalogCollapsed)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-lg flex items-center">
+                        <ShoppingCart className="mr-2 h-5 w-5 text-primary" /> Product Catalog
+                      </CardTitle>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                        {isProductCatalogCollapsed ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  {!isProductCatalogCollapsed && (
+                    <CardContent className="px-4 pb-4">
+                      <ProductCatalog />
+                    </CardContent>
+                  )}
+                </Card>
               </div>
               
               {/* Global Settings & Action Overlay */}
@@ -280,7 +351,6 @@ export default function Home() {
           {activeTool === 'bulkAnalysis' && (
             <BulkAnalysisView />
           )}
-          {/* Placeholder for other tools */}
           {(activeTool === 'sites' || activeTool === 'links' || activeTool === 'devices' || activeTool === 'coverage') && (
             <div className="p-8">
               <h2 className="text-2xl font-semibold mb-4">
@@ -294,4 +364,3 @@ export default function Home() {
     </div>
   );
 }
-

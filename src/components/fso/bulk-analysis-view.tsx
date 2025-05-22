@@ -1,47 +1,96 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { UploadCloud, FileText, Download } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast'; // For placeholder feedback
+import { UploadCloud, FileText, Download, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from '@/components/ui/table';
+
+// Placeholder data type for bulk results
+type BulkResultItem = {
+  id: string;
+  linkName: string;
+  distance: number;
+  losPossible: boolean;
+  status: string;
+  pointAName: string;
+  pointBName: string;
+};
 
 export default function BulkAnalysisView() {
   const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [bulkResults, setBulkResults] = useState<BulkResultItem[]>([]);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   const handleDownloadTemplate = () => {
-    // In a real scenario, this would trigger a file download.
-    // For now, it's a placeholder.
     console.log("Download template clicked - Placeholder");
     toast({
       title: "Download Template",
       description: "Template download functionality is not yet implemented.",
+      variant: "default",
     });
-    // Example: Create a dummy CSV and trigger download
-    // const csvContent = "Point A Name,Point A Latitude,Point A Longitude,Point A Tower Height,Point B Name,Point B Latitude,Point B Longitude,Point B Tower Height,Clearance Threshold\nSite1,32.1,76.1,20,Site2,32.2,76.2,20,10";
-    // const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    // const link = document.createElement("a");
-    // if (link.download !== undefined) { // Feature detection
-    //     const url = URL.createObjectURL(blob);
-    //     link.setAttribute("href", url);
-    //     link.setAttribute("download", "los_bulk_template.csv");
-    //     link.style.visibility = 'hidden';
-    //     document.body.appendChild(link);
-    //     link.click();
-    //     document.body.removeChild(link);
-    // }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setFileName(event.target.files[0].name);
+    } else {
+      setFileName(null);
+    }
+  };
+
+  const simulateProcessing = () => {
+    setIsProcessing(true);
+    setBulkProgress(0);
+    setBulkResults([]);
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      setBulkProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+        setIsProcessing(false);
+        toast({
+          title: "Processing Complete",
+          description: `${fileName || 'File'} processed successfully. (Simulated)`,
+        });
+        // Add dummy results
+        setBulkResults([
+          { id: '1', linkName: 'Link A-B', distance: 2.5, losPossible: true, status: 'Success', pointAName: 'Tower 1', pointBName: 'Tower 2' },
+          { id: '2', linkName: 'Link C-D', distance: 5.1, losPossible: false, status: 'Obstructed', pointAName: 'Office A', pointBName: 'Building B'},
+          { id: '3', linkName: 'Link E-F', distance: 0.8, losPossible: true, status: 'Success', pointAName: 'Site X', pointBName: 'Site Y' },
+        ]);
+      }
+    }, 200);
   };
 
   const handleProcessFile = (type: 'excel' | 'kmz') => {
-     console.log(`Process ${type} file clicked - Placeholder`);
-     toast({
-      title: `Process ${type.toUpperCase()} File`,
-      description: `Processing for ${type} files is not yet implemented.`,
-    });
+     if (!fileName) {
+        toast({
+            title: "No File Selected",
+            description: `Please select a ${type} file to process.`,
+            variant: "destructive",
+        });
+        return;
+     }
+     console.log(`Process ${type} file: ${fileName} - Placeholder`);
+     simulateProcessing();
   }
 
   return (
@@ -74,27 +123,17 @@ export default function BulkAnalysisView() {
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="excel-file">Upload File</Label>
-                    <Input id="excel-file" type="file" accept=".xlsx, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv" className="bg-input/70" />
+                    <Input id="excel-file" type="file" accept=".xlsx, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv" className="bg-input/70" onChange={handleFileChange} />
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Button variant="outline" className="w-full sm:w-auto" onClick={handleDownloadTemplate}>
                       <Download className="mr-2 h-4 w-4" />
                       Download Template
                     </Button>
-                    <Button className="w-full sm:w-auto" onClick={() => handleProcessFile('excel')}>
-                      <FileText className="mr-2 h-4 w-4" />
+                    <Button className="w-full sm:w-auto" onClick={() => handleProcessFile('excel')} disabled={isProcessing}>
+                      {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                       Process Excel File
                     </Button>
-                  </div>
-                  <div className="mt-4">
-                    <h4 className="font-semibold mb-2">Processing Status:</h4>
-                    <p className="text-sm text-muted-foreground">Awaiting file upload...</p>
-                    {/* Progress bar placeholder */}
-                  </div>
-                  <div className="mt-4">
-                    <h4 className="font-semibold mb-2">Results Summary:</h4>
-                    <p className="text-sm text-muted-foreground">No results yet.</p>
-                    {/* Results summary placeholder */}
                   </div>
                 </CardContent>
               </Card>
@@ -110,30 +149,73 @@ export default function BulkAnalysisView() {
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="kmz-file">Upload KMZ File</Label>
-                    <Input id="kmz-file" type="file" accept=".kmz, application/vnd.google-earth.kmz" className="bg-input/70" />
+                    <Input id="kmz-file" type="file" accept=".kmz, application/vnd.google-earth.kmz" className="bg-input/70" onChange={handleFileChange}/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="kmz-range">Pairing Range (km)</Label>
                     <Input id="kmz-range" type="number" defaultValue="5" step="0.1" className="bg-input/70" />
                   </div>
-                  <Button className="w-full sm:w-auto" onClick={() => handleProcessFile('kmz')}>
-                    <UploadCloud className="mr-2 h-4 w-4" />
+                  <Button className="w-full sm:w-auto" onClick={() => handleProcessFile('kmz')} disabled={isProcessing}>
+                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                     Process KMZ File
                   </Button>
-                   <div className="mt-4">
-                    <h4 className="font-semibold mb-2">Processing Status:</h4>
-                    <p className="text-sm text-muted-foreground">Awaiting file upload...</p>
-                    {/* Progress bar placeholder */}
-                  </div>
-                  <div className="mt-4">
-                    <h4 className="font-semibold mb-2">Results Summary:</h4>
-                    <p className="text-sm text-muted-foreground">No results yet.</p>
-                    {/* Results summary placeholder */}
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
+
+          {(isProcessing || bulkResults.length > 0 || (fileName && !isProcessing && bulkResults.length === 0)) && (
+            <div className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Processing Status & Results</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {fileName && <p className="text-sm text-muted-foreground">File: {fileName}</p>}
+                  {isProcessing && (
+                    <div>
+                      <Label className="text-sm">Progress</Label>
+                      <Progress value={bulkProgress} className="w-full mt-1" />
+                      <p className="text-xs text-muted-foreground mt-1">{bulkProgress}% complete</p>
+                    </div>
+                  )}
+                  {!isProcessing && bulkResults.length > 0 && (
+                     <Table>
+                        <TableCaption>Bulk analysis results. (Simulated data)</TableCaption>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Link</TableHead>
+                            <TableHead>Point A</TableHead>
+                            <TableHead>Point B</TableHead>
+                            <TableHead>Distance (km)</TableHead>
+                            <TableHead>LOS Possible</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {bulkResults.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium">{item.linkName}</TableCell>
+                              <TableCell>{item.pointAName}</TableCell>
+                              <TableCell>{item.pointBName}</TableCell>
+                              <TableCell>{item.distance.toFixed(1)}</TableCell>
+                              <TableCell className={item.losPossible ? 'text-los-success' : 'text-los-failure'}>
+                                {item.losPossible ? 'Yes' : 'No'}
+                              </TableCell>
+                              <TableCell>{item.status}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                  )}
+                  {!isProcessing && fileName && bulkResults.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No results to display for {fileName} yet, or processing did not yield results.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
         </CardContent>
       </Card>
     </div>

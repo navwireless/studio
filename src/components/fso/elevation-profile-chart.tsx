@@ -74,9 +74,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
             <BarChart3 className="mr-2 h-5 w-5 text-primary" />
             Elevation Profile
           </CardTitle>
-          {/* Placeholder for expand/collapse if needed later */}
         </div>
-        {/* <CardDescription className="text-xs">Terrain vs. Line-of-Sight path with Earth curvature.</CardDescription> */}
       </CardHeader>
       <CardContent className="px-2 pt-2 pb-0"> 
         <ResponsiveContainer width="100%" height={150}> 
@@ -90,7 +88,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
               fontSize={10}
               axisLine={false}
               tickLine={false}
-              padding={{ left: 10, right: 10 }} // Add padding to XAxis
+              padding={{ left: 10, right: 10 }}
             />
             <YAxis
               stroke="hsl(var(--muted-foreground))"
@@ -99,7 +97,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
               fontSize={10}
               axisLine={false}
               tickLine={false}
-              width={50} // Increased width for YAxis labels
+              width={50}
             />
             <Tooltip
               contentStyle={{
@@ -124,7 +122,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
               dataKey="terrainElevation"
               stroke={chartConfig.terrainElevation.color}
               fill={chartConfig.terrainElevation.color}
-              fillOpacity={0.3} // Ensure low opacity
+              fillOpacity={0.3}
               strokeWidth={1.5}
               name={chartConfig.terrainElevation.label}
               dot={false}
@@ -134,12 +132,11 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
               type="monotone"
               dataKey="losHeight"
               stroke={chartConfig.losHeight.color}
-              strokeWidth={2.5} // Increased strokeWidth for better visibility
+              strokeWidth={3} // Increased strokeWidth to 3px
               name={chartConfig.losHeight.label}
               dot={false}
               isAnimationActive={false}
             />
-            {/* Reference Dots for Site A and B names */}
             {pointAData && (
               <ReferenceDot 
                 x={pointAData.distance} 
@@ -172,4 +169,3 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
     </Card>
   );
 }
-
