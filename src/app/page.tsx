@@ -87,7 +87,7 @@ export default function Home() {
         } else {
           setFormErrors(undefined);
         }
-        if (serverState.fieldErrors) setAnalysisResult(null);
+        if (serverState.fieldErrors) setAnalysisResult(null); // Clear results if there are field errors
       } else if (!('error' in serverState)) {
         setAnalysisResult(serverState as AnalysisResult);
         setClientError(null);
@@ -135,11 +135,6 @@ export default function Home() {
             <Input id={`${id}.height`} type="number" step="any" {...register(`${id}.height`)} placeholder="e.g., 20" className="mt-1 bg-input/70" />
             {(clientFormErrors[id]?.height || formErrors?.[`${id}.height`]) && <p className="text-sm text-destructive mt-1">{getCombinedError(clientFormErrors[id]?.height, formErrors?.[`${id}.height`])}</p>}
           </div>
-          <div className="text-xs text-muted-foreground space-y-1 pt-2">
-            <p>Azimuth: N/A</p>
-            <p>Tilt: N/A</p>
-            <p>Expected Signal: N/A</p>
-          </div>
         </CardContent>
       )}
     </Card>
@@ -168,7 +163,7 @@ export default function Home() {
           </div>
           
           {/* Global Settings & Action Overlay */}
-          <Card className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 bg-card/80 backdrop-blur-sm border-border shadow-xl p-3 flex items-end gap-3">
+          <Card className="absolute bottom-52 left-1/2 -translate-x-1/2 z-20 bg-card/80 backdrop-blur-sm border-border shadow-xl p-3 flex items-end gap-3">
             <div>
               <Label htmlFor="clearanceThreshold" className="text-xs">Clearance Threshold (m)</Label>
               <Input id="clearanceThreshold" type="number" step="any" {...register('clearanceThreshold')} placeholder="e.g., 10" className="mt-1 w-32 bg-input/70" />
@@ -210,17 +205,17 @@ export default function Home() {
           )}
 
           {/* Elevation Profile Chart Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 p-1 pb-0 md:p-2 md:pb-0">
-            {isLoading && (!analysisResult || analysisResult.profile.length === 0) && (
+          <div className="absolute bottom-0 left-0 right-0 z-10 p-1 md:p-2">
+            {isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && (
               <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
                   <CardHeader className="py-2 px-4"><CardTitle className="text-base">Elevation Profile</CardTitle></CardHeader>
                   <CardContent className="px-4 pb-2"><Skeleton className="h-[150px] w-full rounded-md" /></CardContent>
               </Card>
             )}
-            {!isLoading && analysisResult && analysisResult.profile.length > 0 && (
+            {!isLoading && analysisResult && analysisResult.profile && analysisResult.profile.length > 0 && (
               <ElevationProfileChart profile={analysisResult.profile} />
             )}
-            {!isLoading && (!analysisResult || analysisResult.profile.length === 0) && !clientError && (
+            {!isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && !clientError && (
               <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
                   <CardHeader className="py-2 px-4">
                       <CardTitle className="text-base">Elevation Profile</CardTitle>
@@ -232,7 +227,7 @@ export default function Home() {
                   </CardContent>
               </Card>
             )}
-             {!isLoading && clientError && (!analysisResult || analysisResult.profile.length === 0) && (
+             {!isLoading && clientError && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && (
                <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
                 <CardHeader className="py-2 px-4">
                     <CardTitle className="text-base">Elevation Profile</CardTitle>
@@ -251,3 +246,4 @@ export default function Home() {
     </div>
   );
 }
+
