@@ -11,7 +11,7 @@ import AppSidebar, { type ActiveTool } from '@/components/layout/app-sidebar';
 import ResultsDisplay from '@/components/fso/results-display';
 import InteractiveMap from '@/components/fso/interactive-map';
 import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
-import BulkAnalysisView from '@/components/fso/bulk-analysis-view'; // New component
+import BulkAnalysisView from '@/components/fso/bulk-analysis-view';
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,7 +51,7 @@ export default function Home() {
   const [isPointBCollapsed, setIsPointBCollapsed] = useState(false);
   const [activeTool, setActiveTool] = useState<ActiveTool>('singleLink');
 
-  const { register, handleSubmit, formState: { errors: clientFormErrors } } = useForm<PageAnalysisFormValues>({
+  const { register, handleSubmit, formState: { errors: clientFormErrors }, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: {
       pointA: { name: 'Site A', lat: '32.23085', lng: '76.144608', height: '20' },
@@ -64,7 +64,7 @@ export default function Home() {
     setIsLoading(true);
     setClientError(null);
     setFormErrors(undefined);
-    setAnalysisResult(null); // Clear previous results immediately
+    setAnalysisResult(null); 
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
@@ -92,12 +92,31 @@ export default function Home() {
         }
         setAnalysisResult(null); 
       } else if (!('error' in serverState)) {
-        setAnalysisResult(serverState as AnalysisResult);
+        const resultData = serverState as AnalysisResult;
+        // Ensure pointA and pointB names from the form are carried into the result if not returned by server
+        const formValues = getValues();
+        setAnalysisResult({
+            ...resultData,
+            pointA: { 
+                ...resultData.pointA, 
+                name: formValues.pointA.name,
+                lat: parseFloat(formValues.pointA.lat), // ensure types match
+                lng: parseFloat(formValues.pointA.lng),
+                towerHeight: parseFloat(formValues.pointA.height)
+            },
+            pointB: { 
+                ...resultData.pointB, 
+                name: formValues.pointB.name,
+                lat: parseFloat(formValues.pointB.lat),
+                lng: parseFloat(formValues.pointB.lng),
+                towerHeight: parseFloat(formValues.pointB.height)
+            }
+        });
         setClientError(null);
         setFormErrors(undefined);
       }
     }
-  }, [serverState]);
+  }, [serverState, getValues]);
 
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
     if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
@@ -105,7 +124,7 @@ export default function Home() {
   };
 
   const stationInputCard = (id: 'pointA' | 'pointB', title: string, isCollapsed: boolean, toggleCollapse: () => void) => (
-    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border w-[350px] max-h-[calc(90vh-80px)] overflow-y-auto">
+    <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border w-[350px] max-h-[calc(90vh-120px)] overflow-y-auto"> {/* Reduced max-h further */}
       <CardHeader className="py-3 px-4 sticky top-0 bg-card/90 backdrop-blur-sm z-10">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg flex items-center">
@@ -225,7 +244,11 @@ export default function Home() {
                   </Card>
                 )}
                 {!isLoading && analysisResult && analysisResult.profile && analysisResult.profile.length > 0 && (
-                  <ElevationProfileChart profile={analysisResult.profile} />
+                  <ElevationProfileChart 
+                    profile={analysisResult.profile} 
+                    pointAName={analysisResult.pointA?.name || 'Site A'}
+                    pointBName={analysisResult.pointB?.name || 'Site B'}
+                  />
                 )}
                 {!isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && !clientError && (
                   <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
@@ -271,3 +294,4 @@ export default function Home() {
     </div>
   );
 }
+

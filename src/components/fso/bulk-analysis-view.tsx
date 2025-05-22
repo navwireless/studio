@@ -8,8 +8,42 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { UploadCloud, FileText, Download } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast'; // For placeholder feedback
 
 export default function BulkAnalysisView() {
+  const { toast } = useToast();
+
+  const handleDownloadTemplate = () => {
+    // In a real scenario, this would trigger a file download.
+    // For now, it's a placeholder.
+    console.log("Download template clicked - Placeholder");
+    toast({
+      title: "Download Template",
+      description: "Template download functionality is not yet implemented.",
+    });
+    // Example: Create a dummy CSV and trigger download
+    // const csvContent = "Point A Name,Point A Latitude,Point A Longitude,Point A Tower Height,Point B Name,Point B Latitude,Point B Longitude,Point B Tower Height,Clearance Threshold\nSite1,32.1,76.1,20,Site2,32.2,76.2,20,10";
+    // const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // const link = document.createElement("a");
+    // if (link.download !== undefined) { // Feature detection
+    //     const url = URL.createObjectURL(blob);
+    //     link.setAttribute("href", url);
+    //     link.setAttribute("download", "los_bulk_template.csv");
+    //     link.style.visibility = 'hidden';
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     document.body.removeChild(link);
+    // }
+  };
+
+  const handleProcessFile = (type: 'excel' | 'kmz') => {
+     console.log(`Process ${type} file clicked - Placeholder`);
+     toast({
+      title: `Process ${type.toUpperCase()} File`,
+      description: `Processing for ${type} files is not yet implemented.`,
+    });
+  }
+
   return (
     <div className="p-4 md:p-6 lg:p-8 h-full overflow-y-auto">
       <Card className="max-w-4xl mx-auto shadow-xl bg-card/90 backdrop-blur-sm">
@@ -40,14 +74,14 @@ export default function BulkAnalysisView() {
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="excel-file">Upload File</Label>
-                    <Input id="excel-file" type="file" accept=".xlsx, .csv" className="bg-input/70" />
+                    <Input id="excel-file" type="file" accept=".xlsx, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv" className="bg-input/70" />
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Button variant="outline" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto" onClick={handleDownloadTemplate}>
                       <Download className="mr-2 h-4 w-4" />
                       Download Template
                     </Button>
-                    <Button className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto" onClick={() => handleProcessFile('excel')}>
                       <FileText className="mr-2 h-4 w-4" />
                       Process Excel File
                     </Button>
@@ -76,13 +110,13 @@ export default function BulkAnalysisView() {
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="kmz-file">Upload KMZ File</Label>
-                    <Input id="kmz-file" type="file" accept=".kmz" className="bg-input/70" />
+                    <Input id="kmz-file" type="file" accept=".kmz, application/vnd.google-earth.kmz" className="bg-input/70" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="kmz-range">Pairing Range (km)</Label>
                     <Input id="kmz-range" type="number" defaultValue="5" step="0.1" className="bg-input/70" />
                   </div>
-                  <Button className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto" onClick={() => handleProcessFile('kmz')}>
                     <UploadCloud className="mr-2 h-4 w-4" />
                     Process KMZ File
                   </Button>
