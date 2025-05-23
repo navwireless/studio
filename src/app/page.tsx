@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useActionState, useCallback } from 'react';
+import React, { useState, useEffect, useActionState, useCallback, useTransition } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,10 +9,9 @@ import { z } from 'zod';
 import ResultsDisplay from '@/components/fso/results-display';
 import InteractiveMap from '@/components/fso/interactive-map';
 import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
-import TowerHeightControl from '@/components/fso/tower-height-control'; // New
+import TowerHeightControl from '@/components/fso/tower-height-control';
 import ProductCatalog from '@/components/fso/product-catalog'; 
-import BulkAnalysisView from '@/components/fso/bulk-analysis-view'; // Keep for future use
-import AppSidebar, { type ActiveTool } from '@/components/layout/app-sidebar'; // For tool switching if needed
+import BulkAnalysisView from '@/components/fso/bulk-analysis-view';
 
 
 import { performLosAnalysis } from '@/app/actions';
@@ -35,7 +34,7 @@ const StationPointSchema = z.object({
   lng: z.string()
     .min(1, "Longitude is required")
     .refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Must be -180 to 180"),
-  height: z.number().min(0, "Min 0m").max(100, "Max 100m"), // Changed to number, 0-100m
+  height: z.number().min(0, "Min 0m").max(100, "Max 100m"),
 });
 
 // Updated Zod schema for the whole form
@@ -43,16 +42,15 @@ const PageAnalysisFormSchema = z.object({
   pointA: StationPointSchema,
   pointB: StationPointSchema,
   clearanceThreshold: z.string().min(1, "Clearance is required").refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Must be >= 0"),
-  // Example: fresnelFrequency: z.string().optional(), // For future Fresnel Zone calc
 });
 
 type PageAnalysisFormValues = z.infer<typeof PageAnalysisFormSchema>;
 
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
-  const [serverState, formAction] = useActionState(performLosAnalysis, initialState);
+  const [serverState, formAction, isActionPending] = useActionState(performLosAnalysis, initialState);
+  const [, startTransition] = useTransition();
   
-  const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
@@ -74,8 +72,7 @@ export default function Home() {
   const watchedPointA = useWatch({ control, name: 'pointA' });
   const watchedPointB = useWatch({ control, name: 'pointB' });
 
-  const processSubmit = async (data: PageAnalysisFormValues) => {
-    setIsLoading(true);
+  const processSubmit = (data: PageAnalysisFormValues) => { // No longer async
     setClientError(null);
     setFormErrors(undefined);
     setAnalysisResult(null); 
@@ -84,18 +81,19 @@ export default function Home() {
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', data.pointA.lat);
     formData.append('pointA.lng', data.pointA.lng);
-    formData.append('pointA.height', String(data.pointA.height)); // Convert number to string for FormData
+    formData.append('pointA.height', String(data.pointA.height));
     formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', data.pointB.lat);
     formData.append('pointB.lng', data.pointB.lng);
-    formData.append('pointB.height', String(data.pointB.height)); // Convert number to string for FormData
+    formData.append('pointB.height', String(data.pointB.height));
     formData.append('clearanceThreshold', data.clearanceThreshold);
     
-    await formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   };
   
   useEffect(() => {
-    setIsLoading(false);
     if (serverState) {
       if ('error' in serverState && serverState.error) {
         setClientError(serverState.error);
@@ -113,7 +111,7 @@ export default function Home() {
             pointA: { 
                 ...resultData.pointA, 
                 name: formValues.pointA.name,
-                lat: parseFloat(formValues.pointA.lat), // Ensure these are numbers for map
+                lat: parseFloat(formValues.pointA.lat),
                 lng: parseFloat(formValues.pointA.lng),
                 towerHeight: formValues.pointA.height 
             },
@@ -179,8 +177,8 @@ export default function Home() {
               label="Tower Height"
               height={field.value}
               onChange={field.onChange}
-              min={0} // As per new requirement
-              max={100} // As per new requirement
+              min={0}
+              max={100}
               idSuffix={id}
             />
           )}
@@ -190,13 +188,11 @@ export default function Home() {
     </Card>
   );
 
-  // Determine map container height based on elevation profile visibility
   const mapContainerHeightClass = isElevationProfileVisible ? 'h-[65%]' : 'h-full';
   const elevationProfileContainerClass = `h-[35%] overflow-hidden transition-all duration-300 ease-in-out ${isElevationProfileVisible ? 'opacity-100 elevation-profile-visible' : 'opacity-0 h-0 min-h-0 max-h-0'}`;
   
   return (
-    <div className="flex flex-1 h-full overflow-hidden"> {/* page.tsx is now the direct child of main in layout.tsx */}
-      {/* Input Panel - Fixed Width */}
+    <div className="flex flex-1 h-full overflow-hidden">
       <div className={`bg-card border-r border-border transition-all duration-300 ease-in-out ${isInputPanelOpen ? 'w-full md:w-[380px]' : 'w-0 md:w-[0px]'} overflow-hidden relative`}>
         <ScrollArea className="h-full">
           <div className="p-1">
@@ -232,8 +228,8 @@ export default function Home() {
                   </CardContent>
                 </Card>
                 
-                <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 text-base">
-                  {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
+                <Button type="submit" disabled={isActionPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 text-base">
+                  {isActionPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
                   Analyze Line of Sight
                 </Button>
               </form>
@@ -247,7 +243,6 @@ export default function Home() {
         </ScrollArea>
       </div>
 
-      {/* Map Area & Results - Dynamic Width */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
          {!isInputPanelOpen && (
             <Button variant="outline" size="icon" onClick={() => setIsInputPanelOpen(true)} className="absolute top-2 left-2 z-20 bg-card hover:bg-accent md:hidden">
@@ -260,10 +255,9 @@ export default function Home() {
           losPossible={analysisResult?.losPossible}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
-          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass}`} // Use flex-grow and height class
+          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass}`}
         />
 
-        {/* Results Display Overlay on Map */}
         {analysisResult && !clientError && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-2">
             <ResultsDisplay result={analysisResult} />
@@ -288,7 +282,7 @@ export default function Home() {
                 </Card>
             </div>
         )}
-         {isLoading && !analysisResult && !clientError && (
+         {isActionPending && !analysisResult && !clientError && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-2">
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
                     <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
@@ -301,8 +295,6 @@ export default function Home() {
             </div>
         )}
 
-
-        {/* Elevation Profile Area - Conditionally takes up bottom part */}
         <div className={elevationProfileContainerClass}>
           {isElevationProfileVisible && analysisResult && analysisResult.profile && analysisResult.profile.length > 0 && (
             <ElevationProfileChart
@@ -312,7 +304,7 @@ export default function Home() {
               visible={isElevationProfileVisible}
             />
           )}
-          {isElevationProfileVisible && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && !clientError && !isLoading && (
+          {isElevationProfileVisible && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && !clientError && !isActionPending && (
              <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border h-full">
                 <CardHeader className="py-2 px-4"><CardTitle className="text-base">Elevation Profile</CardTitle></CardHeader>
                 <CardContent className="h-full flex items-center justify-center px-4 pb-2">
@@ -324,7 +316,6 @@ export default function Home() {
           )}
         </div>
         
-        {/* Toggle Elevation Profile Button - Positioned over map area */}
         <Button
           variant="outline"
           size="sm"
@@ -338,3 +329,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
