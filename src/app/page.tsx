@@ -10,7 +10,7 @@ import AppHeader from '@/components/layout/app-header';
 import AppSidebar, { type ActiveTool } from '@/components/layout/app-sidebar';
 import ResultsDisplay from '@/components/fso/results-display';
 import InteractiveMap from '@/components/fso/interactive-map';
-import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
+// import ElevationProfileChart from '@/components/fso/elevation-profile-chart'; // Removed import
 import BulkAnalysisView from '@/components/fso/bulk-analysis-view';
 import ProductCatalog from '@/components/fso/product-catalog'; // New import
 import { performLosAnalysis } from '@/app/actions';
@@ -258,7 +258,7 @@ export default function Home() {
               </div>
               
               {/* Global Settings & Action Overlay */}
-              <Card className="absolute bottom-52 left-1/2 -translate-x-1/2 z-20 bg-card/80 backdrop-blur-sm border-border shadow-xl p-3 flex items-end gap-3">
+              <Card className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 bg-card/80 backdrop-blur-sm border-border shadow-xl p-3 flex items-end gap-3">
                 <div>
                   <Label htmlFor="clearanceThreshold" className="text-xs">Fresnel Clearance (m)</Label>
                   <Input id="clearanceThreshold" type="number" step="any" {...register('clearanceThreshold')} placeholder="e.g., 10" className="mt-1 w-32 bg-input/70" />
@@ -306,7 +306,8 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Elevation Profile Chart Overlay */}
+              {/* Elevation Profile Chart Overlay - REMOVED */}
+              {/* 
               <div className="absolute bottom-0 left-0 right-0 z-10 p-1 md:p-2">
                 {isLoading && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && (
                   <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
@@ -345,7 +346,8 @@ export default function Home() {
                     </CardContent>
                    </Card>
                  )}
-              </div>
+              </div> 
+              */}
             </>
           )}
           {activeTool === 'bulkAnalysis' && (
