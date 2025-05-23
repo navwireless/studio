@@ -20,8 +20,8 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
   label,
   height,
   onChange,
-  min = 0,
-  max = 100,
+  min = 0, // Default min as per previous implementation
+  max = 100, // Default max as per previous implementation
   step = 1,
   idSuffix,
 }) => {
@@ -32,20 +32,24 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let newValue = parseFloat(event.target.value);
     if (isNaN(newValue)) {
-      newValue = min; // Or some other default/error handling
+      // If input is not a number, don't change, or reset to min/current. For now, retain current.
+      // Potentially set to min or max if out of bounds on blur.
+      return;
     }
+    // Clamp value only on change if needed, or let validation handle it.
+    // For direct feedback, clamping here is fine.
     if (newValue < min) newValue = min;
     if (newValue > max) newValue = max;
     onChange(newValue);
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1"> {/* Reduced spacing */}
       <div className="flex justify-between items-center">
-        <Label htmlFor={`height-input-${idSuffix}`} className="text-sm">
+        <Label htmlFor={`height-input-${idSuffix}`} className="text-xs"> {/* Label font size */}
           {label} (m)
         </Label>
-        <span className="text-sm font-medium text-primary">{height}m</span>
+        <span className="text-xs font-medium text-primary">{height}m</span> {/* Value font size */}
       </div>
       <div className="flex items-center space-x-2">
         <Input
@@ -53,10 +57,17 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
           type="number"
           value={height}
           onChange={handleInputChange}
+          onBlur={(e) => { // Ensure value is clamped on blur
+            let val = parseFloat(e.target.value);
+            if (isNaN(val)) val = height; // Revert to old if invalid
+            if (val < min) val = min;
+            if (val > max) val = max;
+            onChange(val);
+          }}
           min={min}
           max={max}
           step={step}
-          className="w-20 bg-input/70 text-sm h-9"
+          className="w-16 bg-input/70 text-xs h-8" /* Adjusted size */
         />
         <Slider
           id={`height-slider-${idSuffix}`}
@@ -74,3 +85,5 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
 };
 
 export default TowerHeightControl;
+
+    

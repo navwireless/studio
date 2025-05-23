@@ -1,92 +1,138 @@
 
 "use client";
 
-import type { AnalysisResult, PointCoordinates } from '@/types';
+import { Controller, type Control, type UseFormRegister, type UseFormHandleSubmit, type UseFormGetValues, type UseFormSetValue, type FieldErrors } from 'react-hook-form';
+import type { AnalysisResult, AnalysisFormValues } from '@/types'; // Removed PointInput, AnalysisFormValues as FieldErrors takes generic
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import TowerHeightControl from './tower-height-control';
 import ElevationProfileChart from './elevation-profile-chart';
-import { ChevronDown, ChevronUp, MapPin, TowerControl, TrendingUp, Sigma, Ruler } from 'lucide-react';
+import ResultsDisplay from './results-display';
+import { ChevronDown, ChevronUp, Target, Settings, Zap, Loader2 } from 'lucide-react';
+
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
   isVisible: boolean;
   onToggle: () => void;
-  pointAName: string;
-  pointBName: string;
+  
+  // Form related props
+  control: Control<AnalysisFormValues>;
+  register: UseFormRegister<AnalysisFormValues>;
+  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
+  processSubmit: (data: AnalysisFormValues) => void;
+  clientFormErrors: FieldErrors<AnalysisFormValues>;
+  serverFormErrors?: Record<string, string[] | undefined>;
+  isActionPending: boolean;
+  getValues: UseFormGetValues<AnalysisFormValues>;
+  setValue: UseFormSetValue<AnalysisFormValues>;
 }
 
-const SiteInfoCard: React.FC<{ siteName: string; coords?: PointCoordinates; towerHeight?: number }> = ({ siteName, coords, towerHeight }) => (
-  <Card className="bg-card/80 backdrop-blur-sm h-full flex flex-col">
-    <CardHeader className="py-2 px-3">
-      <CardTitle className="text-base flex items-center">
-        <MapPin className="mr-2 h-4 w-4 text-primary" /> {siteName}
+const SiteInputGroup: React.FC<{
+  id: 'pointA' | 'pointB';
+  title: string;
+  control: Control<AnalysisFormValues>;
+  register: UseFormRegister<AnalysisFormValues>;
+  clientFormErrors: FieldErrors<AnalysisFormValues>;
+  serverFormErrors?: Record<string, string[] | undefined>;
+  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+}> = ({ id, title, control, register, clientFormErrors, serverFormErrors, getCombinedError }) => (
+  <Card className="bg-card/70 border-border shadow-md h-full flex flex-col">
+    <CardHeader className="p-2">
+      <CardTitle className="text-sm flex items-center">
+        <Target className="mr-2 h-4 w-4 text-primary" /> {title}
       </CardTitle>
     </CardHeader>
-    <CardContent className="px-3 pb-2 text-xs space-y-1.5 flex-grow">
-      {coords ? (
-        <>
-          <p><span className="font-medium text-muted-foreground">Lat:</span> {coords.lat.toFixed(5)}</p>
-          <p><span className="font-medium text-muted-foreground">Lng:</span> {coords.lng.toFixed(5)}</p>
-        </>
-      ) : (
-        <p className="text-muted-foreground">Coordinates not available.</p>
-      )}
-      {towerHeight !== undefined ? (
-         <p className="flex items-center"><TowerControl className="mr-1.5 h-3 w-3 text-muted-foreground" /> <span className="font-medium text-muted-foreground">Height:</span> {towerHeight} m</p>
-      ) : (
-        <p className="text-muted-foreground">Tower height not available.</p>
-      )}
+    <CardContent className="p-2 space-y-1.5 text-xs flex-grow overflow-y-auto">
+      <div>
+        <Label htmlFor={`${id}.name`} className="text-xs">Name</Label>
+        <Input 
+          id={`${id}.name`} 
+          {...register(`${id}.name`)} 
+          placeholder="e.g. Main Site" 
+          className="mt-0.5 bg-input/70 h-8 text-xs" 
+        />
+        {(clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) && 
+          <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])}</p>}
+      </div>
+      <div className="grid grid-cols-2 gap-1">
+        <div>
+          <Label htmlFor={`${id}.lat`} className="text-xs">Latitude</Label>
+          <Input 
+            id={`${id}.lat`} 
+            {...register(`${id}.lat`)} 
+            placeholder="-90 to 90" 
+            className="mt-0.5 bg-input/70 h-8 text-xs" 
+          />
+          {(clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) && 
+            <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
+        </div>
+        <div>
+          <Label htmlFor={`${id}.lng`} className="text-xs">Longitude</Label>
+          <Input 
+            id={`${id}.lng`} 
+            {...register(`${id}.lng`)} 
+            placeholder="-180 to 180" 
+            className="mt-0.5 bg-input/70 h-8 text-xs" 
+          />
+          {(clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) && 
+            <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])}</p>}
+        </div>
+      </div>
+      <Controller
+        name={`${id}.height`}
+        control={control}
+        defaultValue={20} // Default height
+        render={({ field }) => (
+          <TowerHeightControl
+            label="Tower Height"
+            height={field.value}
+            onChange={field.onChange}
+            min={0}
+            max={100}
+            idSuffix={id}
+          />
+        )}
+      />
+      {(clientFormErrors[id]?.height || serverFormErrors?.[`${id}.height`]) && 
+        <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.height, serverFormErrors?.[`${id}.height`])}</p>}
     </CardContent>
   </Card>
 );
 
-const OverallResultsDisplay: React.FC<{ result: AnalysisResult }> = ({ result }) => {
-  const formattedDistance = result.distanceKm < 1
-    ? `${(result.distanceKm * 1000).toFixed(1)} m`
-    : `${result.distanceKm.toFixed(2)} km`;
 
-  return (
-    <div className="p-2 text-center mb-1">
-        <span className={`text-sm font-semibold px-3 py-1 rounded-full ${result.losPossible ? 'bg-los-success text-los-success-foreground' : 'bg-los-failure text-los-failure-foreground'}`}>
-            {result.losPossible ? 'LOS POSSIBLE' : 'LOS OBSTRUCTED'}
-        </span>
-        <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-muted/30 p-1.5 rounded">
-                <p className="text-muted-foreground">Aerial Distance</p>
-                <p className="font-semibold">{formattedDistance}</p>
-            </div>
-            <div className="bg-muted/30 p-1.5 rounded">
-                <p className="text-muted-foreground">Min. Clearance</p>
-                <p className={`font-semibold ${
-              result.minClearance !== null && result.minClearance < result.clearanceThresholdUsed
-                ? 'text-los-failure'
-                : 'text-los-success'
-            }`}>
-                    {result.minClearance !== null ? `${result.minClearance.toFixed(1)} m` : 'N/A'}
-                </p>
-            </div>
-        </div>
-         {result.additionalHeightNeeded !== null && result.additionalHeightNeeded > 0 && (
-          <p className="text-xs text-destructive mt-1.5">
-            Additional Tower Height Needed: {result.additionalHeightNeeded.toFixed(1)} m (total)
-          </p>
-        )}
-    </div>
-  );
-};
-
-
-export default function BottomPanel({ analysisResult, isVisible, onToggle, pointAName, pointBName }: BottomPanelProps) {
-  if (!analysisResult) {
-    return null; // Or a placeholder if analysis hasn't run
-  }
-
-  const panelHeightClass = isVisible ? 'h-[35vh]' : 'h-10'; // Height for panel itself, chart needs to fit
+export default function BottomPanel({ 
+  analysisResult, 
+  isVisible, 
+  onToggle,
+  control,
+  register,
+  handleSubmit,
+  processSubmit,
+  clientFormErrors,
+  serverFormErrors,
+  isActionPending,
+  getValues,
+  // setValue // setValue is not used directly in BottomPanel, but passed to SiteInputGroup if needed
+}: BottomPanelProps) {
+  
+  const panelHeightClass = isVisible ? 'h-[38vh] md:h-[35vh]' : 'h-10';
   const contentVisibilityClass = isVisible ? 'opacity-100 visible' : 'opacity-0 invisible h-0';
 
+  const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
+    if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
+    return clientFieldError?.message;
+  };
+  
+  const pointAName = getValues('pointA.name') || (analysisResult?.pointA?.name || "Site A");
+  const pointBName = getValues('pointB.name') || (analysisResult?.pointB?.name || "Site B");
+
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl transition-all duration-300 ease-in-out ${panelHeightClass} overflow-hidden`}>
+    <form onSubmit={handleSubmit(processSubmit)} className={`fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl transition-all duration-300 ease-in-out ${panelHeightClass} overflow-hidden`}>
       <Button
+        type="button"
         variant="ghost"
         size="sm"
         onClick={onToggle}
@@ -94,44 +140,81 @@ export default function BottomPanel({ analysisResult, isVisible, onToggle, point
         aria-label={isVisible ? "Hide Analysis Panel" : "Show Analysis Panel"}
       >
         {isVisible ? <ChevronDown className="mr-1 h-4 w-4" /> : <ChevronUp className="mr-1 h-4 w-4" />}
-        {isVisible ? 'Hide Analysis' : 'Show Analysis'}
+        {isVisible ? 'Hide Panel' : 'Show Panel'}
       </Button>
 
-      <div className={`pt-8 md:pt-3 p-2 md:p-3 transition-opacity duration-200 ease-in-out ${contentVisibilityClass}`}>
-        {isVisible && analysisResult && (
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-full">
-            {/* Section 1: Site A Info */}
-            <div className="h-full">
-              <SiteInfoCard
-                siteName={pointAName || 'Site A'}
-                coords={analysisResult.pointA}
-                towerHeight={analysisResult.pointA?.towerHeight}
+      <div className={`pt-10 md:pt-8 p-2 md:p-2 transition-opacity duration-200 ease-in-out ${contentVisibilityClass} h-full`}>
+        {isVisible && (
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-full max-h-[calc(100%-2.5rem)]">
+            <div className="h-full overflow-hidden">
+              <SiteInputGroup 
+                id="pointA" 
+                title={pointAName} 
+                control={control} 
+                register={register}
+                clientFormErrors={clientFormErrors}
+                serverFormErrors={serverFormErrors}
+                getCombinedError={getCombinedError}
               />
             </div>
 
-            {/* Section 2: Elevation Chart & Overall Results */}
-            <div className="h-full flex flex-col">
-              <OverallResultsDisplay result={analysisResult} />
-              <div className="flex-grow min-h-0"> {/* Ensure chart container can shrink */}
+            <div className="h-full flex flex-col space-y-2 overflow-hidden">
+              <Card className="bg-card/70 border-border shadow-md">
+                <CardHeader className="p-1.5">
+                  <CardTitle className="text-xs flex items-center">
+                    <Settings className="mr-1.5 h-3 w-3 text-primary" /> Analysis Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-1.5 space-y-1">
+                  <div>
+                    <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
+                    <Input 
+                      id="clearanceThreshold" 
+                      type="number" 
+                      step="any" 
+                      {...register('clearanceThreshold')} 
+                      placeholder="e.g., 10" 
+                      className="mt-0.5 bg-input/70 h-8 text-xs" 
+                    />
+                    {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) && 
+                      <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
+                  </div>
+                  <Button type="submit" disabled={isActionPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs mt-1">
+                    {isActionPending ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <Zap className="mr-1.5 h-3 w-3" />}
+                    Analyze LOS
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              {analysisResult && (
+                <ResultsDisplay result={analysisResult} />
+              )}
+              
+              <div className="flex-grow min-h-0 bg-muted/20 rounded-md">
                  <ElevationProfileChart
-                    profile={analysisResult.profile}
-                    pointAName={pointAName || 'Site A'}
-                    pointBName={pointBName || 'Site B'}
+                    profile={analysisResult?.profile || []}
+                    pointAName={pointAName}
+                    pointBName={pointBName}
                   />
               </div>
             </div>
 
-            {/* Section 3: Site B Info */}
-            <div className="h-full">
-              <SiteInfoCard
-                siteName={pointBName || 'Site B'}
-                coords={analysisResult.pointB}
-                towerHeight={analysisResult.pointB?.towerHeight}
+            <div className="h-full overflow-hidden">
+              <SiteInputGroup 
+                id="pointB" 
+                title={pointBName} 
+                control={control} 
+                register={register}
+                clientFormErrors={clientFormErrors}
+                serverFormErrors={serverFormErrors}
+                getCombinedError={getCombinedError}
               />
             </div>
           </div>
         )}
       </div>
-    </div>
+    </form>
   );
 }
+
+    
