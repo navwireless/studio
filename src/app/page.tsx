@@ -7,16 +7,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 import InteractiveMap from '@/components/fso/interactive-map';
-import BottomPanel from '@/components/fso/bottom-panel'; // This will be the refactored analysis panel
+import BottomPanel from '@/components/fso/bottom-panel'; 
 
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, PointCoordinates } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Keep for potential error display
+import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues } from '@/types'; // Use existing PageAnalysisFormValues
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Info, PanelLeftOpen, PanelLeftClose, Eye, EyeOff } from 'lucide-react'; // Removed unused icons
+import { Info, Eye, EyeOff } from 'lucide-react';
 
-// Zod schema for individual point
+// Zod schema for individual point (remains the same)
 const StationPointSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name too long"),
   lat: z.string()
@@ -25,17 +25,16 @@ const StationPointSchema = z.object({
   lng: z.string()
     .min(1, "Longitude is required")
     .refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Must be -180 to 180"),
-  height: z.number().min(0, "Min 0m").max(100, "Max 100m"), // Range from previous spec. Revisit if 10-200m is new req.
+  height: z.number().min(0, "Min 0m").max(100, "Max 100m"),
 });
 
-// Updated Zod schema for the whole form
+// Updated Zod schema for the whole form (remains the same)
 const PageAnalysisFormSchema = z.object({
   pointA: StationPointSchema,
   pointB: StationPointSchema,
   clearanceThreshold: z.string().min(1, "Clearance is required").refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Must be >= 0"),
 });
 
-type PageAnalysisFormValues = z.infer<typeof PageAnalysisFormSchema>;
 
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
@@ -46,13 +45,13 @@ export default function Home() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
 
-  const [isBottomPanelVisible, setIsBottomPanelVisible] = useState(true); // Controls the new bottom panel
+  const [isBottomPanelVisible, setIsBottomPanelVisible] = useState(true);
 
   const { register, handleSubmit, formState: { errors: clientFormErrors }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: {
       pointA: { name: 'Site A', lat: '32.23085', lng: '76.144608', height: 20 },
-      pointB: { name: 'Site B', lat: '32.231875', lng: '76.151969', height: 20 },
+      pointB: { name: 'Site B', lat: '32.231875', lng: '76.151969', height: 58 }, // Updated Point B height
       clearanceThreshold: '10',
     },
   });
@@ -63,8 +62,6 @@ export default function Home() {
   const processSubmit = (data: PageAnalysisFormValues) => {
     setClientError(null);
     setFormErrors(undefined);
-    // Keep analysisResult null until successful response to prevent showing old data with new inputs
-    // setAnalysisResult(null); 
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
@@ -85,19 +82,27 @@ export default function Home() {
   useEffect(() => {
     if (serverState) {
       if ('error' in serverState && serverState.error) {
-        setClientError(serverState.error);
+        // Only set clientError if it's not the initial "No analysis" message,
+        // or if an analysis was actually attempted (isActionPending was true or analysisResult exists)
+        if (serverState.error !== "No analysis performed yet." || analysisResult || isActionPending) {
+            setClientError(serverState.error);
+        }
         if (serverState.fieldErrors) {
           setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
         } else {
           setFormErrors(undefined);
         }
-        setAnalysisResult(null); // Clear previous results on error
+        // Don't clear analysisResult if the error is the initial "No analysis" message
+        // and no analysis was actually run.
+        if (serverState.error !== "No analysis performed yet.") {
+            setAnalysisResult(null);
+        }
       } else if (!('error' in serverState)) {
         const resultData = serverState as AnalysisResult;
         const formValues = getValues();
         setAnalysisResult({
             ...resultData,
-            pointA: { // Ensure point names and current form values are in the result
+            pointA: { 
                 ...resultData.pointA,
                 name: formValues.pointA.name,
                 lat: parseFloat(formValues.pointA.lat),
@@ -114,10 +119,45 @@ export default function Home() {
         });
         setClientError(null);
         setFormErrors(undefined);
-        if (!isBottomPanelVisible) setIsBottomPanelVisible(true); // Show panel on new result
+        if (!isBottomPanelVisible) setIsBottomPanelVisible(true);
       }
     }
-  }, [serverState, getValues, isBottomPanelVisible]);
+  // getValues and isBottomPanelVisible are stable or setters, including them minimally.
+  // serverState is the primary trigger. analysisResult and isActionPending are for conditional logic.
+  }, [serverState, getValues, isBottomPanelVisible, analysisResult, isActionPending]);
+
+
+  // Effect to auto-trigger analysis on initial load
+  useEffect(() => {
+    // Only auto-trigger if no analysis has been done yet (analysisResult is null)
+    // and no action is currently pending, and the server state is the initial one.
+    if (!analysisResult && !isActionPending && serverState?.error?.includes("No analysis performed yet.")) {
+      const defaultFormValues = getValues(); // Get default values from the form
+      const formData = new FormData();
+      formData.append('pointA.name', defaultFormValues.pointA.name);
+      formData.append('pointA.lat', defaultFormValues.pointA.lat);
+      formData.append('pointA.lng', defaultFormValues.pointA.lng);
+      formData.append('pointA.height', String(defaultFormValues.pointA.height));
+      formData.append('pointB.name', defaultFormValues.pointB.name);
+      formData.append('pointB.lat', defaultFormValues.pointB.lat);
+      formData.append('pointB.lng', defaultFormValues.pointB.lng);
+      formData.append('pointB.height', String(defaultFormValues.pointB.height));
+      formData.append('clearanceThreshold', defaultFormValues.clearanceThreshold);
+
+      startTransition(() => {
+        formAction(formData);
+      });
+    }
+    // Dependencies:
+    // analysisResult: to check if analysis already ran
+    // isActionPending: to avoid triggering if something is already running
+    // serverState: to check the initial message
+    // getValues, formAction, startTransition: stable functions from hooks
+    // Empty array [] is usually for "on mount", but since we read state, it's better to list dependencies.
+    // However, we want this to run truly once on initial load logic.
+    // So, we use an eslint-disable for a controlled single run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
@@ -130,13 +170,10 @@ export default function Home() {
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true });
   }, [setValue]);
   
-  // Map container height: if bottom panel is visible, map takes less height.
-  // The bottom panel has a fixed height of 35vh when visible.
   const mapContainerHeightClass = isBottomPanelVisible && analysisResult ? 'h-[calc(100%-35vh)]' : 'h-full';
 
   return (
     <div className="flex flex-1 h-full overflow-hidden">
-      {/* Main content area: Map fills this, BottomPanel overlays it */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <InteractiveMap
           pointA={watchedPointA ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name } : undefined}
@@ -147,8 +184,7 @@ export default function Home() {
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
-        {/* Error display remains as an overlay for immediate feedback if not handled by bottom panel */}
-        {clientError && (
+        {clientError && clientError !== "No analysis performed yet." && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
                 <Card className="shadow-lg border-destructive bg-destructive/20 backdrop-blur-sm">
                     <CardHeader className="py-2 px-4 flex-row items-center justify-between">
@@ -168,7 +204,7 @@ export default function Home() {
             </div>
         )}
 
-         {isActionPending && !analysisResult && !clientError && (
+         {isActionPending && !analysisResult && (!clientError || clientError === "No analysis performed yet.") && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
                     <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
@@ -181,15 +217,12 @@ export default function Home() {
             </div>
         )}
 
-        {/* Render BottomPanel if there's an analysis result or if explicitly toggled for input */}
-        {/* For now, let's always render it if analysisResult exists, or if no error and user wants to input */}
-        {(analysisResult || !clientError) && (
+        {(analysisResult || (!clientError || clientError === "No analysis performed yet.")) && (
           <BottomPanel
             analysisResult={analysisResult}
             isVisible={isBottomPanelVisible}
             onToggle={() => setIsBottomPanelVisible(!isBottomPanelVisible)}
             
-            // Form related props
             control={control}
             register={register}
             handleSubmit={handleSubmit}
@@ -197,18 +230,16 @@ export default function Home() {
             clientFormErrors={clientFormErrors}
             serverFormErrors={formErrors}
             isActionPending={isActionPending}
-            getValues={getValues} // Pass getValues to populate names in BottomPanel
-            setValue={setValue} // Pass setValue for potential direct updates from panel
+            getValues={getValues}
+            setValue={setValue}
           />
         )}
-         {/* Fallback toggle button if analysisResult is null but user might want to open panel for input */}
-         {!analysisResult && clientError && (
+         {!analysisResult && clientError && clientError !== "No analysis performed yet." && (
              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
                     setIsBottomPanelVisible(!isBottomPanelVisible);
-                    // If opening panel due to error, clear clientError so form can be tried again
                     if (!isBottomPanelVisible && clientError) setClientError(null);
                 }}
                 className="absolute bottom-4 right-4 z-40 bg-card hover:bg-accent md:hidden"
@@ -221,5 +252,6 @@ export default function Home() {
     </div>
   );
 }
+    
 
     
