@@ -26,14 +26,14 @@ export type AnalysisParams = {
 export type ElevationSampleAPI = {
   elevation: number;
   location: PointCoordinates;
-  resolution?: number; 
+  resolution?: number;
 };
 
 export type LOSPoint = {
-  distance: number; 
-  terrainElevation: number; 
-  losHeight: number; 
-  clearance: number; 
+  distance: number;
+  terrainElevation: number;
+  losHeight: number;
+  clearance: number;
   fresnelRadius?: number; // Optional: For future Fresnel zone display
 };
 
@@ -43,7 +43,9 @@ export type AnalysisResult = {
   minClearance: number | null;
   additionalHeightNeeded: number | null;
   profile: LOSPoint[];
-  message: string; 
-  pointA?: PointCoordinates & { towerHeight: number; name?: string }; 
-  pointB?: PointCoordinates & { towerHeight: number; name?: string }; 
+  message: string;
+  pointA?: PointCoordinates & { towerHeight: number; name?: string };
+  pointB?: PointCoordinates & { towerHeight: number; name?: string };
+  clearanceThresholdUsed: number; // Added this line
 };
+

@@ -27,7 +27,7 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
     );
   }
 
-  const formattedDistance = result.distanceKm < 1 
+  const formattedDistance = result.distanceKm < 1
     ? `${(result.distanceKm * 1000).toFixed(1)} m`
     : `${result.distanceKm.toFixed(2)} km`;
 
@@ -38,8 +38,8 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
             <CardTitle className="text-md flex items-center">
                 <Sigma className="mr-2 h-5 w-5 text-primary" /> Analysis Summary
             </CardTitle>
-             <Badge 
-                variant={result.losPossible ? "default" : "destructive"} 
+             <Badge
+                variant={result.losPossible ? "default" : "destructive"}
                 className={`text-xs px-2 py-1 ${result.losPossible ? 'bg-los-success' : 'bg-los-failure'}`}
             >
                 {result.losPossible ? 'LOS POSSIBLE' : 'LOS OBSTRUCTED'}
@@ -53,18 +53,18 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">Min. Clearance:</span>
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={`px-2 py-0.5 text-xs font-medium ${
-              result.minClearance !== null && result.profile[0]?.clearance && result.minClearance < params.clearanceThreshold // Assuming params.clearanceThreshold is available or passed
-                ? 'border-destructive text-destructive' 
-                : 'border-green-500 text-green-400' // Example positive style
+              result.minClearance !== null && result.minClearance < result.clearanceThresholdUsed
+                ? 'text-los-failure border-destructive'
+                : 'text-los-success border-app-accent'
             }`}
           >
             {result.minClearance !== null ? `${result.minClearance.toFixed(1)} m` : 'N/A'}
           </Badge>
         </div>
-        
+
         {result.additionalHeightNeeded !== null && result.additionalHeightNeeded > 0 && (
           <div className="flex justify-between items-center text-destructive">
             <span className="text-muted-foreground">Add. Height Needed:</span>
@@ -72,7 +72,7 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
           </div>
         )}
 
-        {result.message && !result.message.toLowerCase().includes("analysis complete") && 
+        {result.message && !result.message.toLowerCase().includes("analysis complete") &&
          !result.message.toLowerCase().includes("google elevation api data") && (
             <div className="flex items-start text-xs text-muted-foreground pt-1">
                 <Info className="mr-1 h-3 w-3 flex-shrink-0 mt-0.5" />
@@ -83,3 +83,4 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
     </Card>
   );
 }
+
