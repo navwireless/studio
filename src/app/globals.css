@@ -22,7 +22,7 @@ body {
     --primary-light: 221 83% 53%; /* A vibrant blue for light mode */
     --primary-foreground-light: 0 0% 100%;
 
-    --secondary-light: 220 10% 92%; 
+    --secondary-light: 220 10% 92%;
     --secondary-foreground-light: 220 10% 20%;
 
     --muted-light: 0 0% 90%;
@@ -33,7 +33,7 @@ body {
 
     --app-accent-light: 120 60% 50%; /* Green for specific app highlights (LOS success) */
     --app-accent-foreground-light: 0 0% 100%;
-    
+
     --destructive-light: 0 84.2% 60.2%;
     --destructive-foreground-light: 0 0% 98%;
 
@@ -51,6 +51,9 @@ body {
 
     --los-success-text-light: 120 60% 30%;
     --los-failure-text-light: 0 70% 40%;
+    --los-success-foreground-light: 0 0% 100%; /* For text on green bg */
+    --los-failure-foreground-light: 0 0% 100%; /* For text on red bg */
+
 
     /* Default to dark theme variables */
     --background: 222 47% 11%; /* Dark Slate Blue/Charcoal */
@@ -76,7 +79,7 @@ body {
 
     --app-accent: 140 60% 50%; /* Green for specific app highlights (LOS success) */
     --app-accent-foreground: 0 0% 100%; /* White text on Green */
-    
+
     --destructive: 0 72% 51%; /* Vivid Red */
     --destructive-foreground: 0 0% 98%;
 
@@ -92,20 +95,22 @@ body {
 
     --los-success-text: 140 70% 75%; /* Lighter Green for text on dark bg */
     --los-failure-text: 0 80% 75%; /* Lighter Red for text on dark bg */
+    --los-success-foreground: 0 0% 100%; /* For text on green bg */
+    --los-failure-foreground: 0 0% 100%; /* For text on red bg */
   }
 
   .dark {
     /* Dark theme is default, these are identical to :root but kept for explicitness */
-    --background: 222 47% 11%; 
-    --foreground: 210 40% 98%; 
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 222 47% 15%; 
+    --card: 222 47% 15%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 10%; 
+    --popover: 222 47% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%; 
+    --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217 33% 25%;
@@ -114,10 +119,10 @@ body {
     --muted: 217 33% 18%;
     --muted-foreground: 210 20% 60%;
 
-    --accent: 217 91% 50%; 
+    --accent: 217 91% 50%;
     --accent-foreground: 210 40% 98%;
 
-    --app-accent: 140 60% 50%; 
+    --app-accent: 140 60% 50%;
     --app-accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -133,8 +138,10 @@ body {
     --chart-4: 280 70% 65%;
     --chart-5: 190 70% 55%;
 
-    --los-success-text: 140 70% 75%; 
+    --los-success-text: 140 70% 75%;
     --los-failure-text: 0 80% 75%;
+    --los-success-foreground: 0 0% 100%;
+    --los-failure-foreground: 0 0% 100%;
   }
 }
 
@@ -156,12 +163,19 @@ body {
 }
 .bg-los-success {
   background-color: hsl(var(--app-accent)); /* Uses main app-accent green */
-  color: hsl(var(--app-accent-foreground));
+  color: hsl(var(--los-success-foreground)); /* Uses specific foreground for on-green text */
 }
 .bg-los-failure {
   background-color: hsl(var(--destructive));
-  color: hsl(var(--destructive-foreground));
+  color: hsl(var(--los-failure-foreground)); /* Uses specific foreground for on-red text */
 }
+.text-los-success-foreground {
+    color: hsl(var(--los-success-foreground));
+}
+.text-los-failure-foreground {
+    color: hsl(var(--los-failure-foreground));
+}
+
 
 /* Ensure ShadCN general accent uses our primary blue for dark theme */
 .dark {
@@ -175,12 +189,12 @@ body {
 
 /* Map container styling */
 .map-container {
-  height: calc(100vh - 64px); /* Assuming header height is 64px */
+  /* height: calc(100vh - 64px); /* Assuming header height is 64px -> now managed by page.tsx */
 }
 
 /* Elevation profile chart styling (will be conditionally applied by parent) */
 .elevation-profile-visible {
-  max-height: 35vh;
-  min-height: 25vh;
-  height: 35vh; /* Explicit height */
+  /* max-height: 35vh; */ /* Managed by BottomPanel's fixed height */
+  /* min-height: 25vh; */
+  /* height: 35vh; */ /* Explicit height handled by BottomPanel */
 }

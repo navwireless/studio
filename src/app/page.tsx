@@ -6,11 +6,12 @@ import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import ResultsDisplay from '@/components/fso/results-display';
+// import ResultsDisplay from '@/components/fso/results-display'; // Replaced by BottomPanel
 import InteractiveMap from '@/components/fso/interactive-map';
-import ElevationProfileChart from '@/components/fso/elevation-profile-chart';
+// import ElevationProfileChart from '@/components/fso/elevation-profile-chart'; // Now part of BottomPanel
+import BottomPanel from '@/components/fso/bottom-panel';
 import TowerHeightControl from '@/components/fso/tower-height-control';
-import ProductCatalog from '@/components/fso/product-catalog'; 
+import ProductCatalog from '@/components/fso/product-catalog';
 import BulkAnalysisView from '@/components/fso/bulk-analysis-view';
 
 
@@ -23,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Zap, Target, Info, MapPinned, Settings, SlidersHorizontal, Eye, EyeOff, ShoppingCart, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Loader2, Zap, Target, Info, MapPinned, Settings, SlidersHorizontal, Eye, EyeOff, ShoppingCart, PanelLeftClose, PanelLeftOpen, BarChart3 } from 'lucide-react';
 
 // Zod schema for individual point
 const StationPointSchema = z.object({
@@ -50,14 +51,14 @@ export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
   const [serverState, formAction, isActionPending] = useActionState(performLosAnalysis, initialState);
   const [, startTransition] = useTransition();
-  
+
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
-  
-  const [isElevationProfileVisible, setIsElevationProfileVisible] = useState(true);
+
   const [isInputPanelOpen, setIsInputPanelOpen] = useState(true);
   const [activeMainTool, setActiveMainTool] = useState<'singleLink' | 'bulkAnalysis'>('singleLink');
+  const [isBottomPanelVisible, setIsBottomPanelVisible] = useState(true);
 
 
   const { register, handleSubmit, formState: { errors: clientFormErrors }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
@@ -72,10 +73,10 @@ export default function Home() {
   const watchedPointA = useWatch({ control, name: 'pointA' });
   const watchedPointB = useWatch({ control, name: 'pointB' });
 
-  const processSubmit = (data: PageAnalysisFormValues) => { // No longer async
+  const processSubmit = (data: PageAnalysisFormValues) => {
     setClientError(null);
     setFormErrors(undefined);
-    setAnalysisResult(null); 
+    setAnalysisResult(null);
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
@@ -87,12 +88,12 @@ export default function Home() {
     formData.append('pointB.lng', data.pointB.lng);
     formData.append('pointB.height', String(data.pointB.height));
     formData.append('clearanceThreshold', data.clearanceThreshold);
-    
+
     startTransition(() => {
       formAction(formData);
     });
   };
-  
+
   useEffect(() => {
     if (serverState) {
       if ('error' in serverState && serverState.error) {
@@ -102,21 +103,21 @@ export default function Home() {
         } else {
           setFormErrors(undefined);
         }
-        setAnalysisResult(null); 
+        setAnalysisResult(null);
       } else if (!('error' in serverState)) {
         const resultData = serverState as AnalysisResult;
         const formValues = getValues();
         setAnalysisResult({
             ...resultData,
-            pointA: { 
-                ...resultData.pointA, 
+            pointA: {
+                ...resultData.pointA,
                 name: formValues.pointA.name,
                 lat: parseFloat(formValues.pointA.lat),
                 lng: parseFloat(formValues.pointA.lng),
-                towerHeight: formValues.pointA.height 
+                towerHeight: formValues.pointA.height
             },
-            pointB: { 
-                ...resultData.pointB, 
+            pointB: {
+                ...resultData.pointB,
                 name: formValues.pointB.name,
                 lat: parseFloat(formValues.pointB.lat),
                 lng: parseFloat(formValues.pointB.lng),
@@ -125,9 +126,10 @@ export default function Home() {
         });
         setClientError(null);
         setFormErrors(undefined);
+        if (!isBottomPanelVisible) setIsBottomPanelVisible(true); // Show panel on new result
       }
     }
-  }, [serverState, getValues]);
+  }, [serverState, getValues, isBottomPanelVisible]);
 
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
     if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
@@ -188,9 +190,8 @@ export default function Home() {
     </Card>
   );
 
-  const mapContainerHeightClass = isElevationProfileVisible ? 'h-[65%]' : 'h-full';
-  const elevationProfileContainerClass = `h-[35%] overflow-hidden transition-all duration-300 ease-in-out ${isElevationProfileVisible ? 'opacity-100 elevation-profile-visible' : 'opacity-0 h-0 min-h-0 max-h-0'}`;
-  
+  const mapContainerHeightClass = isBottomPanelVisible ? 'h-[calc(100%-35vh)]' : 'h-full';
+
   return (
     <div className="flex flex-1 h-full overflow-hidden">
       <div className={`bg-card border-r border-border transition-all duration-300 ease-in-out ${isInputPanelOpen ? 'w-full md:w-[380px]' : 'w-0 md:w-[0px]'} overflow-hidden relative`}>
@@ -227,7 +228,7 @@ export default function Home() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Button type="submit" disabled={isActionPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 text-base">
                   {isActionPending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
                   Analyze Line of Sight
@@ -255,14 +256,10 @@ export default function Home() {
           losPossible={analysisResult?.losPossible}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
-          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass}`}
+          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
-        {analysisResult && !clientError && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-2">
-            <ResultsDisplay result={analysisResult} />
-          </div>
-        )}
+        {/* Error display remains as an overlay for immediate feedback */}
         {clientError && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-2">
                 <Card className="shadow-lg border-destructive bg-destructive/20 backdrop-blur-sm">
@@ -273,7 +270,7 @@ export default function Home() {
                         <p className="text-sm text-destructive-foreground">{clientError}</p>
                         {formErrors && Object.keys(formErrors).length > 0 && (
                         <ul className="list-disc list-inside mt-1 text-xs text-destructive-foreground/80">
-                            {Object.entries(formErrors).map(([field, errors]) => 
+                            {Object.entries(formErrors).map(([field, errors]) =>
                                 errors?.map((error, index) => <li key={`${field}-${index}`}>{`${field.replace('pointA.','A: ').replace('pointB.','B: ')}: ${error}`}</li>)
                             )}
                         </ul>
@@ -295,39 +292,28 @@ export default function Home() {
             </div>
         )}
 
-        <div className={elevationProfileContainerClass}>
-          {isElevationProfileVisible && analysisResult && analysisResult.profile && analysisResult.profile.length > 0 && (
-            <ElevationProfileChart
-              profile={analysisResult.profile}
-              pointAName={analysisResult.pointA?.name || 'Site A'}
-              pointBName={analysisResult.pointB?.name || 'Site B'}
-              visible={isElevationProfileVisible}
-            />
-          )}
-          {isElevationProfileVisible && (!analysisResult || !analysisResult.profile || analysisResult.profile.length === 0) && !clientError && !isActionPending && (
-             <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border h-full">
-                <CardHeader className="py-2 px-4"><CardTitle className="text-base">Elevation Profile</CardTitle></CardHeader>
-                <CardContent className="h-full flex items-center justify-center px-4 pb-2">
-                    <p className="text-muted-foreground text-sm">
-                        Submit an analysis to view the elevation profile.
-                    </p>
-                </CardContent>
-            </Card>
-          )}
-        </div>
-        
-        <Button
+        {analysisResult && !clientError && (
+          <BottomPanel
+            analysisResult={analysisResult}
+            isVisible={isBottomPanelVisible}
+            onToggle={() => setIsBottomPanelVisible(!isBottomPanelVisible)}
+            pointAName={getValues('pointA.name') || 'Site A'}
+            pointBName={getValues('pointB.name') || 'Site B'}
+          />
+        )}
+        {/* Button to toggle panel if it's not part of the panel itself, or for alternative control */}
+        {/* This button could be removed if the panel's internal button is sufficient */}
+         <Button
           variant="outline"
           size="sm"
-          onClick={() => setIsElevationProfileVisible(!isElevationProfileVisible)}
-          className="absolute bottom-4 right-4 z-20 bg-card hover:bg-accent"
+          onClick={() => setIsBottomPanelVisible(!isBottomPanelVisible)}
+          className="absolute bottom-4 right-4 z-40 bg-card hover:bg-accent md:hidden" // Hide on md+ if panel has its own toggle
+          // Consider visibility based on whether analysisResult exists
         >
-          {isElevationProfileVisible ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-          {isElevationProfileVisible ? 'Hide' : 'Show'} Profile
+          {isBottomPanelVisible ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+          {isBottomPanelVisible ? 'Hide' : 'Show'} Panel
         </Button>
       </div>
     </div>
   );
 }
-
-    

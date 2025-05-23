@@ -1,6 +1,14 @@
 
 "use client";
 
+// This component is no longer directly used in page.tsx.
+// Its functionality for displaying overall results (LOS status, distance, clearance)
+// has been integrated into the new `src/components/fso/bottom-panel.tsx` component
+// as part of the `OverallResultsDisplay` sub-component.
+
+// Keeping the file for now in case parts are needed, or if it's decided to be reused
+// in a different context, but it's not active in the main analysis display flow.
+
 import type { AnalysisResult } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -83,4 +91,3 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
     </Card>
   );
 }
-
