@@ -1,5 +1,8 @@
 
 "use client";
+// This component is no longer used in the main layout as per the new grid requirements.
+// It could be repurposed or removed. Keeping it for now in case parts are needed.
+// The main page now handles tool switching differently if at all for 'singleLink' vs 'bulkAnalysis'.
 
 import React from 'react';
 import { MapPin, Waypoints, Laptop, Calculator, Settings, HelpCircle, Files, Crosshair } from 'lucide-react';

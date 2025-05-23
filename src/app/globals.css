@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -163,8 +164,6 @@ body {
 }
 
 /* Ensure ShadCN general accent uses our primary blue for dark theme */
-/* This might need adjustment based on how --accent is used in ShadCN components */
-/* For now, mapping it to the primary blue for strong visual cues */
 .dark {
     --accent: hsl(var(--primary)); /* Shadcn general accent to UISP blue */
     --accent-foreground: hsl(var(--primary-foreground));
@@ -172,4 +171,16 @@ body {
 :root { /* For light theme, if ever used, provide a sensible default */
     --accent: hsl(var(--accent-light));
     --accent-foreground: hsl(var(--accent-foreground-light));
+}
+
+/* Map container styling */
+.map-container {
+  height: calc(100vh - 64px); /* Assuming header height is 64px */
+}
+
+/* Elevation profile chart styling (will be conditionally applied by parent) */
+.elevation-profile-visible {
+  max-height: 35vh;
+  min-height: 25vh;
+  height: 35vh; /* Explicit height */
 }

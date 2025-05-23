@@ -1,109 +1,116 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, Polyline } from '@react-google-maps/api';
-import { Card, CardContent } from '@/components/ui/card'; // Removed Header/Description
-import { MapPin, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { PointCoordinates } from '@/types';
 import { Skeleton } from '../ui/skeleton';
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Ensure this key is for Maps JavaScript API
+const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
 
 interface InteractiveMapProps {
-  pointA?: (PointCoordinates & { towerHeight?: number }) | null;
-  pointB?: (PointCoordinates & { towerHeight?: number }) | null;
+  pointA?: (PointCoordinates & { name?: string });
+  pointB?: (PointCoordinates & { name?: string });
   losPossible?: boolean | null;
+  onMarkerDragEndA?: (coords: PointCoordinates) => void;
+  onMarkerDragEndB?: (coords: PointCoordinates) => void;
+  mapContainerClassName?: string; // Allow parent to set class for height
 }
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '100%', // Changed to fill container
-};
-
 const defaultCenter = {
-  lat: 32.2313625, // Centered roughly between default points
+  lat: 32.2313625,
   lng: 76.1482885,
 };
 
-const defaultZoom = 15; // Zoom closer for typical FSO links
+const defaultZoom = 15;
 
-export default function InteractiveMap({ pointA, pointB, losPossible }: InteractiveMapProps) {
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+export default function InteractiveMap({
+  pointA,
+  pointB,
+  losPossible,
+  onMarkerDragEndA,
+  onMarkerDragEndB,
+  mapContainerClassName = "w-full h-full" // Default to fill parent
+}: InteractiveMapProps) {
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [scriptError, setScriptError] = useState(false);
 
   const onLoad = useCallback((mapInstance: google.maps.Map) => {
-    setMap(mapInstance);
-    // Set map type to satellite
+    mapRef.current = mapInstance;
     mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
   }, []);
 
   const onUnmount = useCallback(() => {
-    setMap(null);
+    mapRef.current = null;
   }, []);
 
   useEffect(() => {
-    if (map && pointA && pointB) {
+    if (mapRef.current && pointA && pointB) {
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(new google.maps.LatLng(pointA.lat, pointA.lng));
       bounds.extend(new google.maps.LatLng(pointB.lat, pointB.lng));
-      map.fitBounds(bounds);
+      mapRef.current.fitBounds(bounds);
       
-      const listener = google.maps.event.addListenerOnce(map, 'idle', () => {
-        if (map.getZoom() && map.getZoom() > 17) { // Don't zoom out too much if points are very close
-            map.setZoom(17);
-        } else if (map.getZoom() && map.getZoom() < 3) { // Basic sanity zoom
-            map.setZoom(3);
+      const listener = google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
+        if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
+          mapRef.current.setZoom(17);
+        } else if (mapRef.current?.getZoom() && mapRef.current.getZoom()! < 3) {
+          mapRef.current.setZoom(3);
         }
       });
       return () => {
         google.maps.event.removeListener(listener);
       };
-
-    } else if (map) {
-        map.setCenter(defaultCenter);
-        map.setZoom(defaultZoom);
+    } else if (mapRef.current) {
+      mapRef.current.setCenter(defaultCenter);
+      mapRef.current.setZoom(defaultZoom);
     }
-  }, [map, pointA, pointB]);
+  }, [pointA, pointB]);
+
+  const handleMarkerDragEnd = (
+    event: google.maps.MapMouseEvent,
+    markerType: 'A' | 'B'
+  ) => {
+    if (event.latLng) {
+      const newCoords = {
+        lat: event.latLng.lat(),
+        lng: event.latLng.lng(),
+      };
+      if (markerType === 'A' && onMarkerDragEndA) {
+        onMarkerDragEndA(newCoords);
+      } else if (markerType === 'B' && onMarkerDragEndB) {
+        onMarkerDragEndB(newCoords);
+      }
+    }
+  };
 
   const pathCoordinates = pointA && pointB ? [
     { lat: pointA.lat, lng: pointA.lng },
     { lat: pointB.lat, lng: pointB.lng },
   ] : [];
 
-  let polylineColor = "hsl(var(--muted-foreground))"; 
-  if (losPossible === true) {
-    polylineColor = "hsl(var(--app-accent))"; // Use app-accent for success (green)
-  } else if (losPossible === false) {
-    polylineColor = "hsl(var(--destructive))"; // Red for failure
-  }
+  let polylineColor = "#FFFFFF"; // Default white for LOS line on map
+  // LOS status colors can be handled by ResultsDisplay or specific map elements if needed
+  // For the main path line on the map, keeping it white for visibility on satellite view.
+  // If you want map path color to change:
+  // if (losPossible === true) polylineColor = "hsl(var(--app-accent))"; 
+  // else if (losPossible === false) polylineColor = "hsl(var(--destructive))";
   
   const polylineOptions = {
     strokeColor: polylineColor,
-    strokeOpacity: 1, // More visible
-    strokeWeight: 5, // Thicker line
+    strokeOpacity: 0.9,
+    strokeWeight: 3,
     clickable: false,
     draggable: false,
     editable: false,
     visible: true,
     zIndex: 1,
-    icons: [{
-        icon: {
-          path: 'M 0,-1 0,1',
-          strokeOpacity: 1,
-          scale: 4,
-          strokeColor: polylineColor === "hsl(var(--app-accent))" || polylineColor === "hsl(var(--destructive))" ? '#FFFFFF' : polylineColor, // White dots on colored lines
-        },
-        offset: '0',
-        repeat: '20px'
-      }],
   };
 
   return (
-    // The Card component is removed from here, as the map itself will fill the container
-    // Styling for borders/shadows will be on the parent container in page.tsx if needed
-    <div className="w-full h-full">
+    <div className={mapContainerClassName}>
       <LoadScript
         googleMapsApiKey={GOOGLE_MAPS_API_KEY}
         onLoad={() => setScriptLoaded(true)}
@@ -112,7 +119,7 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
           setScriptError(true);
           setScriptLoaded(true); 
         }}
-        loadingElement={<Skeleton className="w-full h-full rounded-none" />} // Ensure skeleton fills space
+        loadingElement={<Skeleton className="w-full h-full rounded-none" />}
       >
         {scriptError ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-muted/50 p-4 text-center">
@@ -124,14 +131,14 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
           </div>
         ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? (
           <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={(pointA && pointB) ? undefined : defaultCenter} // Let fitBounds handle center if points exist
-            zoom={(pointA && pointB) ? undefined : defaultZoom} // Let fitBounds handle zoom if points exist
+            mapContainerStyle={{ width: '100%', height: '100%' }}
+            center={(pointA && pointB) ? undefined : defaultCenter}
+            zoom={(pointA && pointB) ? undefined : defaultZoom}
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={{
-              streetViewControl: false,
-              mapTypeControl: true, // Enable map type control (satellite, map)
+              streetViewControl: true,
+              mapTypeControl: true,
               mapTypeControlOptions: {
                 style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
                 position: google.maps.ControlPosition.TOP_RIGHT,
@@ -139,11 +146,25 @@ export default function InteractiveMap({ pointA, pointB, losPossible }: Interact
               fullscreenControl: true,
               zoomControl: true,
               gestureHandling: 'cooperative',
-              mapTypeId: google.maps.MapTypeId.SATELLITE, // Default to satellite
+              mapTypeId: google.maps.MapTypeId.SATELLITE,
             }}
           >
-            {pointA && <Marker position={{ lat: pointA.lat, lng: pointA.lng }} label={{text: "A", color: "white", fontWeight: "bold"}} />}
-            {pointB && <Marker position={{ lat: pointB.lat, lng: pointB.lng }} label={{text: "B", color: "white", fontWeight: "bold"}} />}
+            {pointA && (
+              <Marker
+                position={{ lat: pointA.lat, lng: pointA.lng }}
+                label={{ text: pointA.name || "A", color: "white", fontWeight: "bold" }}
+                draggable={!!onMarkerDragEndA}
+                onDragEnd={(e) => handleMarkerDragEnd(e, 'A')}
+              />
+            )}
+            {pointB && (
+              <Marker
+                position={{ lat: pointB.lat, lng: pointB.lng }}
+                label={{ text: pointB.name || "B", color: "white", fontWeight: "bold" }}
+                draggable={!!onMarkerDragEndB}
+                onDragEnd={(e) => handleMarkerDragEnd(e, 'B')}
+              />
+            )}
             {pointA && pointB && pathCoordinates.length > 0 && (
               <Polyline path={pathCoordinates} options={polylineOptions} />
             )}

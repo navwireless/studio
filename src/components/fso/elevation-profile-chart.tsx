@@ -2,7 +2,7 @@
 "use client"
 
 import type { LOSPoint } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Minus, Maximize, Info } from 'lucide-react';
 import {
   LineChart,
@@ -11,7 +11,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   AreaChart, Area, ReferenceDot
 } from 'recharts';
@@ -21,22 +20,26 @@ interface ElevationProfileChartProps {
   profile: LOSPoint[];
   pointAName?: string;
   pointBName?: string;
+  visible?: boolean; // Added visible prop
 }
 
-// Updated chartConfig for better LOS line visibility
 const chartConfig = {
   terrainElevation: {
     label: "Terrain (m)",
-    color: "hsl(var(--muted))", // More subdued color for terrain fill
+    color: "hsl(var(--muted))", 
   },
   losHeight: {
     label: "LOS Path (m)",
-    color: "hsl(var(--primary))", // Vibrant primary blue for LOS line
+    color: "hsl(var(--primary))", 
   },
 } satisfies ChartConfig;
 
 
-export default function ElevationProfileChart({ profile, pointAName = "Site A", pointBName = "Site B" }: ElevationProfileChartProps) {
+export default function ElevationProfileChart({ profile, pointAName = "Site A", pointBName = "Site B", visible = true }: ElevationProfileChartProps) {
+  if (!visible) {
+    return null; // Don't render if not visible
+  }
+
   if (!profile || profile.length === 0) {
     return (
       <Card className="shadow-xl bg-card/80 backdrop-blur-sm border-border">
@@ -46,7 +49,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
             Elevation Profile
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-[160px] flex items-center justify-center px-4 pb-2"> {/* Increased height */}
+        <CardContent className="h-[160px] flex items-center justify-center px-4 pb-2">
           <p className="text-muted-foreground text-sm">No data available for chart.</p>
         </CardContent>
       </Card>
@@ -86,7 +89,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
         </div>
       </CardHeader>
       <CardContent className="px-2 pt-2 pb-0"> 
-        <ResponsiveContainer width="100%" height={160}> {/* Increased height */}
+        <ResponsiveContainer width="100%" height={160}>
           <AreaChart data={chartData} margin={{ top: 15, right: 20, left: -15, bottom: 0 }}> 
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3}/>
             <XAxis
@@ -125,26 +128,14 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
                   return (
                     <div className="p-1.5 bg-popover border border-border rounded-md shadow-lg">
                       <p className="text-xs text-muted-foreground mb-1">Dist: {data.distance.toFixed(1)} km</p>
-                      {payload.map((entry) => {
-                        let entryName = "";
-                        let entryColor = entry.color;
-                        // Determine entry name and color based on dataKey
-                        if (entry.dataKey === 'terrainElevation') {
-                           entryName = chartConfig.terrainElevation.label;
-                           entryColor = chartConfig.terrainElevation.color; // This will be --muted for fill, stroke is separate
-                        } else if (entry.dataKey === 'losHeight') {
-                           entryName = chartConfig.losHeight.label;
-                           entryColor = chartConfig.losHeight.color; // This will be --primary
-                        }
-                        
-                        return (
-                          <p key={entry.name} style={{ color: entryColor }} className="text-xs">
-                            {entryName}: {entry.value?.toFixed(1)} m
-                          </p>
-                        );
-                      })}
-                       <p className="text-xs" style={{color: chartConfig.losHeight.color}}>
-                        Clearance to LOS: {data.clearance.toFixed(1)} m
+                      <p style={{ color: chartConfig.terrainElevation.color }} className="text-xs">
+                        Terrain: {data.terrainElevation.toFixed(1)} m
+                      </p>
+                      <p style={{ color: chartConfig.losHeight.color }} className="text-xs">
+                        LOS Path: {data.losHeight.toFixed(1)} m
+                      </p>
+                       <p className="text-xs" style={{color: data.clearance >= 0 ? 'hsl(var(--los-success-text))' : 'hsl(var(--los-failure-text))'}}>
+                        Clearance: {data.clearance.toFixed(1)} m
                       </p>
                     </div>
                   );
@@ -152,33 +143,30 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
                 return null;
               }}
             />
-            {/* Terrain profile drawn first (underneath) */}
             <Area
               type="monotone"
               dataKey="terrainElevation"
-              stroke="hsl(var(--secondary))" // Stroke for the terrain area outline
-              fill={chartConfig.terrainElevation.color} // Fill for terrain area (muted)
+              stroke="hsl(var(--secondary))"
+              fill={chartConfig.terrainElevation.color}
               fillOpacity={0.5} 
-              strokeWidth={1}
+              strokeWidth={1.5} // Slightly thicker terrain line
               name={chartConfig.terrainElevation.label}
               dot={false}
             />
-            {/* LOS Path Line - This is the line connecting tower tops */}
             <Line
               type="monotone"
               dataKey="losHeight"
-              stroke={chartConfig.losHeight.color} // Primary blue
-              strokeWidth={2.5} 
+              stroke={chartConfig.losHeight.color} 
+              strokeWidth={3} // Increased stroke width
               name={chartConfig.losHeight.label}
               dot={false} 
             />
-            {/* Custom markers for Site A and Site B */}
             {pointAData && (
               <ReferenceDot 
                 x={pointAData.distance} 
                 y={pointAData.losHeight} 
                 r={5} 
-                fill={chartConfig.losHeight.color} // Match LOS line color
+                fill={chartConfig.losHeight.color}
                 stroke="hsl(var(--background))" 
                 strokeWidth={2}
                 isFront={true}
@@ -191,7 +179,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
                 x={pointBData.distance} 
                 y={pointBData.losHeight} 
                 r={5}
-                fill={chartConfig.losHeight.color} // Match LOS line color
+                fill={chartConfig.losHeight.color}
                 stroke="hsl(var(--background))"
                 strokeWidth={2}
                 isFront={true}
@@ -205,4 +193,3 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
     </Card>
   );
 }
-    

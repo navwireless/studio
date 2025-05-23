@@ -4,15 +4,13 @@ export type PointCoordinates = {
   lng: number;
 };
 
-// Updated to include name, used in page.tsx form
 export type PointInput = {
-  name: string; // Added name
-  lat: string;
-  lng: string;
-  height: string;
+  name: string;
+  lat: string; // Keep as string for form input
+  lng: string; // Keep as string for form input
+  height: number; // Number for controlled component (slider/TowerHeightControl)
 };
 
-// Updated to reflect new form structure in page.tsx
 export type AnalysisFormValues = {
   pointA: PointInput;
   pointB: PointInput;
@@ -20,8 +18,8 @@ export type AnalysisFormValues = {
 };
 
 export type AnalysisParams = {
-  pointA: PointCoordinates & { towerHeight: number; name?: string }; // name is optional here for backend
-  pointB: PointCoordinates & { towerHeight: number; name?: string }; // name is optional here for backend
+  pointA: PointCoordinates & { towerHeight: number; name?: string };
+  pointB: PointCoordinates & { towerHeight: number; name?:string };
   clearanceThreshold: number;
 };
 
@@ -36,6 +34,7 @@ export type LOSPoint = {
   terrainElevation: number; 
   losHeight: number; 
   clearance: number; 
+  fresnelRadius?: number; // Optional: For future Fresnel zone display
 };
 
 export type AnalysisResult = {
