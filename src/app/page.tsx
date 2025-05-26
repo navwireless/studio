@@ -107,11 +107,11 @@ export default function Home() {
 
   useEffect(() => {
     if (!serverState) return;
-
+  
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending);
-
+  
       if (!suppressInitialMessage) {
         setClientError(errorToSet);
       }
@@ -124,7 +124,7 @@ export default function Home() {
     } else if (!('error' in serverState)) { 
       const resultDataFromServer = serverState as AnalysisResult;
       const currentFormValues = getValues(); 
-
+  
       const newAnalysisData = {
         ...resultDataFromServer,
         pointA: {
@@ -143,17 +143,23 @@ export default function Home() {
         },
       };
       
-      setAnalysisResult(newAnalysisData);
+      // Only update analysisResult if it's truly new data to prevent loops
+      if (JSON.stringify(analysisResult) !== JSON.stringify(newAnalysisData)) {
+        setAnalysisResult(newAnalysisData);
+      }
+      
       setClientError(null);
       setFormErrors(undefined);
       setIsStale(false); 
-
+  
       if (newAnalysisData && !hasFirstAnalysisCompleted) {
         setIsPanelOpen(true);
         setHasFirstAnalysisCompleted(true);
       }
     }
-  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen, isActionPending, analysisResult]); 
+  // Dependencies: serverState is the primary trigger. getValues is stable.
+  // hasFirstAnalysisCompleted and setIsPanelOpen are for the one-time panel open.
+  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen]);
 
 
   useEffect(() => {
@@ -235,12 +241,12 @@ export default function Home() {
           pointA={formPointAForMap} 
           pointB={formPointBForMap} 
           analyzedData={analyzedDataForMap} 
-          isStale={isStale} // Kept for potential other uses, though not for line drawing in map directly
+          isStale={isStale}
           onMarkerDragStartA={handleMarkerDragStart}
           onMarkerDragStartB={handleMarkerDragStart}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
-          isActionPending={isActionPending} // Pass this for dimming preview line
+          isActionPending={isActionPending}
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
@@ -296,4 +302,6 @@ export default function Home() {
     </div>
   );
 }
+    
+
     
