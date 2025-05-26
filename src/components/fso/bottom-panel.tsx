@@ -9,14 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import ElevationProfileChart from './elevation-profile-chart';
-import { ChevronDown, ChevronUp, Target, Settings, Zap, Loader2 } from 'lucide-react';
+import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react'; // Removed ChevronUp
 import { cn } from '@/lib/utils';
 
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
-  isOpen: boolean; // Changed from isVisible
-  onToggle: () => void; // Added onToggle
+  isOpen: boolean;
+  onToggle: () => void;
   
   control: Control<AnalysisFormValues>;
   register: UseFormRegister<AnalysisFormValues>;
@@ -129,31 +129,27 @@ export default function BottomPanel({
       onSubmit={handleSubmit(processSubmit)} 
       className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl"
     >
-      <div className="flex items-center justify-center py-1 relative z-10"> {/* Ensure button is on top */}
+      <div className="flex items-center justify-center py-1 relative z-10">
         <button
           type="button"
           onClick={onToggle}
           className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground hover:text-foreground px-2 py-1"
           aria-label={isOpen ? "Hide Analysis Panel" : "Show Analysis Panel"}
         >
-          {isOpen ? (
-            <>
-              <ChevronDown className="h-4 w-4" />
-              Hide Panel
-            </>
-          ) : (
-            <>
-              <ChevronUp className="h-4 w-4" />
-              Show Panel
-            </>
-          )}
+          <ChevronDown 
+            className={cn(
+              "h-4 w-4 transition-transform duration-300",
+              !isOpen && "rotate-180"
+            )} 
+          />
+          {isOpen ? "Hide Panel" : "Show Panel"}
         </button>
       </div>
 
       <div 
         className={cn(
-          "w-full overflow-hidden transition-[max-height] duration-300 ease-in-out",
-          isOpen ? "max-h-[45vh]" : "max-h-0"
+          "w-full overflow-hidden transition-[height] duration-300 ease-in-out", // Changed to transition-[height]
+          isOpen ? "h-[45vh]" : "h-0" // Animate height
         )}
       >
         <div className="p-2 md:p-3 h-full overflow-y-auto"> {/* Scrollable content area */}
@@ -172,6 +168,19 @@ export default function BottomPanel({
 
             {/* Column 2: Analysis Stats, Chart / Settings Input, and Action Button */}
             <div className="flex flex-col h-full overflow-hidden">
+              {!analysisResult && (
+                <div className="py-2 flex justify-center">
+                  <Button
+                    type="submit"
+                    disabled={isActionPending}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1 h-8 rounded-md shadow"
+                  >
+                    {isActionPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                    Analyze LOS
+                  </Button>
+                </div>
+              )}
+
               {analysisResult && (
                 <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md mb-1">
                   <div className={`font-semibold px-2 py-0.5 rounded-full text-xs mb-1 ${analysisResult.losPossible ? 'bg-los-success text-los-success-foreground' : 'bg-los-failure text-los-failure-foreground'}`}>
@@ -189,7 +198,7 @@ export default function BottomPanel({
                     <div className="flex flex-col items-center px-1">
                       <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Min. Clearance</span>
                       <span className={`font-semibold ${
-                        analysisResult.minClearance !== null && analysisResult.minClearance < analysisResult.clearanceThresholdUsed
+                        analysisResult.minClearance !== null && analysisResult.clearanceThresholdUsed !== undefined && analysisResult.minClearance < analysisResult.clearanceThresholdUsed
                           ? 'text-los-failure'
                           : 'text-los-success'
                       }`}>
@@ -267,3 +276,4 @@ export default function BottomPanel({
     </form>
   );
 }
+
