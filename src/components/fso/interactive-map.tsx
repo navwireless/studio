@@ -10,22 +10,23 @@ import { Skeleton } from '../ui/skeleton';
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORTANT: Manage API keys securely
 
 interface InteractiveMapProps {
-  pointA?: (PointCoordinates & { name?: string }); // Current form/marker position for A
-  pointB?: (PointCoordinates & { name?: string }); // Current form/marker position for B
+  pointA?: (PointCoordinates & { name?: string });
+  pointB?: (PointCoordinates & { name?: string });
   
-  analyzedData?: { // Data from the last successful analysis
+  analyzedData?: {
     pointA: PointCoordinates;
     pointB: PointCoordinates;
     losPossible: boolean;
   } | null;
+
+  isStale?: boolean;
+  isActionPending?: boolean;
 
   onMarkerDragStartA?: () => void;
   onMarkerDragStartB?: () => void;
   onMarkerDragEndA?: (coords: PointCoordinates) => void;
   onMarkerDragEndB?: (coords: PointCoordinates) => void;
   mapContainerClassName?: string;
-  isActionPending?: boolean; // To dim preview line during analysis
-  isStale?: boolean; // True if form inputs differ from last analysis
 }
 
 const defaultCenter = {
@@ -39,12 +40,12 @@ export default function InteractiveMap({
   pointA: formPointA, 
   pointB: formPointB, 
   analyzedData,
+  isStale,
+  isActionPending,
   onMarkerDragStartA,
   onMarkerDragStartB,
   onMarkerDragEndA,
   onMarkerDragEndB,
-  isActionPending,
-  isStale,
   mapContainerClassName = "w-full h-full",
 }: InteractiveMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -100,52 +101,13 @@ export default function InteractiveMap({
     }
   };
 
-  // Analyzed LOS line
-  let analyzedPathCoordinates: google.maps.LatLngLiteral[] = [];
-  let analyzedPolylineOptions = {};
-  if (analyzedData && analyzedData.pointA && analyzedData.pointB) {
-    analyzedPathCoordinates = [
-      { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
-      { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng },
-    ];
-    const strokeColor = analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))"; 
-    analyzedPolylineOptions = {
-      strokeColor: strokeColor,
-      strokeOpacity: 0.9,
-      strokeWeight: 3,
-      clickable: false,
-      draggable: false,
-      editable: false,
-      visible: true,
-      zIndex: 1, 
-    };
-  }
+  const analyzedPathKey = analyzedData 
+    ? `analyzed-${analyzedData.pointA.lat}-${analyzedData.pointA.lng}-${analyzedData.pointB.lat}-${analyzedData.pointB.lng}` 
+    : 'no-analyzed-path';
 
-  // Dashed Preview Line (only if stale)
-  let previewPathCoordinates: google.maps.LatLngLiteral[] = [];
-  let previewPolylineOptions = {};
-  if (isStale && formPointA && formPointB) {
-    previewPathCoordinates = [
-        { lat: formPointA.lat, lng: formPointA.lng },
-        { lat: formPointB.lat, lng: formPointB.lng },
-    ];
-    previewPolylineOptions = {
-        strokeColor: "#6b7280", // gray-500 Tailwind
-        strokeOpacity: isActionPending ? 0.3 : 0.6,
-        strokeWeight: 2,
-        clickable: false,
-        draggable: false,
-        editable: false,
-        visible: true,
-        zIndex: 2, // Drawn on top of analyzed line if they differ
-        icons: [{
-            icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, // Dashed line style for Google Maps Polyline
-            offset: '0',
-            repeat: '8px'
-        }],
-    };
-  }
-
+  const previewPathKey = (formPointA && formPointB)
+    ? `preview-${formPointA.lat}-${formPointA.lng}-${formPointB.lat}-${formPointB.lng}`
+    : 'no-preview-path';
 
   return (
     <div className={mapContainerClassName}>
@@ -189,6 +151,7 @@ export default function InteractiveMap({
           >
             {formPointA && (
               <Marker
+                key="marker-a"
                 position={{ lat: formPointA.lat, lng: formPointA.lng }}
                 label={{ text: formPointA.name || "A", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndA}
@@ -198,6 +161,7 @@ export default function InteractiveMap({
             )}
             {formPointB && (
               <Marker
+                key="marker-b"
                 position={{ lat: formPointB.lat, lng: formPointB.lng }}
                 label={{ text: formPointB.name || "B", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndB}
@@ -206,14 +170,51 @@ export default function InteractiveMap({
               />
             )}
 
-            {/* Analyzed Line - Renders on top if positions are same */}
-            {analyzedPathCoordinates.length > 0 && (
-              <Polyline path={analyzedPathCoordinates} options={analyzedPolylineOptions} />
+            {/* Analyzed Line - Renders if analysis data exists */}
+            {analyzedData && analyzedData.pointA && analyzedData.pointB && (
+              <Polyline
+                key={analyzedPathKey}
+                path={[
+                  { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
+                  { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng },
+                ]}
+                options={{
+                  strokeColor: analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))", // Cyan or Red
+                  strokeOpacity: 0.9,
+                  strokeWeight: 3,
+                  clickable: false,
+                  draggable: false,
+                  editable: false,
+                  visible: true,
+                  zIndex: 1, 
+                }}
+              />
             )}
 
             {/* Stale Preview Line - Only if inputs differ from analysis */}
-            {previewPathCoordinates.length > 0 && (
-                <Polyline path={previewPathCoordinates} options={previewPolylineOptions} />
+            {isStale && formPointA && formPointB && (
+                <Polyline
+                  key={previewPathKey}
+                  path={[
+                      { lat: formPointA.lat, lng: formPointA.lng },
+                      { lat: formPointB.lat, lng: formPointB.lng },
+                  ]}
+                  options={{
+                      strokeColor: "#6b7280", // gray-500 Tailwind
+                      strokeOpacity: isActionPending ? 0.3 : 0.6,
+                      strokeWeight: 2,
+                      clickable: false,
+                      draggable: false,
+                      editable: false,
+                      visible: true,
+                      zIndex: 2, // Drawn on top of analyzed line if they differ
+                      icons: [{
+                          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, 
+                          offset: '0',
+                          repeat: '8px' // Creates a dashed line effect
+                      }],
+                  }}
+                />
             )}
             
           </GoogleMap>
@@ -224,4 +225,3 @@ export default function InteractiveMap({
     </div>
   );
 }
-

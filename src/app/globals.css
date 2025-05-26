@@ -188,13 +188,13 @@ body {
 }
 
 /* Map container styling */
-.map-container {
+/* .map-container { */
   /* height: calc(100vh - 64px); /* Assuming header height is 64px -> now managed by page.tsx */
-}
+/* } */
 
 /* Elevation profile chart styling (will be conditionally applied by parent) */
-.elevation-profile-visible {
+/* .elevation-profile-visible { */
   /* max-height: 35vh; */ /* Managed by BottomPanel's fixed height */
   /* min-height: 25vh; */
   /* height: 35vh; */ /* Explicit height handled by BottomPanel */
-}
+/* } */

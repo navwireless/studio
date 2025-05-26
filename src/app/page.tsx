@@ -9,6 +9,11 @@ import { cn } from '@/lib/utils';
 
 import InteractiveMap from '@/components/fso/interactive-map';
 import BottomPanel from '@/components/fso/bottom-panel';
+// import ResultsDisplay from '@/components/fso/results-display'; // No longer used directly here
+// import ElevationProfileChart from '@/components/fso/elevation-profile-chart'; // Now part of BottomPanel
+// import ProductCatalog from '@/components/fso/product-catalog'; // Removed for MVP cleanup
+// import BulkAnalysisView from '@/components/fso/bulk-analysis-view'; // Removed for MVP cleanup
+// import AppSidebar, { type ActiveTool } from '@/components/layout/app-sidebar'; // No longer used
 
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
@@ -143,7 +148,6 @@ export default function Home() {
         },
       };
       
-      // Only update analysisResult if it's truly new data to prevent loops
       if (JSON.stringify(analysisResult) !== JSON.stringify(newAnalysisData)) {
         setAnalysisResult(newAnalysisData);
       }
@@ -157,9 +161,7 @@ export default function Home() {
         setHasFirstAnalysisCompleted(true);
       }
     }
-  // Dependencies: serverState is the primary trigger. getValues is stable.
-  // hasFirstAnalysisCompleted and setIsPanelOpen are for the one-time panel open.
-  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen]);
+  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen, analysisResult, isActionPending]);
 
 
   useEffect(() => {
@@ -202,7 +204,7 @@ export default function Home() {
   const handleMarkerDragStart = useCallback(() => {
     setAnalysisResult(null);
     setClientError(null);
-    // setIsStale(true); // Optionally set stale immediately, or let the useEffect handle it
+    // setIsStale(true); // Stale state will be re-evaluated by the effect above
   }, []);
 
 
@@ -218,6 +220,7 @@ export default function Home() {
     handleSubmit(processSubmit)();
   }, [setValue, handleSubmit]);
 
+  // Map container height is dynamic based on panel state
   const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
 
   const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
@@ -236,20 +239,22 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 h-full overflow-hidden">
+      {/* Sidebar removed */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <InteractiveMap
           pointA={formPointAForMap} 
           pointB={formPointBForMap} 
           analyzedData={analyzedDataForMap} 
           isStale={isStale}
+          isActionPending={isActionPending}
           onMarkerDragStartA={handleMarkerDragStart}
           onMarkerDragStartB={handleMarkerDragStart}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
-          isActionPending={isActionPending}
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
+        {/* Centralized Error Display & Loading Skeleton */}
         {clientError && clientError !== "No analysis performed yet." && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
                 <Card className="shadow-lg border-destructive bg-destructive/20 backdrop-blur-sm">
@@ -270,6 +275,7 @@ export default function Home() {
             </div>
         )}
         
+        {/* Loading skeleton shown when action is pending AND there's no result OR there's an error (but not "No analysis performed yet") */}
         {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
@@ -283,6 +289,9 @@ export default function Home() {
             </div>
         )}
         
+        {/* Bottom Analysis Panel */}
+        {/* Conditionally render BottomPanel or some placeholder if needed */}
+        {/* For now, always rendered but visibility controlled internally by BottomPanel */}
           <BottomPanel
             analysisResult={analysisResult}
             isOpen={isPanelOpen}
@@ -290,12 +299,12 @@ export default function Home() {
             control={control}
             register={register}
             handleSubmit={handleSubmit}
-            processSubmit={processSubmit} 
+            processSubmit={processSubmit} // Pass the main submit handler
             clientFormErrors={clientFormErrors}
             serverFormErrors={formErrors}
             isActionPending={isActionPending}
-            getValues={getValues} 
-            setValue={setValue}
+            getValues={getValues} // Pass for internal use if needed by BottomPanel for its own logic
+            setValue={setValue}   // Pass for internal use if needed
             isStale={isStale}   
           />
       </div>
