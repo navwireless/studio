@@ -1,7 +1,7 @@
 
 "use client";
 
-import { type Control, type UseFormRegister, type UseFormHandleSubmit, type UseFormGetValues, type UseFormSetValue, type FieldErrors, Controller } from 'react-hook-form';
+import { type Control, type UseFormRegister, type UseFormHandleSubmit, type UseFormGetValues, type UseFormSetValue, type FieldErrors, Controller, useWatch } from 'react-hook-form';
 import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import ElevationProfileChart from './elevation-profile-chart';
-import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react'; // Removed ChevronUp
+import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
@@ -89,7 +89,7 @@ const SiteInputGroup: React.FC<{
             label="Tower Height"
             height={field.value}
             onChange={field.onChange}
-            min={0}
+            min={0} // Range updated in page.tsx to 0-100
             max={100}
             idSuffix={id}
           />
@@ -99,6 +99,34 @@ const SiteInputGroup: React.FC<{
         <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.height, serverFormErrors?.[`${id}.height`])}</p>}
     </CardContent>
   </Card>
+);
+
+const AnalysisSettings: React.FC<{
+  register: UseFormRegister<AnalysisFormValues>;
+  clientFormErrors: FieldErrors<AnalysisFormValues>;
+  serverFormErrors?: Record<string, string[] | undefined>;
+  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+}> = ({ register, clientFormErrors, serverFormErrors, getCombinedError }) => (
+  <div className="h-full flex flex-col items-center justify-center p-2">
+    <CardTitle className="text-sm flex items-center mb-2 text-primary">
+      <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
+    </CardTitle>
+    <div className="w-full space-y-2 max-w-xs mx-auto">
+      <div>
+        <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
+        <Input
+          id="clearanceThreshold"
+          type="number"
+          step="any"
+          {...register('clearanceThreshold')}
+          placeholder="e.g., 10"
+          className="mt-0.5 bg-input/70 h-8 text-xs w-full"
+        />
+        {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
+          <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
+      </div>
+    </div>
+  </div>
 );
 
 
@@ -121,15 +149,29 @@ export default function BottomPanel({
     return clientFieldError?.message;
   };
   
-  const pointAName = getValues('pointA.name') || (analysisResult?.pointA?.name || "Site A");
-  const pointBName = getValues('pointB.name') || (analysisResult?.pointB?.name || "Site B");
+  const pointAName = useWatch({ control, name: 'pointA.name' }) || (analysisResult?.pointA?.name || "Site A");
+  const pointBName = useWatch({ control, name: 'pointB.name' }) || (analysisResult?.pointB?.name || "Site B");
+  
+  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold' });
+  const minRequiredClearance = parseFloat(watchedClearanceThresholdString) || 0;
+
+  let isClear = false;
+  let deficit = 0;
+  let actualMinClearance = 0;
+
+  if (analysisResult) {
+    actualMinClearance = analysisResult.minClearance ?? 0;
+    isClear = actualMinClearance >= minRequiredClearance;
+    deficit = isClear ? 0 : Math.ceil(minRequiredClearance - actualMinClearance);
+  }
+
 
   return (
     <form 
       onSubmit={handleSubmit(processSubmit)} 
       className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl"
     >
-      <div className="flex items-center justify-center py-1 relative z-10">
+      <div className="flex items-center justify-center py-1 relative z-10"> {/* Ensure this toggle button is on top of the animated content */}
         <button
           type="button"
           onClick={onToggle}
@@ -148,8 +190,8 @@ export default function BottomPanel({
 
       <div 
         className={cn(
-          "w-full overflow-hidden transition-[height] duration-300 ease-in-out", // Changed to transition-[height]
-          isOpen ? "h-[45vh]" : "h-0" // Animate height
+          "w-full overflow-hidden transition-[height] duration-300 ease-in-out",
+          isOpen ? "h-[45vh]" : "h-0" 
         )}
       >
         <div className="p-2 md:p-3 h-full overflow-y-auto"> {/* Scrollable content area */}
@@ -182,36 +224,46 @@ export default function BottomPanel({
               )}
 
               {analysisResult && (
-                <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md mb-1">
-                  <div className={`font-semibold px-2 py-0.5 rounded-full text-xs mb-1 ${analysisResult.losPossible ? 'bg-los-success text-los-success-foreground' : 'bg-los-failure text-los-failure-foreground'}`}>
-                    {analysisResult.losPossible ? 'LOS POSSIBLE' : 'LOS OBSTRUCTED'}
-                  </div>
-                  <div className="flex justify-evenly w-full">
-                    <div className="flex flex-col items-center px-1">
-                      <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Aerial Distance</span>
-                      <span className="font-semibold text-foreground">
-                        {analysisResult.distanceKm < 1
-                          ? `${(analysisResult.distanceKm * 1000).toFixed(1)} m`
-                          : `${analysisResult.distanceKm.toFixed(2)} km`}
+                <>
+                  <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md mb-1">
+                    <span
+                        className={cn(
+                          "px-2 py-0.5 rounded-full text-xs font-semibold mb-1",
+                          isClear
+                            ? "bg-emerald-500/20 text-emerald-300"
+                            : "bg-rose-500/20 text-rose-300"
+                        )}
+                      >
+                        {isClear ? "LOS POSSIBLE" : "LOS BLOCKED"}
                       </span>
-                    </div>
-                    <div className="flex flex-col items-center px-1">
-                      <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Min. Clearance</span>
-                      <span className={`font-semibold ${
-                        analysisResult.minClearance !== null && analysisResult.clearanceThresholdUsed !== undefined && analysisResult.minClearance < analysisResult.clearanceThresholdUsed
-                          ? 'text-los-failure'
-                          : 'text-los-success'
-                      }`}>
-                        {analysisResult.minClearance !== null ? `${analysisResult.minClearance.toFixed(1)} m` : 'N/A'}
-                      </span>
+                    <div className="flex justify-evenly w-full">
+                      <div className="flex flex-col items-center px-1">
+                        <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Aerial Distance</span>
+                        <span className="font-semibold text-foreground">
+                          {analysisResult.distanceKm < 1
+                            ? `${(analysisResult.distanceKm * 1000).toFixed(1)} m`
+                            : `${analysisResult.distanceKm.toFixed(2)} km`}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center px-1">
+                        <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Min. Clearance</span>
+                        <span className={cn(
+                          "font-semibold",
+                          isClear ? "text-emerald-300" : "text-rose-300"
+                        )}>
+                          {actualMinClearance.toFixed(1)} m
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  {analysisResult.additionalHeightNeeded !== null && analysisResult.additionalHeightNeeded > 0 && (
-                    <p className="text-[0.6rem] text-destructive mt-0.5">
-                      Add. Height Needed: {analysisResult.additionalHeightNeeded.toFixed(1)}m (total)
-                    </p>
+                  {!isClear && (
+                    <div className="text-center text-rose-300 text-xs py-1">
+                      Add&nbsp;
+                      <span className="font-semibold">{deficit} m</span>
+                      &nbsp;to one or both towers to meet clearance.
+                    </div>
                   )}
-                </div>
+                </>
               )}
 
               {/* Main Content Area: Chart or Clearance Input */}
@@ -223,26 +275,12 @@ export default function BottomPanel({
                     pointBName={pointBName}
                   />
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center p-2">
-                    <CardTitle className="text-sm flex items-center mb-2 text-primary">
-                      <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
-                    </CardTitle>
-                    <div className="w-full space-y-2 max-w-xs mx-auto">
-                      <div>
-                        <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
-                        <Input
-                          id="clearanceThreshold"
-                          type="number"
-                          step="any"
-                          {...register('clearanceThreshold')}
-                          placeholder="e.g., 10"
-                          className="mt-0.5 bg-input/70 h-8 text-xs w-full"
-                        />
-                        {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
-                          <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
-                      </div>
-                    </div>
-                  </div>
+                  <AnalysisSettings
+                    register={register}
+                    clientFormErrors={clientFormErrors}
+                    serverFormErrors={serverFormErrors}
+                    getCombinedError={getCombinedError}
+                  />
                 )}
               </div>
 
@@ -276,4 +314,3 @@ export default function BottomPanel({
     </form>
   );
 }
-
