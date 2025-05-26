@@ -163,8 +163,8 @@ export default function BottomPanel({
   let deficit = 0;
   let actualMinClearance = 0;
 
-  if (analysisResult) {
-    actualMinClearance = analysisResult.minClearance ?? 0;
+  if (analysisResult && analysisResult.minClearance !== null) {
+    actualMinClearance = analysisResult.minClearance;
     isClear = actualMinClearance >= minRequiredClearance;
     deficit = isClear ? 0 : Math.ceil(minRequiredClearance - actualMinClearance);
   }
@@ -261,7 +261,7 @@ export default function BottomPanel({
                       </div>
                     </div>
                   </div>
-                  {!isClear && (
+                  {!isClear && analysisResult.minClearance !== null && ( // Ensure minClearance is not null
                     <div className="text-center text-rose-300 text-xs py-0.5"> 
                       Add&nbsp;
                       <span className="font-semibold">{deficit} m</span>
@@ -319,3 +319,4 @@ export default function BottomPanel({
     </form>
   );
 }
+
