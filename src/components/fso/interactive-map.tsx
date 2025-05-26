@@ -7,15 +7,23 @@ import { AlertTriangle } from 'lucide-react';
 import type { PointCoordinates } from '@/types';
 import { Skeleton } from '../ui/skeleton';
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
+const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORTANT: Manage API keys securely
 
 interface InteractiveMapProps {
+  // Points from the form for draggable markers
   pointA?: (PointCoordinates & { name?: string });
   pointB?: (PointCoordinates & { name?: string });
-  losPossible?: boolean | null;
+
+  // Points and status from the last successful analysis for the LOS line
+  analyzedData?: {
+    pointA: PointCoordinates;
+    pointB: PointCoordinates;
+    losPossible: boolean;
+  } | null;
+
   onMarkerDragEndA?: (coords: PointCoordinates) => void;
   onMarkerDragEndB?: (coords: PointCoordinates) => void;
-  mapContainerClassName?: string; // Allow parent to set class for height
+  mapContainerClassName?: string;
 }
 
 const defaultCenter = {
@@ -26,12 +34,12 @@ const defaultCenter = {
 const defaultZoom = 15;
 
 export default function InteractiveMap({
-  pointA,
-  pointB,
-  losPossible,
+  pointA: formPointA, // Renamed for clarity within the component
+  pointB: formPointB, // Renamed for clarity within the component
+  analyzedData,
   onMarkerDragEndA,
   onMarkerDragEndB,
-  mapContainerClassName = "w-full h-full" // Default to fill parent
+  mapContainerClassName = "w-full h-full"
 }: InteractiveMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -47,10 +55,10 @@ export default function InteractiveMap({
   }, []);
 
   useEffect(() => {
-    if (mapRef.current && pointA && pointB) {
+    if (mapRef.current && formPointA && formPointB) {
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(new google.maps.LatLng(pointA.lat, pointA.lng));
-      bounds.extend(new google.maps.LatLng(pointB.lat, pointB.lng));
+      bounds.extend(new google.maps.LatLng(formPointA.lat, formPointA.lng));
+      bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
       mapRef.current.fitBounds(bounds);
       
       const listener = google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
@@ -61,13 +69,13 @@ export default function InteractiveMap({
         }
       });
       return () => {
-        google.maps.event.removeListener(listener);
+        if (listener) google.maps.event.removeListener(listener);
       };
     } else if (mapRef.current) {
       mapRef.current.setCenter(defaultCenter);
       mapRef.current.setZoom(defaultZoom);
     }
-  }, [pointA, pointB]);
+  }, [formPointA, formPointB]);
 
   const handleMarkerDragEnd = (
     event: google.maps.MapMouseEvent,
@@ -86,28 +94,28 @@ export default function InteractiveMap({
     }
   };
 
-  const pathCoordinates = pointA && pointB ? [
-    { lat: pointA.lat, lng: pointA.lng },
-    { lat: pointB.lat, lng: pointB.lng },
-  ] : [];
+  let analyzedPathCoordinates: google.maps.LatLngLiteral[] = [];
+  let polylineOptions = {};
 
-  let polylineColor = "#FFFFFF"; // Default white for LOS line on map
-  // LOS status colors can be handled by ResultsDisplay or specific map elements if needed
-  // For the main path line on the map, keeping it white for visibility on satellite view.
-  // If you want map path color to change:
-  // if (losPossible === true) polylineColor = "hsl(var(--app-accent))"; 
-  // else if (losPossible === false) polylineColor = "hsl(var(--destructive))";
-  
-  const polylineOptions = {
-    strokeColor: polylineColor,
-    strokeOpacity: 0.9,
-    strokeWeight: 3,
-    clickable: false,
-    draggable: false,
-    editable: false,
-    visible: true,
-    zIndex: 1,
-  };
+  if (analyzedData && analyzedData.pointA && analyzedData.pointB) {
+    analyzedPathCoordinates = [
+      { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
+      { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng },
+    ];
+
+    const strokeColor = analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))"; // Cyan for possible, Red for blocked
+
+    polylineOptions = {
+      strokeColor: strokeColor,
+      strokeOpacity: 0.9,
+      strokeWeight: 3, // Bold line
+      clickable: false,
+      draggable: false,
+      editable: false,
+      visible: true,
+      zIndex: 1,
+    };
+  }
 
   return (
     <div className={mapContainerClassName}>
@@ -132,8 +140,8 @@ export default function InteractiveMap({
         ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? (
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={(pointA && pointB) ? undefined : defaultCenter}
-            zoom={(pointA && pointB) ? undefined : defaultZoom}
+            center={(formPointA && formPointB) ? undefined : defaultCenter}
+            zoom={(formPointA && formPointB) ? undefined : defaultZoom}
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={{
@@ -149,24 +157,24 @@ export default function InteractiveMap({
               mapTypeId: google.maps.MapTypeId.SATELLITE,
             }}
           >
-            {pointA && (
+            {formPointA && (
               <Marker
-                position={{ lat: pointA.lat, lng: pointA.lng }}
-                label={{ text: pointA.name || "A", color: "white", fontWeight: "bold" }}
+                position={{ lat: formPointA.lat, lng: formPointA.lng }}
+                label={{ text: formPointA.name || "A", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndA}
                 onDragEnd={(e) => handleMarkerDragEnd(e, 'A')}
               />
             )}
-            {pointB && (
+            {formPointB && (
               <Marker
-                position={{ lat: pointB.lat, lng: pointB.lng }}
-                label={{ text: pointB.name || "B", color: "white", fontWeight: "bold" }}
+                position={{ lat: formPointB.lat, lng: formPointB.lng }}
+                label={{ text: formPointB.name || "B", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndB}
                 onDragEnd={(e) => handleMarkerDragEnd(e, 'B')}
               />
             )}
-            {pointA && pointB && pathCoordinates.length > 0 && (
-              <Polyline path={pathCoordinates} options={polylineOptions} />
+            {analyzedPathCoordinates.length > 0 && (
+              <Polyline path={analyzedPathCoordinates} options={polylineOptions} />
             )}
           </GoogleMap>
         ) : (
