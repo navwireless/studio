@@ -1,20 +1,20 @@
 
 "use client";
 
-import React, { useState, useEffect, useActionState, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useActionState, useCallback, useTransition, useRef } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { cn } from '@/lib/utils';
 
 import InteractiveMap from '@/components/fso/interactive-map';
 import BottomPanel from '@/components/fso/bottom-panel';
 
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues } from '@/types';
+import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Info, Eye, EyeOff } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 // Zod schema for individual point
 const StationPointSchema = z.object({
@@ -50,6 +50,7 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
+  const [isStale, setIsStale] = useState(false);
 
   const [isPanelOpen, setIsPanelOpen] = useState(true);
 
@@ -59,47 +60,37 @@ export default function Home() {
     mode: 'onChange', 
   });
 
-  const triggerAnalysis = useCallback((valuesToSubmit: PageAnalysisFormValues) => {
+  const processSubmit = (data: PageAnalysisFormValues) => {
     if (isActionPending) return;
+    setClientError(null);
+    setFormErrors(undefined);
 
     const formData = new FormData();
-    formData.append('pointA.name', valuesToSubmit.pointA.name);
-    formData.append('pointA.lat', valuesToSubmit.pointA.lat);
-    formData.append('pointA.lng', valuesToSubmit.pointA.lng);
-    formData.append('pointA.height', String(valuesToSubmit.pointA.height));
-    formData.append('pointB.name', valuesToSubmit.pointB.name);
-    formData.append('pointB.lat', valuesToSubmit.pointB.lat);
-    formData.append('pointB.lng', valuesToSubmit.pointB.lng);
-    formData.append('pointB.height', String(valuesToSubmit.pointB.height));
-    formData.append('clearanceThreshold', valuesToSubmit.clearanceThreshold);
+    formData.append('pointA.name', data.pointA.name);
+    formData.append('pointA.lat', data.pointA.lat);
+    formData.append('pointA.lng', data.pointA.lng);
+    formData.append('pointA.height', String(data.pointA.height));
+    formData.append('pointB.name', data.pointB.name);
+    formData.append('pointB.lat', data.pointB.lat);
+    formData.append('pointB.lng', data.pointB.lng);
+    formData.append('pointB.height', String(data.pointB.height));
+    formData.append('clearanceThreshold', data.clearanceThreshold);
 
     startTransition(() => {
       formAction(formData);
     });
-  }, [formAction, isActionPending, startTransition]);
-
-
-  // For the manual "Analyze LOS" / "Re-Analyze LOS" button click
-  const processSubmit = (data: PageAnalysisFormValues) => {
-    setClientError(null);
-    setFormErrors(undefined);
-    triggerAnalysis(data); 
   };
-
+  
   const watchedPointA = useWatch({ control, name: 'pointA' });
   const watchedPointB = useWatch({ control, name: 'pointB' });
-  // watchedClearanceThreshold is not strictly needed here anymore for reactive analysis trigger
-  // but can be kept if other parts of the UI depend on it for immediate updates.
+  const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
 
-  // Removed useEffect that auto-triggered analysis on input changes.
-  // Analysis is now only triggered by processSubmit (manual button click).
 
   useEffect(() => {
     if (!serverState) return;
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      // Do not display "No analysis performed yet" as an error if it's the initial state and no analysis has been triggered
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && analysisResult === null && !isActionPending;
 
       if (!suppressInitialMessage) {
@@ -112,7 +103,6 @@ export default function Home() {
         setFormErrors(undefined); 
       }
 
-      // If there's a real error (not the initial placeholder), clear previous successful results.
       if (errorToSet !== "No analysis performed yet.") {
          setAnalysisResult(null); 
       }
@@ -138,55 +128,111 @@ export default function Home() {
         },
       };
       
-      // Update analysisResult only if data has logically changed to prevent infinite loops
-      if (analysisResult === null || 
-          analysisResult.losPossible !== newAnalysisData.losPossible ||
-          analysisResult.message !== newAnalysisData.message ||
-          analysisResult.distanceKm !== newAnalysisData.distanceKm ||
-          analysisResult.minClearance !== newAnalysisData.minClearance ||
-          JSON.stringify(analysisResult.profile) !== JSON.stringify(newAnalysisData.profile) ||
-          JSON.stringify(analysisResult.pointA) !== JSON.stringify(newAnalysisData.pointA) ||
-          JSON.stringify(analysisResult.pointB) !== JSON.stringify(newAnalysisData.pointB)
-          ) {
-        setAnalysisResult(newAnalysisData);
-      }
-      
+      setAnalysisResult(newAnalysisData);
       setClientError(null);
       setFormErrors(undefined);
     }
-  }, [serverState, getValues, analysisResult, isActionPending]); // analysisResult is kept to ensure UI consistency post-update
+  }, [serverState, getValues, isActionPending]);
+
 
   useEffect(() => {
-    // Open panel if analysis results are available and panel is closed
     if (analysisResult && !isPanelOpen) {
       setIsPanelOpen(true); 
     }
   }, [analysisResult, isPanelOpen]);
 
+  useEffect(() => {
+    if (!analysisResult) {
+      setIsStale(false);
+      return;
+    }
+
+    // Ensure all watched values are defined before attempting to parse
+    if (!watchedPointA?.lat || !watchedPointA?.lng || watchedPointA?.height === undefined ||
+        !watchedPointB?.lat || !watchedPointB?.lng || watchedPointB?.height === undefined ||
+        !watchedClearanceThreshold) {
+      // Potentially set stale if some inputs are missing after an analysis,
+      // or handle as an invalid state. For now, assume not stale if inputs are incomplete.
+      setIsStale(false); 
+      return;
+    }
+    
+    const formLatA = parseFloat(watchedPointA.lat);
+    const formLngA = parseFloat(watchedPointA.lng);
+    const formHeightA = watchedPointA.height; // Already a number
+
+    const formLatB = parseFloat(watchedPointB.lat);
+    const formLngB = parseFloat(watchedPointB.lng);
+    const formHeightB = watchedPointB.height; // Already a number
+
+    const formClearance = parseFloat(watchedClearanceThreshold);
+
+    const safeCompareLatLng = (val1: number, val2: number | undefined, precision = 7) => {
+        if (isNaN(val1) || val2 === undefined || isNaN(val2)) return true; // Treat NaN or undefined as different
+        return val1.toFixed(precision) !== val2.toFixed(precision);
+    };
+    const safeCompareNumbers = (val1: number, val2: number | undefined) => {
+        if (isNaN(val1) || val2 === undefined || isNaN(val2)) return true;
+        return val1 !== val2;
+    };
+
+    const pointAChanged =
+      safeCompareLatLng(formLatA, analysisResult.pointA?.lat) ||
+      safeCompareLatLng(formLngA, analysisResult.pointA?.lng) ||
+      safeCompareNumbers(formHeightA, analysisResult.pointA?.towerHeight);
+
+    const pointBChanged =
+      safeCompareLatLng(formLatB, analysisResult.pointB?.lat) ||
+      safeCompareLatLng(formLngB, analysisResult.pointB?.lng) ||
+      safeCompareNumbers(formHeightB, analysisResult.pointB?.towerHeight);
+
+    const clearanceChanged = safeCompareNumbers(formClearance, analysisResult.clearanceThresholdUsed);
+
+    if (pointAChanged || pointBChanged || clearanceChanged) {
+      setIsStale(true);
+    } else {
+      setIsStale(false);
+    }
+  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult]);
+
+
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
-    setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true });
-    setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true });
-    // Analysis is NOT triggered here anymore.
+    setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
+    setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
   }, [setValue]);
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
-    setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true });
-    setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true });
-    // Analysis is NOT triggered here anymore.
+    setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
+    setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
   }, [setValue]);
 
   const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
+
+  // Prepare data for InteractiveMap based on form state
+  const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
+    ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name }
+    : undefined;
+  const formPointBForMap = watchedPointB && !isNaN(parseFloat(watchedPointB.lat)) && !isNaN(parseFloat(watchedPointB.lng))
+    ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name }
+    : undefined;
+
+  const analyzedDataForMap = analysisResult ? {
+    pointA: { lat: analysisResult.pointA.lat, lng: analysisResult.pointA.lng },
+    pointB: { lat: analysisResult.pointB.lat, lng: analysisResult.pointB.lng },
+    losPossible: analysisResult.losPossible
+  } : null;
+
 
   return (
     <div className="flex flex-1 h-full overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <InteractiveMap
-          pointA={watchedPointA ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name } : undefined}
-          pointB={watchedPointB ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name } : undefined}
-          losPossible={analysisResult?.losPossible}
+          formPointA={formPointAForMap}
+          formPointB={formPointBForMap}
+          analyzedData={analyzedDataForMap}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
-          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-500 ease-in-out`}
+          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
         {clientError && clientError !== "No analysis performed yet." && (
@@ -208,8 +254,7 @@ export default function Home() {
                 </Card>
             </div>
         )}
-
-        {/* Show skeleton only if an action is pending AND there's no result yet, OR if there's an error currently displayed */}
+        
         {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
@@ -235,11 +280,11 @@ export default function Home() {
             serverFormErrors={formErrors}
             isActionPending={isActionPending}
             getValues={getValues} 
-            setValue={setValue}   
+            setValue={setValue}
+            isStale={isStale}   
           />
       </div>
     </div>
   );
 }
-
     

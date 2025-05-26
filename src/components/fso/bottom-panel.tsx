@@ -122,6 +122,7 @@ interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
   isOpen: boolean;
   onToggle: () => void;
+  isStale?: boolean;
   
   control: Control<AnalysisFormValues>;
   register: UseFormRegister<AnalysisFormValues>;
@@ -139,6 +140,7 @@ export default function BottomPanel({
   analysisResult, 
   isOpen, 
   onToggle,
+  isStale,
   control,
   register,
   handleSubmit,
@@ -159,15 +161,18 @@ export default function BottomPanel({
   const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: analysisResult?.clearanceThresholdUsed?.toString() || "10" });
   const minRequiredClearance = parseFloat(watchedClearanceThresholdString) || 0;
 
-  let isClear = false;
+  let isClearBasedOnAnalysis = false;
   let deficit = 0;
   let actualMinClearance = 0;
 
   if (analysisResult && analysisResult.minClearance !== null) {
     actualMinClearance = analysisResult.minClearance;
-    isClear = actualMinClearance >= minRequiredClearance;
-    deficit = isClear ? 0 : Math.ceil(minRequiredClearance - actualMinClearance);
+    isClearBasedOnAnalysis = actualMinClearance >= minRequiredClearance; // Compare with threshold used for *this* analysis
+    // If the form's threshold has changed, this might differ from isStale state, which is fine.
+    // Deficit is always based on the current result and the threshold *used for that result*.
+    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(analysisResult.clearanceThresholdUsed - actualMinClearance);
   }
+
 
   return (
     <form 
@@ -231,16 +236,22 @@ export default function BottomPanel({
               {analysisResult && (
                 <>
                   <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md">
-                      <span
-                        className={cn(
-                          "px-2 py-0.5 rounded-full text-xs font-semibold mb-1",
-                          isClear
-                            ? "bg-emerald-500/20 text-emerald-300"
-                            : "bg-rose-500/20 text-rose-300"
-                        )}
-                      >
-                        {isClear ? "LOS POSSIBLE" : "LOS BLOCKED"}
-                      </span>
+                      {isStale ? (
+                        <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-muted text-muted-foreground mb-1">
+                          NEEDS RE-ANALYZE
+                        </span>
+                      ) : (
+                        <span
+                          className={cn(
+                            "px-2 py-0.5 rounded-full text-xs font-semibold mb-1",
+                            isClearBasedOnAnalysis
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-rose-500/20 text-rose-300"
+                          )}
+                        >
+                          {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
+                        </span>
+                      )}
                     <div className="flex justify-evenly w-full">
                       <div className="flex flex-col items-center px-1">
                         <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Aerial Distance</span>
@@ -254,14 +265,14 @@ export default function BottomPanel({
                         <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Min. Clearance</span>
                         <span className={cn(
                           "font-semibold",
-                          isClear ? "text-emerald-300" : "text-rose-300"
+                          isStale ? "text-muted-foreground" : (isClearBasedOnAnalysis ? "text-emerald-300" : "text-rose-300")
                         )}>
                           {actualMinClearance.toFixed(1)} m
                         </span>
                       </div>
                     </div>
                   </div>
-                  {!isClear && analysisResult.minClearance !== null && ( // Ensure minClearance is not null
+                  {!isStale && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
                     <div className="text-center text-rose-300 text-xs py-0.5"> 
                       Add&nbsp;
                       <span className="font-semibold">{deficit} m</span>
@@ -277,6 +288,7 @@ export default function BottomPanel({
                     data={analysisResult.profile}
                     pointAName={pointAName}
                     pointBName={pointBName}
+                    isStale={isStale}
                   />
                 ) : (
                   <AnalysisSettings
@@ -288,7 +300,6 @@ export default function BottomPanel({
                 )}
               </div>
 
-              {/* Always visible Analyze/Re-Analyze button */}
               <div className="pt-1 pb-1 flex justify-center border-t border-border bg-card/80 rounded-b-md mt-auto"> 
                 <Button
                   type="submit"
@@ -301,7 +312,6 @@ export default function BottomPanel({
               </div>
             </div>
 
-            {/* Column 3: Site B */}
              <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointB" 

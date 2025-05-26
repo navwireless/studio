@@ -10,12 +10,10 @@ import { Skeleton } from '../ui/skeleton';
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORTANT: Manage API keys securely
 
 interface InteractiveMapProps {
-  // Points from the form for draggable markers
-  pointA?: (PointCoordinates & { name?: string });
-  pointB?: (PointCoordinates & { name?: string });
+  formPointA?: (PointCoordinates & { name?: string }); // Current form/marker position for A
+  formPointB?: (PointCoordinates & { name?: string }); // Current form/marker position for B
 
-  // Points and status from the last successful analysis for the LOS line
-  analyzedData?: {
+  analyzedData?: { // Data from the last successful analysis
     pointA: PointCoordinates;
     pointB: PointCoordinates;
     losPossible: boolean;
@@ -34,8 +32,8 @@ const defaultCenter = {
 const defaultZoom = 15;
 
 export default function InteractiveMap({
-  pointA: formPointA, // Renamed for clarity within the component
-  pointB: formPointB, // Renamed for clarity within the component
+  formPointA,
+  formPointB,
   analyzedData,
   onMarkerDragEndA,
   onMarkerDragEndB,
@@ -94,21 +92,19 @@ export default function InteractiveMap({
     }
   };
 
+  // Logic for analyzed LOS line
   let analyzedPathCoordinates: google.maps.LatLngLiteral[] = [];
-  let polylineOptions = {};
-
+  let analyzedPolylineOptions = {};
   if (analyzedData && analyzedData.pointA && analyzedData.pointB) {
     analyzedPathCoordinates = [
       { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
       { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng },
     ];
-
-    const strokeColor = analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))"; // Cyan for possible, Red for blocked
-
-    polylineOptions = {
+    const strokeColor = analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))"; // Cyan or Red
+    analyzedPolylineOptions = {
       strokeColor: strokeColor,
       strokeOpacity: 0.9,
-      strokeWeight: 3, // Bold line
+      strokeWeight: 3,
       clickable: false,
       draggable: false,
       editable: false,
@@ -116,6 +112,45 @@ export default function InteractiveMap({
       zIndex: 1,
     };
   }
+
+  // Logic for preview LOS line
+  const showPreviewLine =
+    analyzedData &&
+    formPointA && formPointB &&
+    (formPointA.lat.toFixed(7) !== analyzedData.pointA.lat.toFixed(7) ||
+     formPointA.lng.toFixed(7) !== analyzedData.pointA.lng.toFixed(7) ||
+     formPointB.lat.toFixed(7) !== analyzedData.pointB.lat.toFixed(7) ||
+     formPointB.lng.toFixed(7) !== analyzedData.pointB.lng.toFixed(7));
+
+  let previewPathCoordinates: google.maps.LatLngLiteral[] = [];
+  let previewPolylineOptions = {};
+  if (showPreviewLine && formPointA && formPointB) {
+    previewPathCoordinates = [
+      { lat: formPointA.lat, lng: formPointA.lng },
+      { lat: formPointB.lat, lng: formPointB.lng },
+    ];
+    previewPolylineOptions = {
+      strokeColor: "#A9A9A9", // DarkGray for preview
+      strokeOpacity: 0.7,
+      strokeWeight: 2,
+      clickable: false,
+      draggable: false,
+      editable: false,
+      visible: true,
+      zIndex: 0, // Lower zIndex than analyzed line
+      icons: [{
+        icon: {
+          path: 'M 0,-1 0,1',
+          strokeOpacity: 1,
+          scale: 3,
+          strokeWeight: 2,
+        },
+        offset: '0',
+        repeat: '15px'
+      }],
+    };
+  }
+
 
   return (
     <div className={mapContainerClassName}>
@@ -174,7 +209,10 @@ export default function InteractiveMap({
               />
             )}
             {analyzedPathCoordinates.length > 0 && (
-              <Polyline path={analyzedPathCoordinates} options={polylineOptions} />
+              <Polyline path={analyzedPathCoordinates} options={analyzedPolylineOptions} />
+            )}
+            {previewPathCoordinates.length > 0 && (
+              <Polyline path={previewPathCoordinates} options={previewPolylineOptions} />
             )}
           </GoogleMap>
         ) : (
@@ -184,3 +222,4 @@ export default function InteractiveMap({
     </div>
   );
 }
+
