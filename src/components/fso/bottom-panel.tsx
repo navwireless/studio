@@ -10,12 +10,13 @@ import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import ElevationProfileChart from './elevation-profile-chart';
 import { ChevronDown, ChevronUp, Target, Settings, Zap, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
-  isVisible: boolean;
-  onToggle: () => void;
+  isOpen: boolean; // Changed from isVisible
+  onToggle: () => void; // Added onToggle
   
   control: Control<AnalysisFormValues>;
   register: UseFormRegister<AnalysisFormValues>;
@@ -100,48 +101,10 @@ const SiteInputGroup: React.FC<{
   </Card>
 );
 
-// Renamed from AnalysisSettingsCard and props adapted
-interface AnalysisSettingsProps {
-  register: UseFormRegister<AnalysisFormValues>;
-  clientFormErrors: FieldErrors<AnalysisFormValues>; // Assuming clientFormErrors is passed as 'errors'
-  serverFormErrors?: Record<string, string[] | undefined>;
-  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
-  isActionPending: boolean;
-}
-
-const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ 
-  register, clientFormErrors, serverFormErrors, getCombinedError, isActionPending 
-}) => (
-  <div className="bg-card/70 border-border shadow-md mx-auto max-w-sm w-full my-auto p-3 rounded-md flex flex-col items-center justify-center h-full">
-    <CardTitle className="text-sm flex items-center mb-2 text-primary">
-      <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
-    </CardTitle>
-    <div className="w-full space-y-2">
-      <div>
-        <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
-        <Input 
-          id="clearanceThreshold" 
-          type="number" 
-          step="any" 
-          {...register('clearanceThreshold')} 
-          placeholder="e.g., 10" 
-          className="mt-0.5 bg-input/70 h-8 text-xs w-full" 
-        />
-        {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) && 
-          <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
-      </div>
-      <Button type="submit" disabled={isActionPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs">
-        {isActionPending ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <Zap className="mr-1.5 h-3 w-3" />}
-        Analyze LOS
-      </Button>
-    </div>
-  </div>
-);
-
 
 export default function BottomPanel({ 
   analysisResult, 
-  isVisible, 
+  isOpen, 
   onToggle,
   control,
   register,
@@ -153,9 +116,6 @@ export default function BottomPanel({
   getValues,
 }: BottomPanelProps) {
   
-  const panelHeightClass = isVisible ? 'h-[38vh] md:h-[35vh]' : 'h-10';
-  const contentVisibilityClass = isVisible ? 'opacity-100 visible' : 'opacity-0 invisible h-0';
-
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
     if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
     return clientFieldError?.message;
@@ -165,23 +125,39 @@ export default function BottomPanel({
   const pointBName = getValues('pointB.name') || (analysisResult?.pointB?.name || "Site B");
 
   return (
-    <form onSubmit={handleSubmit(processSubmit)} className={`fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl transition-all duration-300 ease-in-out ${panelHeightClass}`}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={onToggle}
-        className="absolute top-1 left-1/2 -translate-x-1/2 z-40 bg-card hover:bg-accent text-xs px-2 py-1 h-auto"
-        aria-label={isVisible ? "Hide Analysis Panel" : "Show Analysis Panel"}
-      >
-        {isVisible ? <ChevronDown className="mr-1 h-4 w-4" /> : <ChevronUp className="mr-1 h-4 w-4" />}
-        {isVisible ? 'Hide Panel' : 'Show Panel'}
-      </Button>
+    <form 
+      onSubmit={handleSubmit(processSubmit)} 
+      className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl"
+    >
+      <div className="flex items-center justify-center py-1 relative z-10"> {/* Ensure button is on top */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground hover:text-foreground px-2 py-1"
+          aria-label={isOpen ? "Hide Analysis Panel" : "Show Analysis Panel"}
+        >
+          {isOpen ? (
+            <>
+              <ChevronDown className="h-4 w-4" />
+              Hide Panel
+            </>
+          ) : (
+            <>
+              <ChevronUp className="h-4 w-4" />
+              Show Panel
+            </>
+          )}
+        </button>
+      </div>
 
-      <div className={`pt-10 md:pt-8 p-2 md:p-3 transition-opacity duration-200 ease-in-out ${contentVisibilityClass} h-full`}>
-        {isVisible && (
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full max-h-[calc(100%-2.5rem)]"> {/* Ensure gap-4 */}
-            {/* Column 1: Site A Inputs */}
+      <div 
+        className={cn(
+          "w-full overflow-hidden transition-[max-height] duration-300 ease-in-out",
+          isOpen ? "max-h-[45vh]" : "max-h-0"
+        )}
+      >
+        <div className="p-2 md:p-3 h-full overflow-y-auto"> {/* Scrollable content area */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointA" 
@@ -194,7 +170,7 @@ export default function BottomPanel({
               />
             </div>
 
-            {/* Column 2: Analysis Stats, Chart / Settings */}
+            {/* Column 2: Analysis Stats, Chart / Settings Input, and Action Button */}
             <div className="flex flex-col h-full overflow-hidden">
               {analysisResult && (
                 <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md mb-1">
@@ -212,7 +188,7 @@ export default function BottomPanel({
                     </div>
                     <div className="flex flex-col items-center px-1">
                       <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Min. Clearance</span>
-                      <span className={`font-semibold text-foreground ${
+                      <span className={`font-semibold ${
                         analysisResult.minClearance !== null && analysisResult.minClearance < analysisResult.clearanceThresholdUsed
                           ? 'text-los-failure'
                           : 'text-los-success'
@@ -229,7 +205,8 @@ export default function BottomPanel({
                 </div>
               )}
 
-              <div className="flex-1 min-h-0 bg-card/70 rounded-b-md"> {/* Added min-h-0 for flex child */}
+              {/* Main Content Area: Chart or Clearance Input */}
+              <div className="flex-1 min-h-0 bg-card/70 rounded-md p-1">
                 {analysisResult ? (
                   <ElevationProfileChart
                     data={analysisResult.profile}
@@ -237,18 +214,42 @@ export default function BottomPanel({
                     pointBName={pointBName}
                   />
                 ) : (
-                  <AnalysisSettings
-                    register={register}
-                    clientFormErrors={clientFormErrors} // Passed as errors
-                    serverFormErrors={serverFormErrors}
-                    getCombinedError={getCombinedError}
-                    isActionPending={isActionPending}
-                  />
+                  <div className="h-full flex flex-col items-center justify-center p-2">
+                    <CardTitle className="text-sm flex items-center mb-2 text-primary">
+                      <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
+                    </CardTitle>
+                    <div className="w-full space-y-2 max-w-xs mx-auto">
+                      <div>
+                        <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
+                        <Input
+                          id="clearanceThreshold"
+                          type="number"
+                          step="any"
+                          {...register('clearanceThreshold')}
+                          placeholder="e.g., 10"
+                          className="mt-0.5 bg-input/70 h-8 text-xs w-full"
+                        />
+                        {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
+                          <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
+                      </div>
+                    </div>
+                  </div>
                 )}
+              </div>
+
+              {/* Footer for Analyze/Re-Analyze Button */}
+              <div className="py-2 flex justify-center border-t border-border bg-card/80 rounded-b-md mt-1">
+                <Button
+                  type="submit"
+                  disabled={isActionPending}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1 h-8 rounded-md shadow"
+                >
+                  {isActionPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                  {analysisResult ? "Re-Analyze LOS" : "Analyze LOS"}
+                </Button>
               </div>
             </div>
 
-            {/* Column 3: Site B Inputs */}
              <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointB" 
@@ -261,7 +262,7 @@ export default function BottomPanel({
               />
             </div>
           </div>
-        )}
+        </div>
       </div>
     </form>
   );

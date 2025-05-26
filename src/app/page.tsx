@@ -25,7 +25,7 @@ const StationPointSchema = z.object({
   lng: z.string()
     .min(1, "Longitude is required")
     .refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Must be -180 to 180"),
-  height: z.number().min(0, "Min 0m").max(100, "Max 100m"), // Updated range to 0-100m as per latest instructions for TowerHeightControl
+  height: z.number().min(0, "Min 0m").max(100, "Max 100m"),
 });
 
 // Zod schema for the whole form
@@ -51,7 +51,7 @@ export default function Home() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
 
-  const [isBottomPanelVisible, setIsBottomPanelVisible] = useState(true); // Keep panel visible by default
+  const [isPanelOpen, setIsPanelOpen] = useState(true); // Renamed from isBottomPanelVisible
 
   const { register, handleSubmit, formState: { errors: clientFormErrors }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
@@ -81,7 +81,6 @@ export default function Home() {
     });
   };
 
-  // Effect to process serverState and update local states like analysisResult, clientError, formErrors
   useEffect(() => {
     if (!serverState) return;
 
@@ -89,8 +88,6 @@ export default function Home() {
       const errorToSet = serverState.error;
       const isSignificantError = errorToSet !== "No analysis performed yet.";
       
-      // Display error if it's significant or an action was pending (user initiated)
-      // or if there was a previous successful result being overwritten by an error.
       if (isSignificantError || isActionPending || (analysisResult !== null && errorToSet)) {
         setClientError(errorToSet);
       }
@@ -98,28 +95,26 @@ export default function Home() {
       if (serverState.fieldErrors) {
         setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
       } else {
-        setFormErrors(undefined); // Clear previous field errors
+        setFormErrors(undefined); 
       }
-
-      // Clear analysisResult if a significant error occurred and there was a previous result or an action was pending.
       if (isSignificantError && (analysisResult !== null || isActionPending)) {
-        setAnalysisResult(null);
+         if (analysisResult !== null) setAnalysisResult(null); // Clear previous result only if there was one
       }
-    } else if (!('error' in serverState)) { // serverState is AnalysisResult
+    } else if (!('error' in serverState)) { 
       const resultDataFromServer = serverState as AnalysisResult;
-      const currentFormValues = getValues(); // getValues is stable from react-hook-form
+      const currentFormValues = getValues();
 
       const newAnalysisData = {
         ...resultDataFromServer,
         pointA: {
-          ...(resultDataFromServer.pointA || {} as any), // Provide default empty object if pointA is missing
+          ...(resultDataFromServer.pointA || {} as any),
           name: currentFormValues.pointA.name,
           lat: parseFloat(currentFormValues.pointA.lat),
           lng: parseFloat(currentFormValues.pointA.lng),
           towerHeight: currentFormValues.pointA.height,
         },
         pointB: {
-          ...(resultDataFromServer.pointB || {} as any), // Provide default empty object if pointB is missing
+          ...(resultDataFromServer.pointB || {} as any), 
           name: currentFormValues.pointB.name,
           lat: parseFloat(currentFormValues.pointB.lat),
           lng: parseFloat(currentFormValues.pointB.lng),
@@ -127,8 +122,6 @@ export default function Home() {
         },
       };
       
-      // Only update if analysisResult is null or if the new data is different (simple check based on message or LOS status)
-      // A more robust check might involve deep comparison or checking a unique ID from serverState if available.
       if (analysisResult === null || 
           analysisResult.losPossible !== newAnalysisData.losPossible ||
           analysisResult.message !== newAnalysisData.message ||
@@ -139,48 +132,38 @@ export default function Home() {
       setClientError(null);
       setFormErrors(undefined);
     }
-    // Dependencies:
-    // - serverState: The primary trigger from the server action.
-    // - getValues: Stable function from RHF.
-    // - isActionPending: To conditionally handle errors/updates.
-    // - analysisResult: Used in conditions to determine if an error/update is "new".
-    //   This is the tricky one. By checking if the new data is meaningfully different
-    //   before calling setAnalysisResult, we aim to avoid the loop.
-  }, [serverState, getValues, isActionPending, analysisResult, setAnalysisResult, setClientError, setFormErrors]);
+  }, [serverState, getValues, isActionPending, analysisResult]);
 
   // Effect to manage bottom panel visibility based on analysisResult
   useEffect(() => {
-    if (analysisResult && !isBottomPanelVisible) {
-      setIsBottomPanelVisible(true);
+    if (analysisResult && !isPanelOpen) {
+      setIsPanelOpen(true);
     }
-    // Optional: Hide panel if analysisResult becomes null (e.g. due to a new error)
-    // else if (!analysisResult && isBottomPanelVisible && clientError && clientError !== "No analysis performed yet.") {
-    //   setIsBottomPanelVisible(false); // Or keep it open to show errors
-    // }
-  }, [analysisResult, isBottomPanelVisible, setIsBottomPanelVisible, clientError]);
+  }, [analysisResult, isPanelOpen]);
 
 
   // Effect to auto-trigger analysis on initial load
   useEffect(() => {
-    if (!analysisResult && !isActionPending && serverState?.error?.includes("No analysis performed yet.")) {
-      const formData = new FormData();
-      formData.append('pointA.name', defaultFormStateValues.pointA.name);
-      formData.append('pointA.lat', defaultFormStateValues.pointA.lat);
-      formData.append('pointA.lng', defaultFormStateValues.pointA.lng);
-      formData.append('pointA.height', String(defaultFormStateValues.pointA.height));
-      formData.append('pointB.name', defaultFormStateValues.pointB.name);
-      formData.append('pointB.lat', defaultFormStateValues.pointB.lat);
-      formData.append('pointB.lng', defaultFormStateValues.pointB.lng);
-      formData.append('pointB.height', String(defaultFormStateValues.pointB.height));
-      formData.append('clearanceThreshold', defaultFormStateValues.clearanceThreshold);
+    // Ensure this runs only once and if no analysis has been done / no result yet.
+    if (!analysisResult && !isActionPending && (!serverState || (serverState && 'error' in serverState && serverState.error?.includes("No analysis performed yet.")))) {
+        const formData = new FormData();
+        const defaultValues = getValues(); // Use current default values from form state
+        formData.append('pointA.name', defaultValues.pointA.name);
+        formData.append('pointA.lat', defaultValues.pointA.lat);
+        formData.append('pointA.lng', defaultValues.pointA.lng);
+        formData.append('pointA.height', String(defaultValues.pointA.height));
+        formData.append('pointB.name', defaultValues.pointB.name);
+        formData.append('pointB.lat', defaultValues.pointB.lat);
+        formData.append('pointB.lng', defaultValues.pointB.lng);
+        formData.append('pointB.height', String(defaultValues.pointB.height));
+        formData.append('clearanceThreshold', defaultValues.clearanceThreshold);
 
-      startTransition(() => {
-        formAction(formData);
-      });
+        startTransition(() => {
+            formAction(formData);
+        });
     }
-    // This effect should run once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Intentionally empty to run once on mount.
 
 
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
@@ -193,7 +176,7 @@ export default function Home() {
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true });
   }, [setValue]);
 
-  const mapContainerHeightClass = isBottomPanelVisible && analysisResult ? 'h-[calc(100%-35vh)]' : 'h-full';
+  const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full'; // Adjusted for 45vh panel
 
   return (
     <div className="flex flex-1 h-full overflow-hidden">
@@ -207,7 +190,6 @@ export default function Home() {
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
-        {/* Error Display Area */}
         {clientError && clientError !== "No analysis performed yet." && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
                 <Card className="shadow-lg border-destructive bg-destructive/20 backdrop-blur-sm">
@@ -228,8 +210,7 @@ export default function Home() {
             </div>
         )}
 
-        {/* Loading Skeleton: Show if action is pending AND there's no current result OR if it's the initial "no analysis" state */}
-         {isActionPending && (!analysisResult || (serverState?.error?.includes("No analysis performed yet."))) && (
+         {(isActionPending && (!analysisResult || (serverState?.error?.includes("No analysis performed yet.")))) && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
                     <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
@@ -241,14 +222,12 @@ export default function Home() {
                 </Card>
             </div>
         )}
-
-        {/* Bottom Panel: Show if there's an analysis result OR if there's no significant client error forcing it to hide */}
-        {/* This logic ensures panel remains for inputs even if initial auto-analysis hasn't finished or if user clears results by making invalid inputs */}
+        
         {(analysisResult || (!clientError || clientError === "No analysis performed yet.")) && (
           <BottomPanel
             analysisResult={analysisResult}
-            isVisible={isBottomPanelVisible}
-            onToggle={() => setIsBottomPanelVisible(!isBottomPanelVisible)}
+            isOpen={isPanelOpen} // Pass isOpen
+            onToggle={() => setIsPanelOpen(!isPanelOpen)} // Pass onToggle
             control={control}
             register={register}
             handleSubmit={handleSubmit}
@@ -260,20 +239,17 @@ export default function Home() {
             setValue={setValue}
           />
         )}
-         {/* Mobile Toggle Button for Panel when there's an error and no result */}
          {!analysisResult && clientError && clientError !== "No analysis performed yet." && (
              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                    setIsBottomPanelVisible(!isBottomPanelVisible);
-                    // Optionally clear client error when showing panel to re-input
-                    // if (!isBottomPanelVisible && clientError) setClientError(null);
+                    setIsPanelOpen(!isPanelOpen);
                 }}
                 className="absolute bottom-4 right-4 z-40 bg-card hover:bg-accent md:hidden"
                 >
-                {isBottomPanelVisible ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                {isBottomPanelVisible ? 'Hide Panel' : 'Show Panel'}
+                {isPanelOpen ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                {isPanelOpen ? 'Hide Panel' : 'Show Panel'}
             </Button>
          )}
       </div>
