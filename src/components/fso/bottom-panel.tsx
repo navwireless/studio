@@ -2,7 +2,7 @@
 "use client";
 
 import { Controller, type Control, type UseFormRegister, type UseFormHandleSubmit, type UseFormGetValues, type UseFormSetValue, type FieldErrors } from 'react-hook-form';
-import type { AnalysisResult, AnalysisFormValues } from '@/types'; // Removed PointInput, AnalysisFormValues as FieldErrors takes generic
+import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -145,7 +145,7 @@ export default function BottomPanel({
 
       <div className={`pt-10 md:pt-8 p-2 md:p-2 transition-opacity duration-200 ease-in-out ${contentVisibilityClass} h-full`}>
         {isVisible && (
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-full max-h-[calc(100%-2.5rem)]">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full max-h-[calc(100%-2.5rem)]"> {/* Updated gap to gap-4 */}
             <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointA" 
@@ -216,5 +216,3 @@ export default function BottomPanel({
     </form>
   );
 }
-
-    

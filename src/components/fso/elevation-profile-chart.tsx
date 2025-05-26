@@ -140,7 +140,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
           type="monotone"
           dataKey="losHeight"
           stroke={chartConfig.losHeight.color}
-          strokeWidth={2.5} // Ensure LOS line is prominent
+          strokeWidth={2} // Updated strokeWidth to 2
           name={chartConfig.losHeight.label} // For default tooltip
           dot={false}
           activeDot={{ r: 5, strokeWidth: 1, fill: chartConfig.losHeight.color, stroke: 'hsl(var(--background))' }}
@@ -175,5 +175,3 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
     </ResponsiveContainer>
   );
 }
-
-    
