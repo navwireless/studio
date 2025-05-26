@@ -12,17 +12,13 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORT
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { name?: string }); // Current form/marker position for A
   pointB?: (PointCoordinates & { name?: string }); // Current form/marker position for B
+  isStale?: boolean; // Is current form state different from analyzedData?
 
   analyzedData?: { // Data from the last successful analysis
     pointA: PointCoordinates;
     pointB: PointCoordinates;
     losPossible: boolean;
   } | null;
-
-  previewData?: { // Current form/marker positions if different from analyzedData
-    pointA: PointCoordinates;
-    pointB: PointCoordinates;
-  };
 
   onMarkerDragEndA?: (coords: PointCoordinates) => void;
   onMarkerDragEndB?: (coords: PointCoordinates) => void;
@@ -37,10 +33,10 @@ const defaultCenter = {
 const defaultZoom = 15;
 
 export default function InteractiveMap({
-  pointA: formPointA, // Renamed for clarity, this is the current form/marker position
-  pointB: formPointB, // Renamed for clarity, this is the current form/marker position
+  pointA: formPointA, 
+  pointB: formPointB, 
   analyzedData,
-  previewData,
+  isStale,
   onMarkerDragEndA,
   onMarkerDragEndB,
   mapContainerClassName = "w-full h-full"
@@ -115,18 +111,21 @@ export default function InteractiveMap({
       draggable: false,
       editable: false,
       visible: true,
-      zIndex: 1, // Analyzed line is primary
+      zIndex: 1, 
     };
   }
 
-  // Logic for preview LOS line (dashed)
+  // Logic for preview LOS line (dashed), shown if form is stale OR no analysis yet
   let previewPathCoordinates: google.maps.LatLngLiteral[] = [];
   let previewPolylineOptions = {};
+  const currentFormPathValid = formPointA && formPointB;
 
-  if (previewData && previewData.pointA && previewData.pointB) {
+  const shouldShowPreview = (isStale && analyzedData) || (!analyzedData && currentFormPathValid);
+
+  if (shouldShowPreview && currentFormPathValid) {
     previewPathCoordinates = [
-      { lat: previewData.pointA.lat, lng: previewData.pointA.lng },
-      { lat: previewData.pointB.lat, lng: previewData.pointB.lng },
+      { lat: formPointA.lat, lng: formPointA.lng },
+      { lat: formPointB.lat, lng: formPointB.lng },
     ];
     previewPolylineOptions = {
       strokeColor: "#A9A9A9", // DarkGray for preview
@@ -136,16 +135,16 @@ export default function InteractiveMap({
       draggable: false,
       editable: false,
       visible: true,
-      zIndex: 0, // Preview line behind analyzed if they overlap due to no change in points but other stale factors
-      icons: [{ // Dashed line effect for Google Maps Polyline
+      zIndex: 0, 
+      icons: [{ 
         icon: {
-          path: 'M 0,-1 0,1', // Defines a small vertical line segment
+          path: 'M 0,-1 0,1', 
           strokeOpacity: 1,
-          scale: 3, // Adjust scale for dash length
-          strokeWeight: 2, // Should match polyline's strokeWeight
+          scale: 3, 
+          strokeWeight: 2, 
         },
         offset: '0',
-        repeat: '15px' // Adjust repeat for dash spacing
+        repeat: '15px' 
       }],
     };
   }
@@ -211,7 +210,15 @@ export default function InteractiveMap({
               <Polyline path={analyzedPathCoordinates} options={analyzedPolylineOptions} />
             )}
             {previewPathCoordinates.length > 0 && (
-              <Polyline path={previewPathCoordinates} options={previewPolylineOptions} />
+              // Do not render preview if it's identical to analyzed path (i.e., not stale)
+              !(!isStale && analyzedPathCoordinates.length > 0 && 
+                previewPathCoordinates[0]?.lat === analyzedPathCoordinates[0]?.lat &&
+                previewPathCoordinates[0]?.lng === analyzedPathCoordinates[0]?.lng &&
+                previewPathCoordinates[1]?.lat === analyzedPathCoordinates[1]?.lat &&
+                previewPathCoordinates[1]?.lng === analyzedPathCoordinates[1]?.lng
+              ) && (
+                 <Polyline path={previewPathCoordinates} options={previewPolylineOptions} />
+              )
             )}
           </GoogleMap>
         ) : (

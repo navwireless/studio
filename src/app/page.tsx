@@ -66,8 +66,9 @@ export default function Home() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
   const [isStale, setIsStale] = useState(false);
-
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
+
 
   const { register, handleSubmit, formState: { errors: clientFormErrors, isValid, touchedFields }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
@@ -77,8 +78,11 @@ export default function Home() {
 
   const processSubmit = (data: PageAnalysisFormValues) => {
     if (isActionPending) return;
+
+    setAnalysisResult(null); // Clear previous analysis visuals immediately
     setClientError(null);
     setFormErrors(undefined);
+    setIsStale(false); // Reset stale state as new analysis is triggered
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
@@ -102,11 +106,13 @@ export default function Home() {
 
 
   useEffect(() => {
+    // This effect handles updates from the server action
     if (!serverState) return;
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      const suppressInitialMessage = errorToSet === "No analysis performed yet." && analysisResult === null && !isActionPending;
+      // Avoid showing "No analysis performed yet" as an error if we are about to auto-analyze or have results.
+      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending);
 
       if (!suppressInitialMessage) {
         setClientError(errorToSet);
@@ -117,20 +123,18 @@ export default function Home() {
       } else if (!suppressInitialMessage) { 
         setFormErrors(undefined); 
       }
-
-      if (errorToSet !== "No analysis performed yet.") {
-         setAnalysisResult(null); 
-      }
+      // Do not setAnalysisResult(null) here as processSubmit already handles it.
+      // If serverState is an error, analysisResult should already be null or become null.
     } else if (!('error' in serverState)) { 
       const resultDataFromServer = serverState as AnalysisResult;
-      const currentFormValues = getValues();
+      const currentFormValues = getValues(); // Get fresh form values at the time of processing
 
       const newAnalysisData = {
         ...resultDataFromServer,
         pointA: {
           ...(resultDataFromServer.pointA || {} as any),
           name: currentFormValues.pointA.name,
-          lat: parseFloat(currentFormValues.pointA.lat),
+          lat: parseFloat(currentFormValues.pointA.lat), // Ensure these are from current form
           lng: parseFloat(currentFormValues.pointA.lng),
           towerHeight: currentFormValues.pointA.height,
         },
@@ -146,17 +150,17 @@ export default function Home() {
       setAnalysisResult(newAnalysisData);
       setClientError(null);
       setFormErrors(undefined);
+      setIsStale(false); // Result is fresh
+
+      if (newAnalysisData && !hasFirstAnalysisCompleted) {
+        setIsPanelOpen(true);
+        setHasFirstAnalysisCompleted(true);
+      }
     }
-  }, [serverState, getValues, isActionPending]);
+  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen]); // Dependencies for processing server state
 
 
-  useEffect(() => {
-    if (analysisResult && !isPanelOpen) {
-      setIsPanelOpen(true); 
-    }
-  }, [analysisResult, isPanelOpen]);
-
-  // Stale check
+  // Stale check: Compare current form values with the last analysisResult
   useEffect(() => {
     if (!analysisResult) {
       setIsStale(false);
@@ -180,14 +184,14 @@ export default function Home() {
     const analyzedPointA = analysisResult.pointA;
     const analyzedPointB = analysisResult.pointB;
 
-    const pointsAEqual = pointsEqual(formPointAForCompare, analyzedPointA);
-    const pointsBEqual = pointsEqual(formPointBForCompare, analyzedPointB);
+    const pointsAEqualResult = pointsEqual(formPointAForCompare, analyzedPointA);
+    const pointsBEqualResult = pointsEqual(formPointBForCompare, analyzedPointB);
 
     const heightAEqual = formHeightA === analyzedPointA?.towerHeight;
     const heightBEqual = formHeightB === analyzedPointB?.towerHeight;
     const clearanceEqual = formClearance === analysisResult.clearanceThresholdUsed;
     
-    if (!pointsAEqual || !pointsBEqual || !heightAEqual || !heightBEqual || !clearanceEqual) {
+    if (!pointsAEqualResult || !pointsBEqualResult || !heightAEqual || !heightBEqual || !clearanceEqual) {
       setIsStale(true);
     } else {
       setIsStale(false);
@@ -198,12 +202,14 @@ export default function Home() {
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
     setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-  }, [setValue]);
+    handleSubmit(processSubmit)(); // Auto-trigger analysis
+  }, [setValue, handleSubmit]);
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
     setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-  }, [setValue]);
+    handleSubmit(processSubmit)(); // Auto-trigger analysis
+  }, [setValue, handleSubmit]);
 
   const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
 
@@ -215,26 +221,22 @@ export default function Home() {
     ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name }
     : undefined;
 
+  // Transform analysisResult for InteractiveMap's analyzedData prop
   const analyzedDataForMap = analysisResult ? {
     pointA: { lat: analysisResult.pointA.lat, lng: analysisResult.pointA.lng },
     pointB: { lat: analysisResult.pointB.lat, lng: analysisResult.pointB.lng },
     losPossible: analysisResult.losPossible
   } : null;
 
-  const previewDataForMap = isStale && formPointAForMap && formPointBForMap ? {
-    pointA: formPointAForMap,
-    pointB: formPointBForMap
-  } : undefined;
-
 
   return (
     <div className="flex flex-1 h-full overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <InteractiveMap
-          pointA={formPointAForMap} // Current form values for marker A
-          pointB={formPointBForMap} // Current form values for marker B
-          analyzedData={analyzedDataForMap} // Last analyzed result
-          previewData={previewDataForMap} // Current form values if stale
+          pointA={formPointAForMap} 
+          pointB={formPointBForMap} 
+          analyzedData={analyzedDataForMap} 
+          isStale={isStale} // Pass isStale to map
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
