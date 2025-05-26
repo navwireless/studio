@@ -41,6 +41,21 @@ const defaultFormStateValues: PageAnalysisFormValues = {
   clearanceThreshold: '10',
 };
 
+function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6) {
+  if (!p1 || !p2) return false;
+  const p1Lat = Number(p1.lat);
+  const p1Lng = Number(p1.lng);
+  const p2Lat = Number(p2.lat);
+  const p2Lng = Number(p2.lng);
+
+  if (isNaN(p1Lat) || isNaN(p1Lng) || isNaN(p2Lat) || isNaN(p2Lng)) return false;
+
+  return (
+    p1Lat.toFixed(precision) === p2Lat.toFixed(precision) &&
+    p1Lng.toFixed(precision) === p2Lng.toFixed(precision)
+  );
+}
+
 
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
@@ -141,59 +156,43 @@ export default function Home() {
     }
   }, [analysisResult, isPanelOpen]);
 
+  // Stale check
   useEffect(() => {
     if (!analysisResult) {
       setIsStale(false);
       return;
     }
 
-    // Ensure all watched values are defined before attempting to parse
-    if (!watchedPointA?.lat || !watchedPointA?.lng || watchedPointA?.height === undefined ||
-        !watchedPointB?.lat || !watchedPointB?.lng || watchedPointB?.height === undefined ||
-        !watchedClearanceThreshold) {
-      // Potentially set stale if some inputs are missing after an analysis,
-      // or handle as an invalid state. For now, assume not stale if inputs are incomplete.
-      setIsStale(false); 
-      return;
-    }
+    const currentFormValues = getValues();
+    const formLatA = parseFloat(currentFormValues.pointA.lat);
+    const formLngA = parseFloat(currentFormValues.pointA.lng);
+    const formHeightA = currentFormValues.pointA.height;
+
+    const formLatB = parseFloat(currentFormValues.pointB.lat);
+    const formLngB = parseFloat(currentFormValues.pointB.lng);
+    const formHeightB = currentFormValues.pointB.height;
     
-    const formLatA = parseFloat(watchedPointA.lat);
-    const formLngA = parseFloat(watchedPointA.lng);
-    const formHeightA = watchedPointA.height; // Already a number
+    const formClearance = parseFloat(currentFormValues.clearanceThreshold);
 
-    const formLatB = parseFloat(watchedPointB.lat);
-    const formLngB = parseFloat(watchedPointB.lng);
-    const formHeightB = watchedPointB.height; // Already a number
+    const formPointAForCompare: PointCoordinates = { lat: formLatA, lng: formLngA };
+    const formPointBForCompare: PointCoordinates = { lat: formLatB, lng: formLngB };
 
-    const formClearance = parseFloat(watchedClearanceThreshold);
+    const analyzedPointA = analysisResult.pointA;
+    const analyzedPointB = analysisResult.pointB;
 
-    const safeCompareLatLng = (val1: number, val2: number | undefined, precision = 7) => {
-        if (isNaN(val1) || val2 === undefined || isNaN(val2)) return true; // Treat NaN or undefined as different
-        return val1.toFixed(precision) !== val2.toFixed(precision);
-    };
-    const safeCompareNumbers = (val1: number, val2: number | undefined) => {
-        if (isNaN(val1) || val2 === undefined || isNaN(val2)) return true;
-        return val1 !== val2;
-    };
+    const pointsAEqual = pointsEqual(formPointAForCompare, analyzedPointA);
+    const pointsBEqual = pointsEqual(formPointBForCompare, analyzedPointB);
 
-    const pointAChanged =
-      safeCompareLatLng(formLatA, analysisResult.pointA?.lat) ||
-      safeCompareLatLng(formLngA, analysisResult.pointA?.lng) ||
-      safeCompareNumbers(formHeightA, analysisResult.pointA?.towerHeight);
-
-    const pointBChanged =
-      safeCompareLatLng(formLatB, analysisResult.pointB?.lat) ||
-      safeCompareLatLng(formLngB, analysisResult.pointB?.lng) ||
-      safeCompareNumbers(formHeightB, analysisResult.pointB?.towerHeight);
-
-    const clearanceChanged = safeCompareNumbers(formClearance, analysisResult.clearanceThresholdUsed);
-
-    if (pointAChanged || pointBChanged || clearanceChanged) {
+    const heightAEqual = formHeightA === analyzedPointA?.towerHeight;
+    const heightBEqual = formHeightB === analyzedPointB?.towerHeight;
+    const clearanceEqual = formClearance === analysisResult.clearanceThresholdUsed;
+    
+    if (!pointsAEqual || !pointsBEqual || !heightAEqual || !heightBEqual || !clearanceEqual) {
       setIsStale(true);
     } else {
       setIsStale(false);
     }
-  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult]);
+  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, getValues]);
 
 
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
@@ -222,14 +221,20 @@ export default function Home() {
     losPossible: analysisResult.losPossible
   } : null;
 
+  const previewDataForMap = isStale && formPointAForMap && formPointBForMap ? {
+    pointA: formPointAForMap,
+    pointB: formPointBForMap
+  } : undefined;
+
 
   return (
     <div className="flex flex-1 h-full overflow-hidden">
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <InteractiveMap
-          formPointA={formPointAForMap}
-          formPointB={formPointBForMap}
-          analyzedData={analyzedDataForMap}
+          pointA={formPointAForMap} // Current form values for marker A
+          pointB={formPointBForMap} // Current form values for marker B
+          analyzedData={analyzedDataForMap} // Last analyzed result
+          previewData={previewDataForMap} // Current form values if stale
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}

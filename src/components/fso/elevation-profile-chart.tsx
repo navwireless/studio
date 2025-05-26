@@ -26,7 +26,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
   }
 
   const chartData = data.map(p => ({
-    distance: parseFloat((p.distance * 1000).toFixed(0)),
+    distance: parseFloat((p.distance * 1000).toFixed(0)), // Distance in meters for X-axis
     terrain: parseFloat(p.terrainElevation.toFixed(1)),
     losHeight: parseFloat(p.losHeight.toFixed(1)),
     clearance: parseFloat(p.clearance.toFixed(1)),
@@ -40,10 +40,9 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
   const yMinData = Math.min(...allElevations);
   const yMaxData = Math.max(...allElevations);
   
-  // Add padding, ensuring it's reasonable even if data range is small
-  const padding = Math.max(20, (yMaxData - yMinData) * 0.1); 
-  const yDomainMin = Math.floor(yMinData - padding);
-  const yDomainMax = Math.ceil(yMaxData + padding);
+  const yPadding = Math.max(20, (yMaxData - yMinData) * 0.15); // Increased padding slightly
+  const yDomainMin = Math.floor(yMinData - yPadding);
+  const yDomainMax = Math.ceil(yMaxData + yPadding * 1.5); // More padding at top for labels
 
 
   return (
@@ -55,7 +54,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             dataKey="distance"
             type="number"
             tick={{ fill: '#94a3b8', fontSize: 10 }}
-            tickFormatter={(value) => value.toFixed(0)}
+            tickFormatter={(value) => value.toFixed(0)} // Show distance in meters on X-axis
             unit="m"
             axisLine={false}
             tickLine={false}
@@ -81,7 +80,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
               fontSize: "10px",
               boxShadow: "0 1px 4px hsla(var(--shadow, 0 0% 0% / 0.1))"
             }}
-            labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`}
+            labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`} // Tooltip label in km
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 const pointData = payload[0].payload as typeof chartData[0];
@@ -121,6 +120,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             dot={false}
             activeDot={{ r: 5, strokeWidth: 1, fill: '#22d3ee', stroke: 'hsl(var(--background))' }}
           />
+          {/* Tower Pole for Site A */}
           {pointAData && (
             <ReferenceLine
               x={pointAData.distance}
@@ -134,6 +134,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
               ifOverflow="extendDomain"
             />
           )}
+           {/* Tower Pole for Site B */}
           {pointBData && (
             <ReferenceLine
               x={pointBData.distance}
@@ -148,11 +149,12 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             />
           )}
 
+          {/* Markers on LOS Path */}
           {pointAData && (
             <ReferenceDot
               x={pointAData.distance}
               y={pointAData.losHeight}
-              r={4}
+              r={4} // Increased size slightly
               fill={'#22d3ee'}
               stroke="hsl(var(--background))"
               strokeWidth={1.5}
@@ -165,7 +167,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             <ReferenceDot
               x={pointBData.distance}
               y={pointBData.losHeight}
-              r={4}
+              r={4} // Increased size slightly
               fill={'#22d3ee'}
               stroke="hsl(var(--background))"
               strokeWidth={1.5}

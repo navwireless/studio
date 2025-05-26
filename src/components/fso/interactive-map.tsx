@@ -10,14 +10,19 @@ import { Skeleton } from '../ui/skeleton';
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORTANT: Manage API keys securely
 
 interface InteractiveMapProps {
-  formPointA?: (PointCoordinates & { name?: string }); // Current form/marker position for A
-  formPointB?: (PointCoordinates & { name?: string }); // Current form/marker position for B
+  pointA?: (PointCoordinates & { name?: string }); // Current form/marker position for A
+  pointB?: (PointCoordinates & { name?: string }); // Current form/marker position for B
 
   analyzedData?: { // Data from the last successful analysis
     pointA: PointCoordinates;
     pointB: PointCoordinates;
     losPossible: boolean;
   } | null;
+
+  previewData?: { // Current form/marker positions if different from analyzedData
+    pointA: PointCoordinates;
+    pointB: PointCoordinates;
+  };
 
   onMarkerDragEndA?: (coords: PointCoordinates) => void;
   onMarkerDragEndB?: (coords: PointCoordinates) => void;
@@ -32,9 +37,10 @@ const defaultCenter = {
 const defaultZoom = 15;
 
 export default function InteractiveMap({
-  formPointA,
-  formPointB,
+  pointA: formPointA, // Renamed for clarity, this is the current form/marker position
+  pointB: formPointB, // Renamed for clarity, this is the current form/marker position
   analyzedData,
+  previewData,
   onMarkerDragEndA,
   onMarkerDragEndB,
   mapContainerClassName = "w-full h-full"
@@ -109,25 +115,18 @@ export default function InteractiveMap({
       draggable: false,
       editable: false,
       visible: true,
-      zIndex: 1,
+      zIndex: 1, // Analyzed line is primary
     };
   }
 
-  // Logic for preview LOS line
-  const showPreviewLine =
-    analyzedData &&
-    formPointA && formPointB &&
-    (formPointA.lat.toFixed(7) !== analyzedData.pointA.lat.toFixed(7) ||
-     formPointA.lng.toFixed(7) !== analyzedData.pointA.lng.toFixed(7) ||
-     formPointB.lat.toFixed(7) !== analyzedData.pointB.lat.toFixed(7) ||
-     formPointB.lng.toFixed(7) !== analyzedData.pointB.lng.toFixed(7));
-
+  // Logic for preview LOS line (dashed)
   let previewPathCoordinates: google.maps.LatLngLiteral[] = [];
   let previewPolylineOptions = {};
-  if (showPreviewLine && formPointA && formPointB) {
+
+  if (previewData && previewData.pointA && previewData.pointB) {
     previewPathCoordinates = [
-      { lat: formPointA.lat, lng: formPointA.lng },
-      { lat: formPointB.lat, lng: formPointB.lng },
+      { lat: previewData.pointA.lat, lng: previewData.pointA.lng },
+      { lat: previewData.pointB.lat, lng: previewData.pointB.lng },
     ];
     previewPolylineOptions = {
       strokeColor: "#A9A9A9", // DarkGray for preview
@@ -137,16 +136,16 @@ export default function InteractiveMap({
       draggable: false,
       editable: false,
       visible: true,
-      zIndex: 0, // Lower zIndex than analyzed line
-      icons: [{
+      zIndex: 0, // Preview line behind analyzed if they overlap due to no change in points but other stale factors
+      icons: [{ // Dashed line effect for Google Maps Polyline
         icon: {
-          path: 'M 0,-1 0,1',
+          path: 'M 0,-1 0,1', // Defines a small vertical line segment
           strokeOpacity: 1,
-          scale: 3,
-          strokeWeight: 2,
+          scale: 3, // Adjust scale for dash length
+          strokeWeight: 2, // Should match polyline's strokeWeight
         },
         offset: '0',
-        repeat: '15px'
+        repeat: '15px' // Adjust repeat for dash spacing
       }],
     };
   }

@@ -167,10 +167,8 @@ export default function BottomPanel({
 
   if (analysisResult && analysisResult.minClearance !== null) {
     actualMinClearance = analysisResult.minClearance;
-    isClearBasedOnAnalysis = actualMinClearance >= minRequiredClearance; // Compare with threshold used for *this* analysis
-    // If the form's threshold has changed, this might differ from isStale state, which is fine.
-    // Deficit is always based on the current result and the threshold *used for that result*.
-    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(analysisResult.clearanceThresholdUsed - actualMinClearance);
+    isClearBasedOnAnalysis = actualMinClearance >= (analysisResult.clearanceThresholdUsed || 0);
+    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil((analysisResult.clearanceThresholdUsed || 0) - actualMinClearance);
   }
 
 
@@ -179,7 +177,7 @@ export default function BottomPanel({
       onSubmit={handleSubmit(processSubmit)} 
       className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl"
     >
-      <div className="flex items-center justify-center py-1 relative z-10"> {/* Ensure toggle is on top */}
+      <div className="flex items-center justify-center py-1 relative z-10"> 
         <button
           type="button"
           onClick={onToggle}
@@ -189,23 +187,21 @@ export default function BottomPanel({
           <ChevronDown 
             className={cn(
               "h-4 w-4 transition-transform duration-300",
-              !isOpen && "rotate-180" // Flip when closed
+              !isOpen && "rotate-180" 
             )} 
           />
           {isOpen ? "Hide Panel" : "Show Panel"}
         </button>
       </div>
 
-      {/* Animated content wrapper */}
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out", 
           isOpen ? "h-[45vh]" : "h-0" 
         )}
       >
-        <div className="p-2 md:p-3 h-full overflow-y-auto"> {/* Inner scrollable content */}
+        <div className="p-2 md:p-3 h-full overflow-y-auto"> 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-            {/* Column 1: Site A */}
             <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointA" 
@@ -218,7 +214,6 @@ export default function BottomPanel({
               />
             </div>
 
-            {/* Column 2: Analysis Controls, Results, Chart */}
             <div className="flex flex-col h-full overflow-hidden space-y-1">
               {!analysisResult && !isActionPending && ( 
                 <div className="py-1 flex justify-center">
@@ -272,7 +267,7 @@ export default function BottomPanel({
                       </div>
                     </div>
                   </div>
-                  {!isStale && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
+                  {analysisResult && !isStale && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
                     <div className="text-center text-rose-300 text-xs py-0.5"> 
                       Add&nbsp;
                       <span className="font-semibold">{deficit} m</span>
@@ -282,7 +277,7 @@ export default function BottomPanel({
                 </>
               )}
 
-              <div className="flex-1 min-h-0 bg-card/70 rounded-md p-1">
+              <div className={cn("flex-1 min-h-0 bg-card/70 rounded-md p-1", isStale && "opacity-50 pointer-events-none")}>
                 {analysisResult ? (
                   <ElevationProfileChart
                     data={analysisResult.profile}
