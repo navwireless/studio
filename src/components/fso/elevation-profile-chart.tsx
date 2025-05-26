@@ -3,11 +3,11 @@
 
 import type { LOSPoint } from '@/types';
 import {
-  ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot
+  ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot, ReferenceLine
 } from 'recharts';
 
 interface ElevationProfileChartProps {
-  data: LOSPoint[]; 
+  data: LOSPoint[];
   pointAName?: string;
   pointBName?: string;
 }
@@ -24,19 +24,19 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
   }
 
   const chartData = data.map(p => ({
-    distance: parseFloat((p.distance * 1000).toFixed(0)), 
+    distance: parseFloat((p.distance * 1000).toFixed(0)),
     terrain: parseFloat(p.terrainElevation.toFixed(1)),
     losHeight: parseFloat(p.losHeight.toFixed(1)),
     clearance: parseFloat(p.clearance.toFixed(1)),
   }));
-  
+
   const pointAData = chartData[0];
   const pointBData = chartData[chartData.length - 1];
-  
+
   const yMin = Math.min(...chartData.map(p => Math.min(p.terrain, p.losHeight)));
   const yMax = Math.max(...chartData.map(p => Math.max(p.terrain, p.losHeight)));
-  const yDomainMin = Math.floor(yMin / 10) * 10 - 10; // Ensure some padding
-  const yDomainMax = Math.ceil(yMax / 10) * 10 + 10;  // Ensure some padding
+  const yDomainMin = Math.floor(yMin / 10) * 10 - 20; // Ensure some padding
+  const yDomainMax = Math.ceil(yMax / 10) * 10 + 20;  // Ensure some padding
 
 
   return (
@@ -52,7 +52,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
           axisLine={false}
           tickLine={false}
           padding={{ left: 10, right: 10 }}
-          interval="preserveStartEnd" 
+          interval="preserveStartEnd"
         />
         <YAxis
           domain={[yDomainMin, yDomainMax]}
@@ -61,7 +61,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
           unit="m"
           axisLine={false}
           tickLine={false}
-          width={40} 
+          width={40}
         />
         <Tooltip
           cursor={{ stroke: 'hsl(var(--accent))', strokeWidth: 1, strokeDasharray: '3 3' }}
@@ -69,8 +69,8 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             backgroundColor: "hsl(var(--popover))",
             borderColor: "hsl(var(--border))",
             borderRadius: "var(--radius)",
-            padding: "4px 8px", 
-            fontSize: "10px", 
+            padding: "4px 8px",
+            fontSize: "10px",
             boxShadow: "0 1px 4px hsla(var(--shadow, 0 0% 0% / 0.1))"
           }}
           labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`}
@@ -98,7 +98,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
         <Area
           type="monotone"
           dataKey="terrain"
-          fill="rgba(99, 102, 241, 0.35)" 
+          fill="rgba(99, 102, 241, 0.35)"
           stroke="rgba(99, 102, 241, 0.6)"
           strokeWidth={1}
           name="Terrain"
@@ -107,10 +107,10 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
         <Line
           type="monotone"
           dataKey="losHeight"
-          stroke="#22d3ee"             
-          strokeWidth={2} // Explicitly set to 2 as per prompt
+          stroke="#22d3ee"
+          strokeWidth={2}
           name="LOS Path"
-          dot={false} 
+          dot={false}
           activeDot={{ r: 5, strokeWidth: 1, fill: '#22d3ee', stroke: 'hsl(var(--background))' }}
         />
         {/* Tower Pole for Site A */}
@@ -146,7 +146,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
         {pointAData && (
           <ReferenceDot
             x={pointAData.distance}
-            y={pointAData.losHeight} 
+            y={pointAData.losHeight}
             r={4}
             fill={'#22d3ee'}
             stroke="hsl(var(--background))"
@@ -160,7 +160,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
         {pointBData && (
           <ReferenceDot
             x={pointBData.distance}
-            y={pointBData.losHeight} 
+            y={pointBData.losHeight}
             r={4}
             fill={'#22d3ee'}
             stroke="hsl(var(--background))"
@@ -174,3 +174,4 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
     </ResponsiveContainer>
   );
 }
+
