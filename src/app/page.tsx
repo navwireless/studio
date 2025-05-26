@@ -79,10 +79,10 @@ export default function Home() {
   const processSubmit = (data: PageAnalysisFormValues) => {
     if (isActionPending) return;
 
-    setAnalysisResult(null); // Clear previous analysis visuals immediately
+    setAnalysisResult(null); 
     setClientError(null);
     setFormErrors(undefined);
-    setIsStale(false); // Reset stale state as new analysis is triggered
+    setIsStale(false); 
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
@@ -106,12 +106,10 @@ export default function Home() {
 
 
   useEffect(() => {
-    // This effect handles updates from the server action
     if (!serverState) return;
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      // Avoid showing "No analysis performed yet" as an error if we are about to auto-analyze or have results.
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending);
 
       if (!suppressInitialMessage) {
@@ -123,18 +121,16 @@ export default function Home() {
       } else if (!suppressInitialMessage) { 
         setFormErrors(undefined); 
       }
-      // Do not setAnalysisResult(null) here as processSubmit already handles it.
-      // If serverState is an error, analysisResult should already be null or become null.
     } else if (!('error' in serverState)) { 
       const resultDataFromServer = serverState as AnalysisResult;
-      const currentFormValues = getValues(); // Get fresh form values at the time of processing
+      const currentFormValues = getValues(); 
 
       const newAnalysisData = {
         ...resultDataFromServer,
         pointA: {
           ...(resultDataFromServer.pointA || {} as any),
           name: currentFormValues.pointA.name,
-          lat: parseFloat(currentFormValues.pointA.lat), // Ensure these are from current form
+          lat: parseFloat(currentFormValues.pointA.lat), 
           lng: parseFloat(currentFormValues.pointA.lng),
           towerHeight: currentFormValues.pointA.height,
         },
@@ -150,17 +146,16 @@ export default function Home() {
       setAnalysisResult(newAnalysisData);
       setClientError(null);
       setFormErrors(undefined);
-      setIsStale(false); // Result is fresh
+      setIsStale(false); 
 
       if (newAnalysisData && !hasFirstAnalysisCompleted) {
         setIsPanelOpen(true);
         setHasFirstAnalysisCompleted(true);
       }
     }
-  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen]); // Dependencies for processing server state
+  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen, isActionPending, analysisResult]); 
 
 
-  // Stale check: Compare current form values with the last analysisResult
   useEffect(() => {
     if (!analysisResult) {
       setIsStale(false);
@@ -198,22 +193,27 @@ export default function Home() {
     }
   }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, getValues]);
 
+  const handleMarkerDragStart = useCallback(() => {
+    setAnalysisResult(null);
+    setClientError(null);
+    // setIsStale(true); // Optionally set stale immediately, or let the useEffect handle it
+  }, []);
+
 
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
     setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-    handleSubmit(processSubmit)(); // Auto-trigger analysis
+    handleSubmit(processSubmit)();
   }, [setValue, handleSubmit]);
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
     setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-    handleSubmit(processSubmit)(); // Auto-trigger analysis
+    handleSubmit(processSubmit)();
   }, [setValue, handleSubmit]);
 
   const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
 
-  // Prepare data for InteractiveMap based on form state
   const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
     ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name }
     : undefined;
@@ -221,7 +221,6 @@ export default function Home() {
     ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name }
     : undefined;
 
-  // Transform analysisResult for InteractiveMap's analyzedData prop
   const analyzedDataForMap = analysisResult ? {
     pointA: { lat: analysisResult.pointA.lat, lng: analysisResult.pointA.lng },
     pointB: { lat: analysisResult.pointB.lat, lng: analysisResult.pointB.lng },
@@ -236,9 +235,12 @@ export default function Home() {
           pointA={formPointAForMap} 
           pointB={formPointBForMap} 
           analyzedData={analyzedDataForMap} 
-          isStale={isStale} // Pass isStale to map
+          isStale={isStale} // Kept for potential other uses, though not for line drawing in map directly
+          onMarkerDragStartA={handleMarkerDragStart}
+          onMarkerDragStartB={handleMarkerDragStart}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
+          isActionPending={isActionPending} // Pass this for dimming preview line
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 

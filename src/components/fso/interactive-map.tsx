@@ -12,7 +12,7 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORT
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { name?: string }); // Current form/marker position for A
   pointB?: (PointCoordinates & { name?: string }); // Current form/marker position for B
-  isStale?: boolean; // Is current form state different from analyzedData?
+  isActionPending?: boolean; // To dim preview line during analysis
 
   analyzedData?: { // Data from the last successful analysis
     pointA: PointCoordinates;
@@ -20,9 +20,12 @@ interface InteractiveMapProps {
     losPossible: boolean;
   } | null;
 
+  onMarkerDragStartA?: () => void;
+  onMarkerDragStartB?: () => void;
   onMarkerDragEndA?: (coords: PointCoordinates) => void;
   onMarkerDragEndB?: (coords: PointCoordinates) => void;
   mapContainerClassName?: string;
+  isStale?: boolean; // Kept for potential future use, but not directly for line drawing now
 }
 
 const defaultCenter = {
@@ -36,10 +39,13 @@ export default function InteractiveMap({
   pointA: formPointA, 
   pointB: formPointB, 
   analyzedData,
-  isStale,
+  onMarkerDragStartA,
+  onMarkerDragStartB,
   onMarkerDragEndA,
   onMarkerDragEndB,
-  mapContainerClassName = "w-full h-full"
+  isActionPending,
+  mapContainerClassName = "w-full h-full",
+  isStale 
 }: InteractiveMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -94,7 +100,7 @@ export default function InteractiveMap({
     }
   };
 
-  // Logic for analyzed LOS line
+  // Analyzed LOS line
   let analyzedPathCoordinates: google.maps.LatLngLiteral[] = [];
   let analyzedPolylineOptions = {};
   if (analyzedData && analyzedData.pointA && analyzedData.pointB) {
@@ -102,7 +108,7 @@ export default function InteractiveMap({
       { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
       { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng },
     ];
-    const strokeColor = analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))"; // Cyan or Red
+    const strokeColor = analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))"; 
     analyzedPolylineOptions = {
       strokeColor: strokeColor,
       strokeOpacity: 0.9,
@@ -115,37 +121,23 @@ export default function InteractiveMap({
     };
   }
 
-  // Logic for preview LOS line (dashed), shown if form is stale OR no analysis yet
-  let previewPathCoordinates: google.maps.LatLngLiteral[] = [];
-  let previewPolylineOptions = {};
-  const currentFormPathValid = formPointA && formPointB;
-
-  const shouldShowPreview = (isStale && analyzedData) || (!analyzedData && currentFormPathValid);
-
-  if (shouldShowPreview && currentFormPathValid) {
-    previewPathCoordinates = [
-      { lat: formPointA.lat, lng: formPointA.lng },
-      { lat: formPointB.lat, lng: formPointB.lng },
+  // Real-time Form Preview Line (always shown based on current formPointA and formPointB)
+  let formPreviewPathCoordinates: google.maps.LatLngLiteral[] = [];
+  let formPreviewPolylineOptions = {};
+  if (formPointA && formPointB) {
+    formPreviewPathCoordinates = [
+        { lat: formPointA.lat, lng: formPointA.lng },
+        { lat: formPointB.lat, lng: formPointB.lng },
     ];
-    previewPolylineOptions = {
-      strokeColor: "#A9A9A9", // DarkGray for preview
-      strokeOpacity: 0.7,
-      strokeWeight: 2,
-      clickable: false,
-      draggable: false,
-      editable: false,
-      visible: true,
-      zIndex: 0, 
-      icons: [{ 
-        icon: {
-          path: 'M 0,-1 0,1', 
-          strokeOpacity: 1,
-          scale: 3, 
-          strokeWeight: 2, 
-        },
-        offset: '0',
-        repeat: '15px' 
-      }],
+    formPreviewPolylineOptions = {
+        strokeColor: "#6b7280", // gray-500 Tailwind
+        strokeOpacity: isActionPending ? 0.3 : 0.6,
+        strokeWeight: 2,
+        clickable: false,
+        draggable: false,
+        editable: false,
+        visible: true,
+        zIndex: 0, // Ensure it's below the analyzed line if they overlap
     };
   }
 
@@ -195,6 +187,7 @@ export default function InteractiveMap({
                 position={{ lat: formPointA.lat, lng: formPointA.lng }}
                 label={{ text: formPointA.name || "A", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndA}
+                onDragStart={onMarkerDragStartA}
                 onDragEnd={(e) => handleMarkerDragEnd(e, 'A')}
               />
             )}
@@ -203,23 +196,21 @@ export default function InteractiveMap({
                 position={{ lat: formPointB.lat, lng: formPointB.lng }}
                 label={{ text: formPointB.name || "B", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndB}
+                onDragStart={onMarkerDragStartB}
                 onDragEnd={(e) => handleMarkerDragEnd(e, 'B')}
               />
             )}
+
+            {/* Real-time Form Preview Line */}
+            {formPreviewPathCoordinates.length > 0 && (
+                <Polyline path={formPreviewPathCoordinates} options={formPreviewPolylineOptions} />
+            )}
+
+            {/* Analyzed Line - Renders on top if positions are same */}
             {analyzedPathCoordinates.length > 0 && (
               <Polyline path={analyzedPathCoordinates} options={analyzedPolylineOptions} />
             )}
-            {previewPathCoordinates.length > 0 && (
-              // Do not render preview if it's identical to analyzed path (i.e., not stale)
-              !(!isStale && analyzedPathCoordinates.length > 0 && 
-                previewPathCoordinates[0]?.lat === analyzedPathCoordinates[0]?.lat &&
-                previewPathCoordinates[0]?.lng === analyzedPathCoordinates[0]?.lng &&
-                previewPathCoordinates[1]?.lat === analyzedPathCoordinates[1]?.lat &&
-                previewPathCoordinates[1]?.lng === analyzedPathCoordinates[1]?.lng
-              ) && (
-                 <Polyline path={previewPathCoordinates} options={previewPolylineOptions} />
-              )
-            )}
+            
           </GoogleMap>
         ) : (
            <Skeleton className="w-full h-full rounded-none" />
