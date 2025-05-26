@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Controller, type Control, type UseFormRegister, type UseFormHandleSubmit, type UseFormGetValues, type UseFormSetValue, type FieldErrors } from 'react-hook-form';
+import { type Control, type UseFormRegister, type UseFormHandleSubmit, type UseFormGetValues, type UseFormSetValue, type FieldErrors, Controller } from 'react-hook-form';
 import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import ElevationProfileChart from './elevation-profile-chart';
-import ResultsDisplay from './results-display';
 import { ChevronDown, ChevronUp, Target, Settings, Zap, Loader2 } from 'lucide-react';
 
 
@@ -18,7 +17,6 @@ interface BottomPanelProps {
   isVisible: boolean;
   onToggle: () => void;
   
-  // Form related props
   control: Control<AnalysisFormValues>;
   register: UseFormRegister<AnalysisFormValues>;
   handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
@@ -39,13 +37,13 @@ const SiteInputGroup: React.FC<{
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
 }> = ({ id, title, control, register, clientFormErrors, serverFormErrors, getCombinedError }) => (
-  <Card className="bg-card/70 border-border shadow-md h-full flex flex-col overflow-hidden">
+  <Card className="bg-card/70 border-border shadow-md h-full flex flex-col">
     <CardHeader className="p-2">
       <CardTitle className="text-sm flex items-center">
         <Target className="mr-2 h-4 w-4 text-primary" /> {title}
       </CardTitle>
     </CardHeader>
-    <CardContent className="p-2 space-y-1.5 text-xs flex-grow overflow-y-auto">
+    <CardContent className="p-2 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1">
       <div>
         <Label htmlFor={`${id}.name`} className="text-xs">Name</Label>
         <Input 
@@ -102,6 +100,44 @@ const SiteInputGroup: React.FC<{
   </Card>
 );
 
+// Renamed from AnalysisSettingsCard and props adapted
+interface AnalysisSettingsProps {
+  register: UseFormRegister<AnalysisFormValues>;
+  clientFormErrors: FieldErrors<AnalysisFormValues>; // Assuming clientFormErrors is passed as 'errors'
+  serverFormErrors?: Record<string, string[] | undefined>;
+  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+  isActionPending: boolean;
+}
+
+const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ 
+  register, clientFormErrors, serverFormErrors, getCombinedError, isActionPending 
+}) => (
+  <div className="bg-card/70 border-border shadow-md mx-auto max-w-sm w-full my-auto p-3 rounded-md flex flex-col items-center justify-center h-full">
+    <CardTitle className="text-sm flex items-center mb-2 text-primary">
+      <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
+    </CardTitle>
+    <div className="w-full space-y-2">
+      <div>
+        <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
+        <Input 
+          id="clearanceThreshold" 
+          type="number" 
+          step="any" 
+          {...register('clearanceThreshold')} 
+          placeholder="e.g., 10" 
+          className="mt-0.5 bg-input/70 h-8 text-xs w-full" 
+        />
+        {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) && 
+          <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
+      </div>
+      <Button type="submit" disabled={isActionPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs">
+        {isActionPending ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <Zap className="mr-1.5 h-3 w-3" />}
+        Analyze LOS
+      </Button>
+    </div>
+  </div>
+);
+
 
 export default function BottomPanel({ 
   analysisResult, 
@@ -129,7 +165,7 @@ export default function BottomPanel({
   const pointBName = getValues('pointB.name') || (analysisResult?.pointB?.name || "Site B");
 
   return (
-    <form onSubmit={handleSubmit(processSubmit)} className={`fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl transition-all duration-300 ease-in-out ${panelHeightClass} overflow-hidden`}>
+    <form onSubmit={handleSubmit(processSubmit)} className={`fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl transition-all duration-300 ease-in-out ${panelHeightClass}`}>
       <Button
         type="button"
         variant="ghost"
@@ -142,9 +178,9 @@ export default function BottomPanel({
         {isVisible ? 'Hide Panel' : 'Show Panel'}
       </Button>
 
-      <div className={`pt-10 md:pt-8 p-2 md:p-2 transition-opacity duration-200 ease-in-out ${contentVisibilityClass} h-full`}>
+      <div className={`pt-10 md:pt-8 p-2 md:p-3 transition-opacity duration-200 ease-in-out ${contentVisibilityClass} h-full`}>
         {isVisible && (
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full max-h-[calc(100%-2.5rem)]">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full max-h-[calc(100%-2.5rem)]"> {/* Ensure gap-4 */}
             {/* Column 1: Site A Inputs */}
             <div className="h-full overflow-hidden">
               <SiteInputGroup 
@@ -158,51 +194,62 @@ export default function BottomPanel({
               />
             </div>
 
-            {/* Column 2: Analysis Settings or Results/Chart */}
-            <div className="h-full flex flex-col space-y-2 overflow-hidden">
-              {analysisResult ? (
-                <>
-                  <ResultsDisplay result={analysisResult} />
-                  <div className="flex-grow min-h-0 bg-muted/20 rounded-md">
-                     <ElevationProfileChart
-                        profile={analysisResult.profile}
-                        pointAName={pointAName}
-                        pointBName={pointBName}
-                      />
+            {/* Column 2: Analysis Stats, Chart / Settings */}
+            <div className="flex flex-col h-full overflow-hidden">
+              {analysisResult && (
+                <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md mb-1">
+                  <div className={`font-semibold px-2 py-0.5 rounded-full text-xs mb-1 ${analysisResult.losPossible ? 'bg-los-success text-los-success-foreground' : 'bg-los-failure text-los-failure-foreground'}`}>
+                    {analysisResult.losPossible ? 'LOS POSSIBLE' : 'LOS OBSTRUCTED'}
                   </div>
-                </>
-              ) : (
-                <Card className="bg-card/70 border-border shadow-md">
-                  <CardHeader className="p-1.5">
-                    <CardTitle className="text-xs flex items-center">
-                      <Settings className="mr-1.5 h-3 w-3 text-primary" /> Analysis Settings
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-1.5 space-y-1">
-                    <div>
-                      <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
-                      <Input 
-                        id="clearanceThreshold" 
-                        type="number" 
-                        step="any" 
-                        {...register('clearanceThreshold')} 
-                        placeholder="e.g., 10" 
-                        className="mt-0.5 bg-input/70 h-8 text-xs" 
-                      />
-                      {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) && 
-                        <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
+                  <div className="flex justify-evenly w-full">
+                    <div className="flex flex-col items-center px-1">
+                      <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Aerial Distance</span>
+                      <span className="font-semibold text-foreground">
+                        {analysisResult.distanceKm < 1
+                          ? `${(analysisResult.distanceKm * 1000).toFixed(1)} m`
+                          : `${analysisResult.distanceKm.toFixed(2)} km`}
+                      </span>
                     </div>
-                    <Button type="submit" disabled={isActionPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs mt-1">
-                      {isActionPending ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : <Zap className="mr-1.5 h-3 w-3" />}
-                      Analyze LOS
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <div className="flex flex-col items-center px-1">
+                      <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Min. Clearance</span>
+                      <span className={`font-semibold text-foreground ${
+                        analysisResult.minClearance !== null && analysisResult.minClearance < analysisResult.clearanceThresholdUsed
+                          ? 'text-los-failure'
+                          : 'text-los-success'
+                      }`}>
+                        {analysisResult.minClearance !== null ? `${analysisResult.minClearance.toFixed(1)} m` : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                  {analysisResult.additionalHeightNeeded !== null && analysisResult.additionalHeightNeeded > 0 && (
+                    <p className="text-[0.6rem] text-destructive mt-0.5">
+                      Add. Height Needed: {analysisResult.additionalHeightNeeded.toFixed(1)}m (total)
+                    </p>
+                  )}
+                </div>
               )}
+
+              <div className="flex-1 min-h-0 bg-card/70 rounded-b-md"> {/* Added min-h-0 for flex child */}
+                {analysisResult ? (
+                  <ElevationProfileChart
+                    data={analysisResult.profile}
+                    pointAName={pointAName}
+                    pointBName={pointBName}
+                  />
+                ) : (
+                  <AnalysisSettings
+                    register={register}
+                    clientFormErrors={clientFormErrors} // Passed as errors
+                    serverFormErrors={serverFormErrors}
+                    getCombinedError={getCombinedError}
+                    isActionPending={isActionPending}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Column 3: Site B Inputs */}
-            <div className="h-full overflow-hidden">
+             <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointB" 
                 title={pointBName} 

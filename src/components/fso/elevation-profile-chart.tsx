@@ -5,29 +5,15 @@ import type { LOSPoint } from '@/types';
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceDot
 } from 'recharts';
-import type { ChartConfig } from "@/components/ui/chart"; 
 
 interface ElevationProfileChartProps {
-  profile: LOSPoint[];
+  data: LOSPoint[]; 
   pointAName?: string;
   pointBName?: string;
 }
 
-const chartConfig = {
-  terrain: { // Renamed from terrainElevation to terrain
-    label: "Terrain (m)",
-    color: "hsl(var(--muted))", 
-    strokeColor: "hsl(var(--secondary))" 
-  },
-  losHeight: {
-    label: "LOS Path (m)",
-    color: "hsl(var(--primary))", 
-  },
-} satisfies ChartConfig;
-
-
-export default function ElevationProfileChart({ profile, pointAName = "Site A", pointBName = "Site B" }: ElevationProfileChartProps) {
-  if (!profile || profile.length === 0) {
+export default function ElevationProfileChart({ data, pointAName = "Site A", pointBName = "Site B" }: ElevationProfileChartProps) {
+  if (!data || data.length === 0) {
     return (
         <div className="h-full flex items-center justify-center p-2 bg-muted/30 rounded-md">
           <p className="text-muted-foreground text-xs text-center">
@@ -37,39 +23,39 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
     );
   }
 
-  // Data transformation for chart
-  const chartData = profile.map(p => ({
-    distance: parseFloat((p.distance * 1000).toFixed(0)), // distance in meters, no decimals for axis
-    terrain: parseFloat(p.terrainElevation.toFixed(1)), // Mapped to 'terrain'
+  const chartData = data.map(p => ({
+    distance: parseFloat((p.distance * 1000).toFixed(0)), 
+    terrain: parseFloat(p.terrainElevation.toFixed(1)),
     losHeight: parseFloat(p.losHeight.toFixed(1)),
-    clearance: parseFloat(p.clearance.toFixed(1)), // Keep for tooltip
+    clearance: parseFloat(p.clearance.toFixed(1)),
   }));
   
   const pointAData = chartData[0];
   const pointBData = chartData[chartData.length - 1];
   
+  const yDomainMin = Math.min(...chartData.map(p => p.terrain), ...chartData.map(p => p.losHeight)) - 10;
+  const yDomainMax = Math.max(...chartData.map(p => p.terrain), ...chartData.map(p => p.losHeight)) + 10;
+
   return (
-    <ResponsiveContainer width="100%" height={250}>
-      <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height="100%">
+      <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}> {/* Adjusted margins slightly */}
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.2}/>
         <XAxis
           dataKey="distance"
           type="number"
-          stroke="hsl(var(--muted-foreground))"
-          tickFormatter={(value) => value.toFixed(0)} // Show distance in meters
-          unit="m" // Add unit to axis
-          fontSize={9} 
+          tick={{ fill: '#94a3b8', fontSize: 10 }}
+          tickFormatter={(value) => value.toFixed(0)}
+          unit="m"
           axisLine={false}
           tickLine={false}
           padding={{ left: 10, right: 10 }}
           interval="preserveStartEnd" 
         />
         <YAxis
-          stroke="hsl(var(--muted-foreground))"
-          domain={['dataMin - 10', 'dataMax + 10']}
+          domain={[yDomainMin, yDomainMax]}
+          tick={{ fill: '#94a3b8', fontSize: 10 }}
           tickFormatter={(value) => `${Math.round(value)}`}
-          unit="m" // Add unit to axis
-          fontSize={9} 
+          unit="m"
           axisLine={false}
           tickLine={false}
           width={40} 
@@ -84,21 +70,21 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
             fontSize: "10px", 
             boxShadow: "0 1px 4px hsla(var(--shadow, 0 0% 0% / 0.1))"
           }}
-          labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`} // Show label in km
-           content={({ active, payload, label }) => { // label here is the distance in meters
+          labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`}
+           content={({ active, payload, label }) => {
             if (active && payload && payload.length) {
-              const data = payload[0].payload as typeof chartData[0];
+              const pointData = payload[0].payload as typeof chartData[0];
               return (
                 <div className="p-1.5 bg-popover border border-border rounded-md shadow-lg text-xs">
-                  <p className="text-muted-foreground mb-0.5">Dist: {(data.distance / 1000).toFixed(2)} km</p>
-                  <p style={{ color: chartConfig.terrain.color }} className="font-medium">
-                    Terrain: {data.terrain.toFixed(1)} m
+                  <p className="text-muted-foreground mb-0.5">Dist: {(pointData.distance / 1000).toFixed(2)} km</p>
+                  <p style={{ color: 'rgba(99, 102, 241, 1)' }} className="font-medium">
+                    Terrain: {pointData.terrain.toFixed(1)} m
                   </p>
-                  <p style={{ color: chartConfig.losHeight.color }} className="font-semibold">
-                    LOS Path: {data.losHeight.toFixed(1)} m
+                  <p style={{ color: '#22d3ee' }} className="font-semibold">
+                    LOS Path: {pointData.losHeight.toFixed(1)} m
                   </p>
-                   <p className="font-medium" style={{color: data.clearance >= (profile[0]?.clearance !== undefined ? (analysisResult?.clearanceThresholdUsed ?? 0) : 0) ? 'hsl(var(--los-success-text))' : 'hsl(var(--los-failure-text))'}}>
-                    Clearance: {data.clearance.toFixed(1)} m
+                   <p className="font-medium" style={{color: pointData.clearance >= 0 ? 'hsl(var(--los-success-text))' : 'hsl(var(--los-failure-text))'}}>
+                    Clearance: {pointData.clearance.toFixed(1)} m
                   </p>
                 </div>
               );
@@ -109,27 +95,27 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
         <Area
           type="monotone"
           dataKey="terrain"
-          fill={chartConfig.terrain.color}
-          fillOpacity={0.3} 
-          strokeWidth={0} 
-          name={chartConfig.terrain.label}
+          fill="rgba(99, 102, 241, 0.35)"   // indigo-500 @ 35 %
+          stroke="rgba(99, 102, 241, 0.6)" // indigo-500 @ 60%
+          strokeWidth={1}
+          name="Terrain"
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="losHeight"
-          stroke={chartConfig.losHeight.color}
-          strokeWidth={2} 
-          name={chartConfig.losHeight.label}
+          stroke="#22d3ee"                  // cyan-400
+          strokeWidth={2}
+          name="LOS Path"
           dot={false} 
-          activeDot={{ r: 5, strokeWidth: 1, fill: chartConfig.losHeight.color, stroke: 'hsl(var(--background))' }}
+          activeDot={{ r: 5, strokeWidth: 1, fill: '#22d3ee', stroke: 'hsl(var(--background))' }}
         />
         {pointAData && (
           <ReferenceDot
             x={pointAData.distance}
             y={pointAData.losHeight} 
             r={4}
-            fill={chartConfig.losHeight.color}
+            fill={'#22d3ee'}
             stroke="hsl(var(--background))"
             strokeWidth={1.5}
             isFront={true}
@@ -142,7 +128,7 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
             x={pointBData.distance}
             y={pointBData.losHeight} 
             r={4}
-            fill={chartConfig.losHeight.color}
+            fill={'#22d3ee'}
             stroke="hsl(var(--background))"
             strokeWidth={1.5}
             isFront={true}
@@ -154,10 +140,3 @@ export default function ElevationProfileChart({ profile, pointAName = "Site A", 
     </ResponsiveContainer>
   );
 }
-
-// Helper to access analysisResult (which isn't directly passed here)
-// This is a bit of a hack. Ideally, clearanceThresholdUsed should be passed down
-// or context should be used. For now, this is a placeholder.
-// This part is problematic and should be removed as analysisResult is not available here.
-// The tooltip content logic needs to be fixed.
-const analysisResult: AnalysisResult | null = null; // Placeholder
