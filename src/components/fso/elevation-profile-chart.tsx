@@ -17,7 +17,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
     return (
         <div className="h-full flex items-center justify-center p-2 bg-muted/30 rounded-md">
           <p className="text-muted-foreground text-xs text-center">
-            Elevation data not available.
+            Elevation data not available or being loaded.
           </p>
         </div>
     );
@@ -33,12 +33,15 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
   const pointAData = chartData[0];
   const pointBData = chartData[chartData.length - 1];
   
-  const yDomainMin = Math.min(...chartData.map(p => p.terrain), ...chartData.map(p => p.losHeight)) - 10;
-  const yDomainMax = Math.max(...chartData.map(p => p.terrain), ...chartData.map(p => p.losHeight)) + 10;
+  const yMin = Math.min(...chartData.map(p => Math.min(p.terrain, p.losHeight)));
+  const yMax = Math.max(...chartData.map(p => Math.max(p.terrain, p.losHeight)));
+  const yDomainMin = Math.floor(yMin / 10) * 10 - 10; // Ensure some padding
+  const yDomainMax = Math.ceil(yMax / 10) * 10 + 10;  // Ensure some padding
+
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}> {/* Adjusted margins slightly */}
+      <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.2}/>
         <XAxis
           dataKey="distance"
@@ -95,8 +98,8 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
         <Area
           type="monotone"
           dataKey="terrain"
-          fill="rgba(99, 102, 241, 0.35)"   // indigo-500 @ 35 %
-          stroke="rgba(99, 102, 241, 0.6)" // indigo-500 @ 60%
+          fill="rgba(99, 102, 241, 0.35)" 
+          stroke="rgba(99, 102, 241, 0.6)"
           strokeWidth={1}
           name="Terrain"
           dot={false}
@@ -104,12 +107,42 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
         <Line
           type="monotone"
           dataKey="losHeight"
-          stroke="#22d3ee"                  // cyan-400
-          strokeWidth={2}
+          stroke="#22d3ee"             
+          strokeWidth={2} // Explicitly set to 2 as per prompt
           name="LOS Path"
           dot={false} 
           activeDot={{ r: 5, strokeWidth: 1, fill: '#22d3ee', stroke: 'hsl(var(--background))' }}
         />
+        {/* Tower Pole for Site A */}
+        {pointAData && (
+          <ReferenceLine
+            x={pointAData.distance}
+            segment={[
+              { y: pointAData.terrain },
+              { y: pointAData.losHeight },
+            ]}
+            stroke="#eab308" // Yellow
+            strokeWidth={2}
+            isFront={true}
+            ifOverflow="extendDomain"
+          />
+        )}
+        {/* Tower Pole for Site B */}
+        {pointBData && (
+          <ReferenceLine
+            x={pointBData.distance}
+            segment={[
+              { y: pointBData.terrain },
+              { y: pointBData.losHeight },
+            ]}
+            stroke="#eab308" // Yellow
+            strokeWidth={2}
+            isFront={true}
+            ifOverflow="extendDomain"
+          />
+        )}
+
+        {/* Site A Marker */}
         {pointAData && (
           <ReferenceDot
             x={pointAData.distance}
@@ -123,6 +156,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
               <text x={pointAData.distance} y={pointAData.losHeight - 10} dy={0} fontSize="9px" fill="hsl(var(--foreground))" textAnchor="middle">{pointAName}</text>
           </ReferenceDot>
         )}
+        {/* Site B Marker */}
         {pointBData && (
           <ReferenceDot
             x={pointBData.distance}

@@ -69,12 +69,11 @@ export default function Home() {
   const { register, handleSubmit, formState: { errors: clientFormErrors, isValid, touchedFields }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: defaultFormStateValues,
-    mode: 'onChange', // Important for reactive validation and triggering effects on valid changes
+    mode: 'onChange', 
   });
 
-  // Function to prepare FormData and call the server action
   const triggerAnalysis = useCallback((valuesToSubmit: PageAnalysisFormValues) => {
-    if (isActionPending) return; // Don't trigger if already pending
+    if (isActionPending) return;
 
     const formData = new FormData();
     formData.append('pointA.name', valuesToSubmit.pointA.name);
@@ -92,10 +91,8 @@ export default function Home() {
     });
   }, [formAction, isActionPending, startTransition]);
 
-  // Debounced version of triggerAnalysis
   const debouncedTriggerAnalysis = useCallback(debounce(triggerAnalysis, 300), [triggerAnalysis]);
 
-  // Watch all relevant form values
   const watchedPointA = useWatch({ control, name: 'pointA' });
   const watchedPointB = useWatch({ control, name: 'pointB' });
   const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
@@ -103,12 +100,12 @@ export default function Home() {
   // Effect for reactive analysis on form value changes
   useEffect(() => {
     const currentValues = getValues();
-    // Ensure all critical values are present and the form is valid (or becoming valid)
+    // Ensure all critical values are present and the form is valid
     if (
       !currentValues.pointA?.lat || !currentValues.pointA?.lng || currentValues.pointA?.height === undefined ||
       !currentValues.pointB?.lat || !currentValues.pointB?.lng || currentValues.pointB?.height === undefined ||
       !currentValues.clearanceThreshold ||
-      !isValid // Only proceed if the form is currently valid
+      !isValid 
     ) {
       return;
     }
@@ -117,33 +114,32 @@ export default function Home() {
       return;
     }
 
-    // Smart initial load: if it's the first time and matches defaults, trigger directly
-    // Otherwise, for subsequent changes, use debounce.
-    const isActuallyDefault = 
+    // Check if it's the very first load with default values and no analysis has run
+    const isInitialDefaultLoad = 
       currentValues.pointA.lat === defaultFormStateValues.pointA.lat &&
       currentValues.pointA.lng === defaultFormStateValues.pointA.lng &&
-      // Compare other fields as needed if strict default check is required
-      analysisResult === null &&
+      currentValues.pointB.lat === defaultFormStateValues.pointB.lat &&
+      currentValues.pointB.lng === defaultFormStateValues.pointB.lng &&
+      currentValues.pointA.height === defaultFormStateValues.pointA.height &&
+      currentValues.pointB.height === defaultFormStateValues.pointB.height &&
+      currentValues.clearanceThreshold === defaultFormStateValues.clearanceThreshold &&
+      analysisResult === null && 
       (!serverState || (serverState && 'error' in serverState && serverState.error === "No analysis performed yet."));
 
-    if (isActuallyDefault) {
-      triggerAnalysis(currentValues);
+    if (isInitialDefaultLoad) {
+      triggerAnalysis(currentValues); // Non-debounced for immediate initial analysis
     } else {
-      // Check if any of the watched fields were actually touched/changed by the user or programmatically
-      // This helps prevent triggering on initial default value setting if not intended
-      const relevantFieldsTouched = 
-        touchedFields.pointA?.lat || touchedFields.pointA?.lng || touchedFields.pointA?.height ||
-        touchedFields.pointB?.lat || touchedFields.pointB?.lng || touchedFields.pointB?.height ||
-        touchedFields.clearanceThreshold;
-
-      if(relevantFieldsTouched || analysisResult !== null) { // Trigger if fields touched or if there's already a result (implies change from previous)
-         debouncedTriggerAnalysis(currentValues);
-      }
+      // For any subsequent changes if not initial load, use debounce
+      debouncedTriggerAnalysis(currentValues);
     }
   }, [
-    watchedPointA, watchedPointB, watchedClearanceThreshold, // These trigger the effect
-    getValues, isValid, isActionPending, analysisResult, serverState, touchedFields, // Used inside
-    triggerAnalysis, debouncedTriggerAnalysis // Stable functions
+    watchedPointA, 
+    watchedPointB, 
+    watchedClearanceThreshold, 
+    isValid, 
+    isActionPending,
+    // getValues, triggerAnalysis, debouncedTriggerAnalysis are stable due to useCallback
+    // analysisResult, serverState, defaultFormStateValues are accessed from closure scope
   ]);
 
 
@@ -151,7 +147,7 @@ export default function Home() {
   const processSubmit = (data: PageAnalysisFormValues) => {
     setClientError(null);
     setFormErrors(undefined);
-    triggerAnalysis(data); // Use the common non-debounced trigger function for immediate action
+    triggerAnalysis(data); 
   };
 
   useEffect(() => {
@@ -159,7 +155,6 @@ export default function Home() {
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      // Don't set "No analysis performed yet" as a client error if an analysis is about to run or is pending
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (isActionPending || analysisResult === null);
 
       if (!suppressInitialMessage) {
@@ -168,7 +163,7 @@ export default function Home() {
       
       if (serverState.fieldErrors) {
         setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
-      } else if (!suppressInitialMessage) { // Clear form errors only if not suppressed
+      } else if (!suppressInitialMessage) { 
         setFormErrors(undefined); 
       }
 
@@ -210,7 +205,7 @@ export default function Home() {
       setClientError(null);
       setFormErrors(undefined);
     }
-  }, [serverState, getValues, isActionPending, analysisResult]);
+  }, [serverState, getValues, isActionPending, analysisResult]); // analysisResult is needed here for comparison
 
   useEffect(() => {
     if (analysisResult && !isPanelOpen) {

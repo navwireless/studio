@@ -92,10 +92,9 @@ interface AnalysisSettingsProps {
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
-  isActionPending: boolean;
 }
 
-const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFormErrors, serverFormErrors, getCombinedError, isActionPending }) => (
+const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFormErrors, serverFormErrors, getCombinedError }) => (
   <div className="h-full flex flex-col items-center justify-center p-2">
     <CardTitle className="text-sm flex items-center mb-2 text-primary">
       <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
@@ -175,7 +174,7 @@ export default function BottomPanel({
       onSubmit={handleSubmit(processSubmit)} 
       className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl"
     >
-      <div className="flex items-center justify-center py-1 relative z-10">
+      <div className="flex items-center justify-center py-1 relative z-10"> {/* Ensure toggle is on top */}
         <button
           type="button"
           onClick={onToggle}
@@ -185,21 +184,23 @@ export default function BottomPanel({
           <ChevronDown 
             className={cn(
               "h-4 w-4 transition-transform duration-300",
-              !isOpen && "rotate-180"
+              !isOpen && "rotate-180" // Flip when closed
             )} 
           />
           {isOpen ? "Hide Panel" : "Show Panel"}
         </button>
       </div>
 
+      {/* Animated content wrapper */}
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out", 
           isOpen ? "h-[45vh]" : "h-0" 
         )}
       >
-        <div className="p-2 md:p-3 h-full overflow-y-auto"> 
+        <div className="p-2 md:p-3 h-full overflow-y-auto"> {/* Inner scrollable content */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+            {/* Column 1: Site A */}
             <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointA" 
@@ -212,6 +213,7 @@ export default function BottomPanel({
               />
             </div>
 
+            {/* Column 2: Analysis Controls, Results, Chart */}
             <div className="flex flex-col h-full overflow-hidden space-y-1">
               {!analysisResult && !isActionPending && ( 
                 <div className="py-1 flex justify-center">
@@ -282,11 +284,11 @@ export default function BottomPanel({
                     clientFormErrors={clientFormErrors}
                     serverFormErrors={serverFormErrors}
                     getCombinedError={getCombinedError}
-                    isActionPending={isActionPending}
                   />
                 )}
               </div>
 
+              {/* Always visible Analyze/Re-Analyze button */}
               <div className="pt-1 pb-1 flex justify-center border-t border-border bg-card/80 rounded-b-md mt-auto"> 
                 <Button
                   type="submit"
@@ -299,6 +301,7 @@ export default function BottomPanel({
               </div>
             </div>
 
+            {/* Column 3: Site B */}
              <div className="h-full overflow-hidden">
               <SiteInputGroup 
                 id="pointB" 
