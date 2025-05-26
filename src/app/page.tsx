@@ -35,12 +35,25 @@ const PageAnalysisFormSchema = z.object({
   clearanceThreshold: z.string().min(1, "Clearance is required").refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Must be >= 0"),
 });
 
-// Default values for initial load and auto-analysis
 const defaultFormStateValues: PageAnalysisFormValues = {
   pointA: { name: 'Site A', lat: '32.23085', lng: '76.144608', height: 20 },
   pointB: { name: 'Site B', lat: '32.231875', lng: '76.151969', height: 58 },
   clearanceThreshold: '10',
 };
+
+// Debounce utility function
+const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<F>): Promise<ReturnType<F>> => {
+    return new Promise((resolve) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        resolve(func(...args));
+      }, delay);
+    });
+  };
+};
+
 
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
@@ -51,34 +64,94 @@ export default function Home() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
 
-  const [isPanelOpen, setIsPanelOpen] = useState(true); // Renamed from isBottomPanelVisible
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
-  const { register, handleSubmit, formState: { errors: clientFormErrors }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
+  const { register, handleSubmit, formState: { errors: clientFormErrors, isValid, touchedFields }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: defaultFormStateValues,
+    mode: 'onChange', // Important for reactive validation and triggering effects on valid changes
   });
 
-  const watchedPointA = useWatch({ control, name: 'pointA' });
-  const watchedPointB = useWatch({ control, name: 'pointB' });
-
-  const processSubmit = (data: PageAnalysisFormValues) => {
-    setClientError(null);
-    setFormErrors(undefined);
+  // Function to prepare FormData and call the server action
+  const triggerAnalysis = useCallback((valuesToSubmit: PageAnalysisFormValues) => {
+    if (isActionPending) return; // Don't trigger if already pending
 
     const formData = new FormData();
-    formData.append('pointA.name', data.pointA.name);
-    formData.append('pointA.lat', data.pointA.lat);
-    formData.append('pointA.lng', data.pointA.lng);
-    formData.append('pointA.height', String(data.pointA.height));
-    formData.append('pointB.name', data.pointB.name);
-    formData.append('pointB.lat', data.pointB.lat);
-    formData.append('pointB.lng', data.pointB.lng);
-    formData.append('pointB.height', String(data.pointB.height));
-    formData.append('clearanceThreshold', data.clearanceThreshold);
+    formData.append('pointA.name', valuesToSubmit.pointA.name);
+    formData.append('pointA.lat', valuesToSubmit.pointA.lat);
+    formData.append('pointA.lng', valuesToSubmit.pointA.lng);
+    formData.append('pointA.height', String(valuesToSubmit.pointA.height));
+    formData.append('pointB.name', valuesToSubmit.pointB.name);
+    formData.append('pointB.lat', valuesToSubmit.pointB.lat);
+    formData.append('pointB.lng', valuesToSubmit.pointB.lng);
+    formData.append('pointB.height', String(valuesToSubmit.pointB.height));
+    formData.append('clearanceThreshold', valuesToSubmit.clearanceThreshold);
 
     startTransition(() => {
       formAction(formData);
     });
+  }, [formAction, isActionPending, startTransition]);
+
+  // Debounced version of triggerAnalysis
+  const debouncedTriggerAnalysis = useCallback(debounce(triggerAnalysis, 300), [triggerAnalysis]);
+
+  // Watch all relevant form values
+  const watchedPointA = useWatch({ control, name: 'pointA' });
+  const watchedPointB = useWatch({ control, name: 'pointB' });
+  const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
+
+  // Effect for reactive analysis on form value changes
+  useEffect(() => {
+    const currentValues = getValues();
+    // Ensure all critical values are present and the form is valid (or becoming valid)
+    if (
+      !currentValues.pointA?.lat || !currentValues.pointA?.lng || currentValues.pointA?.height === undefined ||
+      !currentValues.pointB?.lat || !currentValues.pointB?.lng || currentValues.pointB?.height === undefined ||
+      !currentValues.clearanceThreshold ||
+      !isValid // Only proceed if the form is currently valid
+    ) {
+      return;
+    }
+    
+    if (isActionPending) {
+      return;
+    }
+
+    // Smart initial load: if it's the first time and matches defaults, trigger directly
+    // Otherwise, for subsequent changes, use debounce.
+    const isActuallyDefault = 
+      currentValues.pointA.lat === defaultFormStateValues.pointA.lat &&
+      currentValues.pointA.lng === defaultFormStateValues.pointA.lng &&
+      // Compare other fields as needed if strict default check is required
+      analysisResult === null &&
+      (!serverState || (serverState && 'error' in serverState && serverState.error === "No analysis performed yet."));
+
+    if (isActuallyDefault) {
+      triggerAnalysis(currentValues);
+    } else {
+      // Check if any of the watched fields were actually touched/changed by the user or programmatically
+      // This helps prevent triggering on initial default value setting if not intended
+      const relevantFieldsTouched = 
+        touchedFields.pointA?.lat || touchedFields.pointA?.lng || touchedFields.pointA?.height ||
+        touchedFields.pointB?.lat || touchedFields.pointB?.lng || touchedFields.pointB?.height ||
+        touchedFields.clearanceThreshold;
+
+      if(relevantFieldsTouched || analysisResult !== null) { // Trigger if fields touched or if there's already a result (implies change from previous)
+         debouncedTriggerAnalysis(currentValues);
+      }
+    }
+  }, [
+    watchedPointA, watchedPointB, watchedClearanceThreshold, // These trigger the effect
+    getValues, isValid, isActionPending, analysisResult, serverState, touchedFields, // Used inside
+    triggerAnalysis, debouncedTriggerAnalysis // Stable functions
+  ]);
+
+
+  // For the manual "Analyze LOS" button click
+  const processSubmit = (data: PageAnalysisFormValues) => {
+    setClientError(null);
+    setFormErrors(undefined);
+    triggerAnalysis(data); // Use the common non-debounced trigger function for immediate action
   };
 
   useEffect(() => {
@@ -86,19 +159,21 @@ export default function Home() {
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      const isSignificantError = errorToSet !== "No analysis performed yet.";
-      
-      if (isSignificantError || isActionPending || (analysisResult !== null && errorToSet)) {
+      // Don't set "No analysis performed yet" as a client error if an analysis is about to run or is pending
+      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (isActionPending || analysisResult === null);
+
+      if (!suppressInitialMessage) {
         setClientError(errorToSet);
       }
-
+      
       if (serverState.fieldErrors) {
         setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
-      } else {
+      } else if (!suppressInitialMessage) { // Clear form errors only if not suppressed
         setFormErrors(undefined); 
       }
-      if (isSignificantError && (analysisResult !== null || isActionPending)) {
-         if (analysisResult !== null) setAnalysisResult(null); // Clear previous result only if there was one
+
+      if (errorToSet !== "No analysis performed yet." && analysisResult !== null) {
+         setAnalysisResult(null); 
       }
     } else if (!('error' in serverState)) { 
       const resultDataFromServer = serverState as AnalysisResult;
@@ -125,7 +200,10 @@ export default function Home() {
       if (analysisResult === null || 
           analysisResult.losPossible !== newAnalysisData.losPossible ||
           analysisResult.message !== newAnalysisData.message ||
-          analysisResult.distanceKm !== newAnalysisData.distanceKm) {
+          analysisResult.distanceKm !== newAnalysisData.distanceKm ||
+          analysisResult.minClearance !== newAnalysisData.minClearance ||
+          JSON.stringify(analysisResult.profile) !== JSON.stringify(newAnalysisData.profile)
+          ) {
         setAnalysisResult(newAnalysisData);
       }
       
@@ -134,49 +212,23 @@ export default function Home() {
     }
   }, [serverState, getValues, isActionPending, analysisResult]);
 
-  // Effect to manage bottom panel visibility based on analysisResult
   useEffect(() => {
     if (analysisResult && !isPanelOpen) {
-      setIsPanelOpen(true);
+      setIsPanelOpen(true); 
     }
   }, [analysisResult, isPanelOpen]);
 
-
-  // Effect to auto-trigger analysis on initial load
-  useEffect(() => {
-    // Ensure this runs only once and if no analysis has been done / no result yet.
-    if (!analysisResult && !isActionPending && (!serverState || (serverState && 'error' in serverState && serverState.error?.includes("No analysis performed yet.")))) {
-        const formData = new FormData();
-        const defaultValues = getValues(); // Use current default values from form state
-        formData.append('pointA.name', defaultValues.pointA.name);
-        formData.append('pointA.lat', defaultValues.pointA.lat);
-        formData.append('pointA.lng', defaultValues.pointA.lng);
-        formData.append('pointA.height', String(defaultValues.pointA.height));
-        formData.append('pointB.name', defaultValues.pointB.name);
-        formData.append('pointB.lat', defaultValues.pointB.lat);
-        formData.append('pointB.lng', defaultValues.pointB.lng);
-        formData.append('pointB.height', String(defaultValues.pointB.height));
-        formData.append('clearanceThreshold', defaultValues.clearanceThreshold);
-
-        startTransition(() => {
-            formAction(formData);
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty to run once on mount.
-
-
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
-    setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true });
-    setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true });
+    setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true });
+    setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true });
   }, [setValue]);
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
-    setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true });
-    setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true });
+    setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true });
+    setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true });
   }, [setValue]);
 
-  const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full'; // Adjusted for 45vh panel
+  const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
 
   return (
     <div className="flex flex-1 h-full overflow-hidden">
@@ -187,7 +239,7 @@ export default function Home() {
           losPossible={analysisResult?.losPossible}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
-          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
+          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-500 ease-in-out`}
         />
 
         {clientError && clientError !== "No analysis performed yet." && (
@@ -210,7 +262,7 @@ export default function Home() {
             </div>
         )}
 
-         {(isActionPending && (!analysisResult || (serverState?.error?.includes("No analysis performed yet.")))) && (
+        {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
                     <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
@@ -223,35 +275,20 @@ export default function Home() {
             </div>
         )}
         
-        {(analysisResult || (!clientError || clientError === "No analysis performed yet.")) && (
           <BottomPanel
             analysisResult={analysisResult}
-            isOpen={isPanelOpen} // Pass isOpen
-            onToggle={() => setIsPanelOpen(!isPanelOpen)} // Pass onToggle
+            isOpen={isPanelOpen}
+            onToggle={() => setIsPanelOpen(!isPanelOpen)}
             control={control}
             register={register}
             handleSubmit={handleSubmit}
-            processSubmit={processSubmit}
+            processSubmit={processSubmit} 
             clientFormErrors={clientFormErrors}
             serverFormErrors={formErrors}
             isActionPending={isActionPending}
-            getValues={getValues}
-            setValue={setValue}
+            getValues={getValues} 
+            setValue={setValue}   
           />
-        )}
-         {!analysisResult && clientError && clientError !== "No analysis performed yet." && (
-             <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                    setIsPanelOpen(!isPanelOpen);
-                }}
-                className="absolute bottom-4 right-4 z-40 bg-card hover:bg-accent md:hidden"
-                >
-                {isPanelOpen ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                {isPanelOpen ? 'Hide Panel' : 'Show Panel'}
-            </Button>
-         )}
       </div>
     </div>
   );

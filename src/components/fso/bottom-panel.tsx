@@ -9,27 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import ElevationProfileChart from './elevation-profile-chart';
-import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 
-interface BottomPanelProps {
-  analysisResult: AnalysisResult | null;
-  isOpen: boolean;
-  onToggle: () => void;
-  
-  control: Control<AnalysisFormValues>;
-  register: UseFormRegister<AnalysisFormValues>;
-  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
-  processSubmit: (data: AnalysisFormValues) => void;
-  clientFormErrors: FieldErrors<AnalysisFormValues>;
-  serverFormErrors?: Record<string, string[] | undefined>;
-  isActionPending: boolean;
-  getValues: UseFormGetValues<AnalysisFormValues>;
-  setValue: UseFormSetValue<AnalysisFormValues>;
-}
-
-const SiteInputGroup: React.FC<{
+interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
   title: string;
   control: Control<AnalysisFormValues>;
@@ -37,7 +21,9 @@ const SiteInputGroup: React.FC<{
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
-}> = ({ id, title, control, register, clientFormErrors, serverFormErrors, getCombinedError }) => (
+}
+
+const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id, title, control, register, clientFormErrors, serverFormErrors, getCombinedError }) => (
   <Card className="bg-card/70 border-border shadow-md h-full flex flex-col">
     <CardHeader className="p-2">
       <CardTitle className="text-sm flex items-center">
@@ -89,7 +75,7 @@ const SiteInputGroup: React.FC<{
             label="Tower Height"
             height={field.value}
             onChange={field.onChange}
-            min={0} // Range updated in page.tsx to 0-100
+            min={0}
             max={100}
             idSuffix={id}
           />
@@ -101,12 +87,15 @@ const SiteInputGroup: React.FC<{
   </Card>
 );
 
-const AnalysisSettings: React.FC<{
+interface AnalysisSettingsProps {
   register: UseFormRegister<AnalysisFormValues>;
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
-}> = ({ register, clientFormErrors, serverFormErrors, getCombinedError }) => (
+  isActionPending: boolean;
+}
+
+const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFormErrors, serverFormErrors, getCombinedError, isActionPending }) => (
   <div className="h-full flex flex-col items-center justify-center p-2">
     <CardTitle className="text-sm flex items-center mb-2 text-primary">
       <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
@@ -130,6 +119,23 @@ const AnalysisSettings: React.FC<{
 );
 
 
+interface BottomPanelProps {
+  analysisResult: AnalysisResult | null;
+  isOpen: boolean;
+  onToggle: () => void;
+  
+  control: Control<AnalysisFormValues>;
+  register: UseFormRegister<AnalysisFormValues>;
+  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
+  processSubmit: (data: AnalysisFormValues) => void; 
+  clientFormErrors: FieldErrors<AnalysisFormValues>;
+  serverFormErrors?: Record<string, string[] | undefined>;
+  isActionPending: boolean;
+  getValues: UseFormGetValues<AnalysisFormValues>; 
+  setValue: UseFormSetValue<AnalysisFormValues>; 
+}
+
+
 export default function BottomPanel({ 
   analysisResult, 
   isOpen, 
@@ -137,11 +143,10 @@ export default function BottomPanel({
   control,
   register,
   handleSubmit,
-  processSubmit,
+  processSubmit, 
   clientFormErrors,
   serverFormErrors,
   isActionPending,
-  getValues,
 }: BottomPanelProps) {
   
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
@@ -149,10 +154,10 @@ export default function BottomPanel({
     return clientFieldError?.message;
   };
   
-  const pointAName = useWatch({ control, name: 'pointA.name' }) || (analysisResult?.pointA?.name || "Site A");
-  const pointBName = useWatch({ control, name: 'pointB.name' }) || (analysisResult?.pointB?.name || "Site B");
+  const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: analysisResult?.pointA?.name || "Site A" });
+  const pointBName = useWatch({ control, name: 'pointB.name', defaultValue: analysisResult?.pointB?.name || "Site B" });
   
-  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold' });
+  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: analysisResult?.clearanceThresholdUsed?.toString() || "10" });
   const minRequiredClearance = parseFloat(watchedClearanceThresholdString) || 0;
 
   let isClear = false;
@@ -165,13 +170,12 @@ export default function BottomPanel({
     deficit = isClear ? 0 : Math.ceil(minRequiredClearance - actualMinClearance);
   }
 
-
   return (
     <form 
       onSubmit={handleSubmit(processSubmit)} 
       className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl"
     >
-      <div className="flex items-center justify-center py-1 relative z-10"> {/* Ensure this toggle button is on top of the animated content */}
+      <div className="flex items-center justify-center py-1 relative z-10">
         <button
           type="button"
           onClick={onToggle}
@@ -190,11 +194,11 @@ export default function BottomPanel({
 
       <div 
         className={cn(
-          "w-full overflow-hidden transition-[height] duration-300 ease-in-out",
+          "w-full overflow-hidden transition-[height] duration-500 ease-in-out", 
           isOpen ? "h-[45vh]" : "h-0" 
         )}
       >
-        <div className="p-2 md:p-3 h-full overflow-y-auto"> {/* Scrollable content area */}
+        <div className="p-2 md:p-3 h-full overflow-y-auto"> 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
             <div className="h-full overflow-hidden">
               <SiteInputGroup 
@@ -208,16 +212,15 @@ export default function BottomPanel({
               />
             </div>
 
-            {/* Column 2: Analysis Stats, Chart / Settings Input, and Action Button */}
-            <div className="flex flex-col h-full overflow-hidden">
-              {!analysisResult && (
-                <div className="py-2 flex justify-center">
+            <div className="flex flex-col h-full overflow-hidden space-y-1">
+              {!analysisResult && !isActionPending && ( 
+                <div className="py-1 flex justify-center">
                   <Button
                     type="submit"
                     disabled={isActionPending}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1 h-8 rounded-md shadow"
                   >
-                    {isActionPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                    <Loader2 className={cn("mr-1.5 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
                     Analyze LOS
                   </Button>
                 </div>
@@ -225,8 +228,8 @@ export default function BottomPanel({
 
               {analysisResult && (
                 <>
-                  <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md mb-1">
-                    <span
+                  <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md">
+                      <span
                         className={cn(
                           "px-2 py-0.5 rounded-full text-xs font-semibold mb-1",
                           isClear
@@ -257,7 +260,7 @@ export default function BottomPanel({
                     </div>
                   </div>
                   {!isClear && (
-                    <div className="text-center text-rose-300 text-xs py-1">
+                    <div className="text-center text-rose-300 text-xs py-0.5"> 
                       Add&nbsp;
                       <span className="font-semibold">{deficit} m</span>
                       &nbsp;to one or both towers to meet clearance.
@@ -266,7 +269,6 @@ export default function BottomPanel({
                 </>
               )}
 
-              {/* Main Content Area: Chart or Clearance Input */}
               <div className="flex-1 min-h-0 bg-card/70 rounded-md p-1">
                 {analysisResult ? (
                   <ElevationProfileChart
@@ -280,18 +282,18 @@ export default function BottomPanel({
                     clientFormErrors={clientFormErrors}
                     serverFormErrors={serverFormErrors}
                     getCombinedError={getCombinedError}
+                    isActionPending={isActionPending}
                   />
                 )}
               </div>
 
-              {/* Footer for Analyze/Re-Analyze Button */}
-              <div className="py-2 flex justify-center border-t border-border bg-card/80 rounded-b-md mt-1">
+              <div className="pt-1 pb-1 flex justify-center border-t border-border bg-card/80 rounded-b-md mt-auto"> 
                 <Button
                   type="submit"
                   disabled={isActionPending}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1 h-8 rounded-md shadow"
                 >
-                  {isActionPending && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                  <Loader2 className={cn("mr-1.5 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
                   {analysisResult ? "Re-Analyze LOS" : "Analyze LOS"}
                 </Button>
               </div>
