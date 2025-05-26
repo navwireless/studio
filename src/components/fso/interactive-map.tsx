@@ -10,16 +10,16 @@ import { Skeleton } from '../ui/skeleton';
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORTANT: Manage API keys securely
 
 interface InteractiveMapProps {
-  pointA?: (PointCoordinates & { name?: string });
-  pointB?: (PointCoordinates & { name?: string });
+  pointA?: (PointCoordinates & { name?: string }); // Current form/marker position A
+  pointB?: (PointCoordinates & { name?: string }); // Current form/marker position B
   
-  analyzedData?: {
+  analyzedData?: { // Data from the last successful analysis
     pointA: PointCoordinates;
     pointB: PointCoordinates;
     losPossible: boolean;
   } | null;
 
-  isStale?: boolean;
+  isStale?: boolean; // No longer directly used for line drawing, but kept for consistency if page.tsx passes it
   isActionPending?: boolean;
 
   onMarkerDragStartA?: () => void;
@@ -36,11 +36,27 @@ const defaultCenter = {
 
 const defaultZoom = 15;
 
+// Helper function to compare points
+function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6) {
+  if (!p1 || !p2) return false;
+  const p1Lat = Number(p1.lat);
+  const p1Lng = Number(p1.lng);
+  const p2Lat = Number(p2.lat);
+  const p2Lng = Number(p2.lng);
+
+  if (isNaN(p1Lat) || isNaN(p1Lng) || isNaN(p2Lat) || isNaN(p2Lng)) return false;
+
+  return (
+    p1Lat.toFixed(precision) === p2Lat.toFixed(precision) &&
+    p1Lng.toFixed(precision) === p2Lng.toFixed(precision)
+  );
+}
+
 export default function InteractiveMap({
-  pointA: formPointA, 
-  pointB: formPointB, 
+  pointA: formPointA, // Renaming for clarity within this component based on new logic
+  pointB: formPointB, // Renaming for clarity
   analyzedData,
-  isStale,
+  // isStale, // Not directly used for line logic anymore, comparison is internal
   isActionPending,
   onMarkerDragStartA,
   onMarkerDragStartB,
@@ -64,20 +80,25 @@ export default function InteractiveMap({
   useEffect(() => {
     if (mapRef.current && formPointA && formPointB) {
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(new google.maps.LatLng(formPointA.lat, formPointA.lng));
-      bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
-      mapRef.current.fitBounds(bounds);
+      if (formPointA.lat && formPointA.lng) bounds.extend(new google.maps.LatLng(formPointA.lat, formPointA.lng));
+      if (formPointB.lat && formPointB.lng) bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
       
-      const listener = google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
-        if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
-          mapRef.current.setZoom(17);
-        } else if (mapRef.current?.getZoom() && mapRef.current.getZoom()! < 3) {
-          mapRef.current.setZoom(3);
-        }
-      });
-      return () => {
-        if (listener) google.maps.event.removeListener(listener);
-      };
+      if (!bounds.isEmpty()) {
+        mapRef.current.fitBounds(bounds);
+        const listener = google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
+          if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
+            mapRef.current.setZoom(17);
+          } else if (mapRef.current?.getZoom() && mapRef.current.getZoom()! < 3) {
+            mapRef.current.setZoom(3);
+          }
+        });
+        return () => {
+          if (listener) google.maps.event.removeListener(listener);
+        };
+      } else {
+        mapRef.current.setCenter(defaultCenter);
+        mapRef.current.setZoom(defaultZoom);
+      }
     } else if (mapRef.current) {
       mapRef.current.setCenter(defaultCenter);
       mapRef.current.setZoom(defaultZoom);
@@ -100,15 +121,7 @@ export default function InteractiveMap({
       }
     }
   };
-
-  const analyzedPathKey = analyzedData 
-    ? `analyzed-${analyzedData.pointA.lat}-${analyzedData.pointA.lng}-${analyzedData.pointB.lat}-${analyzedData.pointB.lng}` 
-    : 'no-analyzed-path';
-
-  const previewPathKey = (formPointA && formPointB)
-    ? `preview-${formPointA.lat}-${formPointA.lng}-${formPointB.lat}-${formPointB.lng}`
-    : 'no-preview-path';
-
+  
   return (
     <div className={mapContainerClassName}>
       <LoadScript
@@ -170,52 +183,56 @@ export default function InteractiveMap({
               />
             )}
 
-            {/* Analyzed Line - Renders if analysis data exists */}
-            {analyzedData && analyzedData.pointA && analyzedData.pointB && (
-              <Polyline
-                key={analyzedPathKey}
-                path={[
-                  { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
-                  { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng },
-                ]}
-                options={{
-                  strokeColor: analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))", // Cyan or Red
-                  strokeOpacity: 0.9,
-                  strokeWeight: 3,
-                  clickable: false,
-                  draggable: false,
-                  editable: false,
-                  visible: true,
-                  zIndex: 1, 
-                }}
-              />
-            )}
-
-            {/* Stale Preview Line - Only if inputs differ from analysis */}
-            {isStale && formPointA && formPointB && (
-                <Polyline
-                  key={previewPathKey}
-                  path={[
+            {(() => {
+              // Show analyzed LOS line ONLY if current markers match last analysis
+              if (
+                analyzedData &&
+                pointsEqual(formPointA, analyzedData.pointA) &&
+                pointsEqual(formPointB, analyzedData.pointB)
+              ) {
+                return (
+                  <Polyline
+                    key={`analyzed-${analyzedData.pointA.lat}-${analyzedData.pointA.lng}-${analyzedData.pointB.lat}-${analyzedData.pointB.lng}`}
+                    path={[
+                      { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
+                      { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng }
+                    ]}
+                    options={{
+                      strokeColor: analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))", // Cyan or Theme Red
+                      strokeOpacity: 0.9,
+                      strokeWeight: 3,
+                      clickable: false,
+                      zIndex: 2 // Analyzed line on top
+                    }}
+                  />
+                );
+              }
+              // Otherwise, show preview (dashed) line if both form markers exist
+              if (formPointA && formPointB && formPointA.lat && formPointA.lng && formPointB.lat && formPointB.lng) {
+                return (
+                  <Polyline
+                    key={`preview-${formPointA.lat}-${formPointA.lng}-${formPointB.lat}-${formPointB.lng}`}
+                    path={[
                       { lat: formPointA.lat, lng: formPointA.lng },
-                      { lat: formPointB.lat, lng: formPointB.lng },
-                  ]}
-                  options={{
-                      strokeColor: "#6b7280", // gray-500 Tailwind
-                      strokeOpacity: isActionPending ? 0.3 : 0.6,
+                      { lat: formPointB.lat, lng: formPointB.lng }
+                    ]}
+                    options={{
+                      strokeColor: "#6b7280", // gray-500
+                      strokeOpacity: isActionPending ? 0.3 : 0.7,
                       strokeWeight: 2,
                       clickable: false,
-                      draggable: false,
-                      editable: false,
-                      visible: true,
-                      zIndex: 2, // Drawn on top of analyzed line if they differ
+                      zIndex: 1, // Preview line below analyzed
                       icons: [{
-                          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, 
+                          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3, strokeWeight: 1.5 }, // Making strokeWeight of icon match line
                           offset: '0',
-                          repeat: '8px' // Creates a dashed line effect
+                          repeat: '10px' // Creates a dashed line effect
                       }],
-                  }}
-                />
-            )}
+                    }}
+                  />
+                );
+              }
+              return null;
+            })()}
             
           </GoogleMap>
         ) : (
@@ -225,3 +242,5 @@ export default function InteractiveMap({
     </div>
   );
 }
+
+    
