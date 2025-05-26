@@ -41,19 +41,6 @@ const defaultFormStateValues: PageAnalysisFormValues = {
   clearanceThreshold: '10',
 };
 
-// Debounce utility function
-const debounce = <F extends (...args: any[]) => any>(func: F, delay: number) => {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<F>): Promise<ReturnType<F>> => {
-    return new Promise((resolve) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        resolve(func(...args));
-      }, delay);
-    });
-  };
-};
-
 
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
@@ -91,71 +78,29 @@ export default function Home() {
     });
   }, [formAction, isActionPending, startTransition]);
 
-  const debouncedTriggerAnalysis = useCallback(debounce(triggerAnalysis, 300), [triggerAnalysis]);
 
-  const watchedPointA = useWatch({ control, name: 'pointA' });
-  const watchedPointB = useWatch({ control, name: 'pointB' });
-  const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
-
-  // Effect for reactive analysis on form value changes
-  useEffect(() => {
-    const currentValues = getValues();
-    // Ensure all critical values are present and the form is valid
-    if (
-      !currentValues.pointA?.lat || !currentValues.pointA?.lng || currentValues.pointA?.height === undefined ||
-      !currentValues.pointB?.lat || !currentValues.pointB?.lng || currentValues.pointB?.height === undefined ||
-      !currentValues.clearanceThreshold ||
-      !isValid 
-    ) {
-      return;
-    }
-    
-    if (isActionPending) {
-      return;
-    }
-
-    // Check if it's the very first load with default values and no analysis has run
-    const isInitialDefaultLoad = 
-      currentValues.pointA.lat === defaultFormStateValues.pointA.lat &&
-      currentValues.pointA.lng === defaultFormStateValues.pointA.lng &&
-      currentValues.pointB.lat === defaultFormStateValues.pointB.lat &&
-      currentValues.pointB.lng === defaultFormStateValues.pointB.lng &&
-      currentValues.pointA.height === defaultFormStateValues.pointA.height &&
-      currentValues.pointB.height === defaultFormStateValues.pointB.height &&
-      currentValues.clearanceThreshold === defaultFormStateValues.clearanceThreshold &&
-      analysisResult === null && 
-      (!serverState || (serverState && 'error' in serverState && serverState.error === "No analysis performed yet."));
-
-    if (isInitialDefaultLoad) {
-      triggerAnalysis(currentValues); // Non-debounced for immediate initial analysis
-    } else {
-      // For any subsequent changes if not initial load, use debounce
-      debouncedTriggerAnalysis(currentValues);
-    }
-  }, [
-    watchedPointA, 
-    watchedPointB, 
-    watchedClearanceThreshold, 
-    isValid, 
-    isActionPending,
-    // getValues, triggerAnalysis, debouncedTriggerAnalysis are stable due to useCallback
-    // analysisResult, serverState, defaultFormStateValues are accessed from closure scope
-  ]);
-
-
-  // For the manual "Analyze LOS" button click
+  // For the manual "Analyze LOS" / "Re-Analyze LOS" button click
   const processSubmit = (data: PageAnalysisFormValues) => {
     setClientError(null);
     setFormErrors(undefined);
     triggerAnalysis(data); 
   };
 
+  const watchedPointA = useWatch({ control, name: 'pointA' });
+  const watchedPointB = useWatch({ control, name: 'pointB' });
+  // watchedClearanceThreshold is not strictly needed here anymore for reactive analysis trigger
+  // but can be kept if other parts of the UI depend on it for immediate updates.
+
+  // Removed useEffect that auto-triggered analysis on input changes.
+  // Analysis is now only triggered by processSubmit (manual button click).
+
   useEffect(() => {
     if (!serverState) return;
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (isActionPending || analysisResult === null);
+      // Do not display "No analysis performed yet" as an error if it's the initial state and no analysis has been triggered
+      const suppressInitialMessage = errorToSet === "No analysis performed yet." && analysisResult === null && !isActionPending;
 
       if (!suppressInitialMessage) {
         setClientError(errorToSet);
@@ -167,7 +112,8 @@ export default function Home() {
         setFormErrors(undefined); 
       }
 
-      if (errorToSet !== "No analysis performed yet." && analysisResult !== null) {
+      // If there's a real error (not the initial placeholder), clear previous successful results.
+      if (errorToSet !== "No analysis performed yet.") {
          setAnalysisResult(null); 
       }
     } else if (!('error' in serverState)) { 
@@ -192,12 +138,15 @@ export default function Home() {
         },
       };
       
+      // Update analysisResult only if data has logically changed to prevent infinite loops
       if (analysisResult === null || 
           analysisResult.losPossible !== newAnalysisData.losPossible ||
           analysisResult.message !== newAnalysisData.message ||
           analysisResult.distanceKm !== newAnalysisData.distanceKm ||
           analysisResult.minClearance !== newAnalysisData.minClearance ||
-          JSON.stringify(analysisResult.profile) !== JSON.stringify(newAnalysisData.profile)
+          JSON.stringify(analysisResult.profile) !== JSON.stringify(newAnalysisData.profile) ||
+          JSON.stringify(analysisResult.pointA) !== JSON.stringify(newAnalysisData.pointA) ||
+          JSON.stringify(analysisResult.pointB) !== JSON.stringify(newAnalysisData.pointB)
           ) {
         setAnalysisResult(newAnalysisData);
       }
@@ -205,9 +154,10 @@ export default function Home() {
       setClientError(null);
       setFormErrors(undefined);
     }
-  }, [serverState, getValues, isActionPending, analysisResult]); // analysisResult is needed here for comparison
+  }, [serverState, getValues, analysisResult, isActionPending]); // analysisResult is kept to ensure UI consistency post-update
 
   useEffect(() => {
+    // Open panel if analysis results are available and panel is closed
     if (analysisResult && !isPanelOpen) {
       setIsPanelOpen(true); 
     }
@@ -216,11 +166,13 @@ export default function Home() {
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
     setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true });
     setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true });
+    // Analysis is NOT triggered here anymore.
   }, [setValue]);
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
     setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true });
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true });
+    // Analysis is NOT triggered here anymore.
   }, [setValue]);
 
   const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
@@ -257,6 +209,7 @@ export default function Home() {
             </div>
         )}
 
+        {/* Show skeleton only if an action is pending AND there's no result yet, OR if there's an error currently displayed */}
         {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
                 <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
@@ -288,3 +241,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
