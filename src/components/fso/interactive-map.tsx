@@ -12,8 +12,7 @@ const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORT
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { name?: string }); // Current form/marker position for A
   pointB?: (PointCoordinates & { name?: string }); // Current form/marker position for B
-  isActionPending?: boolean; // To dim preview line during analysis
-
+  
   analyzedData?: { // Data from the last successful analysis
     pointA: PointCoordinates;
     pointB: PointCoordinates;
@@ -25,7 +24,8 @@ interface InteractiveMapProps {
   onMarkerDragEndA?: (coords: PointCoordinates) => void;
   onMarkerDragEndB?: (coords: PointCoordinates) => void;
   mapContainerClassName?: string;
-  isStale?: boolean; // Kept for potential future use, but not directly for line drawing now
+  isActionPending?: boolean; // To dim preview line during analysis
+  isStale?: boolean; // True if form inputs differ from last analysis
 }
 
 const defaultCenter = {
@@ -44,8 +44,8 @@ export default function InteractiveMap({
   onMarkerDragEndA,
   onMarkerDragEndB,
   isActionPending,
+  isStale,
   mapContainerClassName = "w-full h-full",
-  isStale 
 }: InteractiveMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -121,15 +121,15 @@ export default function InteractiveMap({
     };
   }
 
-  // Real-time Form Preview Line (always shown based on current formPointA and formPointB)
-  let formPreviewPathCoordinates: google.maps.LatLngLiteral[] = [];
-  let formPreviewPolylineOptions = {};
-  if (formPointA && formPointB) {
-    formPreviewPathCoordinates = [
+  // Dashed Preview Line (only if stale)
+  let previewPathCoordinates: google.maps.LatLngLiteral[] = [];
+  let previewPolylineOptions = {};
+  if (isStale && formPointA && formPointB) {
+    previewPathCoordinates = [
         { lat: formPointA.lat, lng: formPointA.lng },
         { lat: formPointB.lat, lng: formPointB.lng },
     ];
-    formPreviewPolylineOptions = {
+    previewPolylineOptions = {
         strokeColor: "#6b7280", // gray-500 Tailwind
         strokeOpacity: isActionPending ? 0.3 : 0.6,
         strokeWeight: 2,
@@ -137,7 +137,12 @@ export default function InteractiveMap({
         draggable: false,
         editable: false,
         visible: true,
-        zIndex: 0, // Ensure it's below the analyzed line if they overlap
+        zIndex: 2, // Drawn on top of analyzed line if they differ
+        icons: [{
+            icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, // Dashed line style for Google Maps Polyline
+            offset: '0',
+            repeat: '8px'
+        }],
     };
   }
 
@@ -201,14 +206,14 @@ export default function InteractiveMap({
               />
             )}
 
-            {/* Real-time Form Preview Line */}
-            {formPreviewPathCoordinates.length > 0 && (
-                <Polyline path={formPreviewPathCoordinates} options={formPreviewPolylineOptions} />
-            )}
-
             {/* Analyzed Line - Renders on top if positions are same */}
             {analyzedPathCoordinates.length > 0 && (
               <Polyline path={analyzedPathCoordinates} options={analyzedPolylineOptions} />
+            )}
+
+            {/* Stale Preview Line - Only if inputs differ from analysis */}
+            {previewPathCoordinates.length > 0 && (
+                <Polyline path={previewPathCoordinates} options={previewPolylineOptions} />
             )}
             
           </GoogleMap>
