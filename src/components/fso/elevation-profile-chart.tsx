@@ -35,14 +35,13 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
   const pointAData = chartData[0];
   const pointBData = chartData[chartData.length - 1];
 
-  // Calculate domain based on actual data values to ensure everything fits
   const allElevations = chartData.flatMap(p => [p.terrain, p.losHeight]);
   const yMinData = Math.min(...allElevations);
   const yMaxData = Math.max(...allElevations);
   
-  const yPadding = Math.max(20, (yMaxData - yMinData) * 0.15); // Increased padding slightly
+  const yPadding = Math.max(20, (yMaxData - yMinData) * 0.15); 
   const yDomainMin = Math.floor(yMinData - yPadding);
-  const yDomainMax = Math.ceil(yMaxData + yPadding * 1.5); // More padding at top for labels
+  const yDomainMax = Math.ceil(yMaxData + yPadding * 1.5);
 
 
   return (
@@ -53,8 +52,10 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
           <XAxis
             dataKey="distance"
             type="number"
-            tick={{ fill: '#94a3b8', fontSize: 10 }}
-            tickFormatter={(value) => value.toFixed(0)} // Show distance in meters on X-axis
+            domain={[0, 'dataMax']} // Ensure X-axis ends at the max distance in data
+            allowDataOverflow={false}
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+            tickFormatter={(value) => value.toFixed(0)} 
             unit="m"
             axisLine={false}
             tickLine={false}
@@ -63,12 +64,11 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
           />
           <YAxis
             domain={[yDomainMin, yDomainMax]}
-            tick={{ fill: '#94a3b8', fontSize: 10 }}
-            tickFormatter={(value) => `${Math.round(value)}`}
-            unit="m"
+            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+            tickFormatter={(value) => `${Math.round(value)}m`} // Append 'm' to Y-axis ticks
             axisLine={false}
             tickLine={false}
-            width={40}
+            width={45} // Adjusted width for 'm' suffix
           />
           <Tooltip
             cursor={{ stroke: 'hsl(var(--accent))', strokeWidth: 1, strokeDasharray: '3 3' }}
@@ -80,7 +80,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
               fontSize: "10px",
               boxShadow: "0 1px 4px hsla(var(--shadow, 0 0% 0% / 0.1))"
             }}
-            labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`} // Tooltip label in km
+            labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`}
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
                 const pointData = payload[0].payload as typeof chartData[0];
@@ -125,8 +125,8 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             <ReferenceLine
               x={pointAData.distance}
               segment={[
-                { y: pointAData.terrain },
-                { y: pointAData.losHeight },
+                { y: pointAData.terrain }, // Starts at terrain elevation
+                { y: pointAData.losHeight }, // Ends at LOS path height (which includes tower)
               ]}
               stroke="#eab308" 
               strokeWidth={2}
@@ -139,8 +139,8 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             <ReferenceLine
               x={pointBData.distance}
               segment={[
-                { y: pointBData.terrain },
-                { y: pointBData.losHeight },
+                { y: pointBData.terrain }, // Starts at terrain elevation
+                { y: pointBData.losHeight }, // Ends at LOS path height (which includes tower)
               ]}
               stroke="#eab308" 
               strokeWidth={2}
@@ -154,7 +154,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             <ReferenceDot
               x={pointAData.distance}
               y={pointAData.losHeight}
-              r={4} // Increased size slightly
+              r={4} 
               fill={'#22d3ee'}
               stroke="hsl(var(--background))"
               strokeWidth={1.5}
@@ -167,7 +167,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             <ReferenceDot
               x={pointBData.distance}
               y={pointBData.losHeight}
-              r={4} // Increased size slightly
+              r={4} 
               fill={'#22d3ee'}
               stroke="hsl(var(--background))"
               strokeWidth={1.5}
