@@ -56,68 +56,69 @@ body {
 
 
     /* Default to dark theme variables */
-    --background: 222 47% 11%; /* Dark Slate Blue/Charcoal */
-    --foreground: 210 40% 98%; /* Light Gray/Off-white */
+    /* Adjusted for more minimalist/GIS feel */
+    --background: 222 47% 8%; /* Even darker background */
+    --foreground: 210 40% 95%; /* Slightly softer white */
 
-    --card: 222 47% 15%; /* Slightly Lighter Dark Slate */
-    --card-foreground: 210 40% 98%;
+    --card: 222 40% 12%; /* Darker card, to be made translucent by components */
+    --card-foreground: 210 40% 95%;
 
-    --popover: 222 47% 10%; /* Darker for popovers */
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 40% 10%; /* Darker popover, to be made translucent */
+    --popover-foreground: 210 40% 95%;
 
     --primary: 217 91% 60%; /* Bright Blue (UISP style) */
-    --primary-foreground: 210 40% 98%; /* White/Light Gray */
+    --primary-foreground: 210 40% 98%; 
 
-    --secondary: 217 33% 25%; /* Muted Blue/Gray */
-    --secondary-foreground: 210 40% 90%;
+    --secondary: 217 33% 22%; /* Muted Blue/Gray - slightly darker */
+    --secondary-foreground: 210 40% 85%;
 
-    --muted: 217 33% 18%; /* Darker Muted Blue/Gray */
-    --muted-foreground: 210 20% 60%; /* Softer Gray */
+    --muted: 217 33% 15%; /* Darker Muted Blue/Gray */
+    --muted-foreground: 210 20% 55%; /* Softer Gray */
 
-    --accent: 217 91% 50%; /* Slightly darker blue for general UI accents (hovers etc.) */
+    --accent: 217 91% 50%; 
     --accent-foreground: 210 40% 98%;
 
-    --app-accent: 140 60% 50%; /* Green for specific app highlights (LOS success) */
-    --app-accent-foreground: 0 0% 100%; /* White text on Green */
+    --app-accent: 140 60% 50%; /* Green for LOS success */
+    --app-accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%; /* Vivid Red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 25%; /* Muted Blue/Gray border */
-    --input: 217 33% 22%; /* Slightly lighter input background */
-    --ring: 217 91% 65%; /* Lighter blue for focus rings */
+    --border: 217 33% 20%; /* Darker border, or use specific slate borders */
+    --input: 217 33% 18%; /* Darker input background, often overridden by components */
+    --ring: 217 91% 65%; 
 
-    --chart-1: 217 91% 60%; /* Primary blue */
-    --chart-2: 140 60% 50%;  /* App accent green */
-    --chart-3: 30 80% 60%;   /* Example orange */
-    --chart-4: 280 70% 65%;  /* Example purple */
-    --chart-5: 190 70% 55%;  /* Example teal */
+    --chart-1: 217 91% 60%; 
+    --chart-2: 140 60% 50%;  
+    --chart-3: 30 80% 60%;  
+    --chart-4: 280 70% 65%;  
+    --chart-5: 190 70% 55%;  
 
-    --los-success-text: 140 70% 75%; /* Lighter Green for text on dark bg */
-    --los-failure-text: 0 80% 75%; /* Lighter Red for text on dark bg */
-    --los-success-foreground: 0 0% 100%; /* For text on green bg */
-    --los-failure-foreground: 0 0% 100%; /* For text on red bg */
+    --los-success-text: 140 70% 70%; /* Slightly desaturated green for text */
+    --los-failure-text: 0 80% 70%; /* Slightly desaturated red for text */
+    --los-success-foreground: 0 0% 100%; 
+    --los-failure-foreground: 0 0% 100%;
   }
 
   .dark {
     /* Dark theme is default, these are identical to :root but kept for explicitness */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 95%;
 
-    --card: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 40% 12%;
+    --card-foreground: 210 40% 95%;
 
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 40% 10%;
+    --popover-foreground: 210 40% 95%;
 
     --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 33% 25%;
-    --secondary-foreground: 210 40% 90%;
+    --secondary: 217 33% 22%;
+    --secondary-foreground: 210 40% 85%;
 
-    --muted: 217 33% 18%;
-    --muted-foreground: 210 20% 60%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 210 20% 55%;
 
     --accent: 217 91% 50%;
     --accent-foreground: 210 40% 98%;
@@ -128,8 +129,8 @@ body {
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 25%;
-    --input: 217 33% 22%;
+    --border: 217 33% 20%;
+    --input: 217 33% 18%;
     --ring: 217 91% 65%;
 
     --chart-1: 217 91% 60%;
@@ -138,8 +139,8 @@ body {
     --chart-4: 280 70% 65%;
     --chart-5: 190 70% 55%;
 
-    --los-success-text: 140 70% 75%;
-    --los-failure-text: 0 80% 75%;
+    --los-success-text: 140 70% 70%;
+    --los-failure-text: 0 80% 70%;
     --los-success-foreground: 0 0% 100%;
     --los-failure-foreground: 0 0% 100%;
   }
@@ -151,6 +152,9 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    /* Smooth scrolling and font antialiasing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -162,12 +166,12 @@ body {
   color: hsl(var(--los-failure-text));
 }
 .bg-los-success {
-  background-color: hsl(var(--app-accent)); /* Uses main app-accent green */
-  color: hsl(var(--los-success-foreground)); /* Uses specific foreground for on-green text */
+  background-color: hsl(var(--app-accent)); 
+  color: hsl(var(--los-success-foreground)); 
 }
 .bg-los-failure {
   background-color: hsl(var(--destructive));
-  color: hsl(var(--los-failure-foreground)); /* Uses specific foreground for on-red text */
+  color: hsl(var(--los-failure-foreground)); 
 }
 .text-los-success-foreground {
     color: hsl(var(--los-success-foreground));
@@ -179,7 +183,7 @@ body {
 
 /* Ensure ShadCN general accent uses our primary blue for dark theme */
 .dark {
-    --accent: hsl(var(--primary)); /* Shadcn general accent to UISP blue */
+    --accent: hsl(var(--primary)); 
     --accent-foreground: hsl(var(--primary-foreground));
 }
 :root { /* For light theme, if ever used, provide a sensible default */
@@ -187,14 +191,13 @@ body {
     --accent-foreground: hsl(var(--accent-foreground-light));
 }
 
-/* Map container styling */
+/* Commented out as per instructions - these are now managed locally or dynamically */
 /* .map-container { */
-  /* height: calc(100vh - 64px); /* Assuming header height is 64px -> now managed by page.tsx */
+  /* height: calc(100vh - 64px); */ /* Assuming header height is 64px -> now managed by page.tsx */
 /* } */
 
-/* Elevation profile chart styling (will be conditionally applied by parent) */
 /* .elevation-profile-visible { */
-  /* max-height: 35vh; */ /* Managed by BottomPanel's fixed height */
+  /* max-height: 35vh; */ 
   /* min-height: 25vh; */
-  /* height: 35vh; */ /* Explicit height handled by BottomPanel */
+  /* height: 35vh; */ 
 /* } */

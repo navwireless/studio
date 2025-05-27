@@ -1,8 +1,8 @@
 
 "use client";
 
-import type { Control, UseFormRegister, UseFormHandleSubmit, UseFormGetValues, UseFormSetValue, FieldErrors, useWatch } from 'react-hook-form';
-import { Controller } from 'react-hook-form'; // Ensured Controller is imported
+import type { Control, UseFormRegister, UseFormHandleSubmit, UseFormGetValues, UseFormSetValue, FieldErrors } from 'react-hook-form';
+import { Controller, useWatch } from 'react-hook-form';
 import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,6 @@ import ElevationProfileChart from './elevation-profile-chart';
 import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Props for SiteInputGroup
 interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
   title: string;
@@ -24,45 +23,44 @@ interface SiteInputGroupProps {
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
 }
 
-// SiteInputGroup Component (Local to BottomPanel or can be moved to its own file)
 const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id, title, control, register, clientFormErrors, serverFormErrors, getCombinedError }) => (
-  <Card className="bg-card/70 border-border shadow-md h-full flex flex-col"> {/* h-full and flex flex-col are key */}
-    <CardHeader className="p-2">
-      <CardTitle className="text-sm flex items-center">
-        <Target className="mr-2 h-4 w-4 text-primary" /> {title}
+  <Card className="bg-transparent shadow-none border-0 h-full flex flex-col">
+    <CardHeader className="p-1.5"> {/* Reduced padding */}
+      <CardTitle className="text-sm flex items-center text-slate-100/90 uppercase tracking-wider">
+        <Target className="mr-2 h-4 w-4 text-primary/80" /> {title}
       </CardTitle>
     </CardHeader>
-    <CardContent className="p-2 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1"> {/* flex-grow allows content to take space, overflow-y-auto for scrolling */}
+    <CardContent className="p-1.5 space-y-1 text-xs flex-grow overflow-y-auto pr-1"> {/* Reduced padding and spacing */}
       <div>
-        <Label htmlFor={`${id}.name`} className="text-xs">Name</Label>
+        <Label htmlFor={`${id}.name`} className="text-xs uppercase tracking-wider text-slate-400/80">Name</Label>
         <Input 
           id={`${id}.name`} 
           {...register(`${id}.name`)} 
           placeholder="e.g. Main Site" 
-          className="mt-0.5 bg-input/70 h-8 text-xs" 
+          className="mt-0.5 bg-slate-800/50 border-slate-700 placeholder:text-slate-400/60 text-slate-100/90 h-8 text-xs" 
         />
         {(clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) && 
           <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])}</p>}
       </div>
       <div className="grid grid-cols-2 gap-1">
         <div>
-          <Label htmlFor={`${id}.lat`} className="text-xs">Latitude</Label>
+          <Label htmlFor={`${id}.lat`} className="text-xs uppercase tracking-wider text-slate-400/80">Latitude</Label>
           <Input 
             id={`${id}.lat`} 
             {...register(`${id}.lat`)} 
             placeholder="-90 to 90" 
-            className="mt-0.5 bg-input/70 h-8 text-xs" 
+            className="mt-0.5 bg-slate-800/50 border-slate-700 placeholder:text-slate-400/60 text-slate-100/90 h-8 text-xs" 
           />
           {(clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) && 
             <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
         </div>
         <div>
-          <Label htmlFor={`${id}.lng`} className="text-xs">Longitude</Label>
+          <Label htmlFor={`${id}.lng`} className="text-xs uppercase tracking-wider text-slate-400/80">Longitude</Label>
           <Input 
             id={`${id}.lng`} 
             {...register(`${id}.lng`)} 
             placeholder="-180 to 180" 
-            className="mt-0.5 bg-input/70 h-8 text-xs" 
+            className="mt-0.5 bg-slate-800/50 border-slate-700 placeholder:text-slate-400/60 text-slate-100/90 h-8 text-xs" 
           />
           {(clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) && 
             <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])}</p>}
@@ -89,7 +87,6 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id, title, control, reg
   </Card>
 );
 
-// Props for AnalysisSettings
 interface AnalysisSettingsProps {
   register: UseFormRegister<AnalysisFormValues>;
   clientFormErrors: FieldErrors<AnalysisFormValues>;
@@ -97,22 +94,21 @@ interface AnalysisSettingsProps {
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
 }
 
-// AnalysisSettings Component (Local to BottomPanel)
 const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFormErrors, serverFormErrors, getCombinedError }) => (
-  <div className="h-full flex flex-col items-center justify-center p-2">
-    <CardTitle className="text-sm flex items-center mb-2 text-primary">
+  <div className="h-full flex flex-col items-center justify-center p-1.5"> {/* Reduced padding */}
+    <CardTitle className="text-sm flex items-center mb-2 text-primary/80 uppercase tracking-wider">
       <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
     </CardTitle>
     <div className="w-full space-y-2 max-w-xs mx-auto">
       <div>
-        <Label htmlFor="clearanceThreshold" className="text-xs">Min. Fresnel Clearance (m)</Label>
+        <Label htmlFor="clearanceThreshold" className="text-xs uppercase tracking-wider text-slate-400/80">Min. Fresnel Clearance (m)</Label>
         <Input
           id="clearanceThreshold"
           type="number"
           step="any"
           {...register('clearanceThreshold')}
           placeholder="e.g., 10"
-          className="mt-0.5 bg-input/70 h-8 text-xs w-full"
+          className="mt-0.5 bg-slate-800/50 border-slate-700 placeholder:text-slate-400/60 text-slate-100/90 h-8 text-xs w-full"
         />
         {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
           <p className="text-xs text-destructive mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
@@ -120,7 +116,6 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFor
     </div>
   </div>
 );
-
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
@@ -135,10 +130,7 @@ interface BottomPanelProps {
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   isActionPending: boolean;
-  // getValues and setValue are not directly used by BottomPanel, but by its parent (page.tsx)
-  // If they were needed for internal logic here, they should be passed.
 }
-
 
 export default function BottomPanel({ 
   analysisResult, 
@@ -154,10 +146,6 @@ export default function BottomPanel({
   isActionPending,
 }: BottomPanelProps) {
   
-  // Assuming useWatch is imported from 'react-hook-form' if needed here.
-  // For now, names are derived from analysisResult or defaults if not available in control.
-  const { useWatch } = require('react-hook-form'); // Lazy require if not top-level
-
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
     if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
     return clientFieldError?.message;
@@ -175,45 +163,42 @@ export default function BottomPanel({
 
   if (analysisResult && analysisResult.minClearance !== null) {
     actualMinClearance = analysisResult.minClearance;
-    isClearBasedOnAnalysis = actualMinClearance >= (analysisResult.clearanceThresholdUsed || 0);
+    isClearBasedOnAnalysis = actualMinClearance >= (analysisResult.clearanceThresholdUsed || 0); // Use analyzed threshold
     deficit = isClearBasedOnAnalysis ? 0 : Math.ceil((analysisResult.clearanceThresholdUsed || 0) - actualMinClearance);
   }
 
   return (
     <form 
       onSubmit={handleSubmit(processSubmit)} 
-      className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border shadow-2xl"
+      className="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/70 backdrop-blur-lg rounded-t-2xl border-t border-slate-700/50 transition-all duration-200 hover:bg-slate-900/80"
     >
-      {/* Toggle Button - Placed outside the animated content area */}
-      <div className="flex items-center justify-center py-1 relative z-10"> 
+      <div className="flex items-center justify-center py-0.5 relative z-10"> {/* Reduced padding */}
         <button
-          type="button" // Important: make it type="button" to not submit the form
+          type="button" 
           onClick={onToggle}
-          className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground hover:text-foreground px-2 py-1"
+          className="flex items-center gap-1 text-xs uppercase tracking-wider text-slate-300/70 hover:text-slate-100/90 px-2 py-0.5 transition-all duration-200"
           aria-label={isOpen ? "Hide Analysis Panel" : "Show Analysis Panel"}
         >
           <ChevronDown 
             className={cn(
-              "h-4 w-4 transition-transform duration-300",
-              !isOpen && "rotate-180" // Rotate when panel is closed
+              "h-3.5 w-3.5 transition-transform duration-300", // Smaller icon
+              !isOpen && "rotate-180" 
             )} 
           />
-          {isOpen ? "Hide Panel" : "Show Panel"}
+          {/* Text removed for icon-only feel, but can be added back if desired */}
+          {/* {isOpen ? "Hide Panel" : "Show Panel"} */}
         </button>
       </div>
 
-      {/* Animated Content Wrapper */}
       <div 
         className={cn(
-          "w-full overflow-hidden transition-[height] duration-500 ease-in-out", // overflow-hidden is CRUCIAL here
-          isOpen ? "h-[45vh]" : "h-0" // Animate height
+          "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
+          isOpen ? "h-[45vh]" : "h-0"
         )}
       >
-        {/* Inner scrollable container with padding */}
-        <div className="p-2 md:p-3 h-full overflow-y-auto"> {/* h-full makes it respect parent's animated height; overflow-y-auto for content */}
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full"> {/* h-full makes grid take up parent's height */}
-            {/* Column 1: Site A Inputs */}
-            <div className="h-full overflow-hidden"> {/* h-full here to fill grid cell */}
+        <div className="p-1.5 md:p-2 h-full overflow-y-auto"> {/* Reduced padding */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-full"> {/* Reduced gap */}
+            <div className="h-full overflow-hidden"> 
               <SiteInputGroup 
                 id="pointA" 
                 title={pointAName} 
@@ -225,16 +210,13 @@ export default function BottomPanel({
               />
             </div>
 
-            {/* Column 2: Analysis, Results & Chart */}
-            <div className="flex flex-col h-full overflow-hidden"> {/* h-full to fill grid cell; flex-col for layout */}
-              
-              {/* Initial Analyze Button - only if no analysis result AND not pending */}
+            <div className="flex flex-col h-full overflow-hidden">
               {!analysisResult && !isActionPending && ( 
-                <div className="py-1 flex justify-center">
+                <div className="pt-1 pb-0.5 flex justify-center">
                   <Button
                     type="submit"
                     disabled={isActionPending}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1 h-8 rounded-md shadow"
+                    className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
                   >
                     <Loader2 className={cn("mr-1.5 h-3 w-3", isActionPending && "animate-spin" )} />
                     Analyze LOS
@@ -242,21 +224,20 @@ export default function BottomPanel({
                 </div>
               )}
 
-              {/* Stats Header - if analysisResult exists */}
               {analysisResult && (
                 <>
-                  <div className="flex flex-col items-center justify-center py-1 text-xs bg-background/50 rounded-t-md">
+                  <div className="flex flex-col items-center justify-center py-1 text-xs bg-transparent rounded-t-md"> {/* Transparent bg */}
                     {isStale ? (
-                        <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-muted text-muted-foreground mb-1">
+                        <span className="px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold bg-amber-500/30 text-amber-300/90 mb-0.5"> {/* Pill badge */}
                           NEEDS RE-ANALYZE
                         </span>
                       ) : (
                         <span
                           className={cn(
-                            "px-2 py-0.5 rounded-full text-xs font-semibold mb-1",
+                            "px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold mb-0.5", // Pill badge
                             isClearBasedOnAnalysis
-                              ? "bg-emerald-500/20 text-emerald-300"
-                              : "bg-rose-500/20 text-rose-300"
+                              ? "bg-emerald-500/30 text-emerald-300/90"
+                              : "bg-rose-500/30 text-rose-300/90"
                           )}
                         >
                           {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
@@ -264,27 +245,26 @@ export default function BottomPanel({
                       )}
                     <div className="flex justify-evenly w-full">
                       <div className="flex flex-col items-center px-1">
-                        <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Aerial Distance</span>
-                        <span className="font-semibold text-foreground">
+                        <span className="uppercase tracking-wider text-slate-400/80 text-[0.6rem]">Aerial Distance</span>
+                        <span className="font-medium text-slate-100/90">
                           {analysisResult.distanceKm < 1
                             ? `${(analysisResult.distanceKm * 1000).toFixed(1)} m`
                             : `${analysisResult.distanceKm.toFixed(2)} km`}
                         </span>
                       </div>
                       <div className="flex flex-col items-center px-1">
-                        <span className="uppercase tracking-wide text-muted-foreground text-[0.6rem]">Min. Clearance</span>
+                        <span className="uppercase tracking-wider text-slate-400/80 text-[0.6rem]">Min. Clearance</span>
                         <span className={cn(
-                          "font-semibold",
-                          isStale ? "text-muted-foreground" : (isClearBasedOnAnalysis ? "text-emerald-300" : "text-rose-300")
+                          "font-medium",
+                          isStale ? "text-slate-400/80" : (isClearBasedOnAnalysis ? "text-emerald-300/90" : "text-rose-300/90")
                         )}>
                           {actualMinClearance.toFixed(1)} m
                         </span>
                       </div>
                     </div>
                   </div>
-                  {/* Deficit Message */}
                   {analysisResult && !isStale && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
-                    <div className="text-center text-rose-300 text-xs py-0.5"> 
+                    <div className="text-center text-rose-300/90 text-xs py-0.5"> 
                       Add&nbsp;
                       <span className="font-semibold">{deficit} m</span>
                       &nbsp;to one or both towers to meet clearance.
@@ -293,10 +273,9 @@ export default function BottomPanel({
                 </>
               )}
               
-              {/* Chart or Analysis Settings */}
               <div className={cn(
-                "flex-1 min-h-0 bg-card/70 rounded-md p-1", // min-h-0 is important for flex children to shrink
-                isStale && analysisResult && "opacity-50 pointer-events-none" // Fade if stale AND results exist
+                "flex-1 min-h-0 bg-transparent rounded-md p-0.5", // Transparent bg, reduced padding
+                isStale && analysisResult && "opacity-60 pointer-events-none" 
               )}>
                 {analysisResult ? (
                   <ElevationProfileChart
@@ -306,7 +285,7 @@ export default function BottomPanel({
                     isStale={isStale}
                   />
                 ) : (
-                  <AnalysisSettings // Shown when no analysisResult
+                  <AnalysisSettings 
                     register={register}
                     clientFormErrors={clientFormErrors}
                     serverFormErrors={serverFormErrors}
@@ -315,12 +294,11 @@ export default function BottomPanel({
                 )}
               </div>
 
-              {/* Re-Analyze Button Footer - Always shown (if panel open) */}
-              <div className="pt-1 pb-1 flex justify-center border-t border-border bg-card/80 rounded-b-md mt-auto"> 
+              <div className="pt-1 pb-1 flex justify-center border-t border-slate-700/50 bg-transparent mt-auto"> {/* Transparent bg */}
                 <Button
                   type="submit"
                   disabled={isActionPending}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3 py-1 h-8 rounded-md shadow"
+                  className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
                 >
                   <Loader2 className={cn("mr-1.5 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
                   {analysisResult ? "Re-Analyze LOS" : "Analyze LOS"}
@@ -328,8 +306,7 @@ export default function BottomPanel({
               </div>
             </div>
 
-            {/* Column 3: Site B Inputs */}
-             <div className="h-full overflow-hidden"> {/* h-full here to fill grid cell */}
+             <div className="h-full overflow-hidden"> 
               <SiteInputGroup 
                 id="pointB" 
                 title={pointBName} 

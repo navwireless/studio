@@ -9,19 +9,12 @@ import { cn } from '@/lib/utils';
 
 import InteractiveMap from '@/components/fso/interactive-map';
 import BottomPanel from '@/components/fso/bottom-panel';
-// import ResultsDisplay from '@/components/fso/results-display'; // No longer used directly here
-// import ElevationProfileChart from '@/components/fso/elevation-profile-chart'; // Now part of BottomPanel
-// import ProductCatalog from '@/components/fso/product-catalog'; // Removed for MVP cleanup
-// import BulkAnalysisView from '@/components/fso/bulk-analysis-view'; // Removed for MVP cleanup
-// import AppSidebar, { type ActiveTool } from '@/components/layout/app-sidebar'; // No longer used
-
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Info } from 'lucide-react';
 
-// Zod schema for individual point
 const StationPointSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name too long"),
   lat: z.string()
@@ -33,7 +26,6 @@ const StationPointSchema = z.object({
   height: z.number().min(0, "Min 0m").max(100, "Max 100m"),
 });
 
-// Zod schema for the whole form
 const PageAnalysisFormSchema = z.object({
   pointA: StationPointSchema,
   pointB: StationPointSchema,
@@ -61,7 +53,6 @@ function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6
   );
 }
 
-
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
   const [serverState, formAction, isActionPending] = useActionState(performLosAnalysis, initialState);
@@ -71,11 +62,10 @@ export default function Home() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
   const [isStale, setIsStale] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isPanelOpen, setIsPanelOpen] = useState(true); // Panel is open by default
   const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
 
-
-  const { register, handleSubmit, formState: { errors: clientFormErrors, isValid, touchedFields }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
+  const { register, handleSubmit, formState: { errors: clientFormErrors, isValid }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: defaultFormStateValues,
     mode: 'onChange', 
@@ -108,7 +98,6 @@ export default function Home() {
   const watchedPointA = useWatch({ control, name: 'pointA' });
   const watchedPointB = useWatch({ control, name: 'pointB' });
   const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
-
 
   useEffect(() => {
     if (!serverState) return;
@@ -157,7 +146,7 @@ export default function Home() {
       setIsStale(false); 
   
       if (newAnalysisData && !hasFirstAnalysisCompleted) {
-        setIsPanelOpen(true);
+        setIsPanelOpen(true); // Auto-open panel on first successful analysis
         setHasFirstAnalysisCompleted(true);
       }
     }
@@ -204,9 +193,7 @@ export default function Home() {
   const handleMarkerDragStart = useCallback(() => {
     setAnalysisResult(null);
     setClientError(null);
-    // setIsStale(true); // Stale state will be re-evaluated by the effect above
   }, []);
-
 
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
     setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
@@ -220,7 +207,6 @@ export default function Home() {
     handleSubmit(processSubmit)();
   }, [setValue, handleSubmit]);
 
-  // Map container height is dynamic based on panel state
   const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
 
   const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
@@ -236,10 +222,8 @@ export default function Home() {
     losPossible: analysisResult.losPossible
   } : null;
 
-
   return (
     <div className="flex flex-1 h-full overflow-hidden">
-      {/* Sidebar removed */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <InteractiveMap
           pointA={formPointAForMap} 
@@ -254,17 +238,16 @@ export default function Home() {
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
-        {/* Centralized Error Display & Loading Skeleton */}
         {clientError && clientError !== "No analysis performed yet." && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
-                <Card className="shadow-lg border-destructive bg-destructive/20 backdrop-blur-sm">
+                <Card className="shadow-lg border-destructive bg-destructive/30 backdrop-blur-md text-destructive-foreground"> {/* Adjusted background */}
                     <CardHeader className="py-2 px-4 flex-row items-center justify-between">
-                        <CardTitle className="text-destructive text-sm flex items-center"><Info className="mr-2 h-4 w-4" /> Error</CardTitle>
+                        <CardTitle className="text-sm flex items-center"><Info className="mr-2 h-4 w-4" /> Error</CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 py-2">
-                        <p className="text-sm text-destructive-foreground">{clientError}</p>
+                        <p className="text-sm">{clientError}</p>
                         {formErrors && Object.keys(formErrors).length > 0 && (
-                        <ul className="list-disc list-inside mt-1 text-xs text-destructive-foreground/80">
+                        <ul className="list-disc list-inside mt-1 text-xs opacity-80">
                             {Object.entries(formErrors).map(([field, errors]) =>
                                 errors?.map((error, index) => <li key={`${field}-${index}`}>{`${field.replace('pointA.','A: ').replace('pointB.','B: ')}: ${error}`}</li>)
                             )}
@@ -275,23 +258,19 @@ export default function Home() {
             </div>
         )}
         
-        {/* Loading skeleton shown when action is pending AND there's no result OR there's an error (but not "No analysis performed yet") */}
         {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
-                <Card className="shadow-lg bg-card/80 backdrop-blur-sm animate-pulse">
-                    <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
+                <Card className="shadow-lg bg-slate-800/70 backdrop-blur-md animate-pulse"> {/* Adjusted background */}
+                    <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4 bg-slate-700/50" /></CardHeader>
                     <CardContent className="px-4 pb-3 space-y-2">
-                        <Skeleton className="h-4 w-1/2" />
-                        <Skeleton className="h-4 w-2/3" />
-                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
+                        <Skeleton className="h-4 w-2/3 bg-slate-700/50" />
+                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
                     </CardContent>
                 </Card>
             </div>
         )}
         
-        {/* Bottom Analysis Panel */}
-        {/* Conditionally render BottomPanel or some placeholder if needed */}
-        {/* For now, always rendered but visibility controlled internally by BottomPanel */}
           <BottomPanel
             analysisResult={analysisResult}
             isOpen={isPanelOpen}
@@ -299,18 +278,15 @@ export default function Home() {
             control={control}
             register={register}
             handleSubmit={handleSubmit}
-            processSubmit={processSubmit} // Pass the main submit handler
+            processSubmit={processSubmit} 
             clientFormErrors={clientFormErrors}
             serverFormErrors={formErrors}
             isActionPending={isActionPending}
-            getValues={getValues} // Pass for internal use if needed by BottomPanel for its own logic
-            setValue={setValue}   // Pass for internal use if needed
+            getValues={getValues} 
+            setValue={setValue}   
             isStale={isStale}   
           />
       </div>
     </div>
   );
 }
-    
-
-    

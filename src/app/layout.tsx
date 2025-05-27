@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import AppHeader from '@/components/layout/app-header'; // Keep AppHeader
+import AppHeader from '@/components/layout/app-header'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,9 +27,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-background text-foreground flex flex-col h-screen overflow-hidden`}>
+      <body 
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased 
+                   bg-background text-foreground 
+                   flex flex-col h-screen overflow-hidden`}
+      >
         <AppHeader />
-        {/* Main content area will be managed by page.tsx for the new grid */}
         <main className="flex-1 overflow-hidden">
           {children}
         </main>
