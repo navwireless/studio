@@ -22,7 +22,7 @@ interface SiteInputGroupProps {
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
   isActionPending: boolean;
-  analysisResult: AnalysisResult | null;
+  analysisResult: AnalysisResult | null; // Added to conditionally render button text
 }
 
 const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ 
@@ -34,46 +34,46 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
   serverFormErrors, 
   getCombinedError,
   isActionPending,
-  analysisResult 
+  analysisResult
 }) => (
-  <Card className="bg-transparent backdrop-blur-sm shadow-none border-0 h-full flex flex-col p-1">
-    <CardHeader className="p-1.5">
-      <CardTitle className="text-sm flex items-center text-slate-100 uppercase tracking-wider font-medium">
-        <Target className="mr-1.5 h-3.5 w-3.5 text-primary/80" /> {title}
+  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1">
+    <CardHeader className="p-1">
+      <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
+        <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
       </CardTitle>
     </CardHeader>
-    <CardContent className="p-1.5 space-y-1 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
+    <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
       <div className="space-y-1.5">
         <div>
-          <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Name</Label>
+          <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Name</Label>
           <Input 
             id={`${id}.name`} 
             {...register(`${id}.name`)} 
             placeholder="e.g. Main Site" 
-            className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
+            className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
           />
           {(clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) && 
             <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])}</p>}
         </div>
         <div className="grid grid-cols-2 gap-1">
           <div>
-            <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Latitude</Label>
+            <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Latitude</Label>
             <Input 
               id={`${id}.lat`} 
               {...register(`${id}.lat`)} 
               placeholder="-90 to 90" 
-              className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
+              className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
             />
             {(clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) && 
               <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
           </div>
           <div>
-            <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Longitude</Label>
+            <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Longitude</Label>
             <Input 
               id={`${id}.lng`} 
               {...register(`${id}.lng`)} 
               placeholder="-180 to 180" 
-              className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
+              className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
             />
             {(clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) && 
               <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])}</p>}
@@ -97,18 +97,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
         {(clientFormErrors[id]?.height || serverFormErrors?.[`${id}.height`]) && 
           <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.height, serverFormErrors?.[`${id}.height`])}</p>}
       </div>
-      <div className={cn("pt-1.5", id === 'pointA' ? 'self-start' : 'self-end')}>
-        <Button
-          type="submit"
-          disabled={isActionPending}
-          variant="outline"
-          size="sm"
-          className="bg-slate-700/40 hover:bg-slate-600/60 backdrop-blur-sm text-slate-100/90 hover:text-white text-[0.7rem] font-medium px-2.5 py-1 h-7 rounded-md shadow-none border border-slate-600/70 hover:border-slate-500/90 transition-all duration-200"
-        >
-          <Loader2 className={cn("mr-1 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
-          {analysisResult ? "Re-Analyze LOS" : "Analyze LOS"}
-        </Button>
-      </div>
+      {/* Redundant button removed from here as per new design */}
     </CardContent>
   </Card>
 );
@@ -119,6 +108,8 @@ interface AnalysisSettingsProps {
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
   isActionPending: boolean;
+  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>; // Added for the button
+  processSubmit: (data: AnalysisFormValues) => void; // Added for the button
 }
 
 const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ 
@@ -126,22 +117,24 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
   clientFormErrors, 
   serverFormErrors, 
   getCombinedError,
-  isActionPending 
+  isActionPending,
+  handleSubmit,
+  processSubmit
 }) => (
-  <div className="h-full flex flex-col items-center justify-center p-1 bg-transparent backdrop-blur-sm rounded-lg"> 
+  <div className="h-full flex flex-col items-center justify-center p-1 bg-transparent backdrop-blur-2px rounded-lg"> 
     <CardTitle className="text-sm flex items-center mb-2 text-primary/80 uppercase tracking-wider font-medium">
       <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
     </CardTitle>
     <div className="w-full space-y-1 max-w-[180px] mx-auto"> 
       <div>
-        <Label htmlFor="clearanceThreshold" className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Min. Fresnel Cl (m)</Label>
+        <Label htmlFor="clearanceThreshold" className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Min. Fresnel Cl (m)</Label>
         <Input
           id="clearanceThreshold"
           type="number"
           step="any"
           {...register('clearanceThreshold')}
           placeholder="e.g., 10"
-          className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
+          className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
         />
         {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
           <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
@@ -150,6 +143,7 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
     <div className="pt-2">
       <Button
         type="submit"
+        onClick={handleSubmit(processSubmit)} // Use handleSubmit here
         disabled={isActionPending}
         className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
       >
@@ -251,58 +245,62 @@ export default function BottomPanel({
               analysisResult={analysisResult}
             />
             
-            <div className="flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-sm rounded-lg">
+            <div className="flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg">
               
               {analysisResult && (
-                <>
-                  <div className="pt-1.5 pb-1 flex justify-center">
+                <div className="flex items-center justify-around py-2 px-3 border-b border-slate-700/50 mb-1">
+                  <div className="flex-shrink-0">
+                    {isStale ? (
+                      <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-600/30 text-yellow-400/90"> 
+                        NEEDS RE-ANALYZE
+                      </span>
+                    ) : (
+                      <span
+                        className={cn(
+                          "px-2 py-1 rounded-md text-xs font-semibold",
+                          isClearBasedOnAnalysis
+                            ? "bg-emerald-500/30 text-emerald-300/90"
+                            : "bg-rose-500/30 text-rose-300/90"
+                        )}
+                      >
+                        {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-grow flex justify-center">
                     <Button
                       type="submit"
                       disabled={isActionPending}
-                      className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
+                      className="bg-primary/90 hover:bg-primary text-primary-foreground text-sm font-semibold px-4 py-1.5 h-8 rounded-md shadow-md hover:shadow-lg transition-all duration-200"
                     >
-                      <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")} />
+                      <Loader2 className={cn("mr-2 h-4 w-4", !isActionPending && "hidden", isActionPending && "animate-spin")} />
                       Re-Analyze LOS
                     </Button>
                   </div>
-                  <div className="flex justify-evenly items-center py-1 px-2 text-xs bg-transparent">
-                    {isStale ? (
-                        <span className="px-1.5 py-0.5 rounded-full text-[0.65rem] font-medium bg-yellow-600/30 text-yellow-400/90">
-                          NEEDS RE-ANALYZE
-                        </span>
-                      ) : (
-                        <span
-                          className={cn(
-                            "px-1.5 py-0.5 rounded-full text-[0.65rem] font-medium",
-                            isClearBasedOnAnalysis
-                              ? "bg-emerald-500/30 text-emerald-300/90"
-                              : "bg-rose-500/30 text-rose-300/90"
-                          )}
-                        >
-                          {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
-                        </span>
-                      )}
-                    
+
+                  <div className="flex items-center space-x-4 text-xs">
                     <div className="flex flex-col items-center">
-                      <span className="uppercase tracking-wider text-slate-300/80 text-[0.6rem] font-normal">Aerial Distance</span>
-                      <span className="font-medium text-slate-100 text-[0.7rem]">
+                      <span className="uppercase tracking-wider text-slate-400/90 text-[0.65rem] font-medium">Aerial Distance</span>
+                      <span className="font-bold text-slate-100 text-sm">
                         {analysisResult.distanceKm < 1
                           ? `${(analysisResult.distanceKm * 1000).toFixed(1)} m`
                           : `${analysisResult.distanceKm.toFixed(2)} km`}
                       </span>
                     </div>
                     <div className="flex flex-col items-center">
-                      <span className="uppercase tracking-wider text-slate-300/80 text-[0.6rem] font-normal">Min. Clearance</span>
+                      <span className="uppercase tracking-wider text-slate-400/90 text-[0.65rem] font-medium">Min. Clearance</span>
                       <span className={cn(
-                        "font-medium text-[0.7rem]",
-                        isStale ? "text-slate-400/80" : (isClearBasedOnAnalysis ? "text-emerald-300/90" : "text-rose-300/90")
+                        "font-bold text-sm",
+                        isStale ? "text-slate-400" : (isClearBasedOnAnalysis ? "text-emerald-400" : "text-rose-400")
                       )}>
                         {actualMinClearance.toFixed(1)} m
                       </span>
                     </div>
                   </div>
-                </>
+                </div>
               )}
+              
               {analysisResult && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
                 <div className="text-center text-rose-300/80 text-[0.7rem] py-0.5"> 
                   Add&nbsp;
@@ -313,7 +311,7 @@ export default function BottomPanel({
               
               <div className={cn(
                 "flex-1 min-h-0 p-0.5", 
-                isStale && analysisResult && "opacity-60 pointer-events-none" 
+                analysisResult && isStale && "opacity-60 pointer-events-none" 
               )}>
                 {analysisResult ? (
                   <ElevationProfileChart
@@ -329,6 +327,8 @@ export default function BottomPanel({
                     serverFormErrors={serverFormErrors}
                     getCombinedError={getCombinedError}
                     isActionPending={isActionPending}
+                    handleSubmit={handleSubmit}
+                    processSubmit={processSubmit}
                   />
                 )}
               </div>
@@ -351,6 +351,3 @@ export default function BottomPanel({
     </form>
   );
 }
-
-
-    
