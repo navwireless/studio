@@ -16,18 +16,33 @@ interface CustomProfileChartProps {
 }
 
 const PADDING = { top: 20, right: 30, bottom: 40, left: 50 }; 
-const AXIS_COLOR = 'hsl(var(--muted-foreground))'; // Not directly used, TEXT_COLOR is used
 const TEXT_COLOR = 'hsl(var(--muted-foreground))';
 const GRID_COLOR = 'hsla(var(--border), 0.5)'; 
 const TERRAIN_FILL_COLOR = 'rgba(99, 102, 241, 0.35)';
 const TERRAIN_STROKE_COLOR = 'rgba(99, 102, 241, 0.6)';
-const LOS_LINE_COLOR = '#22d3ee';
+const LOS_LINE_COLOR = '#22d3ee'; // Cyan
 const TOWER_LINE_COLOR = '#eab308'; 
-const HOVER_LINE_COLOR = 'hsl(var(--accent))';
-const HOVER_DOT_COLOR = '#22d3ee'; // Match LOS line for dot on path
+const HOVER_GUIDE_LINE_COLOR = 'rgba(200, 200, 200, 0.5)'; // Light, dashed gray for vertical guide
+const HOVER_DOT_COLOR = '#22d3ee'; // Cyan for dot on LOS
 const TOOLTIP_BG_COLOR = 'hsl(var(--popover))';
 const TOOLTIP_TEXT_COLOR = 'hsl(var(--popover-foreground))';
 const TOOLTIP_BORDER_COLOR = 'hsl(var(--border))';
+
+// Helper to draw rounded rectangle
+function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
 
 export default function CustomProfileChart({
   data,
@@ -51,6 +66,7 @@ export default function CustomProfileChart({
     const rect = canvas.getBoundingClientRect();
     
     if (rect.width === 0 || rect.height === 0) {
+        // If canvas has no dimensions yet, try again on next frame
         requestAnimationFrame(drawChart);
         return;
     }
@@ -64,7 +80,7 @@ export default function CustomProfileChart({
 
     ctx.clearRect(0, 0, rect.width, rect.height);
     
-    const originalTransform = ctx.getTransform(); // Save for drawing tooltip relative to canvas, not chart area
+    const originalTransform = ctx.getTransform();
     ctx.translate(PADDING.left, PADDING.top);
 
     const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
@@ -166,13 +182,13 @@ export default function CustomProfileChart({
 
     // 5. Draw Hover Effects (if hoverData exists)
     if (hoverData) {
-      const hxPx = hoverData.xPx; // Pixel X within chart area
-      const hyPxLos = hoverData.yPx; // Pixel Y on LOS line within chart area
+      const hxPx = hoverData.xPx; 
+      const hyPxLos = hoverData.yPx; 
 
       // Vertical guide line
       ctx.beginPath();
       ctx.setLineDash([3, 3]);
-      ctx.strokeStyle = HOVER_LINE_COLOR;
+      ctx.strokeStyle = HOVER_GUIDE_LINE_COLOR; 
       ctx.lineWidth = 1;
       ctx.moveTo(hxPx, 0);
       ctx.lineTo(hxPx, chartHeight);
@@ -189,9 +205,9 @@ export default function CustomProfileChart({
       ctx.stroke();
     }
     
-    ctx.setTransform(originalTransform); // Restore transform for tooltip drawing
+    ctx.setTransform(originalTransform);
 
-    // 6. Draw Tooltip (on canvas)
+    // 6. Draw Tooltip
     if (hoverData && mousePosition) {
         const p = hoverData.point;
         const lines = [
@@ -201,41 +217,40 @@ export default function CustomProfileChart({
         ];
         
         ctx.font = "10px Inter, sans-serif";
-        const lineHeight = 14; // Increased for better readability
+        const lineHeight = 14; 
         const tooltipPadding = 6;
         const textWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
         const tooltipWidth = textWidth + 2 * tooltipPadding;
-        const tooltipHeight = lines.length * lineHeight + 2 * tooltipPadding - (lineHeight - 10); // Adjust based on line height
-
-        let tipX = mousePosition.x + 15; 
-        let tipY = mousePosition.y + 15; 
-
-        if (tipX + tooltipWidth > rect.width - PADDING.right/2) tipX = mousePosition.x - tooltipWidth - 15;
-        if (tipY + tooltipHeight > rect.height - PADDING.bottom/2) tipY = mousePosition.y - tooltipHeight - 15;
-        if (tipX < PADDING.left/2) tipX = PADDING.left/2;
-        if (tipY < PADDING.top/2) tipY = PADDING.top/2;
-        
-        // Rounded rectangle for tooltip
-        ctx.beginPath();
+        const tooltipHeight = lines.length * lineHeight + 2 * tooltipPadding - (lineHeight - 10); // Adjusted for tighter fit
         const cornerRadius = 4;
-        ctx.moveTo(tipX + cornerRadius, tipY);
-        ctx.lineTo(tipX + tooltipWidth - cornerRadius, tipY);
-        ctx.quadraticCurveTo(tipX + tooltipWidth, tipY, tipX + tooltipWidth, tipY + cornerRadius);
-        ctx.lineTo(tipX + tooltipWidth, tipY + tooltipHeight - cornerRadius);
-        ctx.quadraticCurveTo(tipX + tooltipWidth, tipY + tooltipHeight, tipX + tooltipWidth - cornerRadius, tipY + tooltipHeight);
-        ctx.lineTo(tipX + cornerRadius, tipY + tooltipHeight);
-        ctx.quadraticCurveTo(tipX, tipY + tooltipHeight, tipX, tipY + tooltipHeight - cornerRadius);
-        ctx.lineTo(tipX, tipY + cornerRadius);
-        ctx.quadraticCurveTo(tipX, tipY, tipX + cornerRadius, tipY);
-        ctx.closePath();
 
+        // Position tooltip slightly above and to the right of the cursor by default
+        let tipX = mousePosition.x + 15; 
+        let tipY = mousePosition.y - tooltipHeight - 5; 
+
+        // Boundary checks
+        if (tipX + tooltipWidth > rect.width - PADDING.right/2) { // If overflows right
+            tipX = mousePosition.x - tooltipWidth - 15; // Move to left of cursor
+        }
+        if (tipY < PADDING.top/2) { // If overflows top
+            tipY = mousePosition.y + 15; // Move below cursor
+        }
+        if (tipY + tooltipHeight > rect.height - PADDING.bottom/2) { // If overflows bottom (after potential flip)
+            tipY = rect.height - PADDING.bottom/2 - tooltipHeight;
+        }
+        if (tipX < PADDING.left/2) { // If overflows left (after potential flip)
+            tipX = PADDING.left/2;
+        }
+        
+        ctx.globalAlpha = 0.9; 
         ctx.fillStyle = TOOLTIP_BG_COLOR;
-        ctx.globalAlpha = 0.9; // Make tooltip slightly translucent
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
         ctx.strokeStyle = TOOLTIP_BORDER_COLOR;
         ctx.lineWidth = 0.5;
+        
+        drawRoundedRect(ctx, tipX, tipY, tooltipWidth, tooltipHeight, cornerRadius);
+        ctx.fill();
         ctx.stroke();
+        ctx.globalAlpha = 1.0;
 
 
         ctx.textAlign = "left";
@@ -246,9 +261,6 @@ export default function CustomProfileChart({
             ctx.fillText(line, tipX + tooltipPadding, tipY + tooltipPadding + (i * lineHeight) + (lineHeight / 2) );
         });
     }
-    // Note: ctx.restore() was removed from here as setTransform(originalTransform) is used.
-    // If using save/restore, ensure they are balanced.
-
   }, [data, totalDistanceKm, pointAName, pointBName, hoverData, mousePosition]);
 
   useEffect(() => {
@@ -269,7 +281,8 @@ export default function CustomProfileChart({
       setMousePosition({ x: mouseCanvasX, y: mouseCanvasY }); 
 
       const chartWidth = rect.width - PADDING.left - PADDING.right;
-      const chartHeight = rect.height - PADDING.top - PADDING.bottom;
+      const chartHeight = rect.height - PADDING.top - PADDING.bottom; // Needed for local scaling
+
       const mouseXInChartArea = mouseCanvasX - PADDING.left;
 
       if (mouseXInChartArea >= 0 && mouseXInChartArea <= chartWidth) {
@@ -285,8 +298,7 @@ export default function CustomProfileChart({
           }
         }
         
-        // Calculate pixel coordinates for the dot based on this closestPoint
-        // Need scales from drawChart context or recalculate them here.
+        // Calculate pixel coordinates for the dot based on this closestPoint using local scales
         const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
         let tempMinY = Math.min(...elevations);
         let tempMaxY = Math.max(...elevations);
@@ -294,14 +306,14 @@ export default function CustomProfileChart({
         tempMinY -= yDataRange * 0.15;
         tempMaxY += yDataRange * 0.15;
         if (tempMaxY === tempMinY) { tempMaxY +=10; tempMinY -=10; }
-        if (tempMaxY < tempMinY) [tempMaxY, tempMinY] = [tempMinY, tempMaxY];
+        if (tempMaxY < tempMinY) [tempMaxY, tempMinY] = [tempMinY, tempMaxY]; // Ensure maxY > minY
 
         const getXPx = (distKm: number) => (distKm / totalDistanceKm) * chartWidth;
         const getYPx = (elev: number) => chartHeight - ((elev - tempMinY) / (tempMaxY - tempMinY)) * chartHeight;
 
         setHoverData({ 
-            xPx: getXPx(closestPoint.distance),
-            yPx: getYPx(closestPoint.losHeight),
+            xPx: getXPx(closestPoint.distance), // Pixel X within chart area
+            yPx: getYPx(closestPoint.losHeight), // Pixel Y on LOS line within chart area
             point: { ...closestPoint, distanceMeters: closestPoint.distance * 1000 }
         });
       } else {
@@ -314,11 +326,12 @@ export default function CustomProfileChart({
       setMousePosition(null);
     };
 
-    // Use ResizeObserver for better resize handling
     const resizeObserver = new ResizeObserver(() => {
         requestAnimationFrame(drawChart);
     });
-    resizeObserver.observe(canvas);
+    if (canvas) {
+        resizeObserver.observe(canvas);
+    }
 
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseout', handleMouseOut);
@@ -326,15 +339,17 @@ export default function CustomProfileChart({
     drawChart(); // Initial draw
 
     return () => {
-      resizeObserver.unobserve(canvas);
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mouseout', handleMouseOut);
+      if (canvas) {
+        resizeObserver.unobserve(canvas);
+        canvas.removeEventListener('mousemove', handleMouseMove);
+        canvas.removeEventListener('mouseout', handleMouseOut);
+      }
     };
-  }, [drawChart, data, totalDistanceKm]); 
+  }, [drawChart, data, totalDistanceKm, PADDING.left, PADDING.right, PADDING.top, PADDING.bottom]); 
   
   useEffect(() => { 
       drawChart();
-  }, [hoverData, mousePosition, drawChart]); // Redraw when hoverData or mousePosition changes for tooltip
+  }, [hoverData, mousePosition, drawChart]);
 
   if (isLoading) {
       return (
@@ -360,5 +375,4 @@ export default function CustomProfileChart({
     </div>
   );
 }
-
     
