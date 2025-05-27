@@ -1,12 +1,10 @@
 
 import type { Config } from "tailwindcss";
+import plugin from 'tailwindcss/plugin';
 
 export default {
-    darkMode: ["class"], // App will default to dark, class "dark" will be on html/body
+    darkMode: ["class"], 
     content: [
-    // If you are ONLY using the App Router, the next line for 'src/pages' might be unnecessary
-    // but it's harmless if you don't have a 'src/pages' directory.
-    // "./src/pages/**/*.{js,ts,jsx,tsx,mdx}", 
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
@@ -35,11 +33,11 @@ export default {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'
   			},
-  			accent: { // General UI accent (e.g. hovers), should be UISP blue
+  			accent: { 
   				DEFAULT: 'hsl(var(--accent))',
   				foreground: 'hsl(var(--accent-foreground))'
   			},
-        appAccent: { // Specific application accent (e.g. green for LOS success)
+        appAccent: { 
           DEFAULT: 'hsl(var(--app-accent))',
           foreground: 'hsl(var(--app-accent-foreground))'
         },
@@ -57,9 +55,8 @@ export default {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
-        // Sidebar specific colors (can be simplified if they match general theme)
         sidebar: {
-          DEFAULT: 'hsl(var(--card))', // Example: Sidebar bg same as card
+          DEFAULT: 'hsl(var(--card))', 
           foreground: 'hsl(var(--card-foreground))',
         }
   		},
@@ -93,8 +90,20 @@ export default {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
-  		}
+  		},
+      backdropBlur: {
+        '2px': '2px',
+      }
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(function({ addUtilities }) {
+      addUtilities({
+        '.backdrop-blur-2px': {
+          'backdrop-filter': 'blur(2px)',
+        },
+      })
+    })
+  ],
 } satisfies Config;

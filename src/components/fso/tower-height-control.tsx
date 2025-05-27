@@ -32,38 +32,49 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let newValue = parseFloat(event.target.value);
     if (isNaN(newValue)) {
-      return;
+      // Allow empty input for clearing, but don't change if invalid
+      if (event.target.value === "") {
+         onChange(min); // Or some default, or just don't call onChange
+         return;
+      }
+      return; 
     }
-    if (newValue < min) newValue = min;
-    if (newValue > max) newValue = max;
+    // No immediate clamping here, let react-hook-form validation handle it on blur/submit
+    // if (newValue < min) newValue = min;
+    // if (newValue > max) newValue = max;
     onChange(newValue);
   };
 
+  const validateAndSetHeight = (value: string) => {
+    let numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      numValue = min; // default to min if invalid
+    }
+    if (numValue < min) numValue = min;
+    if (numValue > max) numValue = max;
+    onChange(numValue);
+  }
+
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5"> {/* Reduced space */}
       <div className="flex justify-between items-center">
-        <Label htmlFor={`height-input-${idSuffix}`} className="text-xs uppercase tracking-wider text-slate-400/80"> 
+        <Label htmlFor={`height-input-${idSuffix}`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal"> 
           {label} (m)
         </Label>
-        <span className="text-xs font-medium text-primary/90">{height}m</span> 
+        <span className="text-[0.7rem] font-medium text-primary/80">{height}m</span> 
       </div>
-      <div className="flex items-center space-x-1.5"> {/* Reduced space */}
+      <div className="flex items-center space-x-1"> {/* Reduced space */}
         <Input
           id={`height-input-${idSuffix}`}
           type="number"
-          value={height}
+          value={height} // Keep it controlled
           onChange={handleInputChange}
-          onBlur={(e) => { 
-            let val = parseFloat(e.target.value);
-            if (isNaN(val)) val = height; 
-            if (val < min) val = min;
-            if (val > max) val = max;
-            onChange(val);
-          }}
+          onBlur={(e) => validateAndSetHeight(e.target.value)}
           min={min}
           max={max}
           step={step}
-          className="w-16 bg-slate-800/50 border-slate-700 text-slate-100/90 text-xs h-7" /* Adjusted size & style */
+          className="w-12 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 text-xs h-6 px-1 py-0.5 rounded-none focus:ring-0"
         />
         <Slider
           id={`height-slider-${idSuffix}`}
