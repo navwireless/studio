@@ -39,16 +39,14 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
   const yMinData = Math.min(...allElevations);
   const yMaxData = Math.max(...allElevations);
   
-  // Increased yPadding slightly for better visual separation, especially if min/max are close
   const yPadding = Math.max(25, (yMaxData - yMinData) * 0.20); 
   const yDomainMin = Math.floor(yMinData - yPadding);
-  const yDomainMax = Math.ceil(yMaxData + yPadding * 1.5); // More padding at the top
+  const yDomainMax = Math.ceil(yMaxData + yPadding * 1.5);
 
 
   return (
     <div className={cn("w-full h-full", isStale && "opacity-50")}>
       <ResponsiveContainer width="100%" height="100%">
-        {/* Adjusted left margin to prevent Y-axis labels from being cut off */}
         <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.2}/>
           <XAxis
@@ -56,7 +54,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             type="number"
             domain={[0, 'dataMax']}
             allowDataOverflow={false}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             tickFormatter={(value) => value.toFixed(0)} 
             unit="m"
             axisLine={false}
@@ -66,11 +64,11 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
           />
           <YAxis
             domain={[yDomainMin, yDomainMax]}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             tickFormatter={(value) => `${Math.round(value)}m`}
             axisLine={false}
             tickLine={false}
-            width={45} // Ensure this width is sufficient for labels like "135m"
+            width={45} 
           />
           <Tooltip
             cursor={{ stroke: 'hsl(var(--accent))', strokeWidth: 1, strokeDasharray: '3 3' }}
@@ -82,21 +80,19 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
               fontSize: "10px",
               boxShadow: "0 1px 4px hsla(var(--shadow, 0 0% 0% / 0.1))"
             }}
-            labelFormatter={(label) => `Dist: ${(Number(label) / 1000).toFixed(2)} km`}
-            content={({ active, payload, label }) => {
+            content={({ active, payload }) => {
               if (active && payload && payload.length) {
                 const pointData = payload[0].payload as typeof chartData[0];
                 return (
                   <div className="p-1.5 bg-popover border border-border rounded-md shadow-lg text-xs">
-                    <p className="text-muted-foreground mb-0.5">Dist: {(pointData.distance / 1000).toFixed(2)} km</p>
-                    <p style={{ color: 'rgba(99, 102, 241, 1)' }} className="font-medium">
-                      Terrain: {pointData.terrain.toFixed(1)} m
+                    <p className="text-muted-foreground mb-0.5">
+                      Distance to Site: {pointData.distance !== undefined ? pointData.distance.toFixed(2) : 'N/A'} m
                     </p>
-                    <p style={{ color: '#22d3ee' }} className="font-semibold">
-                      LOS Path: {pointData.losHeight.toFixed(1)} m
+                    <p style={{ color: '#22d3ee' }} className="font-semibold mb-0.5">
+                      Line of Sight height: {pointData.losHeight !== undefined ? pointData.losHeight.toFixed(1) : 'N/A'} m
                     </p>
-                    <p className="font-medium" style={{color: pointData.clearance >= 0 ? 'hsl(var(--los-success-text))' : 'hsl(var(--los-failure-text))'}}>
-                      Clearance: {pointData.clearance.toFixed(1)} m
+                    <p className="text-muted-foreground">
+                      Fresnel height: {pointData.clearance !== undefined ? pointData.clearance.toFixed(1) : 'N/A'} m
                     </p>
                   </div>
                 );
@@ -117,7 +113,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             type="monotone"
             dataKey="losHeight"
             stroke="#22d3ee"        
-            strokeWidth={2} // Was 3, user example showed 2, let's try 2 for closer match to example
+            strokeWidth={2} 
             name="LOS Path"
             dot={false}
             activeDot={{ r: 5, strokeWidth: 1, fill: '#22d3ee', stroke: 'hsl(var(--background))' }}
