@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI } from '@/types';
-import { analyzeLOS } from '@/lib/los-calculator'; // Removed calculateDistanceKm as it's used in los-calculator
+import { analyzeLOS } from '@/lib/los-calculator';
 
 // --- Google Elevation API Configuration ---
 // WARNING: Storing API keys directly in code is insecure for production. 
@@ -31,49 +31,58 @@ const AnalysisFormSchema = z.object({
  * Fetches elevation data from Google Elevation API.
  */
 async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
-  if (!GOOGLE_ELEVATION_API_KEY) {
-    throw new Error("Google Elevation API key is not configured.");
+  if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "") {
+    throw new Error("Google Elevation API key is not configured or is empty.");
   }
 
   const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
-  const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
+  const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY.trim()}`;
 
+  let response;
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("Google Elevation API request failed:", response.status, errorBody);
-      throw new Error(`Google Elevation API request failed with status ${response.status}.`);
-    }
-
-    const data = await response.json();
-
-    if (data.status !== 'OK') {
-      console.error("Google Elevation API error:", data.status, data.error_message);
-      throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
-    }
-
-    if (!data.results || data.results.length === 0) {
-      throw new Error("Google Elevation API returned no results.");
-    }
-    
-    // Ensure the results match the ElevationSampleAPI structure
-    return data.results.map((sample: any) => ({
-        elevation: sample.elevation,
-        location: {
-            lat: sample.location.lat,
-            lng: sample.location.lng,
-        },
-        resolution: sample.resolution,
-    }));
-
-  } catch (error) {
-    console.error("Error fetching elevation data:", error);
-    if (error instanceof Error) {
-        throw error; // Re-throw known errors
-    }
-    throw new Error("An unexpected error occurred while fetching elevation data.");
+    response = await fetch(url);
+  } catch (networkError) {
+    console.error("Network error fetching elevation data:", networkError);
+    throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${networkError instanceof Error ? networkError.message : String(networkError)}`);
   }
+
+  if (!response.ok) {
+    let errorBody = "Could not retrieve error body.";
+    try {
+      errorBody = await response.text();
+    } catch (textError) {
+      console.error("Failed to read error body from Google API response:", textError);
+    }
+    console.error("Google Elevation API request failed:", response.status, errorBody);
+    throw new Error(`Google Elevation API request failed with status ${response.status}. Details: ${errorBody}`);
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (jsonError) {
+    console.error("Failed to parse JSON response from Google Elevation API:", jsonError);
+    throw new Error(`Failed to parse response from Google Elevation API. Details: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+  }
+  
+
+  if (data.status !== 'OK') {
+    console.error("Google Elevation API error:", data.status, data.error_message);
+    throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown API error'}`);
+  }
+
+  if (!data.results || data.results.length === 0) {
+    throw new Error("Google Elevation API returned no results for the given path.");
+  }
+    
+  return data.results.map((sample: any) => ({
+      elevation: sample.elevation,
+      location: {
+          lat: sample.location.lat,
+          lng: sample.location.lng,
+      },
+      resolution: sample.resolution,
+  }));
 }
 
 
@@ -117,18 +126,22 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
 
   try {
     const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
-    
     const result = analyzeLOS(params, elevationData);
-    // Update message to reflect real data usage
     return { ...result, message: `${result.message} Using Google Elevation API data.` };
 
   } catch (err) {
     console.error("Error during LOS analysis:", err);
     const errorMessage = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
-    // Provide more specific error if it's from the API key check
-    if (errorMessage.includes("API key is not configured")) {
-        return { error: "Elevation service is not configured. Please contact support."};
+    
+    if (errorMessage.includes("Google Elevation API key is not configured")) {
+        return { error: "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console."};
     }
-    return { error: `Analysis failed: ${errorMessage}` };
+    if (errorMessage.includes("Google Elevation API request failed") || errorMessage.includes("Google Elevation API error")) {
+        return { error: `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, or billing issues with Google Cloud Platform. Details: ${errorMessage}` };
+    }
+     if (errorMessage.includes("Network error while trying to reach Google Elevation API")) {
+        return { error: errorMessage }; // Pass through the detailed network error
+    }
+    return { error: `Analysis failed due to an unexpected issue: ${errorMessage}` };
   }
 }
