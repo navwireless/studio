@@ -92,9 +92,10 @@ interface AnalysisSettingsProps {
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+  isActionPending: boolean;
 }
 
-const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFormErrors, serverFormErrors, getCombinedError }) => (
+const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFormErrors, serverFormErrors, getCombinedError, isActionPending }) => (
   <div className="h-full flex flex-col items-center justify-center p-1.5"> {/* Reduced padding */}
     <CardTitle className="text-sm flex items-center mb-2 text-primary/80 uppercase tracking-wider">
       <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
@@ -130,6 +131,8 @@ interface BottomPanelProps {
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   isActionPending: boolean;
+  getValues: UseFormGetValues<AnalysisFormValues>;
+  setValue: UseFormSetValue<AnalysisFormValues>;
 }
 
 export default function BottomPanel({ 
@@ -163,8 +166,11 @@ export default function BottomPanel({
 
   if (analysisResult && analysisResult.minClearance !== null) {
     actualMinClearance = analysisResult.minClearance;
-    isClearBasedOnAnalysis = actualMinClearance >= (analysisResult.clearanceThresholdUsed || 0); // Use analyzed threshold
-    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil((analysisResult.clearanceThresholdUsed || 0) - actualMinClearance);
+    // Use the clearance threshold from the analysis result for determination, if available
+    // Fallback to the form's current threshold if not (e.g. initial state or error)
+    const thresholdUsedForComparison = analysisResult.clearanceThresholdUsed ?? minRequiredClearance;
+    isClearBasedOnAnalysis = actualMinClearance >= thresholdUsedForComparison;
+    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(thresholdUsedForComparison - actualMinClearance);
   }
 
   return (
@@ -197,7 +203,7 @@ export default function BottomPanel({
         )}
       >
         <div className="p-1.5 md:p-2 h-full overflow-y-auto"> {/* Reduced padding */}
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-full"> {/* Reduced gap */}
+           <div className="grid grid-cols-1 md:grid-cols-[25%_minmax(0,1fr)_25%] gap-2 h-full"> {/* Adjusted grid and reduced gap */}
             <div className="h-full overflow-hidden"> 
               <SiteInputGroup 
                 id="pointA" 
@@ -210,9 +216,9 @@ export default function BottomPanel({
               />
             </div>
 
-            <div className="flex flex-col h-full overflow-hidden">
+            <div className="flex flex-col h-full overflow-hidden"> {/* Center column flex container */}
               {!analysisResult && !isActionPending && ( 
-                <div className="pt-1 pb-0.5 flex justify-center">
+                <div className="pt-1 pb-0.5 flex justify-center"> {/* Reduced padding */}
                   <Button
                     type="submit"
                     disabled={isActionPending}
@@ -290,11 +296,12 @@ export default function BottomPanel({
                     clientFormErrors={clientFormErrors}
                     serverFormErrors={serverFormErrors}
                     getCombinedError={getCombinedError}
+                    isActionPending={isActionPending}
                   />
                 )}
               </div>
 
-              <div className="pt-1 pb-1 flex justify-center border-t border-slate-700/50 bg-transparent mt-auto"> {/* Transparent bg */}
+              <div className="pt-1 pb-1 flex justify-center border-t border-slate-700/50 bg-transparent mt-auto"> {/* Transparent bg, mt-auto */}
                 <Button
                   type="submit"
                   disabled={isActionPending}
@@ -323,3 +330,6 @@ export default function BottomPanel({
     </form>
   );
 }
+
+
+    
