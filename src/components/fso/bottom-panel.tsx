@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import ElevationProfileChart from './elevation-profile-chart';
-import { ChevronDown, Target, Settings, Loader2, Info, X } from 'lucide-react';
+import { ChevronDown, Target, Settings, Loader2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SiteInputGroupProps {
@@ -36,44 +36,44 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
   isActionPending,
   analysisResult 
 }) => (
-  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1"> {/* Reduced padding, no border, glass effect */}
-    <CardHeader className="p-1">
-      <CardTitle className="text-xs flex items-center text-slate-100/80 uppercase tracking-wider font-medium">
-        <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
+  <Card className="bg-transparent backdrop-blur-sm shadow-none border-0 h-full flex flex-col p-1">
+    <CardHeader className="p-1.5">
+      <CardTitle className="text-sm flex items-center text-slate-100 uppercase tracking-wider font-medium">
+        <Target className="mr-1.5 h-3.5 w-3.5 text-primary/80" /> {title}
       </CardTitle>
     </CardHeader>
-    <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-0.5 flex flex-col justify-between"> {/* Minimal padding, flex for button */}
-      <div className="space-y-1.5"> {/* Inputs wrapper */}
+    <CardContent className="p-1.5 space-y-1 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
+      <div className="space-y-1.5">
         <div>
-          <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Name</Label>
+          <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Name</Label>
           <Input 
             id={`${id}.name`} 
             {...register(`${id}.name`)} 
             placeholder="e.g. Main Site" 
-            className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 placeholder:text-slate-400/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
+            className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
           />
           {(clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) && 
             <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])}</p>}
         </div>
         <div className="grid grid-cols-2 gap-1">
           <div>
-            <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Latitude</Label>
+            <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Latitude</Label>
             <Input 
               id={`${id}.lat`} 
               {...register(`${id}.lat`)} 
               placeholder="-90 to 90" 
-              className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 placeholder:text-slate-400/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
+              className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
             />
             {(clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) && 
               <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
           </div>
           <div>
-            <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Longitude</Label>
+            <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Longitude</Label>
             <Input 
               id={`${id}.lng`} 
               {...register(`${id}.lng`)} 
               placeholder="-180 to 180" 
-              className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 placeholder:text-slate-400/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
+              className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
             />
             {(clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) && 
               <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])}</p>}
@@ -101,7 +101,9 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
         <Button
           type="submit"
           disabled={isActionPending}
-          className="bg-slate-700/20 hover:bg-slate-600/30 backdrop-blur-2px text-slate-100/80 hover:text-white text-[0.7rem] font-medium px-2.5 py-1 h-6 rounded-md shadow-none border border-white/10 hover:border-white/20 transition-all duration-200"
+          variant="outline"
+          size="sm"
+          className="bg-slate-700/40 hover:bg-slate-600/60 backdrop-blur-sm text-slate-100/90 hover:text-white text-[0.7rem] font-medium px-2.5 py-1 h-7 rounded-md shadow-none border border-slate-600/70 hover:border-slate-500/90 transition-all duration-200"
         >
           <Loader2 className={cn("mr-1 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
           {analysisResult ? "Re-Analyze LOS" : "Analyze LOS"}
@@ -116,30 +118,48 @@ interface AnalysisSettingsProps {
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+  isActionPending: boolean;
 }
 
-const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ register, clientFormErrors, serverFormErrors, getCombinedError }) => (
-  <div className="h-full flex flex-col items-center justify-center p-1 bg-transparent"> 
-    <CardTitle className="text-sm flex items-center mb-2 text-primary/70 uppercase tracking-wider font-medium">
+const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ 
+  register, 
+  clientFormErrors, 
+  serverFormErrors, 
+  getCombinedError,
+  isActionPending 
+}) => (
+  <div className="h-full flex flex-col items-center justify-center p-1 bg-transparent backdrop-blur-sm rounded-lg"> 
+    <CardTitle className="text-sm flex items-center mb-2 text-primary/80 uppercase tracking-wider font-medium">
       <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
     </CardTitle>
-    <div className="w-full space-y-1 max-w-[180px] mx-auto"> {/* Reduced width */}
+    <div className="w-full space-y-1 max-w-[180px] mx-auto"> 
       <div>
-        <Label htmlFor="clearanceThreshold" className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Min. Fresnel Cl (m)</Label>
+        <Label htmlFor="clearanceThreshold" className="text-[0.7rem] uppercase tracking-wider text-slate-300/80 font-normal">Min. Fresnel Cl (m)</Label>
         <Input
           id="clearanceThreshold"
           type="number"
           step="any"
           {...register('clearanceThreshold')}
           placeholder="e.g., 10"
-          className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 placeholder:text-slate-400/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
+          className="mt-0.5 bg-slate-700/30 border-b border-slate-500/70 focus:border-primary placeholder:text-slate-400/70 text-slate-100 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
         />
         {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
           <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
       </div>
     </div>
+    <div className="pt-2">
+      <Button
+        type="submit"
+        disabled={isActionPending}
+        className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
+      >
+        <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
+        Analyze LOS
+      </Button>
+    </div>
   </div>
 );
+
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
@@ -197,27 +217,27 @@ export default function BottomPanel({
   return (
     <form 
       onSubmit={handleSubmit(processSubmit)} 
-      className="fixed bottom-0 left-0 right-0 z-30 bg-transparent backdrop-blur-2px border-t border-white/10 rounded-t-2xl transition-all duration-200"
+      className="fixed bottom-0 left-0 right-0 z-30 bg-slate-800/80 backdrop-blur-md border-t border-slate-700/60 rounded-t-2xl transition-all duration-200 hover:bg-slate-800/90"
     >
       <div className="absolute top-1 right-1 z-10">
         <button
           type="button" 
           onClick={onToggle}
-          className="p-1.5 rounded-full bg-slate-700/20 hover:bg-slate-600/30 backdrop-blur-sm text-slate-200/70 hover:text-white transition-all duration-200"
+          className="p-1.5 rounded-full bg-slate-700/50 hover:bg-slate-600/70 backdrop-blur-sm text-slate-200/80 hover:text-white transition-all duration-200"
           aria-label={isOpen ? "Hide Analysis Panel" : "Show Analysis Panel"}
         >
-          {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5 rotate-180" />}
+          <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", !isOpen && "rotate-180")} />
         </button>
       </div>
 
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isOpen ? "h-[45vh]" : "h-0" // Adjusted from max-h to h
+          isOpen ? "h-[45vh]" : "h-0" 
         )}
       >
-        <div className="p-1.5 h-full overflow-y-auto"> {/* Reduced padding */}
-           <div className="grid grid-cols-1 md:grid-cols-[23%_minmax(0,1fr)_23%] gap-1.5 h-full"> {/* Narrower side cols, smaller gap */}
+        <div className="p-1.5 md:p-2 h-full overflow-y-auto">
+           <div className="grid grid-cols-1 md:grid-cols-[23%_minmax(0,1fr)_23%] gap-1.5 h-full">
             
             <SiteInputGroup 
               id="pointA" 
@@ -231,47 +251,59 @@ export default function BottomPanel({
               analysisResult={analysisResult}
             />
             
-            <div className="flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg"> {/* Center column, glass effect */}
+            <div className="flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-sm rounded-lg">
               
               {analysisResult && (
-                <div className="flex justify-evenly items-center py-1 px-2 text-xs bg-transparent"> {/* Stats row, transparent */}
-                  {isStale ? (
-                      <span className="px-1.5 py-0.5 rounded-full text-[0.65rem] font-medium bg-yellow-600/20 text-yellow-400/90"> {/* Pill badge */}
-                        NEEDS RE-ANALYZE
-                      </span>
-                    ) : (
-                      <span
-                        className={cn(
-                          "px-1.5 py-0.5 rounded-full text-[0.65rem] font-medium", // Pill badge
-                          isClearBasedOnAnalysis
-                            ? "bg-emerald-500/20 text-emerald-300/90"
-                            : "bg-rose-500/20 text-rose-300/90"
-                        )}
-                      >
-                        {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
-                      </span>
-                    )}
-                  
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider text-slate-300/70 text-[0.6rem] font-normal">Aerial Distance</span>
-                    <span className="font-medium text-slate-100/90 text-[0.7rem]">
-                      {analysisResult.distanceKm < 1
-                        ? `${(analysisResult.distanceKm * 1000).toFixed(1)} m`
-                        : `${analysisResult.distanceKm.toFixed(2)} km`}
-                    </span>
+                <>
+                  <div className="pt-1.5 pb-1 flex justify-center">
+                    <Button
+                      type="submit"
+                      disabled={isActionPending}
+                      className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
+                    >
+                      <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")} />
+                      Re-Analyze LOS
+                    </Button>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <span className="uppercase tracking-wider text-slate-300/70 text-[0.6rem] font-normal">Min. Clearance</span>
-                    <span className={cn(
-                      "font-medium text-[0.7rem]",
-                      isStale ? "text-slate-400/80" : (isClearBasedOnAnalysis ? "text-emerald-300/90" : "text-rose-300/90")
-                    )}>
-                      {actualMinClearance.toFixed(1)} m
-                    </span>
+                  <div className="flex justify-evenly items-center py-1 px-2 text-xs bg-transparent">
+                    {isStale ? (
+                        <span className="px-1.5 py-0.5 rounded-full text-[0.65rem] font-medium bg-yellow-600/30 text-yellow-400/90">
+                          NEEDS RE-ANALYZE
+                        </span>
+                      ) : (
+                        <span
+                          className={cn(
+                            "px-1.5 py-0.5 rounded-full text-[0.65rem] font-medium",
+                            isClearBasedOnAnalysis
+                              ? "bg-emerald-500/30 text-emerald-300/90"
+                              : "bg-rose-500/30 text-rose-300/90"
+                          )}
+                        >
+                          {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
+                        </span>
+                      )}
+                    
+                    <div className="flex flex-col items-center">
+                      <span className="uppercase tracking-wider text-slate-300/80 text-[0.6rem] font-normal">Aerial Distance</span>
+                      <span className="font-medium text-slate-100 text-[0.7rem]">
+                        {analysisResult.distanceKm < 1
+                          ? `${(analysisResult.distanceKm * 1000).toFixed(1)} m`
+                          : `${analysisResult.distanceKm.toFixed(2)} km`}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="uppercase tracking-wider text-slate-300/80 text-[0.6rem] font-normal">Min. Clearance</span>
+                      <span className={cn(
+                        "font-medium text-[0.7rem]",
+                        isStale ? "text-slate-400/80" : (isClearBasedOnAnalysis ? "text-emerald-300/90" : "text-rose-300/90")
+                      )}>
+                        {actualMinClearance.toFixed(1)} m
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
-              {analysisResult && !isStale && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
+              {analysisResult && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
                 <div className="text-center text-rose-300/80 text-[0.7rem] py-0.5"> 
                   Add&nbsp;
                   <span className="font-semibold">{deficit} m</span>
@@ -280,7 +312,7 @@ export default function BottomPanel({
               )}
               
               <div className={cn(
-                "flex-1 min-h-0 p-0.5", // Minimal padding for chart
+                "flex-1 min-h-0 p-0.5", 
                 isStale && analysisResult && "opacity-60 pointer-events-none" 
               )}>
                 {analysisResult ? (
@@ -291,38 +323,13 @@ export default function BottomPanel({
                     isStale={isStale}
                   />
                 ) : (
-                   <div className="h-full flex flex-col items-center justify-center p-1 bg-transparent"> 
-                    <CardTitle className="text-sm flex items-center mb-2 text-primary/70 uppercase tracking-wider font-medium">
-                      <Settings className="mr-1.5 h-4 w-4" /> Analysis Settings
-                    </CardTitle>
-                    <div className="w-full space-y-1 max-w-[180px] mx-auto"> 
-                      <div>
-                        <Label htmlFor="clearanceThreshold" className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Min. Fresnel Cl (m)</Label>
-                        <Input
-                          id="clearanceThreshold"
-                          type="number"
-                          step="any"
-                          {...register('clearanceThreshold')}
-                          placeholder="e.g., 10"
-                          className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 placeholder:text-slate-400/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
-                        />
-                        {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
-                          <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
-                      </div>
-                    </div>
-                     {!analysisResult && !isActionPending && ( 
-                        <div className="pt-2"> {/* Initial Analyze button if no results */}
-                          <Button
-                            type="submit"
-                            disabled={isActionPending}
-                            className="bg-slate-700/20 hover:bg-slate-600/30 backdrop-blur-2px text-slate-100/80 hover:text-white text-[0.7rem] font-medium px-2.5 py-1 h-6 rounded-md shadow-none border border-white/10 hover:border-white/20 transition-all duration-200"
-                          >
-                            <Loader2 className={cn("mr-1.5 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
-                            Analyze LOS
-                          </Button>
-                        </div>
-                      )}
-                  </div>
+                  <AnalysisSettings
+                    register={register}
+                    clientFormErrors={clientFormErrors}
+                    serverFormErrors={serverFormErrors}
+                    getCombinedError={getCombinedError}
+                    isActionPending={isActionPending}
+                  />
                 )}
               </div>
             </div>
@@ -344,3 +351,6 @@ export default function BottomPanel({
     </form>
   );
 }
+
+
+    
