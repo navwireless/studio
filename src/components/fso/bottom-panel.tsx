@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
-import ElevationProfileChart from './elevation-profile-chart';
-import { ChevronDown, Target, Settings, Loader2, Info } from 'lucide-react';
+import CustomProfileChart from './custom-profile-chart'; // Updated import
+import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SiteInputGroupProps {
@@ -22,7 +22,9 @@ interface SiteInputGroupProps {
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
   isActionPending: boolean;
-  analysisResult: AnalysisResult | null; // Added to conditionally render button text
+  analysisResult: AnalysisResult | null;
+  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
+  processSubmit: (data: AnalysisFormValues) => void;
 }
 
 const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ 
@@ -34,7 +36,9 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
   serverFormErrors, 
   getCombinedError,
   isActionPending,
-  analysisResult
+  analysisResult,
+  handleSubmit,
+  processSubmit
 }) => (
   <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1">
     <CardHeader className="p-1">
@@ -97,23 +101,22 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
         {(clientFormErrors[id]?.height || serverFormErrors?.[`${id}.height`]) && 
           <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.height, serverFormErrors?.[`${id}.height`])}</p>}
       </div>
-      {/* Redundant button removed from here as per new design */}
     </CardContent>
   </Card>
 );
 
 interface AnalysisSettingsProps {
-  register: UseFormRegister<AnalysisFormValues>;
+  control: Control<AnalysisFormValues>; // Changed from register to control for consistency if using Controller
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
   isActionPending: boolean;
-  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>; // Added for the button
-  processSubmit: (data: AnalysisFormValues) => void; // Added for the button
+  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
+  processSubmit: (data: AnalysisFormValues) => void;
 }
 
 const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ 
-  register, 
+  control, // Using control here
   clientFormErrors, 
   serverFormErrors, 
   getCombinedError,
@@ -128,13 +131,20 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
     <div className="w-full space-y-1 max-w-[180px] mx-auto"> 
       <div>
         <Label htmlFor="clearanceThreshold" className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">Min. Fresnel Cl (m)</Label>
-        <Input
-          id="clearanceThreshold"
-          type="number"
-          step="any"
-          {...register('clearanceThreshold')}
-          placeholder="e.g., 10"
-          className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
+        <Controller
+            name="clearanceThreshold"
+            control={control}
+            render={({ field }) => (
+                <Input
+                    id="clearanceThreshold"
+                    type="number"
+                    step="any"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.value)} // Ensure string value is passed if schema expects string
+                    placeholder="e.g., 10"
+                    className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
+                />
+            )}
         />
         {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
           <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}</p>}
@@ -143,7 +153,7 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
     <div className="pt-2">
       <Button
         type="submit"
-        onClick={handleSubmit(processSubmit)} // Use handleSubmit here
+        onClick={handleSubmit(processSubmit)}
         disabled={isActionPending}
         className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
       >
@@ -243,6 +253,8 @@ export default function BottomPanel({
               getCombinedError={getCombinedError}
               isActionPending={isActionPending}
               analysisResult={analysisResult}
+              handleSubmit={handleSubmit}
+              processSubmit={processSubmit}
             />
             
             <div className="flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg">
@@ -313,16 +325,22 @@ export default function BottomPanel({
                 "flex-1 min-h-0 p-0.5", 
                 analysisResult && isStale && "opacity-60 pointer-events-none" 
               )}>
-                {analysisResult ? (
-                  <ElevationProfileChart
+                {analysisResult && !isActionPending ? ( // Ensure chart is shown only if analysisResult exists and not pending
+                  <CustomProfileChart
                     data={analysisResult.profile}
                     pointAName={pointAName}
                     pointBName={pointBName}
                     isStale={isStale}
+                    totalDistanceKm={analysisResult.distanceKm}
+                    isLoading={false} // When this branch is taken, it's not loading new results for the chart specifically
                   />
-                ) : (
+                ) : isActionPending ? ( // Show loading specifically if an action is pending for the analysis
+                    <div className="h-full flex items-center justify-center p-2 bg-muted/30 rounded-md">
+                        <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
+                    </div>
+                ) : ( // Show AnalysisSettings if no result and not pending
                   <AnalysisSettings
-                    register={register}
+                    control={control} // Pass control
                     clientFormErrors={clientFormErrors}
                     serverFormErrors={serverFormErrors}
                     getCombinedError={getCombinedError}
@@ -344,6 +362,8 @@ export default function BottomPanel({
               getCombinedError={getCombinedError}
               isActionPending={isActionPending}
               analysisResult={analysisResult}
+              handleSubmit={handleSubmit}
+              processSubmit={processSubmit}
             />
           </div>
         </div>
@@ -351,3 +371,4 @@ export default function BottomPanel({
     </form>
   );
 }
+
