@@ -39,20 +39,22 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
   const yMinData = Math.min(...allElevations);
   const yMaxData = Math.max(...allElevations);
   
-  const yPadding = Math.max(20, (yMaxData - yMinData) * 0.15); 
+  // Increased yPadding slightly for better visual separation, especially if min/max are close
+  const yPadding = Math.max(25, (yMaxData - yMinData) * 0.20); 
   const yDomainMin = Math.floor(yMinData - yPadding);
-  const yDomainMax = Math.ceil(yMaxData + yPadding * 1.5);
+  const yDomainMax = Math.ceil(yMaxData + yPadding * 1.5); // More padding at the top
 
 
   return (
     <div className={cn("w-full h-full", isStale && "opacity-50")}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        {/* Adjusted left margin to prevent Y-axis labels from being cut off */}
+        <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.2}/>
           <XAxis
             dataKey="distance"
             type="number"
-            domain={[0, 'dataMax']} // Ensure X-axis ends at the max distance in data
+            domain={[0, 'dataMax']}
             allowDataOverflow={false}
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
             tickFormatter={(value) => value.toFixed(0)} 
@@ -65,10 +67,10 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
           <YAxis
             domain={[yDomainMin, yDomainMax]}
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-            tickFormatter={(value) => `${Math.round(value)}m`} // Append 'm' to Y-axis ticks
+            tickFormatter={(value) => `${Math.round(value)}m`}
             axisLine={false}
             tickLine={false}
-            width={45} // Adjusted width for 'm' suffix
+            width={45} // Ensure this width is sufficient for labels like "135m"
           />
           <Tooltip
             cursor={{ stroke: 'hsl(var(--accent))', strokeWidth: 1, strokeDasharray: '3 3' }}
@@ -115,7 +117,7 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             type="monotone"
             dataKey="losHeight"
             stroke="#22d3ee"        
-            strokeWidth={2}
+            strokeWidth={2} // Was 3, user example showed 2, let's try 2 for closer match to example
             name="LOS Path"
             dot={false}
             activeDot={{ r: 5, strokeWidth: 1, fill: '#22d3ee', stroke: 'hsl(var(--background))' }}
@@ -125,13 +127,13 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             <ReferenceLine
               x={pointAData.distance}
               segment={[
-                { y: pointAData.terrain }, // Starts at terrain elevation
-                { y: pointAData.losHeight }, // Ends at LOS path height (which includes tower)
+                { y: pointAData.terrain }, 
+                { y: pointAData.losHeight },
               ]}
               stroke="#eab308" 
               strokeWidth={2}
               isFront={true}
-              ifOverflow="extendDomain"
+              ifOverflow="extendDomain" 
             />
           )}
            {/* Tower Pole for Site B */}
@@ -139,8 +141,8 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
             <ReferenceLine
               x={pointBData.distance}
               segment={[
-                { y: pointBData.terrain }, // Starts at terrain elevation
-                { y: pointBData.losHeight }, // Ends at LOS path height (which includes tower)
+                { y: pointBData.terrain },
+                { y: pointBData.losHeight },
               ]}
               stroke="#eab308" 
               strokeWidth={2}
@@ -181,4 +183,3 @@ export default function ElevationProfileChart({ data, pointAName = "Site A", poi
     </div>
   );
 }
-
