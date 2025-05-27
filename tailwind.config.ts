@@ -1,9 +1,12 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
     darkMode: ["class"], // App will default to dark, class "dark" will be on html/body
     content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    // If you are ONLY using the App Router, the next line for 'src/pages' might be unnecessary
+    // but it's harmless if you don't have a 'src/pages' directory.
+    // "./src/pages/**/*.{js,ts,jsx,tsx,mdx}", 
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
