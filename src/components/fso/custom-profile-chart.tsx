@@ -18,7 +18,7 @@ interface CustomProfileChartProps {
 
 const PADDING = { top: 20, right: 30, bottom: 40, left: 50 }; 
 const TEXT_COLOR = 'hsl(210, 20%, 55%)'; // Muted foreground for axes
-const GRID_COLOR = 'hsla(217, 33%, 25%, 0.7)'; // Slightly more visible dark grid
+const GRID_COLOR = 'hsla(217, 33%, 20%, 0.7)'; // Darker grid, increased visibility
 
 const TERRAIN_FILL_COLOR = 'rgba(99, 102, 241, 0.35)';
 const TERRAIN_STROKE_COLOR = 'rgba(99, 102, 241, 0.6)';
@@ -76,7 +76,6 @@ export default function CustomProfileChart({
     const rect = canvas.getBoundingClientRect();
     
     if (rect.width === 0 || rect.height === 0) {
-        // If canvas isn't visible yet, retry shortly
         requestAnimationFrame(drawChart);
         return;
     }
@@ -187,7 +186,7 @@ export default function CustomProfileChart({
     ctx.arc(xA, yLosA, towerHandleRadiusVisual, 0, 2 * Math.PI); 
     ctx.fillStyle = TOWER_LINE_COLOR; 
     ctx.fill();
-    ctx.strokeStyle = 'hsla(222, 40%, 10%, 0.9)'; // Outline handle with dark bg for contrast
+    ctx.strokeStyle = TOOLTIP_BG_COLOR; // Outline handle
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.fillStyle = TEXT_COLOR; 
@@ -208,7 +207,7 @@ export default function CustomProfileChart({
     ctx.arc(xB, yLosB, towerHandleRadiusVisual, 0, 2 * Math.PI); 
     ctx.fillStyle = TOWER_LINE_COLOR;
     ctx.fill();
-    ctx.strokeStyle = 'hsla(222, 40%, 10%, 0.9)';
+    ctx.strokeStyle = TOOLTIP_BG_COLOR;
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.fillStyle = TEXT_COLOR; 
@@ -249,7 +248,7 @@ export default function CustomProfileChart({
             `Fresnel height: ${p.clearance.toFixed(1)} m`
         ];
         
-        ctx.font = "10px Inter, sans-serif"; // Use theme font
+        ctx.font = "10px Inter, sans-serif"; 
         const lineHeight = 14; 
         const tooltipPadding = 6;
         const textWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
@@ -274,29 +273,28 @@ export default function CustomProfileChart({
         }
         
         ctx.globalAlpha = 0.9; 
-        ctx.fillStyle = TOOLTIP_BG_COLOR; // Dark Popover BG
-        ctx.strokeStyle = TOOLTIP_BORDER_COLOR; // Border color
-        ctx.lineWidth = 0.5; // Subtle border
+        ctx.fillStyle = TOOLTIP_BG_COLOR; 
+        ctx.strokeStyle = TOOLTIP_BORDER_COLOR; 
+        ctx.lineWidth = 0.5; 
         
         drawRoundedRect(ctx, tipX, tipY, tooltipWidth, tooltipHeight, cornerRadius);
         ctx.fill();
         ctx.stroke();
-        ctx.globalAlpha = 1.0; // Reset alpha
+        ctx.globalAlpha = 1.0;
 
         ctx.textAlign = "left";
-        ctx.textBaseline = "middle"; // Better for multi-line text
+        ctx.textBaseline = "middle";
         lines.forEach((line, i) => {
             if (line.startsWith("Line of Sight height:")) {
-                ctx.fillStyle = LOS_LINE_COLOR; // Cyan
+                ctx.fillStyle = LOS_LINE_COLOR; 
             } else {
-                ctx.fillStyle = TOOLTIP_TEXT_COLOR; // Light Popover Foreground
+                ctx.fillStyle = TOOLTIP_TEXT_COLOR; 
             }
             ctx.fillText(line, tipX + tooltipPadding, tipY + tooltipPadding + (i * lineHeight) + (lineHeight / 2) );
         });
     }
   }, [data, totalDistanceKm, pointAName, pointBName, hoverData, mousePosition, draggingTower]);
 
-  // Mouse event listeners for tooltip and tower drag initiation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -319,7 +317,6 @@ export default function CustomProfileChart({
         const chartHeight = rect.height - PADDING.top - PADDING.bottom;
         const mouseXInChartArea = mouseCanvasX - PADDING.left;
         
-        // Recalculate scales within event handler to ensure hoverData point is correct for current draw scale
         const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
         let tempMinY = Math.min(...elevations);
         let tempMaxY = Math.max(...elevations);
@@ -346,8 +343,8 @@ export default function CustomProfileChart({
             }
             
             setHoverData({
-                xPx: getXPx(closestPoint.distance), // Pixel X within chart area for the dot
-                yPx: getYPx(closestPoint.losHeight), // Pixel Y within chart area for the dot
+                xPx: getXPx(closestPoint.distance), 
+                yPx: getYPx(closestPoint.losHeight), 
                 point: { ...closestPoint, distanceMeters: closestPoint.distance * 1000 }
             });
         } else {
@@ -362,9 +359,9 @@ export default function CustomProfileChart({
     };
 
     const handleCanvasMouseDown = (event: MouseEvent) => {
-        if (!canvas || !data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null || !onTowerHeightChangeFromGraph) return;
+        if (!canvasRef.current || !data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null || !onTowerHeightChangeFromGraph) return;
     
-        const rect = canvas.getBoundingClientRect();
+        const rect = canvasRef.current.getBoundingClientRect();
         const clickX = event.clientX - rect.left;
         const clickY = event.clientY - rect.top;
     
@@ -393,7 +390,7 @@ export default function CustomProfileChart({
             setTowerDragStartY(event.clientY);
             setInitialTowerHeightValue(data[0].losHeight - data[0].terrainElevation);
             setIsGraphUpdatingByDrag(true);
-            canvas.style.cursor = 'grabbing';
+            if(canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
             event.preventDefault();
             return;
         }
@@ -407,7 +404,7 @@ export default function CustomProfileChart({
             setTowerDragStartY(event.clientY);
             setInitialTowerHeightValue(data[data.length - 1].losHeight - data[data.length - 1].terrainElevation);
             setIsGraphUpdatingByDrag(true);
-            canvas.style.cursor = 'grabbing';
+            if(canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
             event.preventDefault();
             return;
         }
@@ -422,7 +419,7 @@ export default function CustomProfileChart({
     });
     resizeObserver.observe(canvas);
 
-    drawChart(); // Initial draw
+    drawChart(); 
 
     return () => {
       resizeObserver.unobserve(canvas);
@@ -432,7 +429,6 @@ export default function CustomProfileChart({
     };
   }, [drawChart, data, totalDistanceKm, PADDING.left, PADDING.top, onTowerHeightChangeFromGraph, draggingTower]); 
   
-  // Effect for global mouse listeners during tower drag
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!draggingTower || !canvas || !data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null || !onTowerHeightChangeFromGraph) {
@@ -441,7 +437,8 @@ export default function CustomProfileChart({
     }
 
     const handleGlobalMouseMove = (event: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
+        if (!canvasRef.current) return;
+        const rect = canvasRef.current.getBoundingClientRect();
         const chartHeightPixels = rect.height - PADDING.top - PADDING.bottom;
 
         if (chartHeightPixels <=0) return; 
@@ -449,8 +446,8 @@ export default function CustomProfileChart({
         const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
         let dataMinY = Math.min(...elevations);
         let dataMaxY = Math.max(...elevations);
-        const yDataRange = dataMaxY - dataMinY;
-        dataMinY -= yDataRange * 0.15; dataMaxY += yDataRange * 0.15;
+        const yDataRangeVal = dataMaxY - dataMinY; // Renamed to avoid conflict
+        dataMinY -= yDataRangeVal * 0.15; dataMaxY += yDataRangeVal * 0.15;
         if (dataMaxY === dataMinY) { dataMaxY +=10; dataMinY -=10; }
         if (dataMaxY < dataMinY) [dataMaxY, dataMinY] = [dataMinY, dataMaxY];
 
@@ -460,16 +457,20 @@ export default function CustomProfileChart({
         const heightChange = clientYDelta * heightPerPixel * -1; 
         let newTowerHeight = initialTowerHeightValue + heightChange;
         newTowerHeight = Math.max(0, Math.min(100, newTowerHeight)); 
-        // console.log("Dragging, new temp height:", newTowerHeight.toFixed(1));
     };
 
     const handleGlobalMouseUp = (event: MouseEvent) => {
-        const rect = canvas.getBoundingClientRect();
+        if (!canvasRef.current) {
+            setDraggingTower(null);
+            setIsGraphUpdatingByDrag(false);
+            return;
+        }
+        const rect = canvasRef.current.getBoundingClientRect();
         const chartHeightPixels = rect.height - PADDING.top - PADDING.bottom;
 
         if (chartHeightPixels <=0) { 
             setDraggingTower(null);
-            if (canvas) canvas.style.cursor = 'crosshair';
+            if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
             setIsGraphUpdatingByDrag(false);
             return;
         }
@@ -477,8 +478,8 @@ export default function CustomProfileChart({
         const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
         let dataMinY = Math.min(...elevations);
         let dataMaxY = Math.max(...elevations);
-        const yDataRange = dataMaxY - dataMinY;
-        dataMinY -= yDataRange * 0.15; dataMaxY += yDataRange * 0.15;
+        const yDataRangeVal = dataMaxY - dataMinY; // Renamed
+        dataMinY -= yDataRangeVal * 0.15; dataMaxY += yDataRangeVal * 0.15;
         if (dataMaxY === dataMinY) { dataMaxY +=10; dataMinY -=10; }
         if (dataMaxY < dataMinY) [dataMaxY, dataMinY] = [dataMinY, dataMaxY];
 
@@ -488,10 +489,12 @@ export default function CustomProfileChart({
         let finalNewTowerHeight = initialTowerHeightValue + heightChange;
         finalNewTowerHeight = Math.max(0, Math.min(100, parseFloat(finalNewTowerHeight.toFixed(1))));
         
-        onTowerHeightChangeFromGraph(draggingTower === 'A' ? 'pointA' : 'pointB', finalNewTowerHeight);
+        if (draggingTower && onTowerHeightChangeFromGraph) {
+             onTowerHeightChangeFromGraph(draggingTower === 'A' ? 'pointA' : 'pointB', finalNewTowerHeight);
+        }
         
         setDraggingTower(null);
-        if (canvas) canvas.style.cursor = 'crosshair';
+        if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
         setIsGraphUpdatingByDrag(false); 
     };
 
@@ -501,24 +504,23 @@ export default function CustomProfileChart({
     return () => {
         window.removeEventListener('mousemove', handleGlobalMouseMove);
         window.removeEventListener('mouseup', handleGlobalMouseUp);
-        if (canvas) canvas.style.cursor = 'crosshair';
-        if (isGraphUpdatingByDrag) setIsGraphUpdatingByDrag(false);
+        if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
     };
-  }, [draggingTower, towerDragStartY, initialTowerHeightValue, data, totalDistanceKm, onTowerHeightChangeFromGraph, PADDING.top, PADDING.bottom, isGraphUpdatingByDrag]); 
+  }, [draggingTower, towerDragStartY, initialTowerHeightValue, data, totalDistanceKm, onTowerHeightChangeFromGraph, PADDING.top, PADDING.bottom]); // Removed isGraphUpdatingByDrag from deps
 
   useEffect(() => { 
       drawChart();
   }, [hoverData, mousePosition, drawChart]);
 
 
-  if (isGraphUpdatingByDrag && !isLoading) { 
+  if (isGraphUpdatingByDrag) { 
       return (
           <div className={cn("h-full flex items-center justify-center p-2 bg-slate-700/30 rounded-md relative", isStale && "opacity-50")}>
               <p className="text-slate-300 text-xs text-center">Adjusting tower height...</p>
           </div>
       );
   }
-  if (isLoading && !isGraphUpdatingByDrag) {
+  if (isLoading && !isGraphUpdatingByDrag) { // Only show parent's loading if not internally drag-loading
       return (
           <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md", isStale && "opacity-50")}>
               <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
@@ -543,4 +545,6 @@ export default function CustomProfileChart({
     </div>
   );
 }
+    
+
     
