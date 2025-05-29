@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
-import CustomProfileChart from './custom-profile-chart'; // Updated import
+import CustomProfileChart from './custom-profile-chart';
 import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +22,7 @@ interface SiteInputGroupProps {
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
   isActionPending: boolean;
-  analysisResult: AnalysisResult | null;
+  analysisResult: AnalysisResult | null; // For button text
   handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
   processSubmit: (data: AnalysisFormValues) => void;
 }
@@ -106,7 +106,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
 );
 
 interface AnalysisSettingsProps {
-  control: Control<AnalysisFormValues>; // Changed from register to control for consistency if using Controller
+  control: Control<AnalysisFormValues>;
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
@@ -116,7 +116,7 @@ interface AnalysisSettingsProps {
 }
 
 const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ 
-  control, // Using control here
+  control,
   clientFormErrors, 
   serverFormErrors, 
   getCombinedError,
@@ -140,9 +140,10 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
                     type="number"
                     step="any"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value)} // Ensure string value is passed if schema expects string
+                    onChange={(e) => field.onChange(e.target.value)}
                     placeholder="e.g., 10"
                     className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
+                    disabled={isActionPending}
                 />
             )}
         />
@@ -167,8 +168,9 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
-  isOpen: boolean;
-  onToggle: () => void;
+  isOpen: boolean; // For internal content expand/collapse
+  onToggle: () => void; // Toggles internal 'isOpen'
+  isPanelGloballyVisible: boolean; // NEW: Controls if the whole panel is shown/hidden (slides up/down)
   isStale?: boolean;
   
   control: Control<AnalysisFormValues>;
@@ -180,12 +182,14 @@ interface BottomPanelProps {
   isActionPending: boolean;
   getValues: UseFormGetValues<AnalysisFormValues>;
   setValue: UseFormSetValue<AnalysisFormValues>;
+  onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
 }
 
 export default function BottomPanel({ 
   analysisResult, 
-  isOpen, 
-  onToggle,
+  isOpen, // Renamed, this is for internal content
+  onToggle, // Renamed, this is for internal content
+  isPanelGloballyVisible, // New prop for overall panel animation
   isStale,
   control,
   register,
@@ -194,6 +198,9 @@ export default function BottomPanel({
   clientFormErrors,
   serverFormErrors,
   isActionPending,
+  getValues,
+  setValue,
+  onTowerHeightChangeFromGraph
 }: BottomPanelProps) {
   
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
@@ -221,14 +228,17 @@ export default function BottomPanel({
   return (
     <form 
       onSubmit={handleSubmit(processSubmit)} 
-      className="fixed bottom-0 left-0 right-0 z-30 bg-slate-800/80 backdrop-blur-md border-t border-slate-700/60 rounded-t-2xl transition-all duration-200 hover:bg-slate-800/90"
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-30 bg-slate-800/80 backdrop-blur-md border-t border-slate-700/60 rounded-t-2xl transition-transform duration-500 ease-in-out",
+        isPanelGloballyVisible ? "translate-y-0" : "translate-y-full"
+      )}
     >
       <div className="absolute top-1 right-1 z-10">
         <button
           type="button" 
-          onClick={onToggle}
+          onClick={onToggle} // This controls the internal content height
           className="p-1.5 rounded-full bg-slate-700/50 hover:bg-slate-600/70 backdrop-blur-sm text-slate-200/80 hover:text-white transition-all duration-200"
-          aria-label={isOpen ? "Hide Analysis Panel" : "Show Analysis Panel"}
+          aria-label={isOpen ? "Hide Analysis Details" : "Show Analysis Details"}
         >
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", !isOpen && "rotate-180")} />
         </button>
@@ -237,6 +247,7 @@ export default function BottomPanel({
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
+          // This height is controlled by the internal 'isOpen' state
           isOpen ? "h-[45vh]" : "h-0" 
         )}
       >
@@ -325,22 +336,24 @@ export default function BottomPanel({
                 "flex-1 min-h-0 p-0.5", 
                 analysisResult && isStale && "opacity-60 pointer-events-none" 
               )}>
-                {analysisResult && !isActionPending ? ( // Ensure chart is shown only if analysisResult exists and not pending
+                {analysisResult && !isActionPending ? ( 
                   <CustomProfileChart
                     data={analysisResult.profile}
                     pointAName={pointAName}
                     pointBName={pointBName}
                     isStale={isStale}
                     totalDistanceKm={analysisResult.distanceKm}
-                    isLoading={false} // When this branch is taken, it's not loading new results for the chart specifically
+                    isActionPending={false} 
+                    onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
                   />
-                ) : isActionPending ? ( // Show loading specifically if an action is pending for the analysis
+                ) : isActionPending ? ( 
                     <div className="h-full flex items-center justify-center p-2 bg-muted/30 rounded-md">
-                        <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
+                        <Loader2 className="h-8 w-8 text-primary animate-spin mb-3" />
+                        <p className="text-muted-foreground text-sm ml-2">Performing analysis...</p>
                     </div>
-                ) : ( // Show AnalysisSettings if no result and not pending
+                ) : ( 
                   <AnalysisSettings
-                    control={control} // Pass control
+                    control={control} 
                     clientFormErrors={clientFormErrors}
                     serverFormErrors={serverFormErrors}
                     getCombinedError={getCombinedError}
@@ -371,4 +384,3 @@ export default function BottomPanel({
     </form>
   );
 }
-
