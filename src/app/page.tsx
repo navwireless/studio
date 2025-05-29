@@ -104,13 +104,16 @@ export default function Home() {
   const watchedPointB = useWatch({ control, name: 'pointB' });
   const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
 
-
+  // This effect processes the result from the server action
   useEffect(() => {
     if (!serverState) return;
-  
+
+    // Local reference to analysisResult from the current render scope to avoid including it in deps for setAnalysisResult call
+    const currentAnalysisResultFromScope = analysisResult; 
+
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending || hasFirstAnalysisCompleted);
+      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (currentAnalysisResultFromScope !== null || isActionPending || hasFirstAnalysisCompleted);
   
       if (!suppressInitialMessage) {
         setClientError(errorToSet);
@@ -121,45 +124,47 @@ export default function Home() {
       } else if (!suppressInitialMessage) { 
         setFormErrors(undefined); 
       }
-    } else if (!('error' in serverState)) { 
+    } else if (!('error' in serverState)) { // Assumed to be AnalysisResult
       const resultDataFromServer = serverState as AnalysisResult;
       const currentFormValues = getValues(); 
   
-      const newAnalysisData = {
+      const newAnalysisData: AnalysisResult = {
         ...resultDataFromServer,
         pointA: {
           ...(resultDataFromServer.pointA || {} as any), 
           name: currentFormValues.pointA.name, 
-          lat: parseFloat(currentFormValues.pointA.lat), 
-          lng: parseFloat(currentFormValues.pointA.lng),
-          towerHeight: currentFormValues.pointA.height,
+          lat: resultDataFromServer.pointA?.lat ?? parseFloat(currentFormValues.pointA.lat), 
+          lng: resultDataFromServer.pointA?.lng ?? parseFloat(currentFormValues.pointA.lng), // Corrected this line
+          towerHeight: resultDataFromServer.pointA?.towerHeight ?? currentFormValues.pointA.height,
         },
         pointB: {
           ...(resultDataFromServer.pointB || {} as any), 
           name: currentFormValues.pointB.name,
-          lat: parseFloat(currentFormValues.pointB.lat),
-          lng: parseFloat(currentFormValues.pointB.lng),
-          towerHeight: currentFormValues.pointB.height,
+          lat: resultDataFromServer.pointB?.lat ?? parseFloat(currentFormValues.pointB.lat),
+          lng: resultDataFromServer.pointB?.lng ?? parseFloat(currentFormValues.pointB.lng),
+          towerHeight: resultDataFromServer.pointB?.towerHeight ?? currentFormValues.pointB.height,
         },
       };
       
-      if (JSON.stringify(analysisResult) !== JSON.stringify(newAnalysisData)) {
+      if (JSON.stringify(currentAnalysisResultFromScope) !== JSON.stringify(newAnalysisData)) {
         setAnalysisResult(newAnalysisData);
       }
       
       setClientError(null);
       setFormErrors(undefined);
-      setIsStale(false);
-  
-      if (newAnalysisData && !hasFirstAnalysisCompleted) {
-        // setIsAnalysisPanelGloballyOpen(true); // Auto-open panel on first result is removed
-        setIsBottomPanelContentExpanded(true); // Ensure content area is expanded when panel becomes visible
+      // setIsStale(false); // isStale is managed by its own effect
+
+      if (newAnalysisData && !hasFirstAnalysisCompleted && isAnalysisPanelGloballyOpen) {
+        setIsBottomPanelContentExpanded(true); 
         setHasFirstAnalysisCompleted(true);
       }
     }
-  }, [serverState, getValues, hasFirstAnalysisCompleted, analysisResult, isActionPending ]);
+  // Removed `analysisResult` from dependencies to prevent loops.
+  // Added all setters used within this effect. getValues is stable.
+  }, [serverState, getValues, hasFirstAnalysisCompleted, isActionPending, setIsBottomPanelContentExpanded, isAnalysisPanelGloballyOpen, setClientError, setFormErrors, setAnalysisResult, setHasFirstAnalysisCompleted]);
 
 
+  // Effect to calculate if the current form inputs are "stale" compared to the last analysisResult
   useEffect(() => {
     if (!analysisResult) {
       setIsStale(false);
@@ -170,19 +175,34 @@ export default function Home() {
     if (!currentFormValues.pointA?.lat || !currentFormValues.pointA?.lng || currentFormValues.pointA?.height === undefined ||
         !currentFormValues.pointB?.lat || !currentFormValues.pointB?.lng || currentFormValues.pointB?.height === undefined ||
         !currentFormValues.clearanceThreshold) {
-      setIsStale(false);
+      // If any crucial form value is missing, it's hard to determine staleness, assume not stale or handle as error
+      setIsStale(false); 
       return;
     }
 
-    const formLatA = parseFloat(currentFormValues.pointA.lat);
-    const formLngA = parseFloat(currentFormValues.pointA.lng);
-    const formHeightA = currentFormValues.pointA.height;
+    let formLatA, formLngA, formHeightA, formLatB, formLngB, formHeightB, formClearance;
 
-    const formLatB = parseFloat(currentFormValues.pointB.lat);
-    const formLngB = parseFloat(currentFormValues.pointB.lng);
-    const formHeightB = currentFormValues.pointB.height;
+    try {
+        formLatA = parseFloat(currentFormValues.pointA.lat);
+        formLngA = parseFloat(currentFormValues.pointA.lng);
+        formHeightA = currentFormValues.pointA.height; // Already a number
+
+        formLatB = parseFloat(currentFormValues.pointB.lat);
+        formLngB = parseFloat(currentFormValues.pointB.lng);
+        formHeightB = currentFormValues.pointB.height; // Already a number
+        
+        formClearance = parseFloat(currentFormValues.clearanceThreshold);
+    } catch (e) {
+        console.error("Error parsing form values for staleness check:", e);
+        setIsStale(false); // Or true, based on how you want to handle parse errors
+        return;
+    }
     
-    const formClearance = parseFloat(currentFormValues.clearanceThreshold);
+    if (isNaN(formLatA) || isNaN(formLngA) || isNaN(formHeightA) || 
+        isNaN(formLatB) || isNaN(formLngB) || isNaN(formHeightB) || isNaN(formClearance)) {
+      setIsStale(false); // Cannot determine staleness if values are not numbers
+      return;
+    }
 
     const formPointACoords: PointCoordinates = { lat: formLatA, lng: formLngA };
     const formPointBCoords: PointCoordinates = { lat: formLatB, lng: formLngB };
@@ -190,7 +210,7 @@ export default function Home() {
     const analyzedPointA = analysisResult.pointA;
     const analyzedPointB = analysisResult.pointB;
 
-    if (!analyzedPointA || !analyzedPointB) {
+    if (!analyzedPointA || !analyzedPointB) { // Should not happen if analysisResult is not null
         setIsStale(false);
         return;
     }
@@ -287,12 +307,7 @@ export default function Home() {
             onClick={() => {
               console.log("Check Feasibility button clicked: setting isAnalysisPanelGloballyOpen to true");
               setIsAnalysisPanelGloballyOpen(true);
-              setIsBottomPanelContentExpanded(true); // Ensure content area is also open when panel slides up
-               // Optionally set default form values if map interaction should pre-fill them,
-               // or if first interaction with form should use defaults.
-              // setValue('pointA', defaultFormStateValues.pointA, { shouldValidate: false });
-              // setValue('pointB', defaultFormStateValues.pointB, { shouldValidate: false });
-              // setValue('clearanceThreshold', defaultFormStateValues.clearanceThreshold, { shouldValidate: false });
+              setIsBottomPanelContentExpanded(true); 
             }}
           >
             Check OpticSpectra FSO Link Feasibility
@@ -349,3 +364,4 @@ export default function Home() {
     </div>
   );
 }
+
