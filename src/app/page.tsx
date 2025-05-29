@@ -12,8 +12,7 @@ import BottomPanel from '@/components/fso/bottom-panel';
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Info } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 
 const StationPointSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name too long"),
@@ -56,14 +55,16 @@ function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
   const [serverState, formAction, isActionPending] = useActionState(performLosAnalysis, initialState);
-  const [, startTransition] = useTransition();
+  const [startTransition, isTransitionPending] = useTransition(); // Added isTransitionPending for clarity if needed
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
   const [isStale, setIsStale] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true); // Panel is open by default
+  const [isPanelOpen, setIsPanelOpen] = useState(true); 
   const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
+  const [initialAnalysisPerformed, setInitialAnalysisPerformed] = useState(false);
+
 
   const { register, handleSubmit, formState: { errors: clientFormErrors, isValid }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
@@ -71,9 +72,10 @@ export default function Home() {
     mode: 'onChange', 
   });
 
-  const processSubmit = (data: PageAnalysisFormValues) => {
+  const processSubmit = useCallback((data: PageAnalysisFormValues) => {
     if (isActionPending) return;
 
+    console.log("[page.tsx] processSubmit called with data:", data);
     setAnalysisResult(null); 
     setClientError(null);
     setFormErrors(undefined);
@@ -93,18 +95,47 @@ export default function Home() {
     startTransition(() => {
       formAction(formData);
     });
-  };
+  }, [isActionPending, formAction, startTransition]);
   
   const watchedPointA = useWatch({ control, name: 'pointA' });
   const watchedPointB = useWatch({ control, name: 'pointB' });
   const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
+
+
+  // Effect for initial analysis on mount
+  useEffect(() => {
+    if (!initialAnalysisPerformed && !isActionPending) {
+      console.log("page.tsx: Triggering initial LOS analysis on mount...");
+
+      const formData = new FormData();
+      formData.append('pointA.name', defaultFormStateValues.pointA.name);
+      formData.append('pointA.lat', defaultFormStateValues.pointA.lat);
+      formData.append('pointA.lng', defaultFormStateValues.pointA.lng);
+      formData.append('pointA.height', String(defaultFormStateValues.pointA.height));
+      
+      formData.append('pointB.name', defaultFormStateValues.pointB.name);
+      formData.append('pointB.lat', defaultFormStateValues.pointB.lat);
+      formData.append('pointB.lng', defaultFormStateValues.pointB.lng);
+      formData.append('pointB.height', String(defaultFormStateValues.pointB.height));
+      
+      formData.append('clearanceThreshold', defaultFormStateValues.clearanceThreshold);
+
+      startTransition(() => {
+        formAction(formData);
+      });
+      
+      setInitialAnalysisPerformed(true); 
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAnalysisPerformed, formAction, isActionPending, startTransition]);
+
 
   useEffect(() => {
     if (!serverState) return;
   
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending);
+      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending || initialAnalysisPerformed);
   
       if (!suppressInitialMessage) {
         setClientError(errorToSet);
@@ -146,11 +177,11 @@ export default function Home() {
       setIsStale(false); 
   
       if (newAnalysisData && !hasFirstAnalysisCompleted) {
-        setIsPanelOpen(true); // Auto-open panel on first successful analysis
+        setIsPanelOpen(true); 
         setHasFirstAnalysisCompleted(true);
       }
     }
-  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen, analysisResult, isActionPending]);
+  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen, analysisResult, isActionPending, initialAnalysisPerformed]);
 
 
   useEffect(() => {
@@ -160,6 +191,14 @@ export default function Home() {
     }
 
     const currentFormValues = getValues();
+    // Ensure all parts of pointA and pointB are defined before parsing
+    if (!currentFormValues.pointA?.lat || !currentFormValues.pointA?.lng || currentFormValues.pointA?.height === undefined ||
+        !currentFormValues.pointB?.lat || !currentFormValues.pointB?.lng || currentFormValues.pointB?.height === undefined ||
+        !currentFormStateValues.clearanceThreshold) {
+      setIsStale(false); // Not enough data to compare, assume not stale
+      return;
+    }
+
     const formLatA = parseFloat(currentFormValues.pointA.lat);
     const formLngA = parseFloat(currentFormValues.pointA.lng);
     const formHeightA = currentFormValues.pointA.height;
@@ -175,6 +214,11 @@ export default function Home() {
 
     const analyzedPointA = analysisResult.pointA;
     const analyzedPointB = analysisResult.pointB;
+
+    if (!analyzedPointA || !analyzedPointB) { // Should not happen if analysisResult is set
+        setIsStale(false);
+        return;
+    }
 
     const pointsAEqualResult = pointsEqual(formPointAForCompare, analyzedPointA);
     const pointsBEqualResult = pointsEqual(formPointBForCompare, analyzedPointB);
@@ -199,13 +243,36 @@ export default function Home() {
     setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     handleSubmit(processSubmit)();
-  }, [setValue, handleSubmit]);
+  }, [setValue, handleSubmit, processSubmit]);
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
     setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     handleSubmit(processSubmit)();
-  }, [setValue, handleSubmit]);
+  }, [setValue, handleSubmit, processSubmit]);
+  
+  const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
+    if (isActionPending) {
+      console.log("Drag update skipped: An action is already pending.");
+      return;
+    }
+    console.log(`[page.tsx] handleTowerHeightChangeFromGraph called for ${siteId} with new height: ${newHeight}`);
+
+    const clampedHeight = Math.max(0, Math.min(100, parseFloat(newHeight.toFixed(1))));
+
+    setValue(siteId === 'pointA' ? 'pointA.height' : 'pointB.height', clampedHeight, {
+      shouldValidate: true,
+      shouldTouch: true,
+      shouldDirty: true,
+    });
+    
+    console.log(`[page.tsx] Form value for ${siteId}.height set to:`, clampedHeight);
+    
+    const currentValues = getValues();
+    console.log("[page.tsx] Triggering re-analysis with current form values from tower drag:", currentValues);
+    processSubmit(currentValues);
+  }, [setValue, isActionPending, getValues, processSubmit]);
+
 
   const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
 
@@ -238,9 +305,17 @@ export default function Home() {
           mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
 
+        {isActionPending && (
+            <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex flex-col items-center justify-center z-40">
+                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                <p className="text-slate-200 text-lg font-medium">Loading Analysis Data...</p>
+                <p className="text-slate-400 text-sm">Please wait a moment.</p>
+            </div>
+        )}
+
         {clientError && clientError !== "No analysis performed yet." && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
-                <Card className="shadow-lg border-destructive bg-destructive/30 backdrop-blur-md text-destructive-foreground"> {/* Adjusted background */}
+                <Card className="shadow-lg border-destructive bg-destructive/30 backdrop-blur-md text-destructive-foreground">
                     <CardHeader className="py-2 px-4 flex-row items-center justify-between">
                         <CardTitle className="text-sm flex items-center"><Info className="mr-2 h-4 w-4" /> Error</CardTitle>
                     </CardHeader>
@@ -253,19 +328,6 @@ export default function Home() {
                             )}
                         </ul>
                         )}
-                    </CardContent>
-                </Card>
-            </div>
-        )}
-        
-        {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
-             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
-                <Card className="shadow-lg bg-slate-800/70 backdrop-blur-md animate-pulse"> {/* Adjusted background */}
-                    <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4 bg-slate-700/50" /></CardHeader>
-                    <CardContent className="px-4 pb-3 space-y-2">
-                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
-                        <Skeleton className="h-4 w-2/3 bg-slate-700/50" />
-                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
                     </CardContent>
                 </Card>
             </div>
@@ -284,9 +346,12 @@ export default function Home() {
             isActionPending={isActionPending}
             getValues={getValues} 
             setValue={setValue}   
-            isStale={isStale}   
+            isStale={isStale}
+            onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
           />
       </div>
     </div>
   );
 }
+
+    
