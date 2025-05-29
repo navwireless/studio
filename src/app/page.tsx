@@ -55,7 +55,7 @@ function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
   const [serverState, formAction, isActionPending] = useActionState(performLosAnalysis, initialState);
-  const [startTransition, isTransitionPending] = useTransition(); // Added isTransitionPending for clarity if needed
+  const [isTransitionPending, startTransition] = useTransition(); // Correctly get startTransition
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
@@ -120,7 +120,7 @@ export default function Home() {
       
       formData.append('clearanceThreshold', defaultFormStateValues.clearanceThreshold);
 
-      startTransition(() => {
+      startTransition(() => { // Now startTransition is defined
         formAction(formData);
       });
       
@@ -135,6 +135,7 @@ export default function Home() {
   
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
+      // Suppress "No analysis performed yet." only if it's the initial message AND (some analysis has run OR is running OR initial auto-analysis has kicked off)
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending || initialAnalysisPerformed);
   
       if (!suppressInitialMessage) {
@@ -144,17 +145,19 @@ export default function Home() {
       if (serverState.fieldErrors) {
         setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
       } else if (!suppressInitialMessage) { 
+        // Only clear form errors if we are not suppressing the main client error (e.g. if "No analysis..." is the error but we are suppressing it, don't clear field errors yet)
         setFormErrors(undefined); 
       }
     } else if (!('error' in serverState)) { 
       const resultDataFromServer = serverState as AnalysisResult;
       const currentFormValues = getValues(); 
   
+      // Ensure newAnalysisData includes all necessary fields, especially names from current form
       const newAnalysisData = {
         ...resultDataFromServer,
         pointA: {
-          ...(resultDataFromServer.pointA || {} as any),
-          name: currentFormValues.pointA.name,
+          ...(resultDataFromServer.pointA || {} as any), // Spread existing analyzed point data if present
+          name: currentFormValues.pointA.name, // Always use current form name
           lat: parseFloat(currentFormValues.pointA.lat), 
           lng: parseFloat(currentFormValues.pointA.lng),
           towerHeight: currentFormValues.pointA.height,
@@ -168,14 +171,16 @@ export default function Home() {
         },
       };
       
+      // Only update if the new data is actually different from the current analysisResult
       if (JSON.stringify(analysisResult) !== JSON.stringify(newAnalysisData)) {
         setAnalysisResult(newAnalysisData);
       }
       
       setClientError(null);
       setFormErrors(undefined);
-      setIsStale(false); 
+      setIsStale(false); // Analysis is fresh based on current serverState
   
+      // Auto-open panel only on the first successful analysis, not on every subsequent update
       if (newAnalysisData && !hasFirstAnalysisCompleted) {
         setIsPanelOpen(true); 
         setHasFirstAnalysisCompleted(true);
@@ -194,7 +199,7 @@ export default function Home() {
     // Ensure all parts of pointA and pointB are defined before parsing
     if (!currentFormValues.pointA?.lat || !currentFormValues.pointA?.lng || currentFormValues.pointA?.height === undefined ||
         !currentFormValues.pointB?.lat || !currentFormValues.pointB?.lng || currentFormValues.pointB?.height === undefined ||
-        !currentFormStateValues.clearanceThreshold) {
+        !currentFormValues.clearanceThreshold) {
       setIsStale(false); // Not enough data to compare, assume not stale
       return;
     }
@@ -353,5 +358,7 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     
