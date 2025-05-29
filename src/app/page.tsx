@@ -110,7 +110,6 @@ export default function Home() {
   
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      // Suppress "No analysis performed yet." only if it's the initial message AND some analysis has run OR is running
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending || hasFirstAnalysisCompleted);
   
       if (!suppressInitialMessage) {
@@ -153,8 +152,8 @@ export default function Home() {
       setIsStale(false);
   
       if (newAnalysisData && !hasFirstAnalysisCompleted) {
-        // setIsAnalysisPanelGloballyOpen(true); // No longer auto-open panel globally here
-        setIsBottomPanelContentExpanded(true); // Keep internal content expanded
+        // setIsAnalysisPanelGloballyOpen(true); // Auto-open panel on first result is removed
+        setIsBottomPanelContentExpanded(true); // Ensure content area is expanded when panel becomes visible
         setHasFirstAnalysisCompleted(true);
       }
     }
@@ -229,7 +228,7 @@ export default function Home() {
   
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     if (isActionPending) {
-      console.log("Drag update skipped: An action is already pending.");
+      console.log("[page.tsx] Drag update skipped: An action is already pending.");
       return;
     }
     console.log(`[page.tsx] handleTowerHeightChangeFromGraph called for ${siteId} with new height: ${newHeight}`);
@@ -281,18 +280,19 @@ export default function Home() {
       />
 
       {!isAnalysisPanelGloballyOpen && (
-        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
           <Button
             size="lg"
             className="px-8 py-4 text-lg font-semibold shadow-xl bg-primary hover:bg-primary/90 pointer-events-auto animate-pulse"
             onClick={() => {
-              console.log("Check Feasibility button clicked, setting isAnalysisPanelGloballyOpen to true");
+              console.log("Check Feasibility button clicked: setting isAnalysisPanelGloballyOpen to true");
               setIsAnalysisPanelGloballyOpen(true);
-              setIsBottomPanelContentExpanded(true); // Ensure content area is also open
-               // Optionally set default form values if map interaction should pre-fill them
-              setValue('pointA', defaultFormStateValues.pointA, { shouldValidate: false });
-              setValue('pointB', defaultFormStateValues.pointB, { shouldValidate: false });
-              setValue('clearanceThreshold', defaultFormStateValues.clearanceThreshold, { shouldValidate: false });
+              setIsBottomPanelContentExpanded(true); // Ensure content area is also open when panel slides up
+               // Optionally set default form values if map interaction should pre-fill them,
+               // or if first interaction with form should use defaults.
+              // setValue('pointA', defaultFormStateValues.pointA, { shouldValidate: false });
+              // setValue('pointB', defaultFormStateValues.pointB, { shouldValidate: false });
+              // setValue('clearanceThreshold', defaultFormStateValues.clearanceThreshold, { shouldValidate: false });
             }}
           >
             Check OpticSpectra FSO Link Feasibility
@@ -330,9 +330,9 @@ export default function Home() {
       
       <BottomPanel
         analysisResult={analysisResult}
-        isPanelGloballyVisible={isAnalysisPanelGloballyOpen} // Controls panel slide animation
-        isOpen={isBottomPanelContentExpanded} // Controls internal content height
-        onToggle={() => setIsBottomPanelContentExpanded(!isBottomPanelContentExpanded)} // Toggles internal content
+        isPanelGloballyVisible={isAnalysisPanelGloballyOpen} 
+        isOpen={isBottomPanelContentExpanded} 
+        onToggle={() => setIsBottomPanelContentExpanded(!isBottomPanelContentExpanded)}
         
         control={control}
         register={register}
