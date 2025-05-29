@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart';
-import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react';
+import { ChevronDown, Target, Settings, Loader2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SiteInputGroupProps {
@@ -93,6 +93,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
               onChange={field.onChange}
               min={0}
               max={100}
+              step={0.1}
               idSuffix={id}
               disabled={isActionPending}
             />
@@ -149,7 +150,7 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
     </div>
     <div className="pt-2">
       <Button
-        type="submit" // This button will submit the form
+        type="submit" 
         disabled={isActionPending}
         className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-7 rounded-md shadow-none transition-all duration-200"
       >
@@ -182,8 +183,8 @@ interface BottomPanelProps {
 
 export default function BottomPanel({ 
   analysisResult, 
-  isOpen, 
-  onToggle, 
+  isOpen, // Renamed to isContentOpen in the mental model, prop name kept for now
+  onToggle, // Renamed to onContentToggle, prop name kept for now
   isPanelGloballyVisible, 
   isStale,
   control,
@@ -330,14 +331,13 @@ export default function BottomPanel({
                 "flex-1 min-h-0 p-0.5", 
                 analysisResult && isStale && "opacity-60 pointer-events-none" 
               )}>
-                {analysisResult ? ( 
+                {analysisResult && !isActionPending ? ( 
                   <CustomProfileChart
                     data={analysisResult.profile}
                     pointAName={pointAName}
                     pointBName={pointBName}
-                    isStale={isStale}
                     totalDistanceKm={analysisResult.distanceKm}
-                    isActionPending={isActionPending} 
+                    isActionPending={false} // Explicitly false here as analysisResult exists
                     onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
                   />
                 ) : isActionPending ? ( 

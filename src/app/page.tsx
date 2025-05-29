@@ -61,12 +61,13 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
-  const [isStale, setIsStale] = useState(false);
   
   const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true); 
   
   const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
+  const [initialAnalysisPerformed, setInitialAnalysisPerformed] = useState(false);
+  const [isStale, setIsStale] = useState(false);
 
 
   const { register, handleSubmit, formState: { errors: clientFormErrors, isValid }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
@@ -104,13 +105,38 @@ export default function Home() {
   const watchedPointB = useWatch({ control, name: 'pointB' });
   const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
 
+  // Effect for initial analysis on mount
+  useEffect(() => {
+    if (!initialAnalysisPerformed && !isActionPending) {
+      console.log("page.tsx: Triggering initial LOS analysis on mount...");
+
+      const formData = new FormData();
+      formData.append('pointA.name', defaultFormStateValues.pointA.name);
+      formData.append('pointA.lat', defaultFormStateValues.pointA.lat);
+      formData.append('pointA.lng', defaultFormStateValues.pointA.lng);
+      formData.append('pointA.height', String(defaultFormStateValues.pointA.height));
+      
+      formData.append('pointB.name', defaultFormStateValues.pointB.name);
+      formData.append('pointB.lat', defaultFormStateValues.pointB.lat);
+      formData.append('pointB.lng', defaultFormStateValues.pointB.lng);
+      formData.append('pointB.height', String(defaultFormStateValues.pointB.height));
+      
+      formData.append('clearanceThreshold', defaultFormStateValues.clearanceThreshold);
+
+      startTransition(() => {
+        formAction(formData);
+      });
+      
+      setInitialAnalysisPerformed(true); 
+    }
+  }, [initialAnalysisPerformed, formAction, isActionPending, startTransition]);
+
   // This effect processes the result from the server action
   useEffect(() => {
     if (!serverState) return;
-
-    // Local reference to analysisResult from the current render scope to avoid including it in deps for setAnalysisResult call
+  
     const currentAnalysisResultFromScope = analysisResult; 
-
+  
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (currentAnalysisResultFromScope !== null || isActionPending || hasFirstAnalysisCompleted);
@@ -124,7 +150,7 @@ export default function Home() {
       } else if (!suppressInitialMessage) { 
         setFormErrors(undefined); 
       }
-    } else if (!('error' in serverState)) { // Assumed to be AnalysisResult
+    } else if (!('error' in serverState)) { 
       const resultDataFromServer = serverState as AnalysisResult;
       const currentFormValues = getValues(); 
   
@@ -134,7 +160,7 @@ export default function Home() {
           ...(resultDataFromServer.pointA || {} as any), 
           name: currentFormValues.pointA.name, 
           lat: resultDataFromServer.pointA?.lat ?? parseFloat(currentFormValues.pointA.lat), 
-          lng: resultDataFromServer.pointA?.lng ?? parseFloat(currentFormValues.pointA.lng), // Corrected this line
+          lng: resultDataFromServer.pointA?.lng ?? parseFloat(currentFormValues.pointA.lng),
           towerHeight: resultDataFromServer.pointA?.towerHeight ?? currentFormValues.pointA.height,
         },
         pointB: {
@@ -152,16 +178,13 @@ export default function Home() {
       
       setClientError(null);
       setFormErrors(undefined);
-      // setIsStale(false); // isStale is managed by its own effect
 
       if (newAnalysisData && !hasFirstAnalysisCompleted && isAnalysisPanelGloballyOpen) {
         setIsBottomPanelContentExpanded(true); 
         setHasFirstAnalysisCompleted(true);
       }
     }
-  // Removed `analysisResult` from dependencies to prevent loops.
-  // Added all setters used within this effect. getValues is stable.
-  }, [serverState, getValues, hasFirstAnalysisCompleted, isActionPending, setIsBottomPanelContentExpanded, isAnalysisPanelGloballyOpen, setClientError, setFormErrors, setAnalysisResult, setHasFirstAnalysisCompleted]);
+  }, [serverState, getValues, hasFirstAnalysisCompleted, isActionPending, setIsBottomPanelContentExpanded, isAnalysisPanelGloballyOpen]);
 
 
   // Effect to calculate if the current form inputs are "stale" compared to the last analysisResult
@@ -175,7 +198,6 @@ export default function Home() {
     if (!currentFormValues.pointA?.lat || !currentFormValues.pointA?.lng || currentFormValues.pointA?.height === undefined ||
         !currentFormValues.pointB?.lat || !currentFormValues.pointB?.lng || currentFormValues.pointB?.height === undefined ||
         !currentFormValues.clearanceThreshold) {
-      // If any crucial form value is missing, it's hard to determine staleness, assume not stale or handle as error
       setIsStale(false); 
       return;
     }
@@ -185,22 +207,22 @@ export default function Home() {
     try {
         formLatA = parseFloat(currentFormValues.pointA.lat);
         formLngA = parseFloat(currentFormValues.pointA.lng);
-        formHeightA = currentFormValues.pointA.height; // Already a number
+        formHeightA = currentFormValues.pointA.height; 
 
         formLatB = parseFloat(currentFormValues.pointB.lat);
         formLngB = parseFloat(currentFormValues.pointB.lng);
-        formHeightB = currentFormValues.pointB.height; // Already a number
+        formHeightB = currentFormValues.pointB.height; 
         
         formClearance = parseFloat(currentFormValues.clearanceThreshold);
     } catch (e) {
         console.error("Error parsing form values for staleness check:", e);
-        setIsStale(false); // Or true, based on how you want to handle parse errors
+        setIsStale(false); 
         return;
     }
     
     if (isNaN(formLatA) || isNaN(formLngA) || isNaN(formHeightA) || 
         isNaN(formLatB) || isNaN(formLngB) || isNaN(formHeightB) || isNaN(formClearance)) {
-      setIsStale(false); // Cannot determine staleness if values are not numbers
+      setIsStale(false); 
       return;
     }
 
@@ -210,7 +232,7 @@ export default function Home() {
     const analyzedPointA = analysisResult.pointA;
     const analyzedPointB = analysisResult.pointB;
 
-    if (!analyzedPointA || !analyzedPointB) { // Should not happen if analysisResult is not null
+    if (!analyzedPointA || !analyzedPointB) { 
         setIsStale(false);
         return;
     }
@@ -285,7 +307,7 @@ export default function Home() {
   } : null;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative"> {/* Main container */}
+    <div className="flex-1 flex flex-col overflow-hidden relative">
       <InteractiveMap
         pointA={formPointAForMap} 
         pointB={formPointBForMap} 
@@ -364,4 +386,3 @@ export default function Home() {
     </div>
   );
 }
-
