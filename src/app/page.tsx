@@ -8,14 +8,13 @@ import { z } from 'zod';
 import { cn } from '@/lib/utils';
 
 import InteractiveMap from '@/components/fso/interactive-map';
-// import BottomPanel from '@/components/fso/bottom-panel'; // Keep commented
+import BottomPanel from '@/components/fso/bottom-panel';
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, Info } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Info } from 'lucide-react';
 
-// Schemas
 const StationPointSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name too long"),
   lat: z.string()
@@ -39,7 +38,6 @@ const defaultFormStateValues: PageAnalysisFormValues = {
   clearanceThreshold: '10',
 };
 
-// Utility function
 function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6) {
   if (!p1 || !p2) return false;
   const p1Lat = Number(p1.lat);
@@ -63,13 +61,9 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
-  
-  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
-  const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true); 
-  
-  const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
   const [isStale, setIsStale] = useState(false);
-
+  const [isPanelOpen, setIsPanelOpen] = useState(true); // Panel is open by default
+  const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
 
   const { register, handleSubmit, formState: { errors: clientFormErrors, isValid }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
@@ -77,10 +71,9 @@ export default function Home() {
     mode: 'onChange', 
   });
 
-  const processSubmit = useCallback((data: PageAnalysisFormValues) => {
+  const processSubmit = (data: PageAnalysisFormValues) => {
     if (isActionPending) return;
 
-    console.log("[page.tsx] processSubmit called with data:", data);
     setAnalysisResult(null); 
     setClientError(null);
     setFormErrors(undefined);
@@ -100,23 +93,18 @@ export default function Home() {
     startTransition(() => {
       formAction(formData);
     });
-  }, [isActionPending, formAction, startTransition]);
+  };
   
   const watchedPointA = useWatch({ control, name: 'pointA' });
   const watchedPointB = useWatch({ control, name: 'pointB' });
   const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
 
-  // NO useEffect for initial analysis on mount
-
-  // This effect processes the result from the server action
   useEffect(() => {
     if (!serverState) return;
   
-    const currentAnalysisResultFromScope = analysisResult; 
-  
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (currentAnalysisResultFromScope !== null || isActionPending || hasFirstAnalysisCompleted);
+      const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending);
   
       if (!suppressInitialMessage) {
         setClientError(errorToSet);
@@ -131,42 +119,40 @@ export default function Home() {
       const resultDataFromServer = serverState as AnalysisResult;
       const currentFormValues = getValues(); 
   
-      const newAnalysisData: AnalysisResult = {
+      const newAnalysisData = {
         ...resultDataFromServer,
         pointA: {
-          ...(resultDataFromServer.pointA || {} as any), 
-          name: currentFormValues.pointA.name, 
-          lat: resultDataFromServer.pointA?.lat ?? parseFloat(currentFormValues.pointA.lat), 
-          lng: resultDataFromServer.pointA?.lng ?? parseFloat(currentFormValues.pointA.lng),
-          towerHeight: resultDataFromServer.pointA?.towerHeight ?? currentFormValues.pointA.height,
+          ...(resultDataFromServer.pointA || {} as any),
+          name: currentFormValues.pointA.name,
+          lat: parseFloat(currentFormValues.pointA.lat), 
+          lng: parseFloat(currentFormValues.pointA.lng),
+          towerHeight: currentFormValues.pointA.height,
         },
         pointB: {
           ...(resultDataFromServer.pointB || {} as any), 
           name: currentFormValues.pointB.name,
-          lat: resultDataFromServer.pointB?.lat ?? parseFloat(currentFormValues.pointB.lat),
-          lng: resultDataFromServer.pointB?.lng ?? parseFloat(currentFormValues.pointB.lng),
-          towerHeight: resultDataFromServer.pointB?.towerHeight ?? currentFormValues.pointB.height,
+          lat: parseFloat(currentFormValues.pointB.lat),
+          lng: parseFloat(currentFormValues.pointB.lng),
+          towerHeight: currentFormValues.pointB.height,
         },
       };
       
-      // Prevent infinite loop if newAnalysisData is structurally the same as existing analysisResult
       if (JSON.stringify(analysisResult) !== JSON.stringify(newAnalysisData)) {
-         setAnalysisResult(newAnalysisData);
+        setAnalysisResult(newAnalysisData);
       }
       
       setClientError(null);
       setFormErrors(undefined);
-
-      if (newAnalysisData && !hasFirstAnalysisCompleted && isAnalysisPanelGloballyOpen) { // Check isAnalysisPanelGloballyOpen too
-        setIsBottomPanelContentExpanded(true); 
+      setIsStale(false); 
+  
+      if (newAnalysisData && !hasFirstAnalysisCompleted) {
+        setIsPanelOpen(true); // Auto-open panel on first successful analysis
         setHasFirstAnalysisCompleted(true);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverState, getValues, hasFirstAnalysisCompleted, isAnalysisPanelGloballyOpen, setIsBottomPanelContentExpanded]);
+  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen, analysisResult, isActionPending]);
 
 
-  // Effect to calculate if the current form inputs are "stale" compared to the last analysisResult
   useEffect(() => {
     if (!analysisResult) {
       setIsStale(false);
@@ -174,50 +160,24 @@ export default function Home() {
     }
 
     const currentFormValues = getValues();
-    if (!currentFormValues.pointA?.lat || !currentFormValues.pointA?.lng || currentFormValues.pointA?.height === undefined ||
-        !currentFormValues.pointB?.lat || !currentFormValues.pointB?.lng || currentFormValues.pointB?.height === undefined ||
-        !currentFormValues.clearanceThreshold) {
-      setIsStale(false); 
-      return;
-    }
+    const formLatA = parseFloat(currentFormValues.pointA.lat);
+    const formLngA = parseFloat(currentFormValues.pointA.lng);
+    const formHeightA = currentFormValues.pointA.height;
 
-    let formLatA, formLngA, formHeightA, formLatB, formLngB, formHeightB, formClearance;
-
-    try {
-        formLatA = parseFloat(currentFormValues.pointA.lat);
-        formLngA = parseFloat(currentFormValues.pointA.lng);
-        formHeightA = currentFormValues.pointA.height; 
-
-        formLatB = parseFloat(currentFormValues.pointB.lat);
-        formLngB = parseFloat(currentFormValues.pointB.lng);
-        formHeightB = currentFormValues.pointB.height; 
-        
-        formClearance = parseFloat(currentFormValues.clearanceThreshold);
-    } catch (e) {
-        console.error("Error parsing form values for staleness check:", e);
-        setIsStale(false); 
-        return;
-    }
+    const formLatB = parseFloat(currentFormValues.pointB.lat);
+    const formLngB = parseFloat(currentFormValues.pointB.lng);
+    const formHeightB = currentFormValues.pointB.height;
     
-    if (isNaN(formLatA) || isNaN(formLngA) || isNaN(formHeightA) || 
-        isNaN(formLatB) || isNaN(formLngB) || isNaN(formHeightB) || isNaN(formClearance)) {
-      setIsStale(false); 
-      return;
-    }
+    const formClearance = parseFloat(currentFormValues.clearanceThreshold);
 
-    const formPointACoords: PointCoordinates = { lat: formLatA, lng: formLngA };
-    const formPointBCoords: PointCoordinates = { lat: formLatB, lng: formLngB };
+    const formPointAForCompare: PointCoordinates = { lat: formLatA, lng: formLngA };
+    const formPointBForCompare: PointCoordinates = { lat: formLatB, lng: formLngB };
 
     const analyzedPointA = analysisResult.pointA;
     const analyzedPointB = analysisResult.pointB;
 
-    if (!analyzedPointA || !analyzedPointB) { 
-        setIsStale(false);
-        return;
-    }
-
-    const pointsAEqualResult = pointsEqual(formPointACoords, analyzedPointA);
-    const pointsBEqualResult = pointsEqual(formPointBCoords, analyzedPointB);
+    const pointsAEqualResult = pointsEqual(formPointAForCompare, analyzedPointA);
+    const pointsBEqualResult = pointsEqual(formPointBForCompare, analyzedPointB);
 
     const heightAEqual = formHeightA === analyzedPointA?.towerHeight;
     const heightBEqual = formHeightB === analyzedPointB?.towerHeight;
@@ -239,134 +199,94 @@ export default function Home() {
     setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     handleSubmit(processSubmit)();
-  }, [setValue, handleSubmit, processSubmit]);
+  }, [setValue, handleSubmit]);
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
     setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     handleSubmit(processSubmit)();
-  }, [setValue, handleSubmit, processSubmit]);
-  
-  const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
-    if (isActionPending) {
-      console.log("[page.tsx] Drag update skipped: An action is already pending.");
-      return;
-    }
-    console.log(`[page.tsx] handleTowerHeightChangeFromGraph called for ${siteId} with new height: ${newHeight}`);
+  }, [setValue, handleSubmit]);
 
-    const clampedHeight = Math.max(0, Math.min(100, parseFloat(newHeight.toFixed(1))));
+  const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
 
-    setValue(siteId === 'pointA' ? 'pointA.height' : 'pointB.height', clampedHeight, {
-      shouldValidate: true,
-      shouldTouch: true,
-      shouldDirty: true,
-    });
-    
-    console.log(`[page.tsx] Form value for ${siteId}.height set to:`, clampedHeight);
-    
-    const currentValues = getValues();
-    console.log("[page.tsx] Triggering re-analysis with current form values from tower drag:", currentValues);
-    processSubmit(currentValues);
-  }, [setValue, isActionPending, getValues, processSubmit]);
-
-
-  console.log("[page.tsx] Rendering Home. isAnalysisPanelGloballyOpen:", isAnalysisPanelGloballyOpen);
-  const mapContainerHeightClass = isAnalysisPanelGloballyOpen ? 'h-[calc(100%_-_45vh)]' : 'h-full';
-
-  // These are kept for InteractiveMap but some might be commented out for the map's props
   const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
     ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name }
     : undefined;
   const formPointBForMap = watchedPointB && !isNaN(parseFloat(watchedPointB.lat)) && !isNaN(parseFloat(watchedPointB.lng))
     ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name }
     : undefined;
+
   const analyzedDataForMap = analysisResult ? {
     pointA: { lat: analysisResult.pointA.lat, lng: analysisResult.pointA.lng },
     pointB: { lat: analysisResult.pointB.lat, lng: analysisResult.pointB.lng },
     losPossible: analysisResult.losPossible
   } : null;
 
-
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative bg-red-500/20"> {/* DEBUG BG */}
-      
-      <div className={`bg-blue-500/20 ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}> {/* DEBUG BG */}
+    <div className="flex flex-1 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         <InteractiveMap
-          // --- PASS MINIMAL OR NO PROPS INITIALLY FOR DEBUGGING ---
-          // pointA={formPointAForMap} 
-          // pointB={formPointBForMap} 
-          // analyzedData={analyzedDataForMap} 
-          // isStale={isStale}
-          // isActionPending={isActionPending}
-          // onMarkerDragStartA={handleMarkerDragStart}
-          // onMarkerDragStartB={handleMarkerDragStart}
-          // onMarkerDragEndA={handleMarkerDragEndA}
-          // onMarkerDragEndB={handleMarkerDragEndB}
-          mapContainerClassName="w-full h-full" // This is likely safe
+          pointA={formPointAForMap} 
+          pointB={formPointBForMap} 
+          analyzedData={analyzedDataForMap} 
+          isStale={isStale}
+          isActionPending={isActionPending}
+          onMarkerDragStartA={handleMarkerDragStart}
+          onMarkerDragStartB={handleMarkerDragStart}
+          onMarkerDragEndA={handleMarkerDragEndA}
+          onMarkerDragEndB={handleMarkerDragEndB}
+          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
         />
+
+        {clientError && clientError !== "No analysis performed yet." && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
+                <Card className="shadow-lg border-destructive bg-destructive/30 backdrop-blur-md text-destructive-foreground"> {/* Adjusted background */}
+                    <CardHeader className="py-2 px-4 flex-row items-center justify-between">
+                        <CardTitle className="text-sm flex items-center"><Info className="mr-2 h-4 w-4" /> Error</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-4 py-2">
+                        <p className="text-sm">{clientError}</p>
+                        {formErrors && Object.keys(formErrors).length > 0 && (
+                        <ul className="list-disc list-inside mt-1 text-xs opacity-80">
+                            {Object.entries(formErrors).map(([field, errors]) =>
+                                errors?.map((error, index) => <li key={`${field}-${index}`}>{`${field.replace('pointA.','A: ').replace('pointB.','B: ')}: ${error}`}</li>)
+                            )}
+                        </ul>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+        )}
+        
+        {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
+             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
+                <Card className="shadow-lg bg-slate-800/70 backdrop-blur-md animate-pulse"> {/* Adjusted background */}
+                    <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4 bg-slate-700/50" /></CardHeader>
+                    <CardContent className="px-4 pb-3 space-y-2">
+                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
+                        <Skeleton className="h-4 w-2/3 bg-slate-700/50" />
+                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
+                    </CardContent>
+                </Card>
+            </div>
+        )}
+        
+          <BottomPanel
+            analysisResult={analysisResult}
+            isOpen={isPanelOpen}
+            onToggle={() => setIsPanelOpen(!isPanelOpen)}
+            control={control}
+            register={register}
+            handleSubmit={handleSubmit}
+            processSubmit={processSubmit} 
+            clientFormErrors={clientFormErrors}
+            serverFormErrors={formErrors}
+            isActionPending={isActionPending}
+            getValues={getValues} 
+            setValue={setValue}   
+            isStale={isStale}   
+          />
       </div>
-
-      {!isAnalysisPanelGloballyOpen && (
-        <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
-          <Button
-            size="lg"
-            className="px-8 py-4 text-lg font-semibold shadow-xl bg-primary hover:bg-primary/90 pointer-events-auto animate-pulse"
-            onClick={() => {
-              console.log("Check Feasibility button clicked, setting isAnalysisPanelGloballyOpen to true");
-              setIsAnalysisPanelGloballyOpen(true);
-              setIsBottomPanelContentExpanded(true); 
-            }}
-          >
-            Check OpticSpectra FSO Link Feasibility
-          </Button>
-        </div>
-      )}
-      
-      {isActionPending && (
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex flex-col items-center justify-center z-50"> {/* Higher z-index for loading */}
-              <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-              <p className="text-slate-200 text-lg font-medium">Loading Analysis Data...</p>
-              <p className="text-slate-400 text-sm">Please wait a moment.</p>
-          </div>
-      )}
-
-      {clientError && clientError !== "No analysis performed yet." && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
-              <Card className="shadow-lg border-destructive bg-destructive/30 backdrop-blur-md text-destructive-foreground">
-                  <CardHeader className="py-2 px-4 flex-row items-center justify-between">
-                      <CardTitle className="text-sm flex items-center"><Info className="mr-2 h-4 w-4" /> Error</CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 py-2">
-                      <p className="text-sm">{clientError}</p>
-                      {formErrors && Object.keys(formErrors).length > 0 && (
-                      <ul className="list-disc list-inside mt-1 text-xs opacity-80">
-                          {Object.entries(formErrors).map(([field, errors]) =>
-                              errors?.map((error, index) => <li key={`${field}-${index}`}>{`${field.replace('pointA.','A: ').replace('pointB.','B: ')}: ${error}`}</li>)
-                          )}
-                      </ul>
-                      )}
-                  </CardContent>
-              </Card>
-          </div>
-      )}
-      
-      {/* <BottomPanel
-        analysisResult={analysisResult}
-        isPanelGloballyVisible={isAnalysisPanelGloballyOpen}
-        isOpen={isBottomPanelContentExpanded}
-        onToggle={() => setIsBottomPanelContentExpanded(!isBottomPanelContentExpanded)}
-        control={control}
-        register={register}
-        handleSubmit={handleSubmit}
-        processSubmit={processSubmit}
-        clientFormErrors={clientFormErrors}
-        serverFormErrors={formErrors}
-        isActionPending={isActionPending}
-        getValues={getValues}
-        setValue={setValue}
-        isStale={isStale}
-        onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
-      /> */}
     </div>
   );
 }

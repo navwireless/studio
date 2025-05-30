@@ -8,20 +8,18 @@ import type { PointCoordinates } from '@/types';
 import { Skeleton } from '../ui/skeleton';
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // IMPORTANT: Manage API keys securely
-const INDIA_CENTER = { lat: 20.5937, lng: 78.9629 };
-const INDIA_ZOOM = 5;
 
 interface InteractiveMapProps {
-  pointA?: (PointCoordinates & { name?: string }); 
-  pointB?: (PointCoordinates & { name?: string }); 
+  pointA?: (PointCoordinates & { name?: string }); // Current form/marker position A
+  pointB?: (PointCoordinates & { name?: string }); // Current form/marker position B
   
-  analyzedData?: { 
+  analyzedData?: { // Data from the last successful analysis
     pointA: PointCoordinates;
     pointB: PointCoordinates;
     losPossible: boolean;
   } | null;
 
-  isStale?: boolean;
+  isStale?: boolean; // No longer directly used for line drawing, but kept for consistency if page.tsx passes it
   isActionPending?: boolean;
 
   onMarkerDragStartA?: () => void;
@@ -31,6 +29,14 @@ interface InteractiveMapProps {
   mapContainerClassName?: string;
 }
 
+const defaultCenter = {
+  lat: 32.2313625,
+  lng: 76.1482885,
+};
+
+const defaultZoom = 15;
+
+// Helper function to compare points
 function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6) {
   if (!p1 || !p2) return false;
   const p1Lat = Number(p1.lat);
@@ -47,10 +53,10 @@ function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6
 }
 
 export default function InteractiveMap({
-  pointA: formPointA, 
-  pointB: formPointB, 
+  pointA: formPointA, // Renaming for clarity within this component based on new logic
+  pointB: formPointB, // Renaming for clarity
   analyzedData,
-  isStale,
+  // isStale, // Not directly used for line logic anymore, comparison is internal
   isActionPending,
   onMarkerDragStartA,
   onMarkerDragStartB,
@@ -72,10 +78,10 @@ export default function InteractiveMap({
   }, []);
 
   useEffect(() => {
-    if (mapRef.current && formPointA && formPointB && formPointA.lat && formPointA.lng && formPointB.lat && formPointB.lng) {
+    if (mapRef.current && formPointA && formPointB) {
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(new google.maps.LatLng(formPointA.lat, formPointA.lng));
-      bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
+      if (formPointA.lat && formPointA.lng) bounds.extend(new google.maps.LatLng(formPointA.lat, formPointA.lng));
+      if (formPointB.lat && formPointB.lng) bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
       
       if (!bounds.isEmpty()) {
         mapRef.current.fitBounds(bounds);
@@ -89,10 +95,13 @@ export default function InteractiveMap({
         return () => {
           if (listener) google.maps.event.removeListener(listener);
         };
+      } else {
+        mapRef.current.setCenter(defaultCenter);
+        mapRef.current.setZoom(defaultZoom);
       }
-    } else if (mapRef.current && (!formPointA || !formPointB)) {
-      mapRef.current.setCenter(INDIA_CENTER);
-      mapRef.current.setZoom(INDIA_ZOOM);
+    } else if (mapRef.current) {
+      mapRef.current.setCenter(defaultCenter);
+      mapRef.current.setZoom(defaultZoom);
     }
   }, [formPointA, formPointB]);
 
@@ -113,14 +122,6 @@ export default function InteractiveMap({
     }
   };
   
-  const analyzedPathKey = analyzedData 
-    ? `analyzed-${analyzedData.pointA.lat}-${analyzedData.pointA.lng}-${analyzedData.pointB.lat}-${analyzedData.pointB.lng}` 
-    : null;
-
-  const formPathKey = (formPointA && formPointB) 
-    ? `form-${formPointA.lat}-${formPointA.lng}-${formPointB.lat}-${formPointB.lng}`
-    : null;
-
   return (
     <div className={mapContainerClassName}>
       <LoadScript
@@ -144,8 +145,8 @@ export default function InteractiveMap({
         ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? (
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={(formPointA && formPointB && formPointA.lat && formPointA.lng) ? undefined : INDIA_CENTER}
-            zoom={(formPointA && formPointB && formPointA.lat && formPointA.lng) ? undefined : INDIA_ZOOM}
+            center={(formPointA && formPointB) ? undefined : defaultCenter}
+            zoom={(formPointA && formPointB) ? undefined : defaultZoom}
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={{
@@ -161,7 +162,7 @@ export default function InteractiveMap({
               mapTypeId: google.maps.MapTypeId.SATELLITE,
             }}
           >
-            {formPointA && formPointA.lat && formPointA.lng && (
+            {formPointA && (
               <Marker
                 key="marker-a"
                 position={{ lat: formPointA.lat, lng: formPointA.lng }}
@@ -171,7 +172,7 @@ export default function InteractiveMap({
                 onDragEnd={(e) => handleMarkerDragEnd(e, 'A')}
               />
             )}
-            {formPointB && formPointB.lat && formPointB.lng && (
+            {formPointB && (
               <Marker
                 key="marker-b"
                 position={{ lat: formPointB.lat, lng: formPointB.lng }}
@@ -191,40 +192,40 @@ export default function InteractiveMap({
               ) {
                 return (
                   <Polyline
-                    key={analyzedPathKey || 'analyzed-line-fallback'}
+                    key={`analyzed-${analyzedData.pointA.lat}-${analyzedData.pointA.lng}-${analyzedData.pointB.lat}-${analyzedData.pointB.lng}`}
                     path={[
                       { lat: analyzedData.pointA.lat, lng: analyzedData.pointA.lng },
                       { lat: analyzedData.pointB.lat, lng: analyzedData.pointB.lng }
                     ]}
                     options={{
-                      strokeColor: analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))", 
+                      strokeColor: analyzedData.losPossible ? "#22d3ee" : "hsl(var(--destructive))", // Cyan or Theme Red
                       strokeOpacity: 0.9,
                       strokeWeight: 3,
                       clickable: false,
-                      zIndex: 2 
+                      zIndex: 2 // Analyzed line on top
                     }}
                   />
                 );
               }
-              // Otherwise, show preview (dashed) line if both current form markers exist
+              // Otherwise, show preview (dashed) line if both form markers exist
               if (formPointA && formPointB && formPointA.lat && formPointA.lng && formPointB.lat && formPointB.lng) {
                 return (
                   <Polyline
-                    key={formPathKey || 'preview-line-fallback'}
+                    key={`preview-${formPointA.lat}-${formPointA.lng}-${formPointB.lat}-${formPointB.lng}`}
                     path={[
                       { lat: formPointA.lat, lng: formPointA.lng },
                       { lat: formPointB.lat, lng: formPointB.lng }
                     ]}
                     options={{
-                      strokeColor: "#6b7280", 
+                      strokeColor: "#6b7280", // gray-500
                       strokeOpacity: isActionPending ? 0.3 : 0.7,
                       strokeWeight: 2,
                       clickable: false,
-                      zIndex: 1, 
+                      zIndex: 1, // Preview line below analyzed
                       icons: [{
-                          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3, strokeWeight: 1.5 },
+                          icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3, strokeWeight: 1.5 }, // Making strokeWeight of icon match line
                           offset: '0',
-                          repeat: '10px' 
+                          repeat: '10px' // Creates a dashed line effect
                       }],
                     }}
                   />
@@ -241,3 +242,5 @@ export default function InteractiveMap({
     </div>
   );
 }
+
+    
