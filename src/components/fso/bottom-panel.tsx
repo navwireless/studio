@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
-import CustomProfileChart from './custom-profile-chart';
+import CustomProfileChart from './custom-profile-chart'; // Updated import
 import { ChevronDown, Target, Settings, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,8 @@ interface SiteInputGroupProps {
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
   isActionPending: boolean;
   analysisResult: AnalysisResult | null;
+  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
+  processSubmit: (data: AnalysisFormValues) => void;
 }
 
 const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ 
@@ -34,7 +36,9 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
   serverFormErrors, 
   getCombinedError,
   isActionPending,
-  analysisResult
+  analysisResult,
+  handleSubmit,
+  processSubmit
 }) => (
   <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1">
     <CardHeader className="p-1">
@@ -51,7 +55,6 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
             {...register(`${id}.name`)} 
             placeholder="e.g. Main Site" 
             className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
-            disabled={isActionPending}
           />
           {(clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) && 
             <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])}</p>}
@@ -64,7 +67,6 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
               {...register(`${id}.lat`)} 
               placeholder="-90 to 90" 
               className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
-              disabled={isActionPending}
             />
             {(clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) && 
               <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
@@ -76,7 +78,6 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
               {...register(`${id}.lng`)} 
               placeholder="-180 to 180" 
               className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
-              disabled={isActionPending}
             />
             {(clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) && 
               <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])}</p>}
@@ -94,7 +95,6 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
               min={0}
               max={100}
               idSuffix={id}
-              disabled={isActionPending}
             />
           )}
         />
@@ -106,7 +106,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
 );
 
 interface AnalysisSettingsProps {
-  control: Control<AnalysisFormValues>;
+  control: Control<AnalysisFormValues>; // Changed from register to control for consistency if using Controller
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
@@ -116,7 +116,7 @@ interface AnalysisSettingsProps {
 }
 
 const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({ 
-  control, 
+  control, // Using control here
   clientFormErrors, 
   serverFormErrors, 
   getCombinedError,
@@ -140,10 +140,9 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
                     type="number"
                     step="any"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    onChange={(e) => field.onChange(e.target.value)} // Ensure string value is passed if schema expects string
                     placeholder="e.g., 10"
                     className="mt-0.5 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0 w-full"
-                    disabled={isActionPending}
                 />
             )}
         />
@@ -168,10 +167,10 @@ const AnalysisSettings: React.FC<AnalysisSettingsProps> = ({
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
-  isOpen: boolean; 
-  onToggle: () => void; 
-  isPanelGloballyVisible: boolean; 
-
+  isOpen: boolean;
+  onToggle: () => void;
+  isStale?: boolean;
+  
   control: Control<AnalysisFormValues>;
   register: UseFormRegister<AnalysisFormValues>;
   handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
@@ -181,15 +180,12 @@ interface BottomPanelProps {
   isActionPending: boolean;
   getValues: UseFormGetValues<AnalysisFormValues>;
   setValue: UseFormSetValue<AnalysisFormValues>;
-  isStale?: boolean;   
-  onTowerHeightChangeFromGraph?: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
 }
 
 export default function BottomPanel({ 
   analysisResult, 
   isOpen, 
   onToggle,
-  isPanelGloballyVisible,
   isStale,
   control,
   register,
@@ -198,9 +194,6 @@ export default function BottomPanel({
   clientFormErrors,
   serverFormErrors,
   isActionPending,
-  getValues,
-  setValue,
-  onTowerHeightChangeFromGraph
 }: BottomPanelProps) {
   
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
@@ -208,38 +201,34 @@ export default function BottomPanel({
     return clientFieldError?.message;
   };
   
-  const watchedPointAName = useWatch({ control, name: 'pointA.name', defaultValue: "Site A" });
-  const watchedPointBName = useWatch({ control, name: 'pointB.name', defaultValue: "Site B" });
+  const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: analysisResult?.pointA?.name || "Site A" });
+  const pointBName = useWatch({ control, name: 'pointB.name', defaultValue: analysisResult?.pointB?.name || "Site B" });
   
-  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
-  
-  let isClearBasedOnAnalysis = false;
-  let deficitMeters = 0;
-  let actualMinClearanceMeters = 0;
-  const minRequiredClearanceMeters = parseFloat(watchedClearanceThresholdString) || 0;
+  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: analysisResult?.clearanceThresholdUsed?.toString() || "10" });
+  const minRequiredClearance = parseFloat(watchedClearanceThresholdString) || 0;
 
+  let isClearBasedOnAnalysis = false;
+  let deficit = 0;
+  let actualMinClearance = 0;
 
   if (analysisResult && analysisResult.minClearance !== null) {
-    actualMinClearanceMeters = analysisResult.minClearance;
-    const thresholdUsedForComparison = analysisResult.clearanceThresholdUsed ?? minRequiredClearanceMeters;
-    isClearBasedOnAnalysis = actualMinClearanceMeters >= thresholdUsedForComparison;
-    deficitMeters = isClearBasedOnAnalysis ? 0 : Math.max(0, parseFloat((thresholdUsedForComparison - actualMinClearanceMeters).toFixed(1)));
+    actualMinClearance = analysisResult.minClearance;
+    const thresholdUsedForComparison = analysisResult.clearanceThresholdUsed ?? minRequiredClearance;
+    isClearBasedOnAnalysis = actualMinClearance >= thresholdUsedForComparison;
+    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(thresholdUsedForComparison - actualMinClearance);
   }
-  
+
   return (
     <form 
       onSubmit={handleSubmit(processSubmit)} 
-      className={cn(
-        "fixed bottom-0 left-0 right-0 z-30 bg-slate-800/80 backdrop-blur-md border-t border-slate-700/60 rounded-t-2xl transition-transform duration-500 ease-in-out transform",
-        isPanelGloballyVisible ? "translate-y-0" : "translate-y-full"
-      )}
+      className="fixed bottom-0 left-0 right-0 z-30 bg-slate-800/80 backdrop-blur-md border-t border-slate-700/60 rounded-t-2xl transition-all duration-200 hover:bg-slate-800/90"
     >
       <div className="absolute top-1 right-1 z-10">
         <button
           type="button" 
           onClick={onToggle}
           className="p-1.5 rounded-full bg-slate-700/50 hover:bg-slate-600/70 backdrop-blur-sm text-slate-200/80 hover:text-white transition-all duration-200"
-          aria-label={isOpen ? "Hide Analysis Details" : "Show Analysis Details"}
+          aria-label={isOpen ? "Hide Analysis Panel" : "Show Analysis Panel"}
         >
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300", !isOpen && "rotate-180")} />
         </button>
@@ -256,7 +245,7 @@ export default function BottomPanel({
             
             <SiteInputGroup 
               id="pointA" 
-              title={watchedPointAName} 
+              title={pointAName} 
               control={control} 
               register={register}
               clientFormErrors={clientFormErrors}
@@ -264,6 +253,8 @@ export default function BottomPanel({
               getCombinedError={getCombinedError}
               isActionPending={isActionPending}
               analysisResult={analysisResult}
+              handleSubmit={handleSubmit}
+              processSubmit={processSubmit}
             />
             
             <div className="flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg">
@@ -315,43 +306,41 @@ export default function BottomPanel({
                         "font-bold text-sm",
                         isStale ? "text-slate-400" : (isClearBasedOnAnalysis ? "text-emerald-400" : "text-rose-400")
                       )}>
-                        {actualMinClearanceMeters.toFixed(1)} m
+                        {actualMinClearance.toFixed(1)} m
                       </span>
                     </div>
                   </div>
                 </div>
               )}
               
-              {analysisResult && !isClearBasedOnAnalysis && deficitMeters > 0 && (
+              {analysisResult && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && (
                 <div className="text-center text-rose-300/80 text-[0.7rem] py-0.5"> 
                   Add&nbsp;
-                  <span className="font-semibold">{deficitMeters} m</span>
+                  <span className="font-semibold">{deficit} m</span>
                   &nbsp;to tower(s) for clearance.
                 </div>
               )}
               
               <div className={cn(
-                "flex-1 min-h-0 p-0.5 md:min-h-[200px]", // Added min-height for CLS reduction
+                "flex-1 min-h-0 p-0.5", 
                 analysisResult && isStale && "opacity-60 pointer-events-none" 
               )}>
-                {analysisResult ? ( 
+                {analysisResult && !isActionPending ? ( // Ensure chart is shown only if analysisResult exists and not pending
                   <CustomProfileChart
                     data={analysisResult.profile}
-                    pointAName={watchedPointAName}
-                    pointBName={watchedPointBName}
-                    // isStale={isStale} // isStale for chart is handled by parent div opacity
+                    pointAName={pointAName}
+                    pointBName={pointBName}
+                    isStale={isStale}
                     totalDistanceKm={analysisResult.distanceKm}
-                    isActionPending={isActionPending} 
-                    onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
+                    isLoading={false} // When this branch is taken, it's not loading new results for the chart specifically
                   />
-                ) : isActionPending ? ( 
-                    <div className="h-full flex flex-col items-center justify-center p-2 bg-muted/30 rounded-md">
-                        <Loader2 className="h-8 w-8 text-primary animate-spin mb-3" />
-                        <p className="text-muted-foreground text-sm">Performing analysis...</p>
+                ) : isActionPending ? ( // Show loading specifically if an action is pending for the analysis
+                    <div className="h-full flex items-center justify-center p-2 bg-muted/30 rounded-md">
+                        <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
                     </div>
-                ) : ( 
+                ) : ( // Show AnalysisSettings if no result and not pending
                   <AnalysisSettings
-                    control={control}
+                    control={control} // Pass control
                     clientFormErrors={clientFormErrors}
                     serverFormErrors={serverFormErrors}
                     getCombinedError={getCombinedError}
@@ -365,7 +354,7 @@ export default function BottomPanel({
 
             <SiteInputGroup 
               id="pointB" 
-              title={watchedPointBName} 
+              title={pointBName} 
               control={control} 
               register={register}
               clientFormErrors={clientFormErrors}
@@ -373,6 +362,8 @@ export default function BottomPanel({
               getCombinedError={getCombinedError}
               isActionPending={isActionPending}
               analysisResult={analysisResult}
+              handleSubmit={handleSubmit}
+              processSubmit={processSubmit}
             />
           </div>
         </div>
@@ -380,3 +371,4 @@ export default function BottomPanel({
     </form>
   );
 }
+
