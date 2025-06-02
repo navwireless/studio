@@ -191,13 +191,49 @@ body {
     --accent-foreground: hsl(var(--accent-foreground-light));
 }
 
-/* Commented out as per instructions - these are now managed locally or dynamically */
-/* .map-container { */
-  /* height: calc(100vh - 64px); */ /* Assuming header height is 64px -> now managed by page.tsx */
-/* } */
+/* Custom scrollbar for horizontal scrolling in bottom panel on mobile */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px; /* Height of horizontal scrollbar */
+  width: 6px; /* Width of vertical scrollbar */
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--secondary-foreground) / 0.6);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--secondary-foreground) / 0.8);
+}
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--secondary-foreground) / 0.6) hsl(var(--muted) / 0.5);
+}
 
-/* .elevation-profile-visible { */
-  /* max-height: 35vh; */ 
-  /* min-height: 25vh; */
-  /* height: 35vh; */ 
-/* } */
+/* Styles for print mode */
+@media print {
+  body {
+    overflow: visible !important; /* Allow content to naturally flow for printing */
+  }
+  main {
+    overflow: visible !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:overflow-visible {
+    overflow: visible !important;
+  }
+  .print\:h-auto {
+    height: auto !important;
+  }
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  .print\:border-none {
+    border: none !important;
+  }
+}

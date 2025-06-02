@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import AppHeader from '@/components/layout/app-header'; 
+import Footer from '@/components/layout/footer';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,9 +34,10 @@ export default function RootLayout({
                    flex flex-col h-screen overflow-hidden`}
       >
         <AppHeader />
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-y-auto"> {/* Changed overflow-hidden to overflow-y-auto to allow main content to scroll if footer makes it too tall */}
           {children}
         </main>
+        <Footer />
         <Toaster />
       </body>
     </html>

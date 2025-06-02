@@ -6,12 +6,15 @@ import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 import InteractiveMap from '@/components/fso/interactive-map';
 import BottomPanel from '@/components/fso/bottom-panel';
+import FresnelSettingsBar from '@/components/fso/fresnel-settings-bar'; // New import
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Info } from 'lucide-react';
 
@@ -56,24 +59,27 @@ function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6
 export default function Home() {
   const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
   const [serverState, formAction, isActionPending] = useActionState(performLosAnalysis, initialState);
-  const [isTransitionPending, startTransition] = useTransition(); // Correctly get startTransition
+  const [, startTransition] = useTransition(); 
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [clientError, setClientError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
   const [isStale, setIsStale] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true); // Panel is open by default
+  
+  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false); // Panel hidden by default
+  const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true); // Internal content expanded by default when panel opens
+  
   const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
-  // const [initialAnalysisPerformed, setInitialAnalysisPerformed] = useState(false); // Removed based on choosing HEAD for conflicts
-
+  
   const { register, handleSubmit, formState: { errors: clientFormErrors, isValid }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
     defaultValues: defaultFormStateValues,
     mode: 'onChange',
   });
 
-  const processSubmit = (data: PageAnalysisFormValues) => {
+  const processSubmit = useCallback((data: PageAnalysisFormValues) => {
     if (isActionPending) return;
+    console.log("[page.tsx] processSubmit called with data:", data);
 
     setAnalysisResult(null);
     setClientError(null);
@@ -94,65 +100,75 @@ export default function Home() {
     startTransition(() => {
       formAction(formData);
     });
-  };
+  }, [isActionPending, formAction, startTransition]); // Added dependencies
 
-  const watchedPointA = useWatch({ control, name: 'pointA' });
-  const watchedPointB = useWatch({ control, name: 'pointB' });
-  const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
 
   useEffect(() => {
     if (!serverState) return;
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
+      // Suppress "No analysis performed yet." if we already have results or are loading new ones
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending);
 
       if (!suppressInitialMessage) {
         setClientError(errorToSet);
       }
-
+      
       if (serverState.fieldErrors) {
         setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
-      } else if (!suppressInitialMessage) {
+      } else if (!suppressInitialMessage) { 
+        // Clear form errors only if we are not suppressing the main error message
+        // and there are no new field errors.
         setFormErrors(undefined);
       }
     } else if (!('error' in serverState)) {
       const resultDataFromServer = serverState as AnalysisResult;
       const currentFormValues = getValues();
 
-      const newAnalysisData = {
+      // Ensure point names are preserved from the form when setting analysis result
+      const newAnalysisData: AnalysisResult = {
         ...resultDataFromServer,
-        pointA: {
-          ...(resultDataFromServer.pointA || {} as any),
+        pointA: { 
+          ...(resultDataFromServer.pointA || {} as any), 
           name: currentFormValues.pointA.name,
-          lat: parseFloat(currentFormValues.pointA.lat),
+          lat: parseFloat(currentFormValues.pointA.lat), // Ensure lat/lng match form
           lng: parseFloat(currentFormValues.pointA.lng),
           towerHeight: currentFormValues.pointA.height,
         },
-        pointB: {
-          ...(resultDataFromServer.pointB || {} as any),
+        pointB: { 
+          ...(resultDataFromServer.pointB || {} as any), 
           name: currentFormValues.pointB.name,
-          lat: parseFloat(currentFormValues.pointB.lat),
+          lat: parseFloat(currentFormValues.pointB.lat), // Ensure lat/lng match form
           lng: parseFloat(currentFormValues.pointB.lng),
           towerHeight: currentFormValues.pointB.height,
         },
       };
-
+      
+      // Deep comparison to prevent unnecessary re-renders if data is identical
       if (JSON.stringify(analysisResult) !== JSON.stringify(newAnalysisData)) {
         setAnalysisResult(newAnalysisData);
       }
-
+      
       setClientError(null);
       setFormErrors(undefined);
       setIsStale(false);
 
-      if (newAnalysisData && !hasFirstAnalysisCompleted) {
-        setIsPanelOpen(true); // Auto-open panel on first successful analysis
-        setHasFirstAnalysisCompleted(true);
+      // If panel is not already open, open it on successful analysis
+      if (newAnalysisData && !isAnalysisPanelGloballyOpen && !hasFirstAnalysisCompleted) {
+         setIsAnalysisPanelGloballyOpen(true);
+         setIsBottomPanelContentExpanded(true);
+         setHasFirstAnalysisCompleted(true);
+      } else if (newAnalysisData && !hasFirstAnalysisCompleted) {
+         setHasFirstAnalysisCompleted(true); // Mark first analysis done even if panel was already open
       }
     }
-  }, [serverState, getValues, hasFirstAnalysisCompleted, setIsPanelOpen, analysisResult, isActionPending]);
+  }, [serverState, getValues, isAnalysisPanelGloballyOpen, hasFirstAnalysisCompleted, analysisResult, isActionPending]);
 
+
+  const watchedPointA = useWatch({ control, name: 'pointA' });
+  const watchedPointB = useWatch({ control, name: 'pointB' });
+  const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
 
   useEffect(() => {
     if (!analysisResult) {
@@ -161,25 +177,26 @@ export default function Home() {
     }
 
     const currentFormValues = getValues();
+    // Ensure comparison is between numbers for lat/lng/height/clearance
     const formLatA = parseFloat(currentFormValues.pointA.lat);
     const formLngA = parseFloat(currentFormValues.pointA.lng);
-    const formHeightA = currentFormValues.pointA.height;
+    const formHeightA = currentFormValues.pointA.height; 
 
     const formLatB = parseFloat(currentFormValues.pointB.lat);
     const formLngB = parseFloat(currentFormValues.pointB.lng);
-    const formHeightB = currentFormValues.pointB.height;
+    const formHeightB = currentFormValues.pointB.height; 
 
     const formClearance = parseFloat(currentFormValues.clearanceThreshold);
 
     const formPointAForCompare: PointCoordinates = { lat: formLatA, lng: formLngA };
     const formPointBForCompare: PointCoordinates = { lat: formLatB, lng: formLngB };
-
+    
     const analyzedPointA = analysisResult.pointA;
     const analyzedPointB = analysisResult.pointB;
 
     const pointsAEqualResult = pointsEqual(formPointAForCompare, analyzedPointA);
     const pointsBEqualResult = pointsEqual(formPointBForCompare, analyzedPointB);
-
+    
     const heightAEqual = formHeightA === analyzedPointA?.towerHeight;
     const heightBEqual = formHeightB === analyzedPointB?.towerHeight;
     const clearanceEqual = formClearance === analysisResult.clearanceThresholdUsed;
@@ -192,45 +209,46 @@ export default function Home() {
   }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, getValues]);
 
   const handleMarkerDragStart = useCallback(() => {
-    setAnalysisResult(null);
+    setAnalysisResult(null); // Clear previous results on drag start
     setClientError(null);
   }, []);
 
   const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
     setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-    handleSubmit(processSubmit)();
-  }, [setValue, handleSubmit, processSubmit]); // Added processSubmit to dependencies
+    handleSubmit(processSubmit)(); 
+  }, [setValue, handleSubmit, processSubmit]); 
 
   const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
     setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
     handleSubmit(processSubmit)();
-  }, [setValue, handleSubmit, processSubmit]); // Added processSubmit to dependencies
+  }, [setValue, handleSubmit, processSubmit]); 
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     if (isActionPending) return;
 
     const clampedHeight = Math.max(0, Math.min(100, parseFloat(newHeight.toFixed(1))));
-
+    
     setValue(siteId === 'pointA' ? 'pointA.height' : 'pointB.height', clampedHeight, {
       shouldValidate: true,
-      shouldTouch: true,
+      shouldTouch: true, 
       shouldDirty: true,
     });
-
+    // Trigger analysis immediately after height change from graph
     processSubmit(getValues());
-  }, [setValue, isActionPending, getValues, processSubmit]); // Added processSubmit and getValues
+  }, [setValue, isActionPending, getValues, processSubmit]);
 
 
-  const mapContainerHeightClass = isPanelOpen && analysisResult ? 'h-[calc(100%_-_45vh)]' : 'h-full';
-
+  const mapContainerHeightClass = isAnalysisPanelGloballyOpen ? 'h-[calc(100%_-_45vh_-_56px)]' : 'h-[calc(100%_-_56px)]'; // Adjusted for FresnelSettingsBar (approx 56px height)
+  // Fallback to default values if watched values are invalid or empty
   const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
     ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name }
-    : undefined;
+    : { lat: parseFloat(defaultFormStateValues.pointA.lat), lng: parseFloat(defaultFormStateValues.pointA.lng), name: defaultFormStateValues.pointA.name };
+  
   const formPointBForMap = watchedPointB && !isNaN(parseFloat(watchedPointB.lat)) && !isNaN(parseFloat(watchedPointB.lng))
     ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name }
-    : undefined;
+    : { lat: parseFloat(defaultFormStateValues.pointB.lat), lng: parseFloat(defaultFormStateValues.pointB.lng), name: defaultFormStateValues.pointB.name };
 
   const analyzedDataForMap = analysisResult ? {
     pointA: { lat: analysisResult.pointA.lat, lng: analysisResult.pointA.lng },
@@ -238,9 +256,21 @@ export default function Home() {
     losPossible: analysisResult.losPossible
   } : null;
 
+  const toggleGlobalPanelVisibility = () => {
+    setIsAnalysisPanelGloballyOpen(!isAnalysisPanelGloballyOpen);
+    if (!isAnalysisPanelGloballyOpen) { // If panel is being opened
+        setIsBottomPanelContentExpanded(true); // Ensure its content is expanded
+        if (!analysisResult && !isActionPending) { // If no results and not loading, trigger analysis
+          processSubmit(getValues());
+        }
+    }
+  };
+
   return (
-    <div className="flex flex-1 h-full overflow-hidden">
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+    <div className="flex-1 flex flex-col overflow-hidden relative print:overflow-visible">
+      <FresnelSettingsBar control={control} />
+      
+      <div className={cn("relative flex-grow", mapContainerHeightClass, "transition-all duration-300 ease-in-out")}>
         <InteractiveMap
           pointA={formPointAForMap}
           pointB={formPointBForMap}
@@ -251,11 +281,26 @@ export default function Home() {
           onMarkerDragStartB={handleMarkerDragStart}
           onMarkerDragEndA={handleMarkerDragEndA}
           onMarkerDragEndB={handleMarkerDragEndB}
-          mapContainerClassName={`relative flex-grow ${mapContainerHeightClass} transition-all duration-300 ease-in-out`}
+          mapContainerClassName="w-full h-full" 
         />
+      </div>
+
+      {!isAnalysisPanelGloballyOpen && !isActionPending && ( 
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center z-10 pointer-events-none print:hidden">
+          <Button
+            size="lg"
+            className="px-8 py-4 text-lg font-semibold shadow-xl bg-primary hover:bg-primary/90 pointer-events-auto "
+            onClick={() => {
+              toggleGlobalPanelVisibility();
+            }}
+          >
+            Check OpticSpectra FSO Link Feasibility
+          </Button>
+        </div>
+      )}
 
         {clientError && clientError !== "No analysis performed yet." && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2">
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2 print:hidden">
                 <Card className="shadow-lg border-destructive bg-destructive/30 backdrop-blur-md text-destructive-foreground">
                     <CardHeader className="py-2 px-4 flex-row items-center justify-between">
                         <CardTitle className="text-sm flex items-center"><Info className="mr-2 h-4 w-4" /> Error</CardTitle>
@@ -275,22 +320,18 @@ export default function Home() {
         )}
 
         {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
-             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-2">
-                <Card className="shadow-lg bg-slate-800/70 backdrop-blur-md animate-pulse">
-                    <CardHeader className="py-3 px-4"><Skeleton className="h-5 w-3/4 bg-slate-700/50" /></CardHeader>
-                    <CardContent className="px-4 pb-3 space-y-2">
-                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
-                        <Skeleton className="h-4 w-2/3 bg-slate-700/50" />
-                        <Skeleton className="h-4 w-1/2 bg-slate-700/50" />
-                    </CardContent>
-                </Card>
+             <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex flex-col items-center justify-center z-50 print:hidden">
+                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                <p className="text-slate-200 text-lg font-medium">Loading Analysis Data...</p>
             </div>
         )}
 
           <BottomPanel
             analysisResult={analysisResult}
-            isOpen={isPanelOpen}
-            onToggle={() => setIsPanelOpen(!isPanelOpen)}
+            isPanelGloballyVisible={isAnalysisPanelGloballyOpen} 
+            onToggleGlobalVisibility={toggleGlobalPanelVisibility}
+            isContentExpanded={isBottomPanelContentExpanded} 
+            onToggleContentExpansion={() => setIsBottomPanelContentExpanded(!isBottomPanelContentExpanded)}
             control={control}
             register={register}
             handleSubmit={handleSubmit}
@@ -303,7 +344,6 @@ export default function Home() {
             isStale={isStale}
             onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
           />
-      </div>
     </div>
   );
 }
