@@ -551,6 +551,10 @@ body {
   z-index: 100;
 }
 
+.z-40 {
+  z-index: 40;
+}
+
 .-mx-1 {
   margin-left: -.25rem;
   margin-right: -.25rem;
@@ -1387,6 +1391,10 @@ body {
   background-color: #ca8a044d;
 }
 
+.bg-slate-900\/50 {
+  background-color: #0f172a80;
+}
+
 .fill-current {
   fill: currentColor;
 }
@@ -1754,6 +1762,11 @@ body {
   color: #facc15e6;
 }
 
+.text-slate-200 {
+  --tw-text-opacity: 1;
+  color: rgb(226 232 240 / var(--tw-text-opacity, 1));
+}
+
 .underline-offset-4 {
   text-underline-offset: 4px;
 }
@@ -2002,6 +2015,10 @@ body {
 
 .ease-linear {
   animation-timing-function: linear;
+}
+
+.running {
+  animation-play-state: running;
 }
 
 .backdrop-blur-2px {
