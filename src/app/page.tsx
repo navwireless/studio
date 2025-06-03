@@ -1,277 +1,42 @@
 
 "use client";
 
-import React from 'react';
-import InteractiveMap from '@/components/fso/interactive-map';
-// All other imports related to state, form, actions, etc., are commented out for this test.
-// import { useState, useCallback, useActionState, useTransition, useRef } from 'react';
-// import { useForm, Controller, useWatch } from 'react-hook-form';
-// import { zodResolver } from '@hookform/resolvers/zod';
-// import { z } from 'zod';
-// import { cn } from '@/lib/utils';
-// import { Loader2 } from 'lucide-react';
-// import BottomPanel from '@/components/fso/bottom-panel';
-// import { performLosAnalysis } from '@/app/actions';
-// import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
-// import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Button } from '@/components/ui/button';
-// import { Info } from 'lucide-react';
+import React from 'react'; // Keep React import
+import dynamic from 'next/dynamic';
+import { Loader2 } from 'lucide-react';
 
-// All schema definitions, default values, helper functions are commented out for this test.
-/*
-const StationPointSchema = z.object({
-  name: z.string().min(1, "Name is required").max(50, "Name too long"),
-  lat: z.string()
-    .min(1, "Latitude is required")
-    .refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Must be -90 to 90"),
-  lng: z.string()
-    .min(1, "Longitude is required")
-    .refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Must be -180 to 180"),
-  height: z.number().min(0, "Min 0m").max(100, "Max 100m"),
+// Dynamically import InteractiveMap with SSR turned off
+const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-muted">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="ml-2 text-muted-foreground">Loading Map...</p>
+    </div>
+  ),
 });
 
-const PageAnalysisFormSchema = z.object({
-  pointA: StationPointSchema,
-  pointB: StationPointSchema,
-  clearanceThreshold: z.string().min(1, "Clearance is required").refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Must be >= 0"),
-});
-
-const defaultFormStateValues: PageAnalysisFormValues = {
-  pointA: { name: 'Site A', lat: '32.23085', lng: '76.144608', height: 20 },
-  pointB: { name: 'Site B', lat: '32.231875', lng: '76.151969', height: 58 },
-  clearanceThreshold: '10',
-};
-
-function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6) {
-  if (!p1 || !p2) return false;
-  const p1Lat = Number(p1.lat);
-  const p1Lng = Number(p1.lng);
-  const p2Lat = Number(p2.lat);
-  const p2Lng = Number(p2.lng);
-
-  if (isNaN(p1Lat) || isNaN(p1Lng) || isNaN(p2Lat) || isNaN(p2Lng)) return false;
-
-  return (
-    p1Lat.toFixed(precision) === p2Lat.toFixed(precision) &&
-    p1Lng.toFixed(precision) === p2Lng.toFixed(precision)
-  );
-}
-*/
+// All other imports, state, hooks, handlers, and JSX from the most recent
+// "extremely simplified Home" version are commented out or kept minimal.
 
 export default function Home() {
-  // --- ALL STATE AND LOGIC COMMENTED OUT FOR EXTREME SIMPLIFICATION ---
-  // const initialState: AnalysisResult | { error: string; fieldErrors?: any } = { error: "No analysis performed yet." };
-  // const [serverState, formAction, isActionPending] = useActionState(performLosAnalysis, initialState);
-  // const [, startTransition] = useTransition();
-
-  // const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  // const [clientError, setClientError] = useState<string | null>(null);
-  // const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
-  // const [isStale, setIsStale] = useState(false);
-  
-  // const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
-  // const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
-  
-  /*
-  const { register, handleSubmit, formState: { errors: clientFormErrors, isValid }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
-    resolver: zodResolver(PageAnalysisFormSchema),
-    defaultValues: defaultFormStateValues,
-    mode: 'onChange',
-  });
-  */
-
-  /*
-  const processSubmit = useCallback((data: PageAnalysisFormValues) => {
-    // if (isActionPending) return;
-    console.log("[page.tsx] processSubmit called with data:", data);
-
-    // setAnalysisResult(null); 
-    // setClientError(null);
-    // setFormErrors(undefined);
-    // setIsStale(false);
-
-    const formData = new FormData();
-    // ... (append form data) ...
-    // startTransition(() => {
-    //   formAction(formData);
-    // });
-  }, [isActionPending, formAction, startTransition]);
-  */
-
-  // const watchedPointA = useWatch({ control, name: 'pointA' });
-  // const watchedPointB = useWatch({ control, name: 'pointB' });
-  // const watchedClearanceThreshold = useWatch({ control, name: 'clearanceThreshold' });
-
-  /*
-  useEffect(() => {
-    // if (!serverState) return;
-    // ... (serverState processing logic) ...
-  }, [serverState, getValues, isAnalysisPanelGloballyOpen, analysisResult, isActionPending ]);
-  */
-
-  /*
-  useEffect(() => {
-    // if (!analysisResult) {
-    //   setIsStale(false);
-    //   return;
-    // }
-    // ... (isStale calculation logic) ...
-  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, getValues]);
-  */
-
-  // const handleMarkerDragStart = useCallback(() => {
-  //   setAnalysisResult(null); 
-  //   setClientError(null);
-  // }, []);
-
-  // const handleMarkerDragEndA = useCallback((coords: PointCoordinates) => {
-  //   setValue('pointA.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-  //   setValue('pointA.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-  //   handleSubmit(processSubmit)(); 
-  // }, [setValue, handleSubmit, processSubmit]); 
-
-  // const handleMarkerDragEndB = useCallback((coords: PointCoordinates) => {
-  //   setValue('pointB.lat', coords.lat.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-  //   setValue('pointB.lng', coords.lng.toFixed(7), { shouldValidate: true, shouldTouch: true, shouldDirty: true });
-  //   handleSubmit(processSubmit)();
-  // }, [setValue, handleSubmit, processSubmit]); 
-
-  // const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
-  //   // if (isActionPending) return;
-  //   const clampedHeight = Math.max(0, Math.min(100, parseFloat(newHeight.toFixed(1))));
-  //   // setValue(siteId === 'pointA' ? 'pointA.height' : 'pointB.height', clampedHeight, {
-  //   //   shouldValidate: true,
-  //   //   shouldTouch: true, 
-  //   //   shouldDirty: true,
-  //   // });
-  //   // processSubmit(getValues());
-  // }, [setValue, isActionPending, getValues, processSubmit]);
-
-
-  // const mapContainerHeightClass = isAnalysisPanelGloballyOpen ? 'h-[calc(100%_-_45vh)]' : 'h-full';
-  
-  /*
-  const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
-    ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name }
-    : { lat: parseFloat(defaultFormStateValues.pointA.lat), lng: parseFloat(defaultFormStateValues.pointA.lng), name: defaultFormStateValues.pointA.name };
-  
-  const formPointBForMap = watchedPointB && !isNaN(parseFloat(watchedPointB.lat)) && !isNaN(parseFloat(watchedPointB.lng))
-    ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name }
-    : { lat: parseFloat(defaultFormStateValues.pointB.lat), lng: parseFloat(defaultFormStateValues.pointB.lng), name: defaultFormStateValues.pointB.name };
-
-  const analyzedDataForMap = analysisResult ? {
-    pointA: { lat: analysisResult.pointA.lat, lng: analysisResult.pointA.lng },
-    pointB: { lat: analysisResult.pointB.lat, lng: analysisResult.pointB.lng },
-    losPossible: analysisResult.losPossible
-  } : null;
-  */
-
-  // const toggleGlobalPanelVisibility = () => {
-    // setIsAnalysisPanelGloballyOpen(prev => !prev);
-    // if (!isAnalysisPanelGloballyOpen) { 
-        // setIsBottomPanelContentExpanded(true); 
-    // }
-  // };
-  
-  /*
-  const handleStartAnalysisClick = () => {
-    // setIsAnalysisPanelGloballyOpen(true);
-    // setIsBottomPanelContentExpanded(true);
-    // if (!analysisResult && !isActionPending && isValid) {
-        // processSubmit(getValues());
-    // } else if (!analysisResult && !isActionPending && !isValid) {
-        // handleSubmit(processSubmit)(); 
-    // }
-  };
-  */
-  console.log("[page.tsx] Rendering EXTREMELY simplified Home component.");
+  console.log("[page.tsx] DEBUG: Rendering EXTREMELY simplified Home with fixed height map container and dynamic InteractiveMap (ssr:false).");
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative"> {/* Removed debug bg color for clarity */}
-      
-      {/* Ensure InteractiveMap always tries to render and has a defined height */}
-      <div className={`h-full transition-all duration-300 ease-in-out`}> {/* Simplified height */}
+    <div className="flex-1 flex flex-col overflow-hidden relative bg-purple-500/30"> {/* DEBUG BG for page container */}
+      {/* This div wrapper provides a fixed height for the map container */}
+      <div style={{ height: '500px', width: '100%', border: '2px solid blue' }}>
         <InteractiveMap
-          // Pass NO props other than the class name to test its most basic rendering
-          mapContainerClassName="w-full h-full" 
-          // pointA={formPointAForMap}
-          // pointB={formPointBForMap}
-          // analyzedData={analyzedDataForMap}
-          // isStale={isStale}
-          // isActionPending={isActionPending}
-          // onMarkerDragStartA={dummyHandler}
-          // onMarkerDragStartB={dummyHandler}
-          // onMarkerDragEndA={dummyCoordsHandler}
-          // onMarkerDragEndB={dummyCoordsHandler}
+          mapContainerClassName="w-full h-full" // This will apply to InteractiveMap's root div
+          // Provide minimal, valid default props if InteractiveMap expects them,
+          // even if they are not used in its current simplified state.
+          // For now, only mapContainerClassName is critical as per InteractiveMap's current simplified state.
         />
       </div>
-
-      {/* "Start Link Analysis" Button - Commented Out
-      {!isAnalysisPanelGloballyOpen && ( 
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center z-10 pointer-events-none print:hidden">
-          <Button
-            size="lg"
-            className="px-8 py-4 text-lg font-semibold shadow-xl bg-primary hover:bg-primary/90 pointer-events-auto "
-            // onClick={handleStartAnalysisClick}
-          >
-            Start Link Analysis
-          </Button>
-        </div>
-      )}
-      */}
-
-      {/* Loading overlay - Commented Out
-        {isActionPending && (
-             <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex flex-col items-center justify-center z-50 print:hidden">
-                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-                <p className="text-slate-200 text-lg font-medium">Loading Analysis Data...</p>
-            </div>
-        )}
-      */}
-
-      {/* Error display - Commented Out
-        {clientError && clientError !== "No analysis performed yet." && (
-            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-2 print:hidden">
-                <Card className="shadow-lg border-destructive bg-destructive/30 backdrop-blur-md text-destructive-foreground">
-                    <CardHeader className="py-2 px-4 flex-row items-center justify-between">
-                        <CardTitle className="text-sm flex items-center"><Info className="mr-2 h-4 w-4" /> Error</CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-4 py-2">
-                        <p className="text-sm">{clientError}</p>
-                        {formErrors && Object.keys(formErrors).length > 0 && (
-                        <ul className="list-disc list-inside mt-1 text-xs opacity-80">
-                            {Object.entries(formErrors).map(([field, errors]) =>
-                                errors?.map((error, index) => <li key={`${field}-${index}`}>{`${field.replace('pointA.','A: ').replace('pointB.','B: ')}: ${error}`}</li>)
-                            )}
-                        </ul>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        )}
-      */}
-
-      {/* BottomPanel - Commented Out
-          <BottomPanel
-            analysisResult={analysisResult}
-            isPanelGloballyVisible={isAnalysisPanelGloballyOpen} 
-            onToggleGlobalVisibility={toggleGlobalPanelVisibility}
-            isContentExpanded={isBottomPanelContentExpanded} 
-            onToggleContentExpansion={() => setIsBottomPanelContentExpanded(!isBottomPanelContentExpanded)}
-            control={control}
-            register={register}
-            handleSubmit={handleSubmit}
-            processSubmit={processSubmit}
-            clientFormErrors={clientFormErrors}
-            serverFormErrors={formErrors}
-            isActionPending={isActionPending}
-            getValues={getValues}
-            setValue={setValue}
-            isStale={isStale}
-            onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
-          />
-      */}
     </div>
   );
 }
-    
+
+// Original complex content of page.tsx is effectively "commented out" by not including it here.
+// This focuses solely on getting InteractiveMap to load without the SSR error.
+// If this works, we can gradually re-introduce the other state and components.

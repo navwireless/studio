@@ -687,6 +687,10 @@ body {
   margin-right: .25rem;
 }
 
+.ml-2 {
+  margin-left: .5rem;
+}
+
 .block {
   display: block;
 }
@@ -938,6 +942,10 @@ body {
 
 .w-14 {
   width: 3.5rem;
+}
+
+.w-8 {
+  width: 2rem;
 }
 
 .min-w-0 {
@@ -1535,6 +1543,14 @@ body {
 
 .bg-yellow-400\/30 {
   background-color: #facc154d;
+}
+
+.bg-lime-500\/20 {
+  background-color: #84cc1633;
+}
+
+.bg-purple-500\/30 {
+  background-color: #a855f74d;
 }
 
 .fill-current {

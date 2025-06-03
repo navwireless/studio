@@ -1,1 +1,10 @@
-{}
+{
+  "[project]/src/components/fso/interactive-map.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/src/components/fso/interactive-map.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/node_modules_@react-google-maps_api_dist_esm_d50285f1.js",
+      "static/chunks/src_components_fso_interactive-map_tsx_a79360f4._.js",
+      "static/chunks/src_components_fso_interactive-map_tsx_aa5f539e._.js"
+    ]
+  }
+}
