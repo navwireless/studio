@@ -3,7 +3,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, Polyline, OverlayView } from '@react-google-maps/api';
-import { AlertTriangle, Loader2 } from 'lucide-react'; // Added Loader2 for a more distinct loading state
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import type { PointCoordinates } from '@/types';
 import { Skeleton } from '../ui/skeleton';
 import { calculateDistanceKm } from '@/lib/los-calculator';
@@ -80,17 +80,25 @@ export default function InteractiveMap({
   const [currentDistance, setCurrentDistance] = useState<string | null>(null);
   const [distanceLabelPosition, setDistanceLabelPosition] = useState<PointCoordinates | null>(null);
 
+  useEffect(() => {
+    console.log("[InteractiveMap] Script Loaded State:", scriptLoaded);
+    console.log("[InteractiveMap] Script Error State:", scriptError);
+  }, [scriptLoaded, scriptError]);
 
-  const onLoad = useCallback((mapInstance: google.maps.Map) => {
+
+  const handleMapLoad = useCallback((mapInstance: google.maps.Map) => {
+    console.log("[InteractiveMap] GoogleMap onLoad callback fired. Map instance:", mapInstance);
     mapRef.current = mapInstance;
     mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
     if (!formPointA && !formPointB) { 
+      console.log("[InteractiveMap] Setting default center and zoom.");
       mapInstance.setCenter(defaultCenter);
       mapInstance.setZoom(defaultZoom);
     }
   }, [formPointA, formPointB]);
 
   const onUnmount = useCallback(() => {
+    console.log("[InteractiveMap] GoogleMap onUnmount callback fired.");
     mapRef.current = null;
   }, []);
 
@@ -101,6 +109,7 @@ export default function InteractiveMap({
       if (formPointB.lat && formPointB.lng) bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
       
       if (!bounds.isEmpty()) {
+        console.log("[InteractiveMap] Fitting bounds to markers.");
         mapRef.current.fitBounds(bounds);
         const listener = google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
           if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
@@ -114,6 +123,7 @@ export default function InteractiveMap({
         };
       }
     } else if (mapRef.current && (!formPointA || !formPointB)) { 
+        console.log("[InteractiveMap] No form points, resetting to default center/zoom.");
         setMapCenter(defaultCenter);
         setMapZoom(defaultZoom);
         mapRef.current.setCenter(defaultCenter);
@@ -157,22 +167,24 @@ export default function InteractiveMap({
     <div className="w-full h-full flex flex-col items-center justify-center bg-yellow-400/30 text-yellow-700">
         <Loader2 className="w-16 h-16 animate-spin mb-4" />
         <p className="text-lg font-semibold">Loading Map Script...</p>
+        <p className="text-sm">If this persists, check API key & console.</p>
     </div>
   );
 
+  console.log(`[InteractiveMap] Rendering. ClassName: ${mapContainerClassName}`);
   return (
     <div className={`${mapContainerClassName} bg-green-500/20`}> {/* DEBUG: Overall map component container */}
       <LoadScript
         googleMapsApiKey={GOOGLE_MAPS_API_KEY}
         onLoad={() => {
-          console.log("Google Maps script loaded successfully.");
+          console.log("[InteractiveMap] LoadScript onLoad callback fired. Google Maps script should be loaded.");
           setScriptLoaded(true);
-          setScriptError(false); // Explicitly set error to false on successful load
+          setScriptError(false); 
         }}
         onError={(error) => {
-          console.error("Google Maps script could not be loaded. Check API Key (Maps JavaScript API), billing, and restrictions in Google Cloud Console.", error);
+          console.error("[InteractiveMap] LoadScript onError callback fired. Error loading Google Maps script:", error);
           setScriptError(true);
-          setScriptLoaded(true); // Consider script loading attempt as "done" even if it failed
+          setScriptLoaded(true); 
         }}
         loadingElement={distinctLoadingElement}
       >
@@ -188,10 +200,14 @@ export default function InteractiveMap({
           </div>
         ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? (
           <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '100%' }}
+            mapContainerStyle={{ 
+              width: '100%', 
+              height: '100%',
+              border: '5px solid deeppink' // DEBUG: Prominent border for GoogleMap container
+            }}
             center={mapCenter}
             zoom={mapZoom}
-            onLoad={onLoad}
+            onLoad={handleMapLoad}
             onUnmount={onUnmount}
             options={{
               streetViewControl: true,
@@ -230,7 +246,7 @@ export default function InteractiveMap({
             {(() => {
               if (
                 analyzedData &&
-                formPointA && formPointB && // Ensure formPoints are also defined
+                formPointA && formPointB && 
                 pointsEqual(formPointA, analyzedData.pointA) &&
                 pointsEqual(formPointB, analyzedData.pointB)
               ) {
@@ -296,11 +312,13 @@ export default function InteractiveMap({
             
           </GoogleMap>
         ) : (
-           distinctLoadingElement // Show distinct loading if scriptLoaded is false but no error
+           distinctLoadingElement 
         )}
       </LoadScript>
     </div>
   );
 }
+
+    
 
     

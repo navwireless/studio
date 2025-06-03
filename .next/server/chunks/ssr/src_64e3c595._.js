@@ -116,7 +116,7 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@react-google-maps/api/dist/esm.js [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertTriangle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/triangle-alert.js [app-ssr] (ecmascript) <export default as AlertTriangle>"); // Added Loader2 for a more distinct loading state
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertTriangle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/triangle-alert.js [app-ssr] (ecmascript) <export default as AlertTriangle>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript) <export default as Loader2>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/los-calculator.ts [app-ssr] (ecmascript)");
 "use client";
@@ -154,10 +154,19 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
     const [mapZoom, setMapZoom] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(defaultZoom);
     const [currentDistance, setCurrentDistance] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [distanceLabelPosition, setDistanceLabelPosition] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
-    const onLoad = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((mapInstance)=>{
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        console.log("[InteractiveMap] Script Loaded State:", scriptLoaded);
+        console.log("[InteractiveMap] Script Error State:", scriptError);
+    }, [
+        scriptLoaded,
+        scriptError
+    ]);
+    const handleMapLoad = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((mapInstance)=>{
+        console.log("[InteractiveMap] GoogleMap onLoad callback fired. Map instance:", mapInstance);
         mapRef.current = mapInstance;
         mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
         if (!formPointA && !formPointB) {
+            console.log("[InteractiveMap] Setting default center and zoom.");
             mapInstance.setCenter(defaultCenter);
             mapInstance.setZoom(defaultZoom);
         }
@@ -166,6 +175,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
         formPointB
     ]);
     const onUnmount = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
+        console.log("[InteractiveMap] GoogleMap onUnmount callback fired.");
         mapRef.current = null;
     }, []);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
@@ -174,6 +184,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
             if (formPointA.lat && formPointA.lng) bounds.extend(new google.maps.LatLng(formPointA.lat, formPointA.lng));
             if (formPointB.lat && formPointB.lng) bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
             if (!bounds.isEmpty()) {
+                console.log("[InteractiveMap] Fitting bounds to markers.");
                 mapRef.current.fitBounds(bounds);
                 const listener = google.maps.event.addListenerOnce(mapRef.current, 'idle', ()=>{
                     if (mapRef.current?.getZoom() && mapRef.current.getZoom() > 17) {
@@ -187,6 +198,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                 };
             }
         } else if (mapRef.current && (!formPointA || !formPointB)) {
+            console.log("[InteractiveMap] No form points, resetting to default center/zoom.");
             setMapCenter(defaultCenter);
             setMapZoom(defaultZoom);
             mapRef.current.setCenter(defaultCenter);
@@ -237,7 +249,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                 className: "w-16 h-16 animate-spin mb-4"
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 158,
+                lineNumber: 168,
                 columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -245,15 +257,24 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                 children: "Loading Map Script..."
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 159,
+                lineNumber: 169,
+                columnNumber: 9
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                className: "text-sm",
+                children: "If this persists, check API key & console."
+            }, void 0, false, {
+                fileName: "[project]/src/components/fso/interactive-map.tsx",
+                lineNumber: 170,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 157,
+        lineNumber: 167,
         columnNumber: 5
     }, this);
+    console.log(`[InteractiveMap] Rendering. ClassName: ${mapContainerClassName}`);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: `${mapContainerClassName} bg-green-500/20`,
         children: [
@@ -261,14 +282,14 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LoadScript"], {
                 googleMapsApiKey: GOOGLE_MAPS_API_KEY,
                 onLoad: ()=>{
-                    console.log("Google Maps script loaded successfully.");
+                    console.log("[InteractiveMap] LoadScript onLoad callback fired. Google Maps script should be loaded.");
                     setScriptLoaded(true);
-                    setScriptError(false); // Explicitly set error to false on successful load
+                    setScriptError(false);
                 },
                 onError: (error)=>{
-                    console.error("Google Maps script could not be loaded. Check API Key (Maps JavaScript API), billing, and restrictions in Google Cloud Console.", error);
+                    console.error("[InteractiveMap] LoadScript onError callback fired. Error loading Google Maps script:", error);
                     setScriptError(true);
-                    setScriptLoaded(true); // Consider script loading attempt as "done" even if it failed
+                    setScriptLoaded(true);
                 },
                 loadingElement: distinctLoadingElement,
                 children: scriptError ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -278,7 +299,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                             className: "w-12 h-12 text-red-600 mb-4"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 181,
+                            lineNumber: 193,
                             columnNumber: 15
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -286,7 +307,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                             children: "Could not load Google Maps."
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 182,
+                            lineNumber: 194,
                             columnNumber: 15
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -294,22 +315,23 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                             children: 'Please check your internet connection and the Google Maps API key configuration. Ensure the "Maps JavaScript API" is enabled in your Google Cloud Console, that billing is active, and that there are no domain restrictions preventing usage. More details may be in the browser console.'
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 183,
+                            lineNumber: 195,
                             columnNumber: 15
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 180,
+                    lineNumber: 192,
                     columnNumber: 11
                 }, this) : scriptLoaded && typeof google !== 'undefined' && google.maps ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["GoogleMap"], {
                     mapContainerStyle: {
                         width: '100%',
-                        height: '100%'
+                        height: '100%',
+                        border: '5px solid deeppink' // DEBUG: Prominent border for GoogleMap container
                     },
                     center: mapCenter,
                     zoom: mapZoom,
-                    onLoad: onLoad,
+                    onLoad: handleMapLoad,
                     onUnmount: onUnmount,
                     options: {
                         streetViewControl: true,
@@ -339,7 +361,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                             onDragEnd: (e)=>handleMarkerDragEnd(e, 'A')
                         }, "marker-a", false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 210,
+                            lineNumber: 226,
                             columnNumber: 15
                         }, this),
                         formPointB && !isNaN(Number(formPointB.lat)) && !isNaN(Number(formPointB.lng)) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Marker"], {
@@ -357,12 +379,11 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                             onDragEnd: (e)=>handleMarkerDragEnd(e, 'B')
                         }, "marker-b", false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 220,
+                            lineNumber: 236,
                             columnNumber: 15
                         }, this),
                         (()=>{
-                            if (analyzedData && formPointA && formPointB && // Ensure formPoints are also defined
-                            pointsEqual(formPointA, analyzedData.pointA) && pointsEqual(formPointB, analyzedData.pointB)) {
+                            if (analyzedData && formPointA && formPointB && pointsEqual(formPointA, analyzedData.pointA) && pointsEqual(formPointB, analyzedData.pointB)) {
                                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Polyline"], {
                                     path: [
                                         {
@@ -383,7 +404,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                                     }
                                 }, `analyzed-${analyzedData.pointA.lat}-${analyzedData.pointA.lng}-${analyzedData.pointB.lat}-${analyzedData.pointB.lng}`, false, {
                                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                    lineNumber: 238,
+                                    lineNumber: 254,
                                     columnNumber: 19
                                 }, this);
                             }
@@ -420,7 +441,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                                     }
                                 }, `preview-${formPointA.lat}-${formPointA.lng}-${formPointB.lat}-${formPointB.lng}`, false, {
                                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                    lineNumber: 258,
+                                    lineNumber: 274,
                                     columnNumber: 19
                                 }, this);
                             }
@@ -438,29 +459,29 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, analyzedData, 
                                 children: currentDistance
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 291,
+                                lineNumber: 307,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 283,
+                            lineNumber: 299,
                             columnNumber: 15
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 190,
+                    lineNumber: 202,
                     columnNumber: 11
-                }, this) : distinctLoadingElement // Show distinct loading if scriptLoaded is false but no error
+                }, this) : distinctLoadingElement
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 165,
+                lineNumber: 177,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 164,
+        lineNumber: 176,
         columnNumber: 5
     }, this);
 }
