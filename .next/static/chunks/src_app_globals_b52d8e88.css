@@ -2272,6 +2272,10 @@ body {
   animation-timing-function: linear;
 }
 
+.running {
+  animation-play-state: running;
+}
+
 .backdrop-blur-2px {
   backdrop-filter: blur(2px);
 }

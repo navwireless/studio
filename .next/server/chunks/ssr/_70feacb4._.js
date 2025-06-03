@@ -296,7 +296,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
     const [mousePosition, setMousePosition] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [draggingTower, setDraggingTower] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [dragStartInfo, setDragStartInfo] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
-    const [isInteractingByDrag, setIsInteractingByDrag] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [isInteractingByDrag, setIsInteractingByDrag] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false); // This state indicates active dragging
     const chartMetricsRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
     const drawChart = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         const canvas = canvasRef.current;
@@ -442,7 +442,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         ctx.stroke();
         ctx.fillStyle = TEXT_COLOR;
         ctx.fillText(pointBName, xB, yLosB - (towerHandleRadiusVisual + 2));
-        if (hoverData && !draggingTower) {
+        if (hoverData && !draggingTower && !isInteractingByDrag) {
             const hxPx = hoverData.xPx;
             const hyPxLos = hoverData.yPx;
             ctx.beginPath();
@@ -465,7 +465,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.stroke();
         }
         ctx.setTransform(originalTransform);
-        if (hoverData && mousePosition && !draggingTower) {
+        if (hoverData && mousePosition && !draggingTower && !isInteractingByDrag) {
             const p = hoverData.point;
             const lines = [
                 `Distance to Site: ${(p.distance * 1000).toFixed(2)} m`,
@@ -519,13 +519,14 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         pointBName,
         hoverData,
         mousePosition,
-        draggingTower
+        draggingTower,
+        isInteractingByDrag
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const canvas = canvasRef.current;
         if (!canvas) return;
         const handleMouseMoveForTooltip = (event)=>{
-            if (draggingTower || !chartMetricsRef.current || !data || data.length < 2) return;
+            if (draggingTower || !chartMetricsRef.current || !data || data.length < 2 || isInteractingByDrag) return;
             const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation, getKmFromPixelX } = chartMetricsRef.current;
             if (!canvasRect) return;
             const mouseCanvasX = event.clientX - canvasRect.left;
@@ -559,7 +560,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             }
         };
         const handleMouseOutForTooltip = ()=>{
-            if (draggingTower) return;
+            if (draggingTower || isInteractingByDrag) return;
             setHoverData(null);
             setMousePosition(null);
         };
@@ -569,7 +570,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             if (!canvasRect) return;
             const clickX = event.clientX - canvasRect.left;
             const clickY = event.clientY - canvasRect.top;
-            const towerHandleClickRadius = 10; // Increased hit area
+            const towerHandleClickRadius = 10;
             const towerAx = getPixelXFromKm(data[0].distance) + padding.left;
             const towerAy = getPixelYFromElevation(data[0].losHeight) + padding.top;
             const distA = Math.sqrt(Math.pow(clickX - towerAx, 2) + Math.pow(clickY - towerAy, 2));
@@ -620,39 +621,40 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         data,
         totalDistanceKm,
         onTowerHeightChangeFromGraph,
-        draggingTower
+        draggingTower,
+        isInteractingByDrag
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const canvas = canvasRef.current;
+        // Only proceed if dragging is active AND all necessary info is present
         if (!draggingTower || !dragStartInfo || !canvas || !chartMetricsRef.current || !onTowerHeightChangeFromGraph) {
-            if (canvas && canvas.style.cursor === 'grabbing') canvas.style.cursor = 'crosshair';
+            if (canvas && canvas.style.cursor === 'grabbing') canvas.style.cursor = 'crosshair'; // Reset cursor if drag ended unexpectedly
+            if (isInteractingByDrag && !draggingTower) setIsInteractingByDrag(false); // Ensure isInteractingByDrag is reset if draggingTower becomes null
             return;
         }
         const { chartPixelHeight, minYData, maxYData } = chartMetricsRef.current;
+        // handleGlobalMouseMove: This function is for visual updates during drag, NOT for final state change.
+        // For simplicity, we are not implementing live visual updates of the tower on the canvas during drag.
+        // The tower will visually update on the next `drawChart` call after `mouseUp` and parent state update.
         const handleGlobalMouseMove = (event)=>{
-            if (!dragStartInfo || chartPixelHeight <= 0) return;
-            const heightPerPixel = (maxYData - minYData) / chartPixelHeight;
-            const clientYDelta = event.clientY - dragStartInfo.clientY;
-            const heightChangeInElevationUnits = clientYDelta * heightPerPixel * -1;
-            let newTowerAbsoluteElevation = dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation + heightChangeInElevationUnits;
-            let newTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
-            newTowerHeightRelativeToTerrain = Math.max(0, Math.min(100, parseFloat(newTowerHeightRelativeToTerrain.toFixed(1))));
-        // For immediate visual feedback (optional, can be complex to implement smoothly without full re-render)
-        // You might temporarily update a visual representation here if desired,
-        // but the primary update will happen via onTowerHeightChangeFromGraph -> form update -> re-analysis -> chart re-render.
+        // This function can be used for live visual feedback on the canvas if desired,
+        // but for now, it's kept minimal as the main update happens on mouseUp.
         };
         const handleGlobalMouseUp = (event)=>{
-            if (!dragStartInfo || chartPixelHeight <= 0) {
+            if (!draggingTower || !dragStartInfo || !chartMetricsRef.current || chartPixelHeight <= 0) {
                 setDraggingTower(null);
                 setDragStartInfo(null);
                 if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
                 setIsInteractingByDrag(false);
                 return;
             }
-            const heightPerPixel = (maxYData - minYData) / chartPixelHeight;
+            const { getElevationFromPixelY } = chartMetricsRef.current;
             const clientYDelta = event.clientY - dragStartInfo.clientY;
-            const heightChangeInElevationUnits = clientYDelta * heightPerPixel * -1;
-            let newTowerAbsoluteElevation = dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation + heightChangeInElevationUnits;
+            // Calculate new Y position in pixels on the chart
+            const currentTowerLosY_px = chartMetricsRef.current.getPixelYFromElevation(dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation);
+            const newTowerLosY_px = currentTowerLosY_px + clientYDelta;
+            // Convert new Y pixel position back to elevation
+            const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px);
             let finalNewTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
             finalNewTowerHeightRelativeToTerrain = Math.max(0, Math.min(100, parseFloat(finalNewTowerHeightRelativeToTerrain.toFixed(1))));
             onTowerHeightChangeFromGraph(draggingTower === 'A' ? 'pointA' : 'pointB', finalNewTowerHeightRelativeToTerrain);
@@ -675,7 +677,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         totalDistanceKm,
         onTowerHeightChangeFromGraph,
         chartMetricsRef
-    ]);
+    ]); // isInteractingByDrag removed, as it's set by draggingTower
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         drawChart();
     }, [
@@ -683,24 +685,8 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         mousePosition,
         drawChart,
         data
-    ]); // Added data to re-draw if data changes
-    if (isInteractingByDrag) {
-        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("h-full flex items-center justify-center p-2 bg-slate-700/30 rounded-md relative", isStale && "opacity-50"),
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                className: "text-slate-300 text-xs text-center",
-                children: "Adjusting tower height..."
-            }, void 0, false, {
-                fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 497,
-                columnNumber: 15
-            }, this)
-        }, void 0, false, {
-            fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 496,
-            columnNumber: 11
-        }, this);
-    }
+    ]);
+    // Conditional rendering for loading/empty states
     if (isActionPending && !isInteractingByDrag) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md", isStale && "opacity-50"),
@@ -709,12 +695,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 children: "Analyzing..."
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 504,
+                lineNumber: 493,
                 columnNumber: 15
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 503,
+            lineNumber: 492,
             columnNumber: 11
         }, this);
     }
@@ -726,17 +712,20 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 children: "Not enough data to display profile."
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 513,
+                lineNumber: 501,
                 columnNumber: 11
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 512,
+            lineNumber: 500,
             columnNumber: 9
         }, this);
     }
+    // Render the canvas. It will be visible during drag.
+    // `isStale` will apply opacity after drag and before re-analysis.
+    // `isActionPending` will apply pointer-events-none if an analysis is running.
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("w-full h-full relative", isStale && "opacity-50 pointer-events-auto", (isActionPending || isInteractingByDrag) && "pointer-events-none"),
+        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("w-full h-full relative", isStale && !isInteractingByDrag && "opacity-50", isActionPending && "pointer-events-none"),
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("canvas", {
             ref: canvasRef,
             style: {
@@ -746,12 +735,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             }
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 522,
+            lineNumber: 517,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-        lineNumber: 521,
+        lineNumber: 511,
         columnNumber: 5
     }, this);
 }

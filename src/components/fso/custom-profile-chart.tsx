@@ -1,3 +1,4 @@
+
 // src/components/fso/custom-profile-chart.tsx
 "use client";
 
@@ -65,7 +66,7 @@ export default function CustomProfileChart({
   pointBName = "Site B",
   isStale,
   totalDistanceKm,
-  isActionPending, // Changed from isLoading
+  isActionPending,
   onTowerHeightChangeFromGraph
 }: CustomProfileChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -74,7 +75,7 @@ export default function CustomProfileChart({
 
   const [draggingTower, setDraggingTower] = useState<'A' | 'B' | null>(null);
   const [dragStartInfo, setDragStartInfo] = useState<{ clientY: number; initialTowerHeightMeters: number; siteTerrainElevation: number} | null>(null);
-  const [isInteractingByDrag, setIsInteractingByDrag] = useState(false);
+  const [isInteractingByDrag, setIsInteractingByDrag] = useState(false); // This state indicates active dragging
 
   const chartMetricsRef = useRef<ChartMetrics | null>(null);
 
@@ -121,7 +122,6 @@ export default function CustomProfileChart({
     const getElevationFromY = (pixelY: number) => minY + ((chartHeight - pixelY) / chartHeight) * (maxY - minY);
     const getKmFromX = (pixelX: number) => (pixelX / chartWidth) * maxXKmActual;
 
-
     chartMetricsRef.current = {
         padding: PADDING,
         canvasRect: rect,
@@ -135,7 +135,6 @@ export default function CustomProfileChart({
         getElevationFromPixelY: getElevationFromY,
         getKmFromPixelX: getKmFromX,
     };
-
 
     ctx.strokeStyle = GRID_COLOR;
     ctx.lineWidth = 0.5;
@@ -235,8 +234,7 @@ export default function CustomProfileChart({
     ctx.fillStyle = TEXT_COLOR; 
     ctx.fillText(pointBName, xB, yLosB - (towerHandleRadiusVisual + 2));
 
-
-    if (hoverData && !draggingTower) { 
+    if (hoverData && !draggingTower && !isInteractingByDrag) { 
       const hxPx = hoverData.xPx; 
       const hyPxLos = hoverData.yPx; 
 
@@ -260,7 +258,7 @@ export default function CustomProfileChart({
     
     ctx.setTransform(originalTransform);
 
-    if (hoverData && mousePosition && !draggingTower) { 
+    if (hoverData && mousePosition && !draggingTower && !isInteractingByDrag) { 
         const p = hoverData.point;
         const lines = [
             `Distance to Site: ${(p.distance * 1000).toFixed(2)} m`,
@@ -313,14 +311,14 @@ export default function CustomProfileChart({
             ctx.fillText(line, tipX + tooltipPadding, tipY + tooltipPadding + (i * lineHeight) + (lineHeight / 2) );
         });
     }
-  }, [data, totalDistanceKm, pointAName, pointBName, hoverData, mousePosition, draggingTower]);
+  }, [data, totalDistanceKm, pointAName, pointBName, hoverData, mousePosition, draggingTower, isInteractingByDrag]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const handleMouseMoveForTooltip = (event: MouseEvent) => {
-        if (draggingTower || !chartMetricsRef.current || !data || data.length < 2) return; 
+        if (draggingTower || !chartMetricsRef.current || !data || data.length < 2 || isInteractingByDrag) return; 
 
         const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation, getKmFromPixelX } = chartMetricsRef.current;
         if (!canvasRect) return;
@@ -354,7 +352,7 @@ export default function CustomProfileChart({
     };
 
     const handleMouseOutForTooltip = () => {
-        if (draggingTower) return;
+        if (draggingTower || isInteractingByDrag) return;
         setHoverData(null);
         setMousePosition(null);
     };
@@ -368,7 +366,7 @@ export default function CustomProfileChart({
         const clickX = event.clientX - canvasRect.left;
         const clickY = event.clientY - canvasRect.top;
     
-        const towerHandleClickRadius = 10; // Increased hit area
+        const towerHandleClickRadius = 10; 
     
         const towerAx = getPixelXFromKm(data[0].distance) + padding.left;
         const towerAy = getPixelYFromElevation(data[0].losHeight) + padding.top;
@@ -422,48 +420,45 @@ export default function CustomProfileChart({
       canvas.removeEventListener('mouseout', handleMouseOutForTooltip);
       canvas.removeEventListener('mousedown', handleCanvasMouseDown);
     };
-  }, [drawChart, data, totalDistanceKm, onTowerHeightChangeFromGraph, draggingTower]); 
+  }, [drawChart, data, totalDistanceKm, onTowerHeightChangeFromGraph, draggingTower, isInteractingByDrag]); 
   
   useEffect(() => {
     const canvas = canvasRef.current;
+    // Only proceed if dragging is active AND all necessary info is present
     if (!draggingTower || !dragStartInfo || !canvas || !chartMetricsRef.current || !onTowerHeightChangeFromGraph) {
-        if (canvas && canvas.style.cursor === 'grabbing') canvas.style.cursor = 'crosshair'; 
+        if (canvas && canvas.style.cursor === 'grabbing') canvas.style.cursor = 'crosshair'; // Reset cursor if drag ended unexpectedly
+        if(isInteractingByDrag && !draggingTower) setIsInteractingByDrag(false); // Ensure isInteractingByDrag is reset if draggingTower becomes null
         return;
     }
 
     const { chartPixelHeight, minYData, maxYData } = chartMetricsRef.current;
 
+    // handleGlobalMouseMove: This function is for visual updates during drag, NOT for final state change.
+    // For simplicity, we are not implementing live visual updates of the tower on the canvas during drag.
+    // The tower will visually update on the next `drawChart` call after `mouseUp` and parent state update.
     const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (!dragStartInfo || chartPixelHeight <= 0) return;
-
-        const heightPerPixel = (maxYData - minYData) / chartPixelHeight;
-        const clientYDelta = event.clientY - dragStartInfo.clientY;
-        const heightChangeInElevationUnits = clientYDelta * heightPerPixel * -1; 
-        
-        let newTowerAbsoluteElevation = (dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation) + heightChangeInElevationUnits;
-        let newTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
-        
-        newTowerHeightRelativeToTerrain = Math.max(0, Math.min(100, parseFloat(newTowerHeightRelativeToTerrain.toFixed(1))));
-        
-        // For immediate visual feedback (optional, can be complex to implement smoothly without full re-render)
-        // You might temporarily update a visual representation here if desired,
-        // but the primary update will happen via onTowerHeightChangeFromGraph -> form update -> re-analysis -> chart re-render.
+      // This function can be used for live visual feedback on the canvas if desired,
+      // but for now, it's kept minimal as the main update happens on mouseUp.
     };
 
     const handleGlobalMouseUp = (event: MouseEvent) => {
-        if (!dragStartInfo || chartPixelHeight <= 0) {
+        if (!draggingTower || !dragStartInfo || !chartMetricsRef.current || chartPixelHeight <= 0) {
             setDraggingTower(null);
             setDragStartInfo(null);
             if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
             setIsInteractingByDrag(false);
             return;
         }
-
-        const heightPerPixel = (maxYData - minYData) / chartPixelHeight;
-        const clientYDelta = event.clientY - dragStartInfo.clientY;
-        const heightChangeInElevationUnits = clientYDelta * heightPerPixel * -1;
         
-        let newTowerAbsoluteElevation = (dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation) + heightChangeInElevationUnits;
+        const { getElevationFromPixelY } = chartMetricsRef.current;
+        const clientYDelta = event.clientY - dragStartInfo.clientY;
+        
+        // Calculate new Y position in pixels on the chart
+        const currentTowerLosY_px = chartMetricsRef.current.getPixelYFromElevation(dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation);
+        const newTowerLosY_px = currentTowerLosY_px + clientYDelta;
+        
+        // Convert new Y pixel position back to elevation
+        const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px);
         let finalNewTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
 
         finalNewTowerHeightRelativeToTerrain = Math.max(0, Math.min(100, parseFloat(finalNewTowerHeightRelativeToTerrain.toFixed(1))));
@@ -484,28 +479,21 @@ export default function CustomProfileChart({
         window.removeEventListener('mouseup', handleGlobalMouseUp);
         if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
     };
-  }, [draggingTower, dragStartInfo, data, totalDistanceKm, onTowerHeightChangeFromGraph, chartMetricsRef]);
+  }, [draggingTower, dragStartInfo, data, totalDistanceKm, onTowerHeightChangeFromGraph, chartMetricsRef]); // isInteractingByDrag removed, as it's set by draggingTower
 
   useEffect(() => { 
       drawChart();
-  }, [hoverData, mousePosition, drawChart, data]); // Added data to re-draw if data changes
+  }, [hoverData, mousePosition, drawChart, data]);
 
 
-  if (isInteractingByDrag) { 
-      return (
-          <div className={cn("h-full flex items-center justify-center p-2 bg-slate-700/30 rounded-md relative", isStale && "opacity-50")}>
-              <p className="text-slate-300 text-xs text-center">Adjusting tower height...</p>
-          </div>
-      );
-  }
-  if (isActionPending && !isInteractingByDrag) {
+  // Conditional rendering for loading/empty states
+  if (isActionPending && !isInteractingByDrag) { // Show "Analyzing..." if an action is pending AND not currently dragging
       return (
           <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md", isStale && "opacity-50")}>
               <p className="text-muted-foreground text-xs text-center">Analyzing...</p>
           </div>
       );
   }
-
 
   if (!data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null) {
     return (
@@ -516,11 +504,27 @@ export default function CustomProfileChart({
         </div>
     );
   }
-
+  // Render the canvas. It will be visible during drag.
+  // `isStale` will apply opacity after drag and before re-analysis.
+  // `isActionPending` will apply pointer-events-none if an analysis is running.
   return (
-    <div className={cn("w-full h-full relative", isStale && "opacity-50 pointer-events-auto", (isActionPending || isInteractingByDrag) && "pointer-events-none")}>
-      <canvas ref={canvasRef} style={{ width: '100%', height: '100%', cursor: draggingTower ? 'grabbing': 'crosshair' }} />
+    <div className={cn(
+        "w-full h-full relative", 
+        isStale && !isInteractingByDrag && "opacity-50", // Only apply stale opacity if not actively dragging
+        isActionPending && "pointer-events-none"
+      )}
+    >
+      <canvas 
+        ref={canvasRef} 
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          cursor: draggingTower ? 'grabbing': 'crosshair' 
+        }} 
+      />
     </div>
   );
 }
+    
+
     
