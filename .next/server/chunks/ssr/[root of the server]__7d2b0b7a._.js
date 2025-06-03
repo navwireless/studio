@@ -369,13 +369,17 @@ function Home() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (analysisResult) {
             const isActuallyDirty = Object.keys(dirtyFields).length > 0;
-            if (isActuallyDirty) {
+            if (isActuallyDirty && !isActionPending) {
+                // Check if only tower height changed (which triggers auto-analysis and shouldn't make it stale)
                 const pointAHeightChangedOnly = dirtyFields.pointA && 'height' in dirtyFields.pointA && Object.keys(dirtyFields.pointA).length === 1 && !dirtyFields.pointB && !dirtyFields.clearanceThreshold;
                 const pointBHeightChangedOnly = dirtyFields.pointB && 'height' in dirtyFields.pointB && Object.keys(dirtyFields.pointB).length === 1 && !dirtyFields.pointA && !dirtyFields.clearanceThreshold;
                 if (!(pointAHeightChangedOnly || pointBHeightChangedOnly)) {
-                    if (!isActionPending) setIsStale(true); // Only set stale if not already analyzing due to height change
+                    setIsStale(true);
                 }
             }
+        } else if (Object.keys(dirtyFields).length > 0 && !isActionPending && !analysisResult) {
+            // If there's no result yet, but fields are dirty, it should be considered stale/needs analysis
+            setIsStale(true);
         }
     }, [
         watchedPointA,
@@ -397,11 +401,11 @@ function Home() {
                 shouldDirty: true,
                 shouldValidate: true
             });
-            // Check if both points are set, then auto-analyze
-            const currentValues = getValues();
-            if (currentValues.pointA.lat && currentValues.pointA.lng && currentValues.pointB.lat && currentValues.pointB.lng) {
-                handleSubmit(processSubmit)();
-            }
+        // DO NOT auto-analyze here, let user click the button.
+        // const currentValues = getValues();
+        // if (currentValues.pointA.lat && currentValues.pointA.lng && currentValues.pointB.lat && currentValues.pointB.lng) {
+        //   handleSubmit(processSubmit)();
+        // }
         }
     }, [
         setValue,
@@ -421,7 +425,8 @@ function Home() {
                 shouldDirty: true,
                 shouldValidate: true
             });
-            handleSubmit(processSubmit)(); // Auto-analyze on marker drag end
+        // DO NOT auto-analyze here, let user click the button.
+        // handleSubmit(processSubmit)(); 
         }
     }, [
         setValue,
@@ -433,7 +438,7 @@ function Home() {
             shouldDirty: true,
             shouldValidate: true
         });
-        handleSubmit(processSubmit)();
+        handleSubmit(processSubmit)(); // Auto-analyze on tower height change from graph IS desired
     }, [
         setValue,
         handleSubmit,
@@ -452,7 +457,7 @@ function Home() {
     const dismissErrorModal = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
         const dummyFormData = new FormData();
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].startTransition(()=>{
-            formAction(dummyFormData); // Clears serverState error by re-invoking action with no actual data processing intent
+            formAction(dummyFormData);
         });
     }, [
         formAction
@@ -480,12 +485,12 @@ function Home() {
                     isStale: isStale
                 }, void 0, false, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 176,
+                    lineNumber: 181,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 175,
+                lineNumber: 180,
                 columnNumber: 7
             }, this),
             !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -500,19 +505,19 @@ function Home() {
                             className: "mr-2 h-5 w-5"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 195,
+                            lineNumber: 200,
                             columnNumber: 13
                         }, this),
                         "Start Link Analysis"
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 189,
+                    lineNumber: 194,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 188,
+                lineNumber: 193,
                 columnNumber: 9
             }, this),
             isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -526,7 +531,7 @@ function Home() {
                                 className: "h-12 w-12 animate-spin text-primary mb-4"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 205,
+                                lineNumber: 210,
                                 columnNumber: 17
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -534,7 +539,7 @@ function Home() {
                                 children: "Analyzing Link..."
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 206,
+                                lineNumber: 211,
                                 columnNumber: 17
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -542,23 +547,23 @@ function Home() {
                                 children: "Please wait while we process the elevation data."
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 207,
+                                lineNumber: 212,
                                 columnNumber: 17
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 204,
+                        lineNumber: 209,
                         columnNumber: 15
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 203,
+                    lineNumber: 208,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 202,
+                lineNumber: 207,
                 columnNumber: 10
             }, this),
             serverState?.error && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -575,19 +580,19 @@ function Home() {
                                         className: "mr-2 h-6 w-6"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 218,
+                                        lineNumber: 223,
                                         columnNumber: 19
                                     }, this),
                                     " Analysis Failed"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 217,
+                                lineNumber: 222,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 216,
+                            lineNumber: 221,
                             columnNumber: 15
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -597,7 +602,7 @@ function Home() {
                                     children: serverState.error
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 222,
+                                    lineNumber: 227,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -610,24 +615,24 @@ function Home() {
                                     children: "Dismiss"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 223,
+                                    lineNumber: 228,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 221,
+                            lineNumber: 226,
                             columnNumber: 15
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 215,
+                    lineNumber: 220,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 214,
+                lineNumber: 219,
                 columnNumber: 10
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(BottomPanel, {
@@ -649,13 +654,13 @@ function Home() {
                 onTowerHeightChangeFromGraph: handleTowerHeightChangeFromGraph
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 238,
+                lineNumber: 243,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 174,
+        lineNumber: 179,
         columnNumber: 5
     }, this);
 }

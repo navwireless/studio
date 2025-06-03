@@ -16,7 +16,7 @@ const defaultCenter = {
 const defaultZoom = 5;
 
 const STYLES = {
-  mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)]",
+  mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap",
 };
 
 interface InteractiveMapProps {
@@ -201,4 +201,3 @@ export default function InteractiveMap({
     </div>
   );
 }
-

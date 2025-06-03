@@ -106,14 +106,18 @@ export default function Home() {
  useEffect(() => {
     if (analysisResult) { 
       const isActuallyDirty = Object.keys(dirtyFields).length > 0;
-      if (isActuallyDirty) {
+      if (isActuallyDirty && !isActionPending) {
+         // Check if only tower height changed (which triggers auto-analysis and shouldn't make it stale)
          const pointAHeightChangedOnly = dirtyFields.pointA && 'height' in dirtyFields.pointA && Object.keys(dirtyFields.pointA).length === 1 && !dirtyFields.pointB && !dirtyFields.clearanceThreshold;
          const pointBHeightChangedOnly = dirtyFields.pointB && 'height' in dirtyFields.pointB && Object.keys(dirtyFields.pointB).length === 1 && !dirtyFields.pointA && !dirtyFields.clearanceThreshold;
          
          if (!(pointAHeightChangedOnly || pointBHeightChangedOnly)) {
-             if(!isActionPending) setIsStale(true); // Only set stale if not already analyzing due to height change
+             setIsStale(true); 
          }
       }
+    } else if (Object.keys(dirtyFields).length > 0 && !isActionPending && !analysisResult) {
+        // If there's no result yet, but fields are dirty, it should be considered stale/needs analysis
+        setIsStale(true);
     }
   }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, dirtyFields, isActionPending]);
 
@@ -125,11 +129,11 @@ export default function Home() {
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
       
-      // Check if both points are set, then auto-analyze
-      const currentValues = getValues();
-      if (currentValues.pointA.lat && currentValues.pointA.lng && currentValues.pointB.lat && currentValues.pointB.lng) {
-        handleSubmit(processSubmit)();
-      }
+      // DO NOT auto-analyze here, let user click the button.
+      // const currentValues = getValues();
+      // if (currentValues.pointA.lat && currentValues.pointA.lng && currentValues.pointB.lat && currentValues.pointB.lng) {
+      //   handleSubmit(processSubmit)();
+      // }
     }
   }, [setValue, getValues, handleSubmit, processSubmit]);
 
@@ -139,13 +143,14 @@ export default function Home() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
-      handleSubmit(processSubmit)(); // Auto-analyze on marker drag end
+      // DO NOT auto-analyze here, let user click the button.
+      // handleSubmit(processSubmit)(); 
     }
   }, [setValue, handleSubmit, processSubmit]);
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
-    handleSubmit(processSubmit)();
+    handleSubmit(processSubmit)(); // Auto-analyze on tower height change from graph IS desired
   }, [setValue, handleSubmit, processSubmit]);
 
 
@@ -165,7 +170,7 @@ export default function Home() {
   const dismissErrorModal = useCallback(() => {
     const dummyFormData = new FormData(); 
     React.startTransition(() => {
-      formAction(dummyFormData); // Clears serverState error by re-invoking action with no actual data processing intent
+      formAction(dummyFormData); 
     });
   }, [formAction]);
 
@@ -256,4 +261,3 @@ export default function Home() {
     </div>
   );
 }
-
