@@ -14,8 +14,9 @@ export default function Footer() {
         className="text-primary hover:text-primary/80 underline"
       >
         RK
-      </a>{' '}
-      - All rights reserved : Nav Wireless Technologies Private limited.
+      </a>
+      .
     </footer>
   );
 }
+

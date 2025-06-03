@@ -33,13 +33,13 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
   serverFormErrors, 
   getCombinedError,
 }) => (
-  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full">
+  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full min-w-[280px] md:min-w-0"> {/* Added min-w for mobile horizontal scroll */}
     <CardHeader className="p-1">
       <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
         <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
       </CardTitle>
     </CardHeader>
-    <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
+    <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between"> {/* Keep overflow-y-auto for individual column content if needed */}
       <div className="space-y-1.5">
         <div>
           <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Name</Label>
@@ -154,7 +154,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
     : (isStale || !analysisResult ? "Analyze Link" : "Re-Analyze");
 
   return (
-    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
+    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0 min-w-[320px] md:min-w-0"> {/* Added min-w for mobile horizontal scroll */}
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
         <div className="flex-shrink-0 order-1">
           {isStale && !isActionPending ? (
@@ -206,7 +206,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         
         <div className="order-3 flex-grow-0 md:flex-grow-0 text-center">
              <Button
-                type="submit" // This is for form submission for analysis
+                type="submit" 
                 onClick={handleSubmit(processSubmit)}
                 disabled={isActionPending}
                 size="sm"
@@ -220,7 +220,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         {analysisResult && !isStale && !isActionPending && (
           <div className="order-6 flex-grow-0 md:flex-grow-0 text-center">
             <Button
-              type="button" // This is a separate action, not form submission
+              type="button" 
               onClick={onGenerateReport}
               size="sm"
               variant="outline"
@@ -309,7 +309,7 @@ interface BottomPanelProps {
   getValues: UseFormGetValues<AnalysisFormValues>;
   setValue: UseFormSetValue<AnalysisFormValues>;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
-  onGenerateReport: () => void; // Added this prop
+  onGenerateReport: () => void;
 }
 
 export default function BottomPanel({ 
@@ -329,7 +329,7 @@ export default function BottomPanel({
   getValues, 
   setValue, 
   onTowerHeightChangeFromGraph,
-  onGenerateReport, // Added this prop
+  onGenerateReport,
 }: BottomPanelProps) {
   
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
@@ -342,7 +342,7 @@ export default function BottomPanel({
   
   return (
     <form 
-      noValidate // Prevent browser validation, rely on RHF + Zod
+      noValidate 
       onSubmit={handleSubmit(processSubmit)} 
       className={cn(
         "fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
@@ -353,15 +353,13 @@ export default function BottomPanel({
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[40vh] md:h-[35vh]" : "h-0" 
+          isContentExpanded && isPanelGloballyVisible ? "h-[33vh]" : "h-0" // Fixed height using vh
         )}
       >
-        {/* Main content area of the panel: stacks on mobile, grid on medium+ */}
-        <div className="p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto">
-           <div className="flex flex-col md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
+        <div className="p-1.5 md:p-2 h-full overflow-hidden"> {/* Panel itself does not scroll vertically */}
+           <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar"> {/* This inner div scrolls horizontally on mobile */}
             
-            {/* Site A Input Group - order-1 for flex, will be first in grid */}
-            <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0 order-1">
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1"> {/* w-auto for shrinkwrap on mobile */}
               <SiteInputGroup 
                 id="pointA" 
                 title={pointAName || "Site A"} 
@@ -373,8 +371,7 @@ export default function BottomPanel({
               />
             </div>
             
-            {/* Middle Column (Profile/Chart) - order-2 for flex, will be second in grid */}
-            <div className="flex-shrink-0 w-full md:w-auto snap-start order-2">
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start order-2"> {/* w-auto for shrinkwrap on mobile */}
               <ProfilePanelMiddleColumn
                 analysisResult={analysisResult}
                 isStale={isStale}
@@ -388,12 +385,11 @@ export default function BottomPanel({
                 pointAName={pointAName || "Site A"}
                 pointBName={pointBName || "Site B"}
                 onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
-                onGenerateReport={onGenerateReport} // Pass down the handler
+                onGenerateReport={onGenerateReport}
               />
             </div>
             
-            {/* Site B Input Group - order-3 for flex, will be third in grid */}
-            <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0 order-3">
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3"> {/* w-auto for shrinkwrap on mobile */}
               <SiteInputGroup 
                 id="pointB" 
                 title={pointBName || "Site B"} 
@@ -409,13 +405,13 @@ export default function BottomPanel({
       </div>
       {isPanelGloballyVisible && ( 
         <div 
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 p-1.5 bg-card rounded-t-lg border-t border-x border-border shadow-lg cursor-pointer hover:bg-muted group"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 p-1.5 bg-slate-800/50 backdrop-blur-sm rounded-t-lg border-t border-x border-slate-700/50 shadow-lg cursor-pointer hover:bg-slate-700/70 group"
           onClick={onToggleContentExpansion}
           aria-label={isContentExpanded ? "Collapse Panel Content" : "Expand Panel Content"}
         >
           {isContentExpanded ? 
-            <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground" /> : 
-            <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />}
+            <ChevronDown className="h-4 w-4 text-slate-300 group-hover:text-slate-100" /> : 
+            <ChevronUp className="h-4 w-4 text-slate-300 group-hover:text-slate-100" />}
         </div>
       )}
     </form>

@@ -2,8 +2,8 @@
   "[project]/src/components/fso/bottom-panel.tsx [app-client] (ecmascript, next/dynamic entry)": {
     "id": "[project]/src/components/fso/bottom-panel.tsx [app-client] (ecmascript, next/dynamic entry)",
     "files": [
-      "static/chunks/_9e7ffad4._.js",
-      "static/chunks/src_components_fso_bottom-panel_tsx_6a3f499d._.js"
+      "static/chunks/_9bbc2490._.js",
+      "static/chunks/src_components_fso_bottom-panel_tsx_5d9a745f._.js"
     ]
   },
   "[project]/src/components/fso/interactive-map.tsx [app-client] (ecmascript, next/dynamic entry)": {
@@ -11,7 +11,7 @@
     "files": [
       "static/chunks/node_modules_@react-google-maps_api_dist_esm_d50285f1.js",
       "static/chunks/src_components_fso_interactive-map_tsx_a79360f4._.js",
-      "static/chunks/src_components_fso_interactive-map_tsx_6a3f499d._.js"
+      "static/chunks/src_components_fso_interactive-map_tsx_5d9a745f._.js"
     ]
   }
 }

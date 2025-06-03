@@ -393,8 +393,7 @@ function Footer() {
                 lineNumber: 10,
                 columnNumber: 7
             }, this),
-            ' ',
-            "- All rights reserved : Nav Wireless Technologies Private limited."
+            "."
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/layout/footer.tsx",
