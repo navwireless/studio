@@ -153,28 +153,33 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$i
 ;
 const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step = 1, idSuffix })=>{
     const handleSliderChange = (value)=>{
-        onChange(value[0]);
+        onChange(Math.round(value[0])); // Ensure slider output is rounded
     };
     const handleInputChange = (event)=>{
-        let newValue = parseFloat(event.target.value);
-        if (isNaN(newValue)) {
-            // Allow empty input for clearing, but don't change if invalid
-            if (event.target.value === "") {
-                onChange(min); // Or some default, or just don't call onChange
-                return;
-            }
+        const rawValue = event.target.value;
+        if (rawValue === "") {
+            // Allow temporarily empty input, parent form validation will handle empty required field.
+            // Or, set to min if that's preferred on empty.
+            // For now, let parent validation catch it if empty is not allowed by schema.
+            // If schema expects a number, this needs to be handled carefully.
+            // onChange(min); // Or don't call onChange if empty string is typed.
+            // Let's try to pass NaN or a placeholder that indicates "empty" if possible
+            // For now, simplest is to revert to min or let validation handle.
+            // For controlled number input, it's tricky. Let's pass parseFloat which becomes NaN.
+            onChange(parseFloat(rawValue)); // This might become NaN
             return;
         }
-        // No immediate clamping here, let react-hook-form validation handle it on blur/submit
-        // if (newValue < min) newValue = min;
-        // if (newValue > max) newValue = max;
-        onChange(newValue);
-    };
-    const validateAndSetHeight = (value)=>{
-        let numValue = parseFloat(value);
-        if (isNaN(numValue)) {
-            numValue = min; // default to min if invalid
+        let newValue = parseFloat(rawValue);
+        if (!isNaN(newValue)) {
+            onChange(newValue); // Pass the float, rounding is done on blur or by chart.
         }
+    };
+    const validateAndSetHeight = (event)=>{
+        let numValue = parseFloat(event.target.value);
+        if (isNaN(numValue)) {
+            numValue = min; // default to min if invalid or empty on blur
+        }
+        numValue = Math.round(numValue); // Round on blur
         if (numValue < min) numValue = min;
         if (numValue > max) numValue = max;
         onChange(numValue);
@@ -182,7 +187,6 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "space-y-0.5",
         children: [
-            " ",
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex justify-between items-center",
                 children: [
@@ -195,49 +199,49 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 62,
+                        lineNumber: 67,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                         className: "text-[0.7rem] font-medium text-primary/80",
                         children: [
-                            height,
+                            Number.isFinite(height) ? Math.round(height) : min,
                             "m"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 65,
+                        lineNumber: 70,
                         columnNumber: 9
-                    }, this)
+                    }, this),
+                    " "
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                lineNumber: 61,
+                lineNumber: 66,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex items-center space-x-1",
                 children: [
-                    " ",
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
                         id: `height-input-${idSuffix}`,
                         type: "number",
-                        value: height,
+                        value: Number.isFinite(height) ? height.toString() : "",
                         onChange: handleInputChange,
-                        onBlur: (e)=>validateAndSetHeight(e.target.value),
+                        onBlur: validateAndSetHeight,
                         min: min,
                         max: max,
                         step: step,
                         className: "w-12 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 text-xs h-6 px-1 py-0.5 rounded-none focus:ring-0"
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 68,
+                        lineNumber: 73,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$slider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Slider"], {
                         id: `height-slider-${idSuffix}`,
                         value: [
-                            height
+                            Number.isFinite(height) ? height : min
                         ],
                         onValueChange: handleSliderChange,
                         min: min,
@@ -247,19 +251,19 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         "aria-labelledby": `label-${idSuffix}-height`
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 79,
+                        lineNumber: 84,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                lineNumber: 67,
+                lineNumber: 72,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-        lineNumber: 60,
+        lineNumber: 65,
         columnNumber: 5
     }, this);
 };
@@ -289,11 +293,11 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 const PADDING_BASE = {
-    top: 20,
+    top: 30,
     right: 30,
     bottom: 40,
     left: 50
-};
+}; // Increased top padding for distance text
 const TEXT_COLOR = 'hsl(210, 20%, 55%)';
 const GRID_COLOR = 'hsla(217, 33%, 20%, 0.7)';
 const TERRAIN_FILL_COLOR = 'rgba(99, 102, 241, 0.35)';
@@ -310,7 +314,7 @@ const MIN_TOWER_HEIGHT = 0;
 const MAX_TOWER_HEIGHT = 100;
 const TOWER_HANDLE_RADIUS_VISUAL = 6;
 const TOWER_HANDLE_CLICK_RADIUS = 10;
-const HORIZONTAL_PADDING_PERCENTAGE = 0.05; // 5% padding on each side
+const HORIZONTAL_PADDING_PERCENTAGE = 0.1; // Increased to 10% on each side
 function drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -389,8 +393,6 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             const getKmFromX = {
                 "CustomProfileChart.useCallback[drawChart].getKmFromX": (pixelX_ChartArea_relative_to_padding_left)=>{
                     const effectivePx = pixelX_ChartArea_relative_to_padding_left - xOffsetPx;
-                    // Allow slightly out of bounds for interpolation near edges
-                    // if (effectivePx < -1 || effectivePx > effectiveChartWidthPx + 1) return -1; 
                     return effectivePx / effectiveChartWidthPx * maxXKmActual;
                 }
             }["CustomProfileChart.useCallback[drawChart].getKmFromX"];
@@ -430,7 +432,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.textBaseline = "top";
             for(let i = 0; i <= numXTicks; i++){
                 const distKm = i / numXTicks * maxXKmActual;
-                const xPx = getX(distKm); // Use getX which includes padding
+                const xPx = getX(distKm);
                 ctx.beginPath();
                 ctx.moveTo(xPx, 0);
                 ctx.lineTo(xPx, chartHeight);
@@ -464,26 +466,33 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                     yLosB_px_ChartArea = liveDragVisuals.currentLosY_px_ChartArea;
                 }
             }
-            ctx.beginPath();
             const xA_px_ChartArea = getX(data[0].distance);
             const xB_px_ChartArea = getX(data[data.length - 1].distance);
+            ctx.beginPath();
             ctx.moveTo(xA_px_ChartArea, yLosA_px_ChartArea);
             ctx.lineTo(xB_px_ChartArea, yLosB_px_ChartArea);
             ctx.strokeStyle = LOS_LINE_COLOR;
             ctx.lineWidth = 1.5;
             ctx.stroke();
+            // Display Aerial Distance
+            if (totalDistanceKm !== undefined) {
+                const midXLos = (xA_px_ChartArea + xB_px_ChartArea) / 2;
+                const midYLos = (yLosA_px_ChartArea + yLosB_px_ChartArea) / 2;
+                ctx.fillStyle = TEXT_COLOR;
+                ctx.font = "10px Inter, sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "bottom";
+                const distanceText = totalDistanceKm < 1 ? `${(totalDistanceKm * 1000).toFixed(0)}m` : `${totalDistanceKm.toFixed(1)}km`;
+                ctx.fillText(`Aerial Dist: ${distanceText}`, midXLos, midYLos - 5);
+            }
             // Draw Obstruction Dots
-            // Iterate across the effective chart width for obstruction check
             if (data.length > 1 && maxXKmActual > 0) {
-                for(let px = 0; px <= effectiveChartWidthPx; px++){
-                    const currentX_on_effective_width = px;
-                    const currentX_on_chart_area = xOffsetPx + currentX_on_effective_width;
-                    const currentKm = currentX_on_effective_width / effectiveChartWidthPx * maxXKmActual;
-                    // LOS Y at currentX_on_chart_area
-                    const losSlope = (yLosB_px_ChartArea - yLosA_px_ChartArea) / (xB_px_ChartArea - xA_px_ChartArea || 1); // Avoid div by zero
+                for(let px_on_effective_width = 0; px_on_effective_width <= effectiveChartWidthPx; px_on_effective_width++){
+                    const currentX_on_chart_area = xOffsetPx + px_on_effective_width;
+                    const currentKm = px_on_effective_width / effectiveChartWidthPx * maxXKmActual;
+                    const losSlope = (yLosB_px_ChartArea - yLosA_px_ChartArea) / (xB_px_ChartArea - xA_px_ChartArea || 1);
                     const los_y_at_currentX = yLosA_px_ChartArea + losSlope * (currentX_on_chart_area - xA_px_ChartArea);
-                    // Terrain Y at currentKm
-                    let terrain_elevation_at_currentKm = data[0].terrainElevation; // Default to first point
+                    let terrain_elevation_at_currentKm = data[0].terrainElevation;
                     for(let j = 0; j < data.length - 1; j++){
                         if (currentKm >= data[j].distance && currentKm <= data[j + 1].distance) {
                             const d1 = data[j].distance;
@@ -553,11 +562,11 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 if (liveDragVisuals.site === 'A') {
                     ctx.textAlign = xA_px_ChartArea < chartWidth / 2 ? "left" : "right";
                     const textX = xA_px_ChartArea + (ctx.textAlign === "left" ? textXOffset : -textXOffset);
-                    ctx.fillText(`${liveDragVisuals.currentHeightMeters.toFixed(1)}m`, textX, yLosA_px_ChartArea);
+                    ctx.fillText(`${liveDragVisuals.currentHeightMeters.toFixed(0)}m`, textX, yLosA_px_ChartArea);
                 } else if (liveDragVisuals.site === 'B') {
                     ctx.textAlign = xB_px_ChartArea < chartWidth / 2 ? "left" : "right";
                     const textX = xB_px_ChartArea + (ctx.textAlign === "left" ? textXOffset : -textXOffset);
-                    ctx.fillText(`${liveDragVisuals.currentHeightMeters.toFixed(1)}m`, textX, yLosB_px_ChartArea);
+                    ctx.fillText(`${liveDragVisuals.currentHeightMeters.toFixed(0)}m`, textX, yLosB_px_ChartArea);
                 }
             }
             if (hoverData && !isInteractingByDrag) {
@@ -646,7 +655,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                         if (hoverData) setHoverData(null);
                         return;
                     }
-                    const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation, getKmFromPixelX, chartPixelWidth, xOffsetPx, effectivePixelWidth } = chartMetricsRef.current;
+                    const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation, getKmFromPixelX, xOffsetPx, effectivePixelWidth } = chartMetricsRef.current;
                     if (!canvasRect) return;
                     const mouseCanvasX = event.clientX - canvasRect.left;
                     const mouseCanvasY = event.clientY - canvasRect.top;
@@ -655,13 +664,10 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                         y: mouseCanvasY
                     });
                     const mouseXInChartArea = mouseCanvasX - padding.left;
-                    // Check if mouse is within the data-displaying part of the chart
                     if (mouseXInChartArea >= xOffsetPx && mouseXInChartArea <= xOffsetPx + effectivePixelWidth) {
                         const distanceKmHovered = getKmFromPixelX(mouseXInChartArea);
                         let closestPoint = data[0];
                         let minDiff = Math.abs(data[0].distance - distanceKmHovered);
-                        // Find the closest actual data point for tooltip context
-                        // This loop could be optimized, but for typical data sizes it's fine.
                         for(let i = 0; i < data.length; i++){
                             const diff = Math.abs(data[i].distance - distanceKmHovered);
                             if (diff < minDiff) {
@@ -771,18 +777,20 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 if (canvasRef.current && canvasRef.current.style.cursor === 'grabbing') canvasRef.current.style.cursor = 'crosshair';
                 return;
             }
-            const { getElevationFromPixelY, chartPixelHeight } = chartMetricsRef.current;
+            const { getElevationFromPixelY, chartPixelHeight, getPixelYFromElevation: getPixelY } = chartMetricsRef.current;
             const handleGlobalMouseMove = {
                 "CustomProfileChart.useEffect.handleGlobalMouseMove": (event)=>{
                     if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) return;
                     const clientYDelta = event.clientY - dragStartInfo.clientY;
-                    let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta; // Y is inverted from mouse
+                    let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta;
                     newTowerLosY_px_ChartArea = Math.max(0, Math.min(chartPixelHeight, newTowerLosY_px_ChartArea));
                     const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px_ChartArea);
                     let currentHeightMeters = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
-                    currentHeightMeters = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, parseFloat(currentHeightMeters.toFixed(1))));
+                    // Round to integer and clamp
+                    currentHeightMeters = Math.round(currentHeightMeters);
+                    currentHeightMeters = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, currentHeightMeters));
                     const clampedAbsoluteElevation = currentHeightMeters + dragStartInfo.siteTerrainElevation;
-                    newTowerLosY_px_ChartArea = chartMetricsRef.current.getPixelYFromElevation(clampedAbsoluteElevation);
+                    newTowerLosY_px_ChartArea = getPixelY(clampedAbsoluteElevation);
                     setLiveDragVisuals({
                         site: draggingTower,
                         currentLosY_px_ChartArea: newTowerLosY_px_ChartArea,
@@ -799,17 +807,18 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                         if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
                         return;
                     }
-                    const { getElevationFromPixelY, chartPixelHeight } = chartMetricsRef.current; // Re-access for safety
+                    const { getElevationFromPixelY, chartPixelHeight } = chartMetricsRef.current;
                     let finalNewTowerHeightRelativeToTerrain;
                     if (liveDragVisuals) {
-                        finalNewTowerHeightRelativeToTerrain = liveDragVisuals.currentHeightMeters;
+                        finalNewTowerHeightRelativeToTerrain = liveDragVisuals.currentHeightMeters; // Already rounded and clamped
                     } else {
                         const clientYDelta = event.clientY - dragStartInfo.clientY;
-                        let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta; // Y is inverted from mouse
+                        let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta;
                         newTowerLosY_px_ChartArea = Math.max(0, Math.min(chartPixelHeight, newTowerLosY_px_ChartArea));
                         const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px_ChartArea);
                         finalNewTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
-                        finalNewTowerHeightRelativeToTerrain = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, parseFloat(finalNewTowerHeightRelativeToTerrain.toFixed(1))));
+                        finalNewTowerHeightRelativeToTerrain = Math.round(finalNewTowerHeightRelativeToTerrain);
+                        finalNewTowerHeightRelativeToTerrain = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, finalNewTowerHeightRelativeToTerrain));
                     }
                     onTowerHeightChangeFromGraph(draggingTower === 'A' ? 'pointA' : 'pointB', finalNewTowerHeightRelativeToTerrain);
                     setDraggingTower(null);
@@ -832,8 +841,9 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         draggingTower,
         dragStartInfo,
         onTowerHeightChangeFromGraph,
-        data
-    ]);
+        data,
+        liveDragVisuals
+    ]); // Added liveDragVisuals to dependencies
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "CustomProfileChart.useEffect": ()=>{
             drawChart();
@@ -841,7 +851,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
     }["CustomProfileChart.useEffect"], [
         liveDragVisuals,
         drawChart
-    ]);
+    ]); // drawChart depends on liveDragVisuals (among others)
     if (isActionPending) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md pointer-events-none"),
@@ -850,12 +860,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 children: "Analyzing..."
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 524,
+                lineNumber: 534,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 523,
+            lineNumber: 533,
             columnNumber: 7
         }, this);
     }
@@ -867,12 +877,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 children: "Not enough data to display profile."
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 532,
+                lineNumber: 542,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 531,
+            lineNumber: 541,
             columnNumber: 7
         }, this);
     }
@@ -887,12 +897,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             }
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 544,
+            lineNumber: 554,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-        lineNumber: 538,
+        lineNumber: 548,
         columnNumber: 5
     }, this);
 }
