@@ -50,11 +50,11 @@ export default function Home() {
   const watchedPointB = watch('pointB');
   const watchedClearanceThreshold = watch('clearanceThreshold');
 
+  // Use useWatch for reactive updates to map points
   const formPointAForMap = useWatch({ control, name: 'pointA' });
   const formPointBForMap = useWatch({ control, name: 'pointB' });
 
   const processSubmit = useCallback((data: AnalysisFormValues) => {
-    console.log("Form data submitted for analysis:", data);
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', data.pointA.lat);
@@ -65,18 +65,17 @@ export default function Home() {
     formData.append('pointB.lng', data.pointB.lng);
     formData.append('pointB.height', data.pointB.height.toString());
     formData.append('clearanceThreshold', data.clearanceThreshold);
-
-    setIsStale(false); // Mark as not stale before starting analysis
+    
     React.startTransition(() => {
       formAction(formData);
     });
-  }, [formAction, setIsStale]);
+    setIsStale(false); // Mark as not stale before starting analysis
+  }, [formAction]);
 
   useEffect(() => {
     if (serverState) {
-      console.log("Server state received:", serverState);
       if (serverState.error) {
-        setAnalysisResult(null);
+        setAnalysisResult(null); // Clear previous results on error
         toast({
           title: "Analysis Error",
           description: serverState.error,
@@ -87,13 +86,11 @@ export default function Home() {
         const newResult = serverState as AnalysisResult;
         setAnalysisResult(newResult);
         
-        // After a successful analysis, the current form values are the new baseline.
-        // Resetting the form with these values will clear dirtyFields.
         const currentFormValues = getValues(); 
-        reset(currentFormValues); // This makes current values the new "pristine" state
-        setIsStale(false); // Explicitly ensure stale is false.
+        reset(currentFormValues); 
+        setIsStale(false); 
 
-        if (!isAnalysisPanelGloballyOpen) { // Open panel if it was closed
+        if (!isAnalysisPanelGloballyOpen) { 
             setIsAnalysisPanelGloballyOpen(true);
             setIsBottomPanelContentExpanded(true);
         }
@@ -106,25 +103,19 @@ export default function Home() {
     }
   }, [serverState, toast, reset, getValues, setIsAnalysisPanelGloballyOpen, setIsBottomPanelContentExpanded, isAnalysisPanelGloballyOpen]);
   
-  useEffect(() => {
-    // This effect determines if the current form state is "stale" compared to the last analysisResult.
-    // It should only mark as stale if an analysisResult exists and then changes are made.
-    if (analysisResult) { // Only consider staleness if there's a baseline result
+ useEffect(() => {
+    if (analysisResult) { 
       const isActuallyDirty = Object.keys(dirtyFields).length > 0;
       if (isActuallyDirty) {
-         // Check if only height changed, which might not require full "stale" if auto-analyzing height
          const pointAHeightChangedOnly = dirtyFields.pointA && 'height' in dirtyFields.pointA && Object.keys(dirtyFields.pointA).length === 1 && !dirtyFields.pointB && !dirtyFields.clearanceThreshold;
          const pointBHeightChangedOnly = dirtyFields.pointB && 'height' in dirtyFields.pointB && Object.keys(dirtyFields.pointB).length === 1 && !dirtyFields.pointA && !dirtyFields.clearanceThreshold;
          
-         // If it's not *just* a height change (which auto-analyzes), then it's genuinely stale for other params
          if (!(pointAHeightChangedOnly || pointBHeightChangedOnly)) {
-            setIsStale(true);
+             if(!isActionPending) setIsStale(true); // Only set stale if not already analyzing due to height change
          }
       }
-      // If not dirty, and we have an analysis result, it should not be stale.
-      // setIsStale(false) is handled after successful analysis.
     }
-  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, dirtyFields]);
+  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, dirtyFields, isActionPending]);
 
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
@@ -134,9 +125,13 @@ export default function Home() {
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
       
-      // No need to check getValues() here for staleness, useEffect for dirtyFields will handle it
+      // Check if both points are set, then auto-analyze
+      const currentValues = getValues();
+      if (currentValues.pointA.lat && currentValues.pointA.lng && currentValues.pointB.lat && currentValues.pointB.lng) {
+        handleSubmit(processSubmit)();
+      }
     }
-  }, [setValue]);
+  }, [setValue, getValues, handleSubmit, processSubmit]);
 
   const handleMarkerDrag = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     if (event.latLng) {
@@ -144,13 +139,12 @@ export default function Home() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
-      // No need to set isStale(true) directly, useEffect for dirtyFields will handle it
+      handleSubmit(processSubmit)(); // Auto-analyze on marker drag end
     }
-  }, [setValue]);
+  }, [setValue, handleSubmit, processSubmit]);
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
-    // Auto-submit after height change from graph
     handleSubmit(processSubmit)();
   }, [setValue, handleSubmit, processSubmit]);
 
@@ -168,18 +162,12 @@ export default function Home() {
     setIsBottomPanelContentExpanded(true);
   };
 
-  // Dismisses the error modal by clearing serverState, allowing user to try again.
   const dismissErrorModal = useCallback(() => {
-    // Create a new FormData instance to effectively 'clear' the action for serverState.
-    // This doesn't resubmit with old data but resets the useActionState for the error.
     const dummyFormData = new FormData(); 
     React.startTransition(() => {
-      formAction(dummyFormData);
+      formAction(dummyFormData); // Clears serverState error by re-invoking action with no actual data processing intent
     });
-    // Optionally, reset form fields to default or last good state if desired
-    // For now, just clearing the error state.
-    // reset(getValues()); // Keeps current values, might be what user wants
-  }, [formAction, reset, getValues]);
+  }, [formAction]);
 
 
   return (
@@ -191,6 +179,8 @@ export default function Home() {
           onMapClick={handleMapClick}
           onMarkerDrag={handleMarkerDrag}
           mapContainerClassName="w-full h-full"
+          analysisResult={analysisResult}
+          isStale={isStale}
         />
       </div>
 

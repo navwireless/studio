@@ -332,6 +332,7 @@ function Home() {
     const watchedPointA = watch('pointA');
     const watchedPointB = watch('pointB');
     const watchedClearanceThreshold = watch('clearanceThreshold');
+    // Use useWatch for reactive updates to map points
     const formPointAForMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
         control,
         name: 'pointA'
@@ -342,7 +343,6 @@ function Home() {
     });
     const processSubmit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[processSubmit]": (data)=>{
-            console.log("Form data submitted for analysis:", data);
             const formData = new FormData();
             formData.append('pointA.name', data.pointA.name);
             formData.append('pointA.lat', data.pointA.lat);
@@ -353,23 +353,21 @@ function Home() {
             formData.append('pointB.lng', data.pointB.lng);
             formData.append('pointB.height', data.pointB.height.toString());
             formData.append('clearanceThreshold', data.clearanceThreshold);
-            setIsStale(false); // Mark as not stale before starting analysis
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].startTransition({
                 "Home.useCallback[processSubmit]": ()=>{
                     formAction(formData);
                 }
             }["Home.useCallback[processSubmit]"]);
+            setIsStale(false); // Mark as not stale before starting analysis
         }
     }["Home.useCallback[processSubmit]"], [
-        formAction,
-        setIsStale
+        formAction
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Home.useEffect": ()=>{
             if (serverState) {
-                console.log("Server state received:", serverState);
                 if (serverState.error) {
-                    setAnalysisResult(null);
+                    setAnalysisResult(null); // Clear previous results on error
                     toast({
                         title: "Analysis Error",
                         description: serverState.error,
@@ -379,11 +377,9 @@ function Home() {
                 } else if ('losPossible' in serverState) {
                     const newResult = serverState;
                     setAnalysisResult(newResult);
-                    // After a successful analysis, the current form values are the new baseline.
-                    // Resetting the form with these values will clear dirtyFields.
                     const currentFormValues = getValues();
-                    reset(currentFormValues); // This makes current values the new "pristine" state
-                    setIsStale(false); // Explicitly ensure stale is false.
+                    reset(currentFormValues);
+                    setIsStale(false);
                     if (!isAnalysisPanelGloballyOpen) {
                         setIsAnalysisPanelGloballyOpen(true);
                         setIsBottomPanelContentExpanded(true);
@@ -406,21 +402,15 @@ function Home() {
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Home.useEffect": ()=>{
-            // This effect determines if the current form state is "stale" compared to the last analysisResult.
-            // It should only mark as stale if an analysisResult exists and then changes are made.
             if (analysisResult) {
                 const isActuallyDirty = Object.keys(dirtyFields).length > 0;
                 if (isActuallyDirty) {
-                    // Check if only height changed, which might not require full "stale" if auto-analyzing height
                     const pointAHeightChangedOnly = dirtyFields.pointA && 'height' in dirtyFields.pointA && Object.keys(dirtyFields.pointA).length === 1 && !dirtyFields.pointB && !dirtyFields.clearanceThreshold;
                     const pointBHeightChangedOnly = dirtyFields.pointB && 'height' in dirtyFields.pointB && Object.keys(dirtyFields.pointB).length === 1 && !dirtyFields.pointA && !dirtyFields.clearanceThreshold;
-                    // If it's not *just* a height change (which auto-analyzes), then it's genuinely stale for other params
                     if (!(pointAHeightChangedOnly || pointBHeightChangedOnly)) {
-                        setIsStale(true);
+                        if (!isActionPending) setIsStale(true); // Only set stale if not already analyzing due to height change
                     }
                 }
-            // If not dirty, and we have an analysis result, it should not be stale.
-            // setIsStale(false) is handled after successful analysis.
             }
         }
     }["Home.useEffect"], [
@@ -428,7 +418,8 @@ function Home() {
         watchedPointB,
         watchedClearanceThreshold,
         analysisResult,
-        dirtyFields
+        dirtyFields,
+        isActionPending
     ]);
     const handleMapClick = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[handleMapClick]": (event, pointId)=>{
@@ -443,11 +434,18 @@ function Home() {
                     shouldDirty: true,
                     shouldValidate: true
                 });
-            // No need to check getValues() here for staleness, useEffect for dirtyFields will handle it
+                // Check if both points are set, then auto-analyze
+                const currentValues = getValues();
+                if (currentValues.pointA.lat && currentValues.pointA.lng && currentValues.pointB.lat && currentValues.pointB.lng) {
+                    handleSubmit(processSubmit)();
+                }
             }
         }
     }["Home.useCallback[handleMapClick]"], [
-        setValue
+        setValue,
+        getValues,
+        handleSubmit,
+        processSubmit
     ]);
     const handleMarkerDrag = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[handleMarkerDrag]": (event, pointId)=>{
@@ -462,11 +460,13 @@ function Home() {
                     shouldDirty: true,
                     shouldValidate: true
                 });
-            // No need to set isStale(true) directly, useEffect for dirtyFields will handle it
+                handleSubmit(processSubmit)(); // Auto-analyze on marker drag end
             }
         }
     }["Home.useCallback[handleMarkerDrag]"], [
-        setValue
+        setValue,
+        handleSubmit,
+        processSubmit
     ]);
     const handleTowerHeightChangeFromGraph = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[handleTowerHeightChangeFromGraph]": (siteId, newHeight)=>{
@@ -474,7 +474,6 @@ function Home() {
                 shouldDirty: true,
                 shouldValidate: true
             });
-            // Auto-submit after height change from graph
             handleSubmit(processSubmit)();
         }
     }["Home.useCallback[handleTowerHeightChangeFromGraph]"], [
@@ -500,25 +499,17 @@ function Home() {
         setIsAnalysisPanelGloballyOpen(true);
         setIsBottomPanelContentExpanded(true);
     };
-    // Dismisses the error modal by clearing serverState, allowing user to try again.
     const dismissErrorModal = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[dismissErrorModal]": ()=>{
-            // Create a new FormData instance to effectively 'clear' the action for serverState.
-            // This doesn't resubmit with old data but resets the useActionState for the error.
             const dummyFormData = new FormData();
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].startTransition({
                 "Home.useCallback[dismissErrorModal]": ()=>{
-                    formAction(dummyFormData);
+                    formAction(dummyFormData); // Clears serverState error by re-invoking action with no actual data processing intent
                 }
             }["Home.useCallback[dismissErrorModal]"]);
-        // Optionally, reset form fields to default or last good state if desired
-        // For now, just clearing the error state.
-        // reset(getValues()); // Keeps current values, might be what user wants
         }
     }["Home.useCallback[dismissErrorModal]"], [
-        formAction,
-        reset,
-        getValues
+        formAction
     ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex-1 flex flex-col overflow-hidden relative h-full",
@@ -538,15 +529,17 @@ function Home() {
                     } : undefined,
                     onMapClick: handleMapClick,
                     onMarkerDrag: handleMarkerDrag,
-                    mapContainerClassName: "w-full h-full"
+                    mapContainerClassName: "w-full h-full",
+                    analysisResult: analysisResult,
+                    isStale: isStale
                 }, void 0, false, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 188,
+                    lineNumber: 176,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 187,
+                lineNumber: 175,
                 columnNumber: 7
             }, this),
             !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -561,19 +554,19 @@ function Home() {
                             className: "mr-2 h-5 w-5"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 205,
+                            lineNumber: 195,
                             columnNumber: 13
                         }, this),
                         "Start Link Analysis"
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 199,
+                    lineNumber: 189,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 198,
+                lineNumber: 188,
                 columnNumber: 9
             }, this),
             isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -587,7 +580,7 @@ function Home() {
                                 className: "h-12 w-12 animate-spin text-primary mb-4"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 215,
+                                lineNumber: 205,
                                 columnNumber: 17
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -595,7 +588,7 @@ function Home() {
                                 children: "Analyzing Link..."
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 216,
+                                lineNumber: 206,
                                 columnNumber: 17
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -603,23 +596,23 @@ function Home() {
                                 children: "Please wait while we process the elevation data."
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 217,
+                                lineNumber: 207,
                                 columnNumber: 17
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 214,
+                        lineNumber: 204,
                         columnNumber: 15
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 213,
+                    lineNumber: 203,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 212,
+                lineNumber: 202,
                 columnNumber: 10
             }, this),
             serverState?.error && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -636,19 +629,19 @@ function Home() {
                                         className: "mr-2 h-6 w-6"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 228,
+                                        lineNumber: 218,
                                         columnNumber: 19
                                     }, this),
                                     " Analysis Failed"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 227,
+                                lineNumber: 217,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 226,
+                            lineNumber: 216,
                             columnNumber: 15
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -658,7 +651,7 @@ function Home() {
                                     children: serverState.error
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 232,
+                                    lineNumber: 222,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -671,24 +664,24 @@ function Home() {
                                     children: "Dismiss"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 233,
+                                    lineNumber: 223,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 231,
+                            lineNumber: 221,
                             columnNumber: 15
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 225,
+                    lineNumber: 215,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 224,
+                lineNumber: 214,
                 columnNumber: 10
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(BottomPanel, {
@@ -710,13 +703,13 @@ function Home() {
                 onTowerHeightChangeFromGraph: handleTowerHeightChangeFromGraph
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 248,
+                lineNumber: 238,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 186,
+        lineNumber: 174,
         columnNumber: 5
     }, this);
 }
