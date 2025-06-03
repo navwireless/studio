@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart'; 
-import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, Waypoints } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react'; 
 
@@ -240,7 +240,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
        {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
           <div className="text-center text-los-failure text-[0.7rem] py-0.5"> 
             Add&nbsp;
-            <span className="font-semibold">{deficit}m</span>
+            <span className="font-semibold">{deficit.toFixed(0)}m</span>
             &nbsp;to tower(s) for clearance.
           </div>
         )}
@@ -336,7 +336,7 @@ export default function BottomPanel({
           className="p-1.5 rounded-full bg-card hover:bg-muted border border-border shadow-md text-muted-foreground hover:text-foreground transition-all duration-200"
           aria-label={isPanelGloballyVisible ? "Hide Analysis Panel" : "Show Analysis Panel"}
         >
-          <ChevronDown className="h-4 w-4" />
+          <X className="h-4 w-4" /> {/* Replaced ChevronDown with X for clarity */}
         </button>
       </div>
 
@@ -404,3 +404,4 @@ export default function BottomPanel({
     </form>
   );
 }
+
