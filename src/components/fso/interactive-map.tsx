@@ -16,7 +16,7 @@ const defaultCenter = {
 const defaultZoom = 5;
 
 const STYLES = {
-  mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap",
+  mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
 };
 
 interface InteractiveMapProps {
@@ -35,6 +35,23 @@ const getPixelPositionOffset = (width: number, height: number) => ({
   y: -(height + 10), // Adjust as needed for label positioning above marker
 });
 
+const getCustomMarkerIcon = (label: string) => {
+  if (typeof window !== 'undefined' && window.google && window.google.maps) {
+    return {
+      path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, // Teardrop pin shape
+      fillColor: '#FFEE58', // Bright Yellow
+      fillOpacity: 1,
+      strokeColor: '#424242', // Dark grey outline for better visibility of yellow
+      strokeWeight: 1,
+      rotation: 0,
+      scale: 6.5, // Adjust size of the pin
+      anchor: new window.google.maps.Point(0, 2.5), // Anchor at the tip of the pin
+      labelOrigin: new window.google.maps.Point(0, -2.5), // Position for the A/B label inside pin
+    };
+  }
+  return undefined; // Fallback if google.maps is not available
+};
+
 
 export default function InteractiveMap({
   pointA: formPointA,
@@ -48,6 +65,9 @@ export default function InteractiveMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const [isMapInstanceLoaded, setIsMapInstanceLoaded] = useState(false);
   const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
+
+  const markerIconA = React.useMemo(() => getCustomMarkerIcon("A"), [isMapInstanceLoaded]);
+  const markerIconB = React.useMemo(() => getCustomMarkerIcon("B"), [isMapInstanceLoaded]);
 
 
   const handleActualMapLoad = useCallback((mapInstance: google.maps.Map) => {
@@ -78,7 +98,6 @@ export default function InteractiveMap({
   const handleInternalMapClick = useCallback((event: google.maps.MapMouseEvent) => {
     if (onMapClick) {
       onMapClick(event, currentMapClickTarget);
-      // Toggle target for next click
       setCurrentMapClickTarget(prev => prev === 'pointA' ? 'pointB' : 'pointA');
     }
   }, [onMapClick, currentMapClickTarget]);
@@ -90,7 +109,7 @@ export default function InteractiveMap({
       bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
       bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
       if (!bounds.isEmpty()) {
-        mapRef.current.fitBounds(bounds, 50); // Add padding to fitBounds
+        mapRef.current.fitBounds(bounds, 50); 
         const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
           if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
             mapRef.current.setZoom(17);
@@ -111,8 +130,8 @@ export default function InteractiveMap({
   }, [formPointA, formPointB, isMapInstanceLoaded]);
 
   const polylineColor = () => {
-    if (isStale) return '#FFEB3B'; // Yellow for stale
-    if (!analysisResult) return '#60A5FA'; // Blue for no analysis yet
+    if (isStale) return '#60A5FA'; // Blue for stale data that needs re-analysis
+    if (!analysisResult) return '#A9A9A9'; // DarkGray for no analysis yet or pending state
     return analysisResult.losPossible ? '#4CAF50' : '#F44336'; // Green for LOS, Red for blocked
   };
 
@@ -140,15 +159,16 @@ export default function InteractiveMap({
           onLoad={handleActualMapLoad}
           onUnmount={handleMapUnmount}
           onClick={handleInternalMapClick} 
-          options={{ /* Basic options moved to onLoad for safety */ }}
+          options={{}}
         >
-          {formPointA && formPointA.lat && formPointA.lng && (
+          {formPointA && formPointA.lat && formPointA.lng && markerIconA && (
             <>
               <Marker
                 position={{ lat: formPointA.lat, lng: formPointA.lng }}
                 draggable={true}
                 onDragEnd={(e) => onMarkerDrag && onMarkerDrag(e, 'pointA')}
-                label={{ text: "A", color: "white", fontWeight: "bold", fontSize: "12px" }}
+                icon={markerIconA}
+                label={{ text: "A", color: "#333333", fontWeight: "bold", fontSize: "10px" }}
               />
               <OverlayView
                 position={{ lat: formPointA.lat, lng: formPointA.lng }}
@@ -162,13 +182,14 @@ export default function InteractiveMap({
             </>
           )}
 
-          {formPointB && formPointB.lat && formPointB.lng && (
+          {formPointB && formPointB.lat && formPointB.lng && markerIconB && (
              <>
               <Marker
                 position={{ lat: formPointB.lat, lng: formPointB.lng }}
                 draggable={true}
                 onDragEnd={(e) => onMarkerDrag && onMarkerDrag(e, 'pointB')}
-                label={{ text: "B", color: "white", fontWeight: "bold", fontSize: "12px" }}
+                icon={markerIconB}
+                label={{ text: "B", color: "#333333", fontWeight: "bold", fontSize: "10px" }}
               />
               <OverlayView
                 position={{ lat: formPointB.lat, lng: formPointB.lng }}
@@ -190,9 +211,10 @@ export default function InteractiveMap({
               ]}
               options={{
                 strokeColor: polylineColor(),
-                strokeOpacity: isStale ? 0.7 : 0.9,
-                strokeWeight: isStale ? 3 : 4,
+                strokeOpacity: isStale ? 0.8 : 0.9,
+                strokeWeight: isStale ? 3.5 : 4,
                 geodesic: true,
+                zIndex: 1, // Ensure polyline is generally above tiles but below markers/overlays
               }}
             />
           )}
@@ -201,3 +223,4 @@ export default function InteractiveMap({
     </div>
   );
 }
+

@@ -961,6 +961,10 @@ body {
   width: 100%;
 }
 
+.w-max {
+  width: max-content;
+}
+
 .min-w-0 {
   min-width: 0;
 }
