@@ -936,6 +936,10 @@ body {
   height: calc(100% - 45vh);
 }
 
+.h-16 {
+  height: 4rem;
+}
+
 .max-h-96 {
   max-height: 24rem;
 }
@@ -1633,6 +1637,18 @@ body {
   background-color: #ca8a044d;
 }
 
+.bg-green-500\/20 {
+  background-color: #22c55e33;
+}
+
+.bg-red-500\/30 {
+  background-color: #ef44444d;
+}
+
+.bg-yellow-400\/30 {
+  background-color: #facc154d;
+}
+
 .fill-current {
   fill: currentColor;
 }
@@ -2024,6 +2040,21 @@ body {
 
 .text-yellow-400\/90 {
   color: #facc15e6;
+}
+
+.text-red-600 {
+  --tw-text-opacity: 1;
+  color: rgb(220 38 38 / var(--tw-text-opacity, 1));
+}
+
+.text-red-700 {
+  --tw-text-opacity: 1;
+  color: rgb(185 28 28 / var(--tw-text-opacity, 1));
+}
+
+.text-yellow-700 {
+  --tw-text-opacity: 1;
+  color: rgb(161 98 7 / var(--tw-text-opacity, 1));
 }
 
 .underline {

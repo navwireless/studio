@@ -3,10 +3,10 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, Polyline, OverlayView } from '@react-google-maps/api';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react'; // Added Loader2 for a more distinct loading state
 import type { PointCoordinates } from '@/types';
 import { Skeleton } from '../ui/skeleton';
-import { calculateDistanceKm } from '@/lib/los-calculator'; // Import distance calculation
+import { calculateDistanceKm } from '@/lib/los-calculator';
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; 
 
@@ -52,7 +52,6 @@ function pointsEqual(p1?: PointCoordinates, p2?: PointCoordinates, precision = 6
   );
 }
 
-// Function to get the middle point of a line
 const getMidPoint = (p1: PointCoordinates, p2: PointCoordinates): PointCoordinates => {
   return {
     lat: (p1.lat + p2.lat) / 2,
@@ -85,7 +84,7 @@ export default function InteractiveMap({
   const onLoad = useCallback((mapInstance: google.maps.Map) => {
     mapRef.current = mapInstance;
     mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-    if (!formPointA && !formPointB) { // Only set default view if no points are initially provided
+    if (!formPointA && !formPointB) { 
       mapInstance.setCenter(defaultCenter);
       mapInstance.setZoom(defaultZoom);
     }
@@ -107,14 +106,14 @@ export default function InteractiveMap({
           if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
             mapRef.current.setZoom(17);
           } else if (mapRef.current?.getZoom() && mapRef.current.getZoom()! < 3) {
-            mapRef.current.setZoom(3); // Prevent zooming out too far
+            mapRef.current.setZoom(3); 
           }
         });
         return () => {
           if (listener) google.maps.event.removeListener(listener);
         };
       }
-    } else if (mapRef.current && (!formPointA || !formPointB)) { // If one or both points become undefined, reset to default
+    } else if (mapRef.current && (!formPointA || !formPointB)) { 
         setMapCenter(defaultCenter);
         setMapZoom(defaultZoom);
         mapRef.current.setCenter(defaultCenter);
@@ -154,24 +153,37 @@ export default function InteractiveMap({
     }
   };
   
+  const distinctLoadingElement = (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-yellow-400/30 text-yellow-700">
+        <Loader2 className="w-16 h-16 animate-spin mb-4" />
+        <p className="text-lg font-semibold">Loading Map Script...</p>
+    </div>
+  );
+
   return (
-    <div className={`${mapContainerClassName} bg-slate-700`}> {/* Added a fallback bg for map container */}
+    <div className={`${mapContainerClassName} bg-green-500/20`}> {/* DEBUG: Overall map component container */}
       <LoadScript
         googleMapsApiKey={GOOGLE_MAPS_API_KEY}
-        onLoad={() => setScriptLoaded(true)}
-        onError={() => {
-          console.error("Google Maps script could not be loaded. Check API Key (Maps JavaScript API), billing, and restrictions in Google Cloud Console.");
-          setScriptError(true);
-          setScriptLoaded(true); 
+        onLoad={() => {
+          console.log("Google Maps script loaded successfully.");
+          setScriptLoaded(true);
+          setScriptError(false); // Explicitly set error to false on successful load
         }}
-        loadingElement={<Skeleton className="w-full h-full rounded-none bg-slate-600" />}
+        onError={(error) => {
+          console.error("Google Maps script could not be loaded. Check API Key (Maps JavaScript API), billing, and restrictions in Google Cloud Console.", error);
+          setScriptError(true);
+          setScriptLoaded(true); // Consider script loading attempt as "done" even if it failed
+        }}
+        loadingElement={distinctLoadingElement}
       >
         {scriptError ? (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-muted/50 p-4 text-center">
-              <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
-              <p className="text-destructive font-semibold">Could not load Google Maps.</p>
-              <p className="text-sm text-muted-foreground">
-                  Check internet connection and API key configuration. Ensure "Maps JavaScript API" is enabled and billing is active. See browser console for details.
+          <div className="w-full h-full flex flex-col items-center justify-center bg-red-500/30 p-4 text-center text-red-700">
+              <AlertTriangle className="w-12 h-12 text-red-600 mb-4" />
+              <p className="font-semibold text-lg">Could not load Google Maps.</p>
+              <p className="text-sm">
+                  Please check your internet connection and the Google Maps API key configuration.
+                  Ensure the "Maps JavaScript API" is enabled in your Google Cloud Console, that billing is active,
+                  and that there are no domain restrictions preventing usage. More details may be in the browser console.
               </p>
           </div>
         ) : scriptLoaded && typeof google !== 'undefined' && google.maps ? (
@@ -194,20 +206,20 @@ export default function InteractiveMap({
               mapTypeId: google.maps.MapTypeId.SATELLITE,
             }}
           >
-            {formPointA && (
+            {formPointA && !isNaN(Number(formPointA.lat)) && !isNaN(Number(formPointA.lng)) && (
               <Marker
                 key="marker-a"
-                position={{ lat: formPointA.lat, lng: formPointA.lng }}
+                position={{ lat: Number(formPointA.lat), lng: Number(formPointA.lng) }}
                 label={{ text: formPointA.name || "A", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndA}
                 onDragStart={onMarkerDragStartA}
                 onDragEnd={(e) => handleMarkerDragEnd(e, 'A')}
               />
             )}
-            {formPointB && (
+            {formPointB && !isNaN(Number(formPointB.lat)) && !isNaN(Number(formPointB.lng)) && (
               <Marker
                 key="marker-b"
-                position={{ lat: formPointB.lat, lng: formPointB.lng }}
+                position={{ lat: Number(formPointB.lat), lng: Number(formPointB.lng) }}
                 label={{ text: formPointB.name || "B", color: "white", fontWeight: "bold" }}
                 draggable={!!onMarkerDragEndB}
                 onDragStart={onMarkerDragStartB}
@@ -218,6 +230,7 @@ export default function InteractiveMap({
             {(() => {
               if (
                 analyzedData &&
+                formPointA && formPointB && // Ensure formPoints are also defined
                 pointsEqual(formPointA, analyzedData.pointA) &&
                 pointsEqual(formPointB, analyzedData.pointB)
               ) {
@@ -238,13 +251,15 @@ export default function InteractiveMap({
                   />
                 );
               }
-              if (formPointA && formPointB && formPointA.lat && formPointA.lng && formPointB.lat && formPointB.lng) {
+              if (formPointA && formPointB && 
+                  !isNaN(Number(formPointA.lat)) && !isNaN(Number(formPointA.lng)) && 
+                  !isNaN(Number(formPointB.lat)) && !isNaN(Number(formPointB.lng))) {
                 return (
                   <Polyline
                     key={`preview-${formPointA.lat}-${formPointA.lng}-${formPointB.lat}-${formPointB.lng}`}
                     path={[
-                      { lat: formPointA.lat, lng: formPointA.lng },
-                      { lat: formPointB.lat, lng: formPointB.lng }
+                      { lat: Number(formPointA.lat), lng: Number(formPointA.lng) },
+                      { lat: Number(formPointB.lat), lng: Number(formPointB.lng) }
                     ]}
                     options={{
                       strokeColor: "hsl(var(--muted-foreground))", 
@@ -270,7 +285,7 @@ export default function InteractiveMap({
                 mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                 getPixelPositionOffset={(offsetWidth, offsetHeight) => ({
                   x: -(offsetWidth / 2),
-                  y: -offsetHeight -10, // Position above the line
+                  y: -offsetHeight -10, 
                 })}
               >
                 <div className="bg-slate-800/70 text-white text-xs px-2 py-1 rounded-md shadow-lg backdrop-blur-sm whitespace-nowrap">
@@ -281,9 +296,11 @@ export default function InteractiveMap({
             
           </GoogleMap>
         ) : (
-           <Skeleton className="w-full h-full rounded-none bg-slate-600" />
+           distinctLoadingElement // Show distinct loading if scriptLoaded is false but no error
         )}
       </LoadScript>
     </div>
   );
 }
+
+    
