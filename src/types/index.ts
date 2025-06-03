@@ -38,14 +38,16 @@ export type LOSPoint = {
 };
 
 export type AnalysisResult = {
+  id: string; // Unique identifier for history
   losPossible: boolean;
   distanceKm: number;
   minClearance: number | null;
   additionalHeightNeeded: number | null;
   profile: LOSPoint[];
   message: string;
-  pointA?: PointCoordinates & { towerHeight: number; name?: string };
-  pointB?: PointCoordinates & { towerHeight: number; name?: string };
-  clearanceThresholdUsed: number; // Added this line
+  pointA: PointCoordinates & { towerHeight: number; name?: string }; // Made pointA and pointB non-optional
+  pointB: PointCoordinates & { towerHeight: number; name?: string }; // Made pointA and pointB non-optional
+  clearanceThresholdUsed: number;
+  timestamp: number; // To sort or display history items
 };
 

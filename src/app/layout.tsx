@@ -3,7 +3,8 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import AppHeader from '@/components/layout/app-header'; 
+// AppHeader is now rendered within page.tsx or specific layouts that need it, to pass props.
+// import AppHeader from '@/components/layout/app-header'; 
 import Footer from '@/components/layout/footer';
 
 const geistSans = Geist({
@@ -31,10 +32,10 @@ export default function RootLayout({
       <body 
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased 
                    bg-background text-foreground 
-                   flex flex-col h-screen overflow-hidden`} // Ensure body itself is overflow-hidden
+                   flex flex-col h-screen overflow-hidden`}
       >
-        <AppHeader />
-        <main className="flex-1 overflow-hidden relative"> {/* Changed to overflow-hidden and added relative for positioning context */}
+        {/* AppHeader will be part of the children, typically in page.tsx */}
+        <main className="flex-1 overflow-hidden relative flex flex-col"> {/* Ensure main can flex its children */}
           {children}
         </main>
         <Footer />

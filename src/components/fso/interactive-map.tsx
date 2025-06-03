@@ -7,16 +7,17 @@ import { Loader2 } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult } from '@/types';
 import { cn } from '@/lib/utils';
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Ensure this is managed securely in a real app
+const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; 
 
 const defaultCenter = {
-  lat: 20.5937, // Centered on India
+  lat: 20.5937, 
   lng: 78.9629,
 };
 const defaultZoom = 5;
 
 const STYLES = {
   mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
+  distanceOverlayLabel: "p-1.5 text-sm font-bold text-white bg-primary/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap",
 };
 
 interface InteractiveMapProps {
@@ -27,26 +28,32 @@ interface InteractiveMapProps {
   mapContainerClassName?: string;
   analysisResult: AnalysisResult | null;
   isStale?: boolean;
+  currentDistanceKm?: number | null;
 }
 
-// Helper to get position for OverlayView
 const getPixelPositionOffset = (width: number, height: number) => ({
   x: -(width / 2),
-  y: -(height + 10), // Adjust as needed for label positioning above marker
+  y: -(height + 10), 
 });
 
-const getCustomMarkerIcon = (label: string) => {
-  if (typeof window !== 'undefined' && window.google && window.google.maps) {
+const getDistanceOverlayPositionOffset = (width: number, height: number) => ({
+  x: -(width / 2),
+  y: -(height / 2) -15, // Position above the midpoint of the line
+});
+
+
+const getCustomMarkerIcon = (label: string, isMapLoaded: boolean) => {
+  if (isMapLoaded && typeof window !== 'undefined' && window.google && window.google.maps) {
     return {
       path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-      fillColor: '#FFEE58', // Bright Yellow
+      fillColor: '#FFEE58', // Bright Yellow (consistent with tower handles in chart)
       fillOpacity: 1,
-      strokeColor: '#424242',
-      strokeWeight: 1,
+      strokeColor: '#424242', // Dark grey outline
+      strokeWeight: 1.5,
       rotation: 0,
-      scale: 6.5,
-      anchor: new window.google.maps.Point(0, 2.5),
-      labelOrigin: new window.google.maps.Point(0, -2.5),
+      scale: 7, // Slightly larger for better visibility
+      anchor: new window.google.maps.Point(0, 2.5), // Pin point
+      labelOrigin: new window.google.maps.Point(0, 0.5), // Center label inside pin
     };
   }
   return undefined;
@@ -61,14 +68,14 @@ export default function InteractiveMap({
   mapContainerClassName = "w-full h-full",
   analysisResult,
   isStale,
+  currentDistanceKm,
 }: InteractiveMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [isMapInstanceLoaded, setIsMapInstanceLoaded] = useState(false);
   const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
 
-  const markerIconA = React.useMemo(() => getCustomMarkerIcon("A"), [isMapInstanceLoaded]);
-  const markerIconB = React.useMemo(() => getCustomMarkerIcon("B"), [isMapInstanceLoaded]);
-
+  const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapInstanceLoaded), [isMapInstanceLoaded]);
+  const markerIconB = React.useMemo(() => getCustomMarkerIcon("B", isMapInstanceLoaded), [isMapInstanceLoaded]);
 
   const handleActualMapLoad = useCallback((mapInstance: google.maps.Map) => {
     mapRef.current = mapInstance;
@@ -102,14 +109,13 @@ export default function InteractiveMap({
     }
   }, [onMapClick, currentMapClickTarget]);
 
-
   useEffect(() => {
     if (isMapInstanceLoaded && mapRef.current && formPointA && formPointB && typeof formPointA.lat === 'number' && typeof formPointA.lng === 'number' && typeof formPointB.lat === 'number' && typeof formPointB.lng === 'number') {
       const bounds = new window.google.maps.LatLngBounds();
       bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
       bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
       if (!bounds.isEmpty()) {
-        mapRef.current.fitBounds(bounds, 50); // Added padding
+        mapRef.current.fitBounds(bounds, 75); 
         const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
           if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
             mapRef.current.setZoom(17);
@@ -118,7 +124,7 @@ export default function InteractiveMap({
           }
         });
          return () => {
-           if (listener && window.google && window.google.maps) { // Ensure google.maps and listener exist before removing
+           if (listener && window.google && window.google.maps) { 
               window.google.maps.event.removeListener(listener);
            }
          };
@@ -130,16 +136,21 @@ export default function InteractiveMap({
   }, [formPointA, formPointB, isMapInstanceLoaded]);
 
   const polylineColor = () => {
-    if (isStale) return '#60A5FA'; // Blue for stale data (marker moved)
-    if (!analysisResult) return '#A9A9A9'; // DarkGray for no analysis yet or pending state
+    if (isStale) return '#60A5FA'; // Blue for stale data
+    if (!analysisResult) return '#A9A9A9'; // DarkGray for no analysis yet
     return analysisResult.losPossible ? '#4CAF50' : '#F44336'; // Green for LOS, Red for blocked
   };
 
-  // Ensure lat/lng are numbers for the key and path
   const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
   const pALng = typeof formPointA?.lng === 'number' ? formPointA.lng : undefined;
   const pBLat = typeof formPointB?.lat === 'number' ? formPointB.lat : undefined;
   const pBLng = typeof formPointB?.lng === 'number' ? formPointB.lng : undefined;
+
+  const midPoint = pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined ? {
+    lat: (pALat + pBLat) / 2,
+    lng: (pALng + pBLng) / 2,
+  } : null;
+
 
   return (
     <div className={`${mapContainerClassName}`}>
@@ -174,7 +185,7 @@ export default function InteractiveMap({
                 draggable={true}
                 onDragEnd={(e) => onMarkerDrag && onMarkerDrag(e, 'pointA')}
                 icon={markerIconA}
-                label={{ text: "A", color: "#333333", fontWeight: "bold", fontSize: "10px" }}
+                label={{ text: "A", color: "#333333", fontWeight: "bold", fontSize: "11px" }}
               />
               <OverlayView
                 position={{ lat: pALat, lng: pALng }}
@@ -195,7 +206,7 @@ export default function InteractiveMap({
                 draggable={true}
                 onDragEnd={(e) => onMarkerDrag && onMarkerDrag(e, 'pointB')}
                 icon={markerIconB}
-                label={{ text: "B", color: "#333333", fontWeight: "bold", fontSize: "10px" }}
+                label={{ text: "B", color: "#333333", fontWeight: "bold", fontSize: "11px" }}
               />
               <OverlayView
                 position={{ lat: pBLat, lng: pBLng }}
@@ -211,7 +222,6 @@ export default function InteractiveMap({
 
           {pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined && (
             <Polyline
-              key={`poly-${pALat}-${pALng}-${pBLat}-${pBLng}`} // Key forces re-render on path change
               path={[
                 { lat: pALat, lng: pALng },
                 { lat: pBLat, lng: pBLng },
@@ -225,10 +235,19 @@ export default function InteractiveMap({
               }}
             />
           )}
+          {midPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && (
+            <OverlayView
+              position={midPoint}
+              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+              getPixelPositionOffset={getDistanceOverlayPositionOffset}
+            >
+              <div className={STYLES.distanceOverlayLabel}>
+                {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`}
+              </div>
+            </OverlayView>
+          )}
         </GoogleMap>
       </LoadScript>
     </div>
   );
 }
-
-    

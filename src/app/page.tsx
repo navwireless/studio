@@ -1,17 +1,21 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useId } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, Waypoints } from 'lucide-react';
+import { Loader2, AlertTriangle, Waypoints, MapPin } from 'lucide-react'; // Added MapPin
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, AnalysisFormValues, PointInput as PointFormInputType } from '@/types';
+import type { AnalysisResult, AnalysisFormValues, PointInput as PointFormInputType, PointCoordinates } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
+import AppHeader from '@/components/layout/app-header';
+import HistoryPanel from '@/components/layout/history-panel';
+import { calculateDistanceKm } from '@/lib/los-calculator';
+
 
 const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
   ssr: false,
@@ -38,6 +42,11 @@ export default function Home() {
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
   const [isStale, setIsStale] = useState(false);
 
+  const [historyList, setHistoryList] = useState<AnalysisResult[]>([]);
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
+  const [liveDistanceKm, setLiveDistanceKm] = useState<number | null>(null);
+
+
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
     defaultValues: defaultFormStateValues,
@@ -50,7 +59,6 @@ export default function Home() {
   const watchedPointB = watch('pointB');
   const watchedClearanceThreshold = watch('clearanceThreshold');
 
-  // Use useWatch for reactive updates to map points
   const formPointAForMap = useWatch({ control, name: 'pointA' });
   const formPointBForMap = useWatch({ control, name: 'pointB' });
 
@@ -71,10 +79,11 @@ export default function Home() {
     });
   }, [formAction]);
 
+  // Effect to handle server action results
   useEffect(() => {
     if (serverState) {
       if (serverState.error) {
-        setAnalysisResult(null); // Clear previous results on error
+        setAnalysisResult(null); 
         toast({
           title: "Analysis Error",
           description: serverState.error,
@@ -82,8 +91,34 @@ export default function Home() {
           duration: 7000,
         });
       } else if ('losPossible' in serverState) {
-        const newResult = serverState as AnalysisResult;
-        setAnalysisResult(newResult);
+        // Explicitly type assertion for successful result
+        const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>; 
+        
+        const newResultWithId: AnalysisResult = {
+          ...successfulResult,
+          id: new Date().toISOString() + Math.random().toString(36).substring(2,9), // Simple unique ID
+          timestamp: Date.now(),
+          // Ensure pointA and pointB from params are correctly structured if they were part of serverState
+          // If serverState already includes full pointA/pointB from params, this might be redundant
+          // but ensures they are present as per AnalysisResult type.
+          pointA: { 
+            name: getValues('pointA.name'), 
+            lat: parseFloat(getValues('pointA.lat')), 
+            lng: parseFloat(getValues('pointA.lng')), 
+            towerHeight: getValues('pointA.height')
+          },
+          pointB: { 
+            name: getValues('pointB.name'),
+            lat: parseFloat(getValues('pointB.lat')),
+            lng: parseFloat(getValues('pointB.lng')),
+            towerHeight: getValues('pointB.height')
+          },
+          clearanceThresholdUsed: parseFloat(getValues('clearanceThreshold'))
+        };
+
+        setAnalysisResult(newResultWithId);
+        setHistoryList(prev => [newResultWithId, ...prev.slice(0, 19)]); // Keep last 20 history items
+        setLiveDistanceKm(newResultWithId.distanceKm);
         
         const currentFormValues = getValues(); 
         reset(currentFormValues); 
@@ -96,66 +131,61 @@ export default function Home() {
         
         toast({
           title: "Analysis Complete",
-          description: newResult.message || "LOS analysis performed successfully.",
+          description: newResultWithId.message || "LOS analysis performed successfully.",
         });
       }
     }
-  }, [serverState, toast, reset, getValues, isAnalysisPanelGloballyOpen]);
+  }, [serverState, toast, reset, getValues, isAnalysisPanelGloballyOpen, setValue]);
   
- useEffect(() => {
-  const formValues = getValues();
-  const currentPointA = formValues.pointA;
-  const currentPointB = formValues.pointB;
-  const currentClearanceStr = formValues.clearanceThreshold;
+  // Effect to determine if form data is stale compared to current analysisResult
+  useEffect(() => {
+    const formValues = getValues();
+    const currentPointA = formValues.pointA;
+    const currentPointB = formValues.pointB;
+    const currentClearanceStr = formValues.clearanceThreshold;
 
-  let newIsStale = false;
+    let newIsStale = false;
+    const isValidNumeric = (val: string) => val && !isNaN(parseFloat(val));
+    const isPointDataSufficient = (p: PointFormInputType) => 
+        isValidNumeric(p.lat) && isValidNumeric(p.lng) && typeof p.height === 'number';
 
-  const isValidNumeric = (val: string) => val && !isNaN(parseFloat(val));
+    const canPerformAnalysisWithCurrentForm = 
+        isPointDataSufficient(currentPointA) &&
+        isPointDataSufficient(currentPointB) &&
+        isValidNumeric(currentClearanceStr);
 
-  const isPointDataSufficient = (p: PointFormInputType) => 
-    isValidNumeric(p.lat) && isValidNumeric(p.lng) && typeof p.height === 'number';
+    if (analysisResult && analysisResult.pointA && analysisResult.pointB) {
+        const formLatA = parseFloat(currentPointA.lat);
+        const formLngA = parseFloat(currentPointA.lng);
+        const formHeightA = currentPointA.height;
+        const formLatB = parseFloat(currentPointB.lat);
+        const formLngB = parseFloat(currentPointB.lng);
+        const formHeightB = currentPointB.height;
+        const formClearanceNum = parseFloat(currentClearanceStr);
 
-  const canPerformAnalysisWithCurrentForm = 
-    isPointDataSufficient(currentPointA) &&
-    isPointDataSufficient(currentPointB) &&
-    isValidNumeric(currentClearanceStr);
-
-  if (analysisResult && analysisResult.pointA && analysisResult.pointB) {
-    // An analysis exists. Check if current form data differs from that analysis.
-    // Ensure all compared numbers are parsed consistently.
-    const formLatA = parseFloat(currentPointA.lat);
-    const formLngA = parseFloat(currentPointA.lng);
-    const formLatB = parseFloat(currentPointB.lat);
-    const formLngB = parseFloat(currentPointB.lng);
-    const formClearanceNum = parseFloat(currentClearanceStr);
-
-    if (
-      analysisResult.pointA.lat !== formLatA ||
-      analysisResult.pointA.lng !== formLngA ||
-      analysisResult.pointA.towerHeight !== currentPointA.height ||
-      analysisResult.pointB.lat !== formLatB ||
-      analysisResult.pointB.lng !== formLngB ||
-      analysisResult.pointB.towerHeight !== currentPointB.height ||
-      analysisResult.clearanceThresholdUsed !== formClearanceNum
-    ) {
-      newIsStale = true;
-    } else {
-      newIsStale = false; // Form matches the last analysis
+        if (
+            analysisResult.pointA.lat !== formLatA ||
+            analysisResult.pointA.lng !== formLngA ||
+            analysisResult.pointA.towerHeight !== formHeightA ||
+            analysisResult.pointB.lat !== formLatB ||
+            analysisResult.pointB.lng !== formLngB ||
+            analysisResult.pointB.towerHeight !== formHeightB ||
+            analysisResult.clearanceThresholdUsed !== formClearanceNum
+        ) {
+            newIsStale = true;
+        } else {
+            newIsStale = false;
+        }
+    } else { // No analysisResult exists
+        if (canPerformAnalysisWithCurrentForm) {
+            newIsStale = true; // Ready for a new analysis
+        } else {
+            newIsStale = false; // Not ready, or form is pristine matching no analysis
+        }
     }
-  } else {
-    // No analysis result exists.
-    if (canPerformAnalysisWithCurrentForm) {
-      // Form has sufficient data for a new (first) analysis.
-      newIsStale = true;
-    } else {
-      // No analysis and form is not ready (e.g., still empty or incomplete).
-      newIsStale = false;
-    }
-  }
-  
-  setIsStale(newIsStale);
+    setIsStale(newIsStale);
 
-}, [getValues, analysisResult, watchedPointA, watchedPointB, watchedClearanceThreshold]);
+  }, [getValues, analysisResult, watchedPointA, watchedPointB, watchedClearanceThreshold, isActionPending]);
 
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
@@ -164,9 +194,16 @@ export default function Home() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
-       // No auto-submit here, user clicks "Analyze Link"
+      
+      const currentA = getValues('pointA');
+      const currentB = getValues('pointB');
+      if (isValidNumericString(currentA.lat) && isValidNumericString(currentA.lng) && isValidNumericString(currentB.lat) && isValidNumericString(currentB.lng)) {
+        setLiveDistanceKm(calculateDistanceKm({lat: parseFloat(currentA.lat), lng: parseFloat(currentA.lng)}, {lat: parseFloat(currentB.lat), lng: parseFloat(currentB.lng)}));
+      } else {
+        setLiveDistanceKm(null);
+      }
     }
-  }, [setValue]);
+  }, [setValue, getValues]);
 
   const handleMarkerDrag = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     if (event.latLng) {
@@ -174,9 +211,19 @@ export default function Home() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
-      // No auto-submit here, user clicks "Analyze Link"
+
+      const currentA = getValues('pointA');
+      const currentB = getValues('pointB');
+      if (isValidNumericString(currentA.lat) && isValidNumericString(currentA.lng) && isValidNumericString(currentB.lat) && isValidNumericString(currentB.lng)) {
+        setLiveDistanceKm(calculateDistanceKm({lat: parseFloat(currentA.lat), lng: parseFloat(currentA.lng)}, {lat: parseFloat(currentB.lat), lng: parseFloat(currentB.lng)}));
+      } else {
+        setLiveDistanceKm(null);
+      }
     }
-  }, [setValue]);
+  }, [setValue, getValues]);
+  
+  const isValidNumericString = (val: string) => val && !isNaN(parseFloat(val));
+
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
@@ -197,159 +244,166 @@ export default function Home() {
   const handleStartAnalysisClick = () => {
     setIsAnalysisPanelGloballyOpen(true);
     setIsBottomPanelContentExpanded(true);
-    // Check if form is dirty and trigger analysis if it has valid data
-    // This button could also directly submit if data is valid and stale
     const formValues = getValues();
     const { pointA, pointB, clearanceThreshold } = formValues;
-    const isValidNumeric = (val: string) => val && !isNaN(parseFloat(val));
-    const isPointDataSufficient = (p: PointFormInputType) => isValidNumeric(p.lat) && isValidNumeric(p.lng);
+    const isPointDataSufficient = (p: PointFormInputType) => isValidNumericString(p.lat) && isValidNumericString(p.lng);
     
-    if (isPointDataSufficient(pointA) && isPointDataSufficient(pointB) && isValidNumeric(clearanceThreshold)) {
+    if (isPointDataSufficient(pointA) && isPointDataSufficient(pointB) && isValidNumericString(clearanceThreshold)) {
         handleSubmit(processSubmit)();
-    } else {
-      // Optionally, toast a message to fill the form if it's not submittable yet
-      // but for now, just opening the panel is fine.
     }
   };
 
   const dismissErrorModal = useCallback(() => {
-    // To clear the error in serverState, we can call formAction with null/empty or a specific "clear error" state
-    // For now, re-using formAction with potentially empty/invalid data to reset it.
-    // This might not be ideal if formAction always expects valid data.
-    // A better approach would be a dedicated way to clear serverState or ignore errors.
-    // For simplicity now, let's try setting serverState to null directly, if useActionState allows it.
-    // Actually, useActionState's reset function (the second element in the returned array) is for this.
-    // However, we don't have access to the direct `resetActionState` function from `useActionState` here.
-    // Calling `formAction` with dummy data to clear is a workaround.
-    const dummyFormData = new FormData(); 
-    React.startTransition(() => {
-      // To truly clear the error, we need to make serverState itself null.
-      // Let's try to just hide the modal by re-evaluating the condition that shows it.
-      // The effect handling serverState will not re-trigger if serverState doesn't change.
-      // So, we need a way to tell useActionState that the error is "handled".
-      // The simplest here is to make `performLosAnalysis` capable of returning a "cleared" state.
-      // Or, we can just set `serverState` to null locally to hide modal.
-      // For now, let's use the existing approach that if `formAction` is called, it will reset.
-       // This approach might not be ideal as it could trigger an unwanted action if the dummy data is valid.
-       // A cleaner way would be to have a local state for showing the error modal.
-       // For now, let's assume `performLosAnalysis` handles empty formData gracefully or we accept a benign re-trigger.
-       if (serverState && serverState.error) {
-         // Artificially reset serverState to clear the error display condition
-         // This assumes we can modify serverState directly, which isn't the pattern for useActionState's returned state.
-         // The correct way is that `formAction` itself should produce a new state that doesn't have an error.
-         // Let's just rely on the visual dismissal and hope the next actual analysis clears it.
-         // For robust error clearing, the server action would ideally have a "clear" mechanism or return a non-error state on certain inputs.
-       }
-       // For now, the UI hides on click. If performLosAnalysis is called with empty/invalid data, it might return a new error or non-error state.
-       // This is effectively a no-op on the serverState error if the formAction doesn't change it.
-       // The modal hides because the condition `serverState?.error && !isActionPending` re-evaluates.
-       // The key is that the error remains in `serverState` until a new action overwrites it.
-    });
-  }, [formAction, serverState]);
+    // This is primarily a visual dismissal. Error remains in serverState until a new action.
+  }, []);
+
+  const handleToggleHistoryPanel = () => {
+    setIsHistoryPanelOpen(prev => !prev);
+  };
+
+  const handleClearMap = () => {
+    reset(defaultFormStateValues);
+    setAnalysisResult(null);
+    setLiveDistanceKm(null);
+    setIsStale(false);
+    // setHistoryList([]); // Optionally clear history too
+    toast({ title: "Map Cleared", description: "Form reset to default values." });
+    if (isAnalysisPanelGloballyOpen) {
+        setIsAnalysisPanelGloballyOpen(false); // Close bottom panel if open
+    }
+  };
+  
+  const handleLoadHistoryItem = (id: string) => {
+    const itemToLoad = historyList.find(item => item.id === id);
+    if (itemToLoad) {
+      setAnalysisResult(itemToLoad);
+      
+      // Populate form with history item's data
+      const formValuesFromHistory: AnalysisFormValues = {
+        pointA: {
+          name: itemToLoad.pointA.name || 'Site A',
+          lat: itemToLoad.pointA.lat.toString(),
+          lng: itemToLoad.pointA.lng.toString(),
+          height: itemToLoad.pointA.towerHeight,
+        },
+        pointB: {
+          name: itemToLoad.pointB.name || 'Site B',
+          lat: itemToLoad.pointB.lat.toString(),
+          lng: itemToLoad.pointB.lng.toString(),
+          height: itemToLoad.pointB.towerHeight,
+        },
+        clearanceThreshold: itemToLoad.clearanceThresholdUsed.toString(),
+      };
+      reset(formValuesFromHistory);
+      setLiveDistanceKm(itemToLoad.distanceKm);
+      setIsStale(false); // Loaded state is not stale initially
+      setIsAnalysisPanelGloballyOpen(true); // Open bottom panel
+      setIsBottomPanelContentExpanded(true);
+      toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
+    }
+  };
+
+  const handleClearHistory = () => {
+    setHistoryList([]);
+    toast({ title: "History Cleared" });
+  };
 
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative h-full">
-      <div className="flex-1 w-full relative">
-        <InteractiveMap
-          pointA={formPointAForMap && formPointAForMap.lat && formPointAForMap.lng ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name } : undefined}
-          pointB={formPointBForMap && formPointBForMap.lat && formPointBForMap.lng ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name } : undefined}
-          onMapClick={handleMapClick}
-          onMarkerDrag={handleMarkerDrag}
-          mapContainerClassName="w-full h-full"
+    <> {/* Using fragment to wrap AppHeader and the main content div */}
+      <AppHeader 
+        onToggleHistory={handleToggleHistoryPanel}
+        onClearMap={handleClearMap}
+        isHistoryPanelSupported={true}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden relative h-full">
+        <div className="flex-1 w-full relative">
+          <InteractiveMap
+            pointA={formPointAForMap && formPointAForMap.lat && formPointAForMap.lng ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name } : undefined}
+            pointB={formPointBForMap && formPointBForMap.lat && formPointBForMap.lng ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name } : undefined}
+            onMapClick={handleMapClick}
+            onMarkerDrag={handleMarkerDrag}
+            mapContainerClassName="w-full h-full"
+            analysisResult={analysisResult}
+            isStale={isStale}
+            currentDistanceKm={liveDistanceKm}
+          />
+        </div>
+
+        {!isAnalysisPanelGloballyOpen && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
+            <Button
+              onClick={handleStartAnalysisClick}
+              size="lg"
+              className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm"
+              aria-label="Start Link Analysis"
+            >
+              <Waypoints className="mr-2 h-5 w-5" />
+              Start Link Analysis
+            </Button>
+          </div>
+        )}
+        
+        {isActionPending && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
+              <Card className="p-6 shadow-2xl bg-card/90">
+                <CardContent className="flex flex-col items-center text-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                  <p className="text-lg font-semibold text-foreground">Analyzing Link...</p>
+                  <p className="text-sm text-muted-foreground mt-1">Please wait while we process the elevation data.</p>
+                </CardContent>
+              </Card>
+          </div>
+        )}
+
+        {serverState?.error && !isActionPending && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={dismissErrorModal}>
+              <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4">
+                <CardHeader>
+                  <CardTitle className="text-destructive-foreground flex items-center">
+                    <AlertTriangle className="mr-2 h-6 w-6"/> Analysis Failed
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-destructive-foreground mb-4">{serverState.error}</p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
+                    onClick={(e) => e.stopPropagation()} // Allow main div onClick to dismiss visually
+                  >
+                    Dismiss
+                  </Button>
+                </CardContent>
+              </Card>
+          </div>
+        )}
+
+        <BottomPanel
           analysisResult={analysisResult}
+          isPanelGloballyVisible={isAnalysisPanelGloballyOpen}
+          onToggleGlobalVisibility={toggleGlobalPanelVisibility}
+          isContentExpanded={isBottomPanelContentExpanded}
+          onToggleContentExpansion={toggleBottomPanelContentExpansion}
           isStale={isStale}
+          control={control}
+          register={register}
+          handleSubmit={handleSubmit}
+          processSubmit={processSubmit}
+          clientFormErrors={clientFormErrors}
+          serverFormErrors={serverState?.fieldErrors}
+          isActionPending={isActionPending}
+          getValues={getValues}
+          setValue={setValue}
+          onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
+        />
+        <HistoryPanel 
+          historyList={historyList}
+          onLoadHistoryItem={handleLoadHistoryItem}
+          onClearHistory={handleClearHistory}
+          isOpen={isHistoryPanelOpen}
+          onToggle={handleToggleHistoryPanel}
         />
       </div>
-
-      {!isAnalysisPanelGloballyOpen && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
-          <Button
-            onClick={handleStartAnalysisClick}
-            size="lg"
-            className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm"
-            aria-label="Start Link Analysis"
-          >
-            <Waypoints className="mr-2 h-5 w-5" />
-            Start Link Analysis
-          </Button>
-        </div>
-      )}
-      
-      {isActionPending && (
-         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
-            <Card className="p-6 shadow-2xl bg-card/90">
-              <CardContent className="flex flex-col items-center text-center">
-                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-lg font-semibold text-foreground">Analyzing Link...</p>
-                <p className="text-sm text-muted-foreground mt-1">Please wait while we process the elevation data.</p>
-              </CardContent>
-            </Card>
-         </div>
-      )}
-
-      {serverState?.error && !isActionPending && (
-         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={dismissErrorModal /* This dismisses visually by allowing re-render, not by clearing error state */}>
-            <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4">
-              <CardHeader>
-                <CardTitle className="text-destructive-foreground flex items-center">
-                  <AlertTriangle className="mr-2 h-6 w-6"/> Analysis Failed
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-destructive-foreground mb-4">{serverState.error}</p>
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-                  onClick={(e) => { 
-                    e.stopPropagation(); // Prevent parent div's onClick if button is distinct
-                    // To truly clear the error from serverState, a new action outcome is needed.
-                    // For now, this button offers a more explicit dismiss action than clicking backdrop.
-                    // Ideally, this would trigger a state update that removes the error from serverState.
-                    // A simple local state for modal visibility might be cleaner:
-                    // e.g. `setShowErrorModal(false)`
-                    // This implies `serverState.error` would still be true, but modal hides.
-                    // Let's keep it as visual dismiss for now.
-                    const dummyFormData = new FormData(); // Attempt to "reset" server state by re-invoking action
-                     React.startTransition(() => {
-                       // Calling formAction might lead to new errors if form is empty.
-                       // This isn't a true "clear error" operation on serverState.
-                       // It's more of a visual dismissal by causing a re-render that might hide the modal
-                       // if other conditions change. The error in serverState persists.
-                     });
-                     // To truly fix, would need to set serverState to a non-error state,
-                     // or have performLosAnalysis return a specific "error_acknowledged" state.
-                     // Simplest for now: the modal hides due to the main div's onClick.
-                  }}
-                >
-                  Dismiss
-                </Button>
-              </CardContent>
-            </Card>
-         </div>
-      )}
-
-      <BottomPanel
-        analysisResult={analysisResult}
-        isPanelGloballyVisible={isAnalysisPanelGloballyOpen}
-        onToggleGlobalVisibility={toggleGlobalPanelVisibility}
-        isContentExpanded={isBottomPanelContentExpanded}
-        onToggleContentExpansion={toggleBottomPanelContentExpansion}
-        isStale={isStale}
-        control={control}
-        register={register}
-        handleSubmit={handleSubmit}
-        processSubmit={processSubmit}
-        clientFormErrors={clientFormErrors}
-        serverFormErrors={serverState?.fieldErrors}
-        isActionPending={isActionPending}
-        getValues={getValues}
-        setValue={setValue}
-        onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
-      />
-    </div>
+    </>
   );
 }
-
-
-      
