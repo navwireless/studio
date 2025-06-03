@@ -46,7 +46,7 @@ const getCustomMarkerIcon = (label)=>{
             labelOrigin: new window.google.maps.Point(0, -2.5)
         };
     }
-    return undefined; // Fallback if google.maps is not available
+    return undefined;
 };
 function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, onMarkerDrag, mapContainerClassName = "w-full h-full", analysisResult, isStale }) {
     _s();
@@ -105,12 +105,12 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "InteractiveMap.useEffect": ()=>{
-            if (isMapInstanceLoaded && mapRef.current && formPointA && formPointB && formPointA.lat && formPointA.lng && formPointB.lat && formPointB.lng) {
+            if (isMapInstanceLoaded && mapRef.current && formPointA && formPointB && typeof formPointA.lat === 'number' && typeof formPointA.lng === 'number' && typeof formPointB.lat === 'number' && typeof formPointB.lng === 'number') {
                 const bounds = new window.google.maps.LatLngBounds();
                 bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
                 bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
                 if (!bounds.isEmpty()) {
-                    mapRef.current.fitBounds(bounds, 50);
+                    mapRef.current.fitBounds(bounds, 50); // Added padding
                     const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', {
                         "InteractiveMap.useEffect.listener": ()=>{
                             if (mapRef.current?.getZoom() && mapRef.current.getZoom() > 17) {
@@ -139,10 +139,15 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
         isMapInstanceLoaded
     ]);
     const polylineColor = ()=>{
-        if (isStale) return '#60A5FA'; // Blue for stale data that needs re-analysis
+        if (isStale) return '#60A5FA'; // Blue for stale data (marker moved)
         if (!analysisResult) return '#A9A9A9'; // DarkGray for no analysis yet or pending state
         return analysisResult.losPossible ? '#4CAF50' : '#F44336'; // Green for LOS, Red for blocked
     };
+    // Ensure lat/lng are numbers for the key and path
+    const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
+    const pALng = typeof formPointA?.lng === 'number' ? formPointA.lng : undefined;
+    const pBLat = typeof formPointB?.lat === 'number' ? formPointB.lat : undefined;
+    const pBLng = typeof formPointB?.lng === 'number' ? formPointB.lng : undefined;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: `${mapContainerClassName}`,
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["LoadScript"], {
@@ -154,7 +159,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                         className: "w-12 h-12 animate-spin mb-3"
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 144,
+                        lineNumber: 150,
                         columnNumber: 13
                     }, void 0),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -162,13 +167,13 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                         children: "Initializing Map Service..."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 145,
+                        lineNumber: 151,
                         columnNumber: 13
                     }, void 0)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 143,
+                lineNumber: 149,
                 columnNumber: 11
             }, void 0),
             onError: (error)=>{
@@ -186,12 +191,12 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                 onClick: handleInternalMapClick,
                 options: {},
                 children: [
-                    formPointA && formPointA.lat && formPointA.lng && markerIconA && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                    formPointA && pALat !== undefined && pALng !== undefined && markerIconA && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Marker"], {
                                 position: {
-                                    lat: formPointA.lat,
-                                    lng: formPointA.lng
+                                    lat: pALat,
+                                    lng: pALng
                                 },
                                 draggable: true,
                                 onDragEnd: (e)=>onMarkerDrag && onMarkerDrag(e, 'pointA'),
@@ -204,13 +209,13 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                 }
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 166,
+                                lineNumber: 172,
                                 columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
                                 position: {
-                                    lat: formPointA.lat,
-                                    lng: formPointA.lng
+                                    lat: pALat,
+                                    lng: pALng
                                 },
                                 mapPaneName: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"].OVERLAY_MOUSE_TARGET,
                                 getPixelPositionOffset: getPixelPositionOffset,
@@ -219,22 +224,22 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                     children: formPointA.name || "Site A"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                    lineNumber: 178,
+                                    lineNumber: 184,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 173,
+                                lineNumber: 179,
                                 columnNumber: 15
                             }, this)
                         ]
                     }, void 0, true),
-                    formPointB && formPointB.lat && formPointB.lng && markerIconB && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                    formPointB && pBLat !== undefined && pBLng !== undefined && markerIconB && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Marker"], {
                                 position: {
-                                    lat: formPointB.lat,
-                                    lng: formPointB.lng
+                                    lat: pBLat,
+                                    lng: pBLng
                                 },
                                 draggable: true,
                                 onDragEnd: (e)=>onMarkerDrag && onMarkerDrag(e, 'pointB'),
@@ -247,13 +252,13 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                 }
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 187,
+                                lineNumber: 193,
                                 columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
                                 position: {
-                                    lat: formPointB.lat,
-                                    lng: formPointB.lng
+                                    lat: pBLat,
+                                    lng: pBLng
                                 },
                                 mapPaneName: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"].OVERLAY_MOUSE_TARGET,
                                 getPixelPositionOffset: getPixelPositionOffset,
@@ -262,25 +267,25 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                     children: formPointB.name || "Site B"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                    lineNumber: 199,
+                                    lineNumber: 205,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 194,
+                                lineNumber: 200,
                                 columnNumber: 15
                             }, this)
                         ]
                     }, void 0, true),
-                    formPointA && formPointA.lat && formPointA.lng && formPointB && formPointB.lat && formPointB.lng && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Polyline"], {
+                    pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Polyline"], {
                         path: [
                             {
-                                lat: formPointA.lat,
-                                lng: formPointA.lng
+                                lat: pALat,
+                                lng: pALng
                             },
                             {
-                                lat: formPointB.lat,
-                                lng: formPointB.lng
+                                lat: pBLat,
+                                lng: pBLng
                             }
                         ],
                         options: {
@@ -290,25 +295,25 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                             geodesic: true,
                             zIndex: 1
                         }
-                    }, void 0, false, {
+                    }, `poly-${pALat}-${pALng}-${pBLat}-${pBLng}`, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 207,
+                        lineNumber: 213,
                         columnNumber: 13
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 152,
+                lineNumber: 158,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/interactive-map.tsx",
-            lineNumber: 140,
+            lineNumber: 146,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 139,
+        lineNumber: 145,
         columnNumber: 5
     }, this);
 }

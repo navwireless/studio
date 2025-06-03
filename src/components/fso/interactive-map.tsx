@@ -38,18 +38,18 @@ const getPixelPositionOffset = (width: number, height: number) => ({
 const getCustomMarkerIcon = (label: string) => {
   if (typeof window !== 'undefined' && window.google && window.google.maps) {
     return {
-      path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW, // Teardrop pin shape
+      path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       fillColor: '#FFEE58', // Bright Yellow
       fillOpacity: 1,
-      strokeColor: '#424242', // Dark grey outline for better visibility of yellow
+      strokeColor: '#424242',
       strokeWeight: 1,
       rotation: 0,
-      scale: 6.5, // Adjust size of the pin
-      anchor: new window.google.maps.Point(0, 2.5), // Anchor at the tip of the pin
-      labelOrigin: new window.google.maps.Point(0, -2.5), // Position for the A/B label inside pin
+      scale: 6.5,
+      anchor: new window.google.maps.Point(0, 2.5),
+      labelOrigin: new window.google.maps.Point(0, -2.5),
     };
   }
-  return undefined; // Fallback if google.maps is not available
+  return undefined;
 };
 
 
@@ -84,7 +84,7 @@ export default function InteractiveMap({
         fullscreenControl: true,
         zoomControl: true,
         gestureHandling: 'cooperative',
-        clickableIcons: false, 
+        clickableIcons: false,
       });
     }
     setIsMapInstanceLoaded(true);
@@ -104,12 +104,12 @@ export default function InteractiveMap({
 
 
   useEffect(() => {
-    if (isMapInstanceLoaded && mapRef.current && formPointA && formPointB && formPointA.lat && formPointA.lng && formPointB.lat && formPointB.lng) {
+    if (isMapInstanceLoaded && mapRef.current && formPointA && formPointB && typeof formPointA.lat === 'number' && typeof formPointA.lng === 'number' && typeof formPointB.lat === 'number' && typeof formPointB.lng === 'number') {
       const bounds = new window.google.maps.LatLngBounds();
       bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
       bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
       if (!bounds.isEmpty()) {
-        mapRef.current.fitBounds(bounds, 50); 
+        mapRef.current.fitBounds(bounds, 50); // Added padding
         const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
           if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
             mapRef.current.setZoom(17);
@@ -118,7 +118,7 @@ export default function InteractiveMap({
           }
         });
          return () => {
-           if (listener && window.google && window.google.maps) {
+           if (listener && window.google && window.google.maps) { // Ensure google.maps and listener exist before removing
               window.google.maps.event.removeListener(listener);
            }
          };
@@ -130,10 +130,16 @@ export default function InteractiveMap({
   }, [formPointA, formPointB, isMapInstanceLoaded]);
 
   const polylineColor = () => {
-    if (isStale) return '#60A5FA'; // Blue for stale data that needs re-analysis
+    if (isStale) return '#60A5FA'; // Blue for stale data (marker moved)
     if (!analysisResult) return '#A9A9A9'; // DarkGray for no analysis yet or pending state
     return analysisResult.losPossible ? '#4CAF50' : '#F44336'; // Green for LOS, Red for blocked
   };
+
+  // Ensure lat/lng are numbers for the key and path
+  const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
+  const pALng = typeof formPointA?.lng === 'number' ? formPointA.lng : undefined;
+  const pBLat = typeof formPointB?.lat === 'number' ? formPointB.lat : undefined;
+  const pBLng = typeof formPointB?.lng === 'number' ? formPointB.lng : undefined;
 
   return (
     <div className={`${mapContainerClassName}`}>
@@ -158,20 +164,20 @@ export default function InteractiveMap({
           zoom={defaultZoom}
           onLoad={handleActualMapLoad}
           onUnmount={handleMapUnmount}
-          onClick={handleInternalMapClick} 
+          onClick={handleInternalMapClick}
           options={{}}
         >
-          {formPointA && formPointA.lat && formPointA.lng && markerIconA && (
+          {formPointA && pALat !== undefined && pALng !== undefined && markerIconA && (
             <>
               <Marker
-                position={{ lat: formPointA.lat, lng: formPointA.lng }}
+                position={{ lat: pALat, lng: pALng }}
                 draggable={true}
                 onDragEnd={(e) => onMarkerDrag && onMarkerDrag(e, 'pointA')}
                 icon={markerIconA}
                 label={{ text: "A", color: "#333333", fontWeight: "bold", fontSize: "10px" }}
               />
               <OverlayView
-                position={{ lat: formPointA.lat, lng: formPointA.lng }}
+                position={{ lat: pALat, lng: pALng }}
                 mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                 getPixelPositionOffset={getPixelPositionOffset}
               >
@@ -182,17 +188,17 @@ export default function InteractiveMap({
             </>
           )}
 
-          {formPointB && formPointB.lat && formPointB.lng && markerIconB && (
+          {formPointB && pBLat !== undefined && pBLng !== undefined && markerIconB && (
              <>
               <Marker
-                position={{ lat: formPointB.lat, lng: formPointB.lng }}
+                position={{ lat: pBLat, lng: pBLng }}
                 draggable={true}
                 onDragEnd={(e) => onMarkerDrag && onMarkerDrag(e, 'pointB')}
                 icon={markerIconB}
                 label={{ text: "B", color: "#333333", fontWeight: "bold", fontSize: "10px" }}
               />
               <OverlayView
-                position={{ lat: formPointB.lat, lng: formPointB.lng }}
+                position={{ lat: pBLat, lng: pBLng }}
                 mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                 getPixelPositionOffset={getPixelPositionOffset}
               >
@@ -203,18 +209,19 @@ export default function InteractiveMap({
             </>
           )}
 
-          {formPointA && formPointA.lat && formPointA.lng && formPointB && formPointB.lat && formPointB.lng && (
+          {pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined && (
             <Polyline
+              key={`poly-${pALat}-${pALng}-${pBLat}-${pBLng}`} // Key forces re-render on path change
               path={[
-                { lat: formPointA.lat, lng: formPointA.lng },
-                { lat: formPointB.lat, lng: formPointB.lng },
+                { lat: pALat, lng: pALng },
+                { lat: pBLat, lng: pBLng },
               ]}
               options={{
                 strokeColor: polylineColor(),
                 strokeOpacity: isStale ? 0.8 : 0.9,
                 strokeWeight: isStale ? 3.5 : 4,
                 geodesic: true,
-                zIndex: 1, // Ensure polyline is generally above tiles but below markers/overlays
+                zIndex: 1,
               }}
             />
           )}
@@ -224,3 +231,4 @@ export default function InteractiveMap({
   );
 }
 
+    
