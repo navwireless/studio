@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Control, UseFormRegister, UseFormHandleSubmit, UseFormGetValues, UseFormSetValue, FieldErrors } from 'react-hook-form';
@@ -11,6 +12,7 @@ import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart'; 
 import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import React from 'react'; // Import React for key prop
 
 interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
@@ -125,19 +127,24 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   pointBName,
   onTowerHeightChangeFromGraph,
 }) => {
-  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: analysisResult?.clearanceThresholdUsed?.toString() || "10" });
-  const minRequiredClearance = parseFloat(watchedClearanceThresholdString) || 0;
+  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
+  const minRequiredClearance = parseFloat(watchedClearanceThresholdString); // Parse immediately
 
   let isClearBasedOnAnalysis = false;
   let deficit = 0;
-  let actualMinClearance = 0;
+  let actualMinClearance = analysisResult?.minClearance ?? null; // Use null as default if no result
 
-  if (analysisResult && analysisResult.minClearance !== null) {
-    actualMinClearance = analysisResult.minClearance;
-    const thresholdUsedForComparison = analysisResult.clearanceThresholdUsed ?? minRequiredClearance;
-    isClearBasedOnAnalysis = actualMinClearance >= thresholdUsedForComparison;
-    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(thresholdUsedForComparison - actualMinClearance);
+  if (analysisResult && analysisResult.minClearance !== null && !isNaN(minRequiredClearance)) {
+    // Ensure minRequiredClearance is a valid number before comparison
+    isClearBasedOnAnalysis = analysisResult.minClearance >= minRequiredClearance;
+    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(minRequiredClearance - analysisResult.minClearance);
   }
+  
+  // Key for CustomProfileChart to force re-render when critical data changes
+  const chartKey = React.useMemo(() => {
+    if (!analysisResult) return 'no-result';
+    return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${JSON.stringify(analysisResult.profile?.[0])}-${JSON.stringify(analysisResult.profile?.[analysisResult.profile.length-1])}`;
+  }, [analysisResult]);
 
   return (
     <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
@@ -145,16 +152,16 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         <div className="flex flex-col md:flex-row items-center justify-around py-1 md:py-2 px-2 md:px-3 border-b border-slate-700/50 mb-1">
           <div className="flex-shrink-0 mb-1 md:mb-0">
             {isStale ? (
-              <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-yellow-600/30 text-yellow-400/90 flex items-center">
+              <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-100 flex items-center shadow">
                 <AlertTriangle className="mr-1 h-3 w-3" /> NEEDS RE-ANALYZE
               </span>
             ) : (
               <span
                 className={cn(
-                  "px-2 py-1 rounded-md text-xs font-semibold",
+                  "px-3 py-1.5 rounded-md text-xs font-bold shadow-md",
                   isClearBasedOnAnalysis
-                    ? "bg-emerald-500/30 text-emerald-300/90"
-                    : "bg-rose-500/30 text-rose-300/90"
+                    ? "bg-los-success text-los-success-foreground" // Using theme colors
+                    : "bg-los-failure text-los-failure-foreground" // Using theme colors
                 )}
               >
                 {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
@@ -175,9 +182,9 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
               <span className="uppercase tracking-wider text-slate-400/90 text-[0.6rem] md:text-[0.65rem] font-medium">Min. Clear.</span>
               <span className={cn(
                 "font-bold text-xs md:text-sm",
-                isStale ? "text-slate-400" : (isClearBasedOnAnalysis ? "text-emerald-400" : "text-rose-400")
+                 isStale ? "text-slate-400" : (actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure")
               )}>
-                {actualMinClearance.toFixed(1)}m
+                {actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"}
               </span>
             </div>
           </div>
@@ -192,7 +199,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                     type="number"
                     step="any"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    onChange={(e) => field.onChange(e.target.value)} // Keep as string for form, parse above
                     className="bg-slate-700/50 border-slate-600/70 focus:border-primary/70 text-slate-100/90 h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
                     />
                 )}
@@ -205,7 +212,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           {getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}
         </p>
       }
-       {analysisResult && !isClearBasedOnAnalysis && analysisResult.minClearance !== null && !isStale && (
+       {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
           <div className="text-center text-rose-300/80 text-[0.7rem] py-0.5"> 
             Add&nbsp;
             <span className="font-semibold">{deficit}m</span>
@@ -215,10 +222,12 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
       
       <div className={cn(
         "flex-1 min-h-0 p-0.5", 
-        analysisResult && isStale && "opacity-60 pointer-events-none" 
+        // Opacity for staleness is handled by CustomProfileChart internally
+        // analysisResult && isStale && "opacity-60 pointer-events-none" 
       )}>
         {analysisResult ? ( 
           <CustomProfileChart
+            key={chartKey} // Add key here
             data={analysisResult.profile}
             pointAName={pointAName}
             pointBName={pointBName}
@@ -243,8 +252,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           onClick={handleSubmit(processSubmit)}
           disabled={isActionPending}
           className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-normal text-center leading-tight"
-          // Style to be less distorted, min-w-fit or fixed width might be needed depending on text.
-          // Keeping it flexible for now, Tailwind's default button padding is usually good.
         >
           <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
           {analysisResult ? "Re-Analyze" : "Analyze LOS"}
@@ -289,6 +296,8 @@ export default function BottomPanel({
   clientFormErrors,
   serverFormErrors,
   isActionPending,
+  getValues, // Pass getValues
+  setValue, // Pass setValue
   onTowerHeightChangeFromGraph,
 }: BottomPanelProps) {
   
@@ -322,7 +331,7 @@ export default function BottomPanel({
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded ? "h-[45vh]" : "h-0"
+          isContentExpanded ? "h-[45vh]" : "h-0" // Min height when collapsed to show handle
         )}
       >
         <div className="p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto">
@@ -384,4 +393,5 @@ export default function BottomPanel({
     </form>
   );
 }
-
+    
+    
