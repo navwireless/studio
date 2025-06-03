@@ -329,16 +329,19 @@ export default function BottomPanel({
         "z-[50]" // Ensure panel is above map, but below modals/toasts
       )}
     >
-      <div className="absolute -top-3 right-3 z-[60]"> {/* Close button slightly offset & higher z-index */}
+      {/* Removed the explicit X close button as per user request */}
+      {/* 
+      <div className="absolute -top-3 right-3 z-[60]">
         <button
           type="button" 
           onClick={onToggleGlobalVisibility}
           className="p-1.5 rounded-full bg-card hover:bg-muted border border-border shadow-md text-muted-foreground hover:text-foreground transition-all duration-200"
           aria-label={isPanelGloballyVisible ? "Hide Analysis Panel" : "Show Analysis Panel"}
         >
-          <X className="h-4 w-4" /> {/* Replaced ChevronDown with X for clarity */}
+          <X className="h-4 w-4" />
         </button>
       </div>
+      */}
 
       <div 
         className={cn(
