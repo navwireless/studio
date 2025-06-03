@@ -12,7 +12,7 @@ import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart'; 
 import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React from 'react'; // Import React for key prop
+import React from 'react'; 
 
 interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
@@ -128,23 +128,24 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   onTowerHeightChangeFromGraph,
 }) => {
   const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
-  const minRequiredClearance = parseFloat(watchedClearanceThresholdString); // Parse immediately
+  const minRequiredClearance = parseFloat(watchedClearanceThresholdString); 
 
   let isClearBasedOnAnalysis = false;
   let deficit = 0;
-  let actualMinClearance = analysisResult?.minClearance ?? null; // Use null as default if no result
+  let actualMinClearance = analysisResult?.minClearance ?? null; 
 
   if (analysisResult && analysisResult.minClearance !== null && !isNaN(minRequiredClearance)) {
-    // Ensure minRequiredClearance is a valid number before comparison
     isClearBasedOnAnalysis = analysisResult.minClearance >= minRequiredClearance;
     deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(minRequiredClearance - analysisResult.minClearance);
   }
   
-  // Key for CustomProfileChart to force re-render when critical data changes
   const chartKey = React.useMemo(() => {
     if (!analysisResult) return 'no-result';
-    return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${JSON.stringify(analysisResult.profile?.[0])}-${JSON.stringify(analysisResult.profile?.[analysisResult.profile.length-1])}`;
-  }, [analysisResult]);
+    const profileDataSignature = analysisResult.profile.length > 0 
+      ? `${analysisResult.profile[0].distance}-${analysisResult.profile[0].terrainElevation}-${analysisResult.profile[0].losHeight}-${analysisResult.profile[analysisResult.profile.length-1].distance}-${analysisResult.profile[analysisResult.profile.length-1].terrainElevation}-${analysisResult.profile[analysisResult.profile.length-1].losHeight}`
+      : 'empty-profile';
+    return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${profileDataSignature}-${minRequiredClearance}`;
+  }, [analysisResult, minRequiredClearance]);
 
   return (
     <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
@@ -160,8 +161,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                 className={cn(
                   "px-3 py-1.5 rounded-md text-xs font-bold shadow-md",
                   isClearBasedOnAnalysis
-                    ? "bg-los-success text-los-success-foreground" // Using theme colors
-                    : "bg-los-failure text-los-failure-foreground" // Using theme colors
+                    ? "bg-los-success text-los-success-foreground" 
+                    : "bg-los-failure text-los-failure-foreground" 
                 )}
               >
                 {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
@@ -199,7 +200,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                     type="number"
                     step="any"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value)} // Keep as string for form, parse above
+                    onChange={(e) => field.onChange(e.target.value)} 
                     className="bg-slate-700/50 border-slate-600/70 focus:border-primary/70 text-slate-100/90 h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
                     />
                 )}
@@ -222,12 +223,10 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
       
       <div className={cn(
         "flex-1 min-h-0 p-0.5", 
-        // Opacity for staleness is handled by CustomProfileChart internally
-        // analysisResult && isStale && "opacity-60 pointer-events-none" 
       )}>
         {analysisResult ? ( 
           <CustomProfileChart
-            key={chartKey} // Add key here
+            key={chartKey} 
             data={analysisResult.profile}
             pointAName={pointAName}
             pointBName={pointBName}
@@ -254,7 +253,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           className="bg-primary/80 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-normal text-center leading-tight"
         >
           <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
-          {analysisResult ? "Re-Analyze" : "Analyze LOS"}
+          {analysisResult ? "Re-Analyze Link" : "Analyze Link"}
         </Button>
       </div>
     </div>
@@ -296,8 +295,8 @@ export default function BottomPanel({
   clientFormErrors,
   serverFormErrors,
   isActionPending,
-  getValues, // Pass getValues
-  setValue, // Pass setValue
+  getValues, 
+  setValue, 
   onTowerHeightChangeFromGraph,
 }: BottomPanelProps) {
   
@@ -313,11 +312,11 @@ export default function BottomPanel({
     <form 
       onSubmit={handleSubmit(processSubmit)} 
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-30 bg-slate-800/80 backdrop-blur-md border-t border-slate-700/60 rounded-t-2xl transition-transform duration-300 ease-in-out hover:bg-slate-800/90 print:hidden",
+        "fixed bottom-0 left-0 right-0 z-50 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
         isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full"
       )}
     >
-      <div className="absolute top-1 right-1 z-40">
+      <div className="absolute top-1 right-1 z-[60]"> {/* Ensure close button is above content */}
         <button
           type="button" 
           onClick={onToggleGlobalVisibility}
@@ -331,10 +330,11 @@ export default function BottomPanel({
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded ? "h-[45vh]" : "h-0" // Min height when collapsed to show handle
+          // Adjust height to be slightly less than half viewport height
+          isContentExpanded ? "h-[40vh] md:h-[35vh]" : "h-0" 
         )}
       >
-        <div className="p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto">
+        <div className="p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto"> {/* Main content area of the panel */}
            <div className="flex md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
             
             <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">
@@ -378,20 +378,15 @@ export default function BottomPanel({
           </div>
         </div>
       </div>
-      {isPanelGloballyVisible && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 md:hidden">
-             <button
-                type="button"
-                onClick={onToggleContentExpansion}
-                className="p-1.5 rounded-full bg-slate-700/60 hover:bg-slate-600/80 text-slate-200 hover:text-white transition-all"
-                aria-label={isContentExpanded ? "Collapse Panel Content" : "Expand Panel Content"}
-             >
-                {isContentExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-             </button>
+      {isPanelGloballyVisible && ( // This button is to expand/collapse the panel's content height
+        <div 
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0.5 p-1 bg-slate-800/90 rounded-t-md border-t border-x border-slate-700/60 shadow-lg cursor-pointer hover:bg-slate-700/90"
+          onClick={onToggleContentExpansion}
+          aria-label={isContentExpanded ? "Collapse Panel Content" : "Expand Panel Content"}
+        >
+          {isContentExpanded ? <ChevronDown className="h-4 w-4 text-slate-300" /> : <ChevronUp className="h-4 w-4 text-slate-300" />}
         </div>
       )}
     </form>
   );
 }
-    
-    

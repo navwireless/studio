@@ -272,7 +272,6 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-// Dynamically import InteractiveMap with SSR turned off
 const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])(()=>__turbopack_context__.r("[project]/src/components/fso/interactive-map.tsx [app-client] (ecmascript, next/dynamic entry, async loader)")(__turbopack_context__.i), {
     loadableGenerated: {
         modules: [
@@ -287,7 +286,7 @@ const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_
                     className: "h-8 w-8 animate-spin text-primary"
                 }, void 0, false, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 21,
+                    lineNumber: 20,
                     columnNumber: 7
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -295,13 +294,13 @@ const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_
                     children: "Loading Map..."
                 }, void 0, false, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 22,
+                    lineNumber: 21,
                     columnNumber: 7
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/page.tsx",
-            lineNumber: 20,
+            lineNumber: 19,
             columnNumber: 5
         }, this)
 });
@@ -313,30 +312,7 @@ const BottomPanel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
         ]
     },
     ssr: false,
-    loading: ()=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "fixed bottom-0 left-0 right-0 h-[50px] bg-slate-800/80 flex items-center justify-center text-muted-foreground",
-            children: [
-                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
-                    className: "h-5 w-5 animate-spin"
-                }, void 0, false, {
-                    fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 31,
-                    columnNumber: 7
-                }, this),
-                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                    className: "ml-2",
-                    children: "Loading Analysis Panel..."
-                }, void 0, false, {
-                    fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 32,
-                    columnNumber: 7
-                }, this)
-            ]
-        }, void 0, true, {
-            fileName: "[project]/src/app/page.tsx",
-            lineNumber: 30,
-            columnNumber: 5
-        }, this)
+    loading: ()=>null
 });
 _c1 = BottomPanel;
 function Home() {
@@ -403,8 +379,6 @@ function Home() {
                     setAnalysisResult(serverState);
                     setIsAnalysisPanelGloballyOpen(true);
                     setIsBottomPanelContentExpanded(true);
-                    // Avoid toasting if only tower height changed and auto-submitted
-                    // This crude check assumes that if it's not stale, it was likely an auto-submit from tower height
                     if (isStale || !analysisResult?.profile.length) {
                         toast({
                             title: "Analysis Complete",
@@ -487,7 +461,6 @@ function Home() {
                 shouldDirty: true,
                 shouldValidate: true
             });
-            // Trigger re-analysis automatically
             handleSubmit(processSubmit)();
         }
     }["Home.useCallback[handleTowerHeightChangeFromGraph]"], [
@@ -513,120 +486,124 @@ function Home() {
         setIsAnalysisPanelGloballyOpen(true);
         setIsBottomPanelContentExpanded(true);
     };
-    const mapContainerHeightClass = isAnalysisPanelGloballyOpen && isBottomPanelContentExpanded ? "h-[55vh]" : isAnalysisPanelGloballyOpen && !isBottomPanelContentExpanded ? "h-[calc(100vh-50px-48px-env(safe-area-inset-bottom))]" // Account for footer, panel handle, and notch
-     : "h-[calc(100vh-40px-48px-env(safe-area-inset-bottom))]"; // Account for header, footer and notch (48px footer, 40px header)
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "flex-1 flex flex-col overflow-hidden relative",
+        className: "flex-1 flex flex-col overflow-hidden relative h-full",
         children: [
+            " ",
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: `transition-all duration-500 ease-in-out ${mapContainerHeightClass} w-full border-2 border-blue-500`,
-                style: {
-                    height: 'calc(50vh)'
-                },
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(InteractiveMap, {
-                    pointA: formPointAForMap && formPointAForMap.lat && formPointAForMap.lng ? {
-                        lat: parseFloat(formPointAForMap.lat),
-                        lng: parseFloat(formPointAForMap.lng),
-                        name: formPointAForMap.name
-                    } : undefined,
-                    pointB: formPointBForMap && formPointBForMap.lat && formPointBForMap.lng ? {
-                        lat: parseFloat(formPointBForMap.lat),
-                        lng: parseFloat(formPointBForMap.lng),
-                        name: formPointBForMap.name
-                    } : undefined,
-                    onMapClick: handleMapClick,
-                    onMarkerDrag: handleMarkerDrag,
-                    mapContainerClassName: "w-full h-full"
-                }, void 0, false, {
-                    fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 177,
-                    columnNumber: 9
-                }, this)
-            }, void 0, false, {
+                className: "flex-1 w-full relative",
+                children: [
+                    " ",
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(InteractiveMap, {
+                        pointA: formPointAForMap && formPointAForMap.lat && formPointAForMap.lng ? {
+                            lat: parseFloat(formPointAForMap.lat),
+                            lng: parseFloat(formPointAForMap.lng),
+                            name: formPointAForMap.name
+                        } : undefined,
+                        pointB: formPointBForMap && formPointBForMap.lat && formPointBForMap.lng ? {
+                            lat: parseFloat(formPointBForMap.lat),
+                            lng: parseFloat(formPointBForMap.lng),
+                            name: formPointBForMap.name
+                        } : undefined,
+                        onMapClick: handleMapClick,
+                        onMarkerDrag: handleMarkerDrag,
+                        mapContainerClassName: "w-full h-full"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/page.tsx",
+                        lineNumber: 159,
+                        columnNumber: 9
+                    }, this)
+                ]
+            }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 173,
+                lineNumber: 158,
                 columnNumber: 7
             }, this),
             !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "absolute bottom-16 left-1/2 -translate-x-1/2 z-40 print:hidden",
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                    onClick: handleStartAnalysisClick,
-                    size: "lg",
-                    className: "bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm",
-                    "aria-label": "Start Link Analysis",
-                    children: [
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$waypoints$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Waypoints$3e$__["Waypoints"], {
-                            className: "mr-2 h-5 w-5"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 194,
-                            columnNumber: 13
-                        }, this),
-                        "Start Link Analysis"
-                    ]
-                }, void 0, true, {
-                    fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 188,
-                    columnNumber: 11
-                }, this)
-            }, void 0, false, {
-                fileName: "[project]/src/app/page.tsx",
-                lineNumber: 187,
-                columnNumber: 9
-            }, this),
-            isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50",
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
-                    className: "p-6 shadow-2xl bg-card/90",
-                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
-                        className: "flex flex-col items-center text-center",
+                className: "absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden",
+                children: [
+                    " ",
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                        onClick: handleStartAnalysisClick,
+                        size: "lg",
+                        className: "bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm",
+                        "aria-label": "Start Link Analysis",
                         children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
-                                className: "h-12 w-12 animate-spin text-primary mb-4"
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$waypoints$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Waypoints$3e$__["Waypoints"], {
+                                className: "mr-2 h-5 w-5"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 204,
-                                columnNumber: 17
+                                lineNumber: 176,
+                                columnNumber: 13
                             }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                className: "text-lg font-semibold text-foreground",
-                                children: "Analyzing Link..."
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 205,
-                                columnNumber: 17
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                className: "text-sm text-muted-foreground mt-1",
-                                children: "Please wait while we process the elevation data."
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 206,
-                                columnNumber: 17
-                            }, this)
+                            "Start Link Analysis"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 203,
-                        columnNumber: 15
+                        lineNumber: 170,
+                        columnNumber: 11
                     }, this)
-                }, void 0, false, {
-                    fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 202,
-                    columnNumber: 13
-                }, this)
-            }, void 0, false, {
+                ]
+            }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 201,
+                lineNumber: 169,
+                columnNumber: 9
+            }, this),
+            isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]",
+                children: [
+                    " ",
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
+                        className: "p-6 shadow-2xl bg-card/90",
+                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
+                            className: "flex flex-col items-center text-center",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+                                    className: "h-12 w-12 animate-spin text-primary mb-4"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/page.tsx",
+                                    lineNumber: 186,
+                                    columnNumber: 17
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: "text-lg font-semibold text-foreground",
+                                    children: "Analyzing Link..."
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/page.tsx",
+                                    lineNumber: 187,
+                                    columnNumber: 17
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: "text-sm text-muted-foreground mt-1",
+                                    children: "Please wait while we process the elevation data."
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/page.tsx",
+                                    lineNumber: 188,
+                                    columnNumber: 17
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/page.tsx",
+                            lineNumber: 185,
+                            columnNumber: 15
+                        }, this)
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/page.tsx",
+                        lineNumber: 184,
+                        columnNumber: 13
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/page.tsx",
+                lineNumber: 183,
                 columnNumber: 10
             }, this),
             serverState?.error && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50",
+                className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]",
                 onClick: ()=>{
-                    // Clear only the error state, keep form values
-                    const currentFormData = getValues(); // Get current form values
-                    formAction(new FormData()); // Effectively clears serverState by passing empty FormData
-                    reset(currentFormData); // Reset form with existing values to clear dirty state if needed
+                    const currentFormData = getValues();
+                    formAction(new FormData());
+                    reset(currentFormData);
                 },
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
                     className: "p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4",
@@ -639,19 +616,19 @@ function Home() {
                                         className: "mr-2 h-6 w-6"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 222,
+                                        lineNumber: 203,
                                         columnNumber: 19
                                     }, this),
                                     " Analysis Failed"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 221,
+                                lineNumber: 202,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 220,
+                            lineNumber: 201,
                             columnNumber: 15
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -661,14 +638,14 @@ function Home() {
                                     children: serverState.error
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 226,
+                                    lineNumber: 207,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                     variant: "outline",
                                     className: "w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90",
                                     onClick: (e)=>{
-                                        e.stopPropagation(); // Prevent click from bubbling to the backdrop div
+                                        e.stopPropagation();
                                         const currentFormData = getValues();
                                         formAction(new FormData());
                                         reset(currentFormData);
@@ -676,24 +653,24 @@ function Home() {
                                     children: "Dismiss"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 227,
+                                    lineNumber: 208,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 225,
+                            lineNumber: 206,
                             columnNumber: 15
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/page.tsx",
-                    lineNumber: 219,
+                    lineNumber: 200,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 213,
+                lineNumber: 195,
                 columnNumber: 10
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(BottomPanel, {
@@ -715,13 +692,13 @@ function Home() {
                 onTowerHeightChangeFromGraph: handleTowerHeightChangeFromGraph
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 244,
+                lineNumber: 225,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 172,
+        lineNumber: 157,
         columnNumber: 5
     }, this);
 }

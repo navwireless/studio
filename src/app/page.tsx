@@ -13,7 +13,6 @@ import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
 
-// Dynamically import InteractiveMap with SSR turned off
 const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
   ssr: false,
   loading: () => (
@@ -26,12 +25,7 @@ const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'),
 
 const BottomPanel = dynamic(() => import('@/components/fso/bottom-panel'), {
   ssr: false,
-  loading: () => (
-    <div className="fixed bottom-0 left-0 right-0 h-[50px] bg-slate-800/80 flex items-center justify-center text-muted-foreground">
-      <Loader2 className="h-5 w-5 animate-spin" />
-      <span className="ml-2">Loading Analysis Panel...</span>
-    </div>
-  ),
+  loading: () => null, // Panel will be hidden initially anyway
 });
 
 
@@ -94,8 +88,6 @@ export default function Home() {
         setIsAnalysisPanelGloballyOpen(true); 
         setIsBottomPanelContentExpanded(true);
         
-        // Avoid toasting if only tower height changed and auto-submitted
-        // This crude check assumes that if it's not stale, it was likely an auto-submit from tower height
         if (isStale || !analysisResult?.profile.length) {
             toast({
             title: "Analysis Complete",
@@ -144,7 +136,6 @@ export default function Home() {
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
-    // Trigger re-analysis automatically
     handleSubmit(processSubmit)(); 
   }, [setValue, handleSubmit, processSubmit]);
 
@@ -162,18 +153,9 @@ export default function Home() {
     setIsBottomPanelContentExpanded(true);
   };
 
-  const mapContainerHeightClass = isAnalysisPanelGloballyOpen && isBottomPanelContentExpanded 
-    ? "h-[55vh]" 
-    : isAnalysisPanelGloballyOpen && !isBottomPanelContentExpanded
-    ? "h-[calc(100vh-50px-48px-env(safe-area-inset-bottom))]" // Account for footer, panel handle, and notch
-    : "h-[calc(100vh-40px-48px-env(safe-area-inset-bottom))]"; // Account for header, footer and notch (48px footer, 40px header)
-
   return (
-    <div className="flex-1 flex flex-col overflow-hidden relative">
-      <div 
-        className={`transition-all duration-500 ease-in-out ${mapContainerHeightClass} w-full border-2 border-blue-500`}
-        style={{ height: 'calc(50vh)' }} // Fixed height for map debugging
-      >
+    <div className="flex-1 flex flex-col overflow-hidden relative h-full"> {/* Ensure this container takes full height */}
+      <div className="flex-1 w-full relative"> {/* Map container, takes remaining space, relative for button */}
         <InteractiveMap
           pointA={formPointAForMap && formPointAForMap.lat && formPointAForMap.lng ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name } : undefined}
           pointB={formPointBForMap && formPointBForMap.lat && formPointBForMap.lng ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name } : undefined}
@@ -184,7 +166,7 @@ export default function Home() {
       </div>
 
       {!isAnalysisPanelGloballyOpen && (
-        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 print:hidden">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden"> {/* Adjusted bottom positioning */}
           <Button
             onClick={handleStartAnalysisClick}
             size="lg"
@@ -198,7 +180,7 @@ export default function Home() {
       )}
       
       {isActionPending && (
-         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]"> {/* Increased z-index */}
             <Card className="p-6 shadow-2xl bg-card/90">
               <CardContent className="flex flex-col items-center text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -210,11 +192,10 @@ export default function Home() {
       )}
 
       {serverState?.error && !isActionPending && (
-         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => { 
-             // Clear only the error state, keep form values
-             const currentFormData = getValues(); // Get current form values
-             formAction(new FormData()); // Effectively clears serverState by passing empty FormData
-             reset(currentFormData); // Reset form with existing values to clear dirty state if needed
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={() => { 
+             const currentFormData = getValues(); 
+             formAction(new FormData()); 
+             reset(currentFormData);
            }}>
             <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4">
               <CardHeader>
@@ -228,7 +209,7 @@ export default function Home() {
                   variant="outline" 
                   className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
                   onClick={(e) => { 
-                    e.stopPropagation(); // Prevent click from bubbling to the backdrop div
+                    e.stopPropagation(); 
                     const currentFormData = getValues();
                     formAction(new FormData()); 
                     reset(currentFormData);
@@ -262,4 +243,3 @@ export default function Home() {
     </div>
   );
 }
-

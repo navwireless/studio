@@ -31,10 +31,10 @@ export default function RootLayout({
       <body 
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased 
                    bg-background text-foreground 
-                   flex flex-col h-screen overflow-hidden`}
+                   flex flex-col h-screen overflow-hidden`} // Ensure body itself is overflow-hidden
       >
         <AppHeader />
-        <main className="flex-1 overflow-y-auto"> {/* Changed overflow-hidden to overflow-y-auto to allow main content to scroll if footer makes it too tall */}
+        <main className="flex-1 overflow-hidden relative"> {/* Changed to overflow-hidden and added relative for positioning context */}
           {children}
         </main>
         <Footer />
