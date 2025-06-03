@@ -88,7 +88,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                     }
                 };
             }
-        } else if (isMapInstanceLoaded && mapRef.current && (!formPointA?.lat || !pointB?.lat)) {
+        } else if (isMapInstanceLoaded && mapRef.current && (!formPointA?.lat || !formPointB?.lat)) {
             mapRef.current.setCenter(defaultCenter);
             mapRef.current.setZoom(defaultZoom);
         }
@@ -229,7 +229,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                             }, this)
                         ]
                     }, void 0, true),
-                    formPointA && formPointA.lat && formPointB && formPointB.lat && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Polyline"], {
+                    formPointA && formPointA.lat && formPointA.lng && formPointB && formPointB.lat && formPointB.lng && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Polyline"], {
                         path: [
                             {
                                 lat: formPointA.lat,

@@ -64,7 +64,7 @@ export default function InteractiveMap({
         fullscreenControl: true,
         zoomControl: true,
         gestureHandling: 'cooperative',
-        clickableIcons: false, // Disable default POI clicks if map clicks are for placing markers
+        clickableIcons: false, 
       });
     }
     setIsMapInstanceLoaded(true);
@@ -104,7 +104,7 @@ export default function InteractiveMap({
            }
          };
       }
-    } else if (isMapInstanceLoaded && mapRef.current && (!formPointA?.lat || !pointB?.lat)) {
+    } else if (isMapInstanceLoaded && mapRef.current && (!formPointA?.lat || !formPointB?.lat)) {
         mapRef.current.setCenter(defaultCenter);
         mapRef.current.setZoom(defaultZoom);
     }
@@ -139,7 +139,7 @@ export default function InteractiveMap({
           zoom={defaultZoom}
           onLoad={handleActualMapLoad}
           onUnmount={handleMapUnmount}
-          onClick={handleInternalMapClick} // Use internal handler to manage click target
+          onClick={handleInternalMapClick} 
           options={{ /* Basic options moved to onLoad for safety */ }}
         >
           {formPointA && formPointA.lat && formPointA.lng && (
@@ -182,7 +182,7 @@ export default function InteractiveMap({
             </>
           )}
 
-          {formPointA && formPointA.lat && formPointB && formPointB.lat && (
+          {formPointA && formPointA.lat && formPointA.lng && formPointB && formPointB.lat && formPointB.lng && (
             <Polyline
               path={[
                 { lat: formPointA.lat, lng: formPointA.lng },
@@ -201,3 +201,4 @@ export default function InteractiveMap({
     </div>
   );
 }
+
