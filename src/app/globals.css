@@ -56,91 +56,91 @@ body {
 
 
     /* Default to dark theme variables */
-    /* Adjusted for more minimalist/GIS feel */
-    --background: 222 47% 8%; /* Even darker background */
-    --foreground: 210 40% 95%; /* Slightly softer white */
+    /* Adjusted for more minimalist/GIS feel and better clarity */
+    --background: 222 47% 11%; /* Slightly lighter than 8% for less harshness */
+    --foreground: 210 40% 98%; /* Brighter white */
 
-    --card: 222 40% 12%; /* Darker card, to be made translucent by components */
-    --card-foreground: 210 40% 95%;
+    --card: 222 40% 15%; /* Lighter card */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 222 40% 10%; /* Darker popover, to be made translucent */
-    --popover-foreground: 210 40% 95%;
+    --popover: 222 40% 13%; /* Lighter popover */
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%; /* Bright Blue (UISP style) */
+    --primary: 217 91% 65%; /* Brighter Blue */
     --primary-foreground: 210 40% 98%; 
 
-    --secondary: 217 33% 22%; /* Muted Blue/Gray - slightly darker */
-    --secondary-foreground: 210 40% 85%;
+    --secondary: 217 33% 25%; /* Lighter Muted Blue/Gray */
+    --secondary-foreground: 210 40% 90%; /* Lighter secondary text */
 
-    --muted: 217 33% 15%; /* Darker Muted Blue/Gray */
-    --muted-foreground: 210 20% 55%; /* Softer Gray */
+    --muted: 217 33% 18%; /* Lighter Muted */
+    --muted-foreground: 210 30% 75%; /* Brighter Muted Gray Text */
 
-    --accent: 217 91% 50%; 
+    --accent: 217 91% 55%; 
     --accent-foreground: 210 40% 98%;
 
-    --app-accent: 140 60% 50%; /* Green for LOS success */
+    --app-accent: 140 60% 55%; /* Brighter Green for LOS success */
     --app-accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%; /* Vivid Red */
+    --destructive: 0 72% 55%; /* Brighter Vivid Red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 20%; /* Darker border, or use specific slate borders */
-    --input: 217 33% 18%; /* Darker input background, often overridden by components */
-    --ring: 217 91% 65%; 
+    --border: 217 33% 28%; /* Lighter border */
+    --input: 217 33% 22%; /* Lighter input background */
+    --ring: 217 91% 70%; 
 
-    --chart-1: 217 91% 60%; 
-    --chart-2: 140 60% 50%;  
-    --chart-3: 30 80% 60%;  
-    --chart-4: 280 70% 65%;  
-    --chart-5: 190 70% 55%;  
+    --chart-1: 217 91% 65%; 
+    --chart-2: 140 60% 55%;  
+    --chart-3: 30 80% 65%;  
+    --chart-4: 280 70% 70%;  
+    --chart-5: 190 70% 60%;  
 
-    --los-success-text: 140 70% 70%; /* Slightly desaturated green for text */
-    --los-failure-text: 0 80% 70%; /* Slightly desaturated red for text */
+    --los-success-text: 140 65% 75%; /* Brighter green for text */
+    --los-failure-text: 0 75% 75%; /* Brighter red for text */
     --los-success-foreground: 0 0% 100%; 
     --los-failure-foreground: 0 0% 100%;
   }
 
   .dark {
     /* Dark theme is default, these are identical to :root but kept for explicitness */
-    --background: 222 47% 8%;
-    --foreground: 210 40% 95%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 222 40% 12%;
-    --card-foreground: 210 40% 95%;
+    --card: 222 40% 15%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 222 40% 10%;
-    --popover-foreground: 210 40% 95%;
+    --popover: 222 40% 13%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
+    --primary: 217 91% 65%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 33% 22%;
-    --secondary-foreground: 210 40% 85%;
+    --secondary: 217 33% 25%;
+    --secondary-foreground: 210 40% 90%;
 
-    --muted: 217 33% 15%;
-    --muted-foreground: 210 20% 55%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 210 30% 75%;
 
-    --accent: 217 91% 50%;
+    --accent: 217 91% 55%;
     --accent-foreground: 210 40% 98%;
 
-    --app-accent: 140 60% 50%;
+    --app-accent: 140 60% 55%;
     --app-accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 18%;
-    --ring: 217 91% 65%;
+    --border: 217 33% 28%;
+    --input: 217 33% 22%;
+    --ring: 217 91% 70%;
 
-    --chart-1: 217 91% 60%;
-    --chart-2: 140 60% 50%;
-    --chart-3: 30 80% 60%;
-    --chart-4: 280 70% 65%;
-    --chart-5: 190 70% 55%;
+    --chart-1: 217 91% 65%;
+    --chart-2: 140 60% 55%;
+    --chart-3: 30 80% 65%;
+    --chart-4: 280 70% 70%;
+    --chart-5: 190 70% 60%;
 
-    --los-success-text: 140 70% 70%;
-    --los-failure-text: 0 80% 70%;
+    --los-success-text: 140 65% 75%;
+    --los-failure-text: 0 75% 75%;
     --los-success-foreground: 0 0% 100%;
     --los-failure-foreground: 0 0% 100%;
   }
