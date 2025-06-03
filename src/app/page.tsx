@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useActionState, useCallback, useTransition, useRef } from 'react';
@@ -10,12 +9,10 @@ import { Loader2 } from 'lucide-react';
 
 import InteractiveMap from '@/components/fso/interactive-map';
 import BottomPanel from '@/components/fso/bottom-panel';
-import FresnelSettingsBar from '@/components/fso/fresnel-settings-bar'; // New import
 import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisResult, PointCoordinates, AnalysisFormValues as PageAnalysisFormValues, PointInput } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Info } from 'lucide-react';
 
 const StationPointSchema = z.object({
@@ -66,10 +63,8 @@ export default function Home() {
   const [formErrors, setFormErrors] = useState<Record<string, string[] | undefined> | undefined>(undefined);
   const [isStale, setIsStale] = useState(false);
   
-  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false); // Panel hidden by default
-  const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true); // Internal content expanded by default when panel opens
-  
-  const [hasFirstAnalysisCompleted, setHasFirstAnalysisCompleted] = useState(false);
+  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
+  const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
   
   const { register, handleSubmit, formState: { errors: clientFormErrors, isValid }, control, setValue, getValues } = useForm<PageAnalysisFormValues>({
     resolver: zodResolver(PageAnalysisFormSchema),
@@ -81,7 +76,7 @@ export default function Home() {
     if (isActionPending) return;
     console.log("[page.tsx] processSubmit called with data:", data);
 
-    setAnalysisResult(null);
+    setAnalysisResult(null); // Clear previous results for new analysis
     setClientError(null);
     setFormErrors(undefined);
     setIsStale(false);
@@ -100,7 +95,7 @@ export default function Home() {
     startTransition(() => {
       formAction(formData);
     });
-  }, [isActionPending, formAction, startTransition]); // Added dependencies
+  }, [isActionPending, formAction, startTransition]);
 
 
   useEffect(() => {
@@ -108,7 +103,6 @@ export default function Home() {
 
     if ('error' in serverState && serverState.error) {
       const errorToSet = serverState.error;
-      // Suppress "No analysis performed yet." if we already have results or are loading new ones
       const suppressInitialMessage = errorToSet === "No analysis performed yet." && (analysisResult !== null || isActionPending);
 
       if (!suppressInitialMessage) {
@@ -118,34 +112,30 @@ export default function Home() {
       if (serverState.fieldErrors) {
         setFormErrors(serverState.fieldErrors as Record<string, string[] | undefined>);
       } else if (!suppressInitialMessage) { 
-        // Clear form errors only if we are not suppressing the main error message
-        // and there are no new field errors.
         setFormErrors(undefined);
       }
     } else if (!('error' in serverState)) {
       const resultDataFromServer = serverState as AnalysisResult;
       const currentFormValues = getValues();
 
-      // Ensure point names are preserved from the form when setting analysis result
       const newAnalysisData: AnalysisResult = {
         ...resultDataFromServer,
         pointA: { 
           ...(resultDataFromServer.pointA || {} as any), 
           name: currentFormValues.pointA.name,
-          lat: parseFloat(currentFormValues.pointA.lat), // Ensure lat/lng match form
+          lat: parseFloat(currentFormValues.pointA.lat),
           lng: parseFloat(currentFormValues.pointA.lng),
           towerHeight: currentFormValues.pointA.height,
         },
         pointB: { 
           ...(resultDataFromServer.pointB || {} as any), 
           name: currentFormValues.pointB.name,
-          lat: parseFloat(currentFormValues.pointB.lat), // Ensure lat/lng match form
+          lat: parseFloat(currentFormValues.pointB.lat),
           lng: parseFloat(currentFormValues.pointB.lng),
           towerHeight: currentFormValues.pointB.height,
         },
       };
       
-      // Deep comparison to prevent unnecessary re-renders if data is identical
       if (JSON.stringify(analysisResult) !== JSON.stringify(newAnalysisData)) {
         setAnalysisResult(newAnalysisData);
       }
@@ -154,16 +144,12 @@ export default function Home() {
       setFormErrors(undefined);
       setIsStale(false);
 
-      // If panel is not already open, open it on successful analysis
-      if (newAnalysisData && !isAnalysisPanelGloballyOpen && !hasFirstAnalysisCompleted) {
+      if (newAnalysisData && !isAnalysisPanelGloballyOpen) {
          setIsAnalysisPanelGloballyOpen(true);
          setIsBottomPanelContentExpanded(true);
-         setHasFirstAnalysisCompleted(true);
-      } else if (newAnalysisData && !hasFirstAnalysisCompleted) {
-         setHasFirstAnalysisCompleted(true); // Mark first analysis done even if panel was already open
       }
     }
-  }, [serverState, getValues, isAnalysisPanelGloballyOpen, hasFirstAnalysisCompleted, analysisResult, isActionPending]);
+  }, [serverState, getValues, isAnalysisPanelGloballyOpen, analysisResult, isActionPending ]); // Removed setIsAnalysisPanelGloballyOpen
 
 
   const watchedPointA = useWatch({ control, name: 'pointA' });
@@ -177,7 +163,6 @@ export default function Home() {
     }
 
     const currentFormValues = getValues();
-    // Ensure comparison is between numbers for lat/lng/height/clearance
     const formLatA = parseFloat(currentFormValues.pointA.lat);
     const formLngA = parseFloat(currentFormValues.pointA.lng);
     const formHeightA = currentFormValues.pointA.height; 
@@ -209,7 +194,7 @@ export default function Home() {
   }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, getValues]);
 
   const handleMarkerDragStart = useCallback(() => {
-    setAnalysisResult(null); // Clear previous results on drag start
+    setAnalysisResult(null); 
     setClientError(null);
   }, []);
 
@@ -227,21 +212,18 @@ export default function Home() {
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     if (isActionPending) return;
-
     const clampedHeight = Math.max(0, Math.min(100, parseFloat(newHeight.toFixed(1))));
-    
     setValue(siteId === 'pointA' ? 'pointA.height' : 'pointB.height', clampedHeight, {
       shouldValidate: true,
       shouldTouch: true, 
       shouldDirty: true,
     });
-    // Trigger analysis immediately after height change from graph
     processSubmit(getValues());
   }, [setValue, isActionPending, getValues, processSubmit]);
 
 
-  const mapContainerHeightClass = isAnalysisPanelGloballyOpen ? 'h-[calc(100%_-_45vh_-_56px)]' : 'h-[calc(100%_-_56px)]'; // Adjusted for FresnelSettingsBar (approx 56px height)
-  // Fallback to default values if watched values are invalid or empty
+  const mapContainerHeightClass = isAnalysisPanelGloballyOpen ? 'h-[calc(100%_-_45vh)]' : 'h-full';
+  
   const formPointAForMap = watchedPointA && !isNaN(parseFloat(watchedPointA.lat)) && !isNaN(parseFloat(watchedPointA.lng))
     ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name }
     : { lat: parseFloat(defaultFormStateValues.pointA.lat), lng: parseFloat(defaultFormStateValues.pointA.lng), name: defaultFormStateValues.pointA.name };
@@ -257,18 +239,26 @@ export default function Home() {
   } : null;
 
   const toggleGlobalPanelVisibility = () => {
-    setIsAnalysisPanelGloballyOpen(!isAnalysisPanelGloballyOpen);
-    if (!isAnalysisPanelGloballyOpen) { // If panel is being opened
-        setIsBottomPanelContentExpanded(true); // Ensure its content is expanded
-        if (!analysisResult && !isActionPending) { // If no results and not loading, trigger analysis
-          processSubmit(getValues());
-        }
+    setIsAnalysisPanelGloballyOpen(prev => !prev);
+    if (!isAnalysisPanelGloballyOpen) { 
+        setIsBottomPanelContentExpanded(true); 
+    }
+  };
+  
+  const handleStartAnalysisClick = () => {
+    setIsAnalysisPanelGloballyOpen(true);
+    setIsBottomPanelContentExpanded(true);
+    // Optionally trigger an initial analysis if form is valid and no results yet
+    if (!analysisResult && !isActionPending && isValid) {
+        processSubmit(getValues());
+    } else if (!analysisResult && !isActionPending && !isValid) {
+        // If form is not valid, maybe show a toast or highlight errors
+        handleSubmit(processSubmit)(); // This will trigger validation
     }
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative print:overflow-visible">
-      <FresnelSettingsBar control={control} />
       
       <div className={cn("relative flex-grow", mapContainerHeightClass, "transition-all duration-300 ease-in-out")}>
         <InteractiveMap
@@ -285,16 +275,14 @@ export default function Home() {
         />
       </div>
 
-      {!isAnalysisPanelGloballyOpen && !isActionPending && ( 
+      {!analysisResult && !isActionPending && !isAnalysisPanelGloballyOpen && ( 
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center z-10 pointer-events-none print:hidden">
           <Button
             size="lg"
             className="px-8 py-4 text-lg font-semibold shadow-xl bg-primary hover:bg-primary/90 pointer-events-auto "
-            onClick={() => {
-              toggleGlobalPanelVisibility();
-            }}
+            onClick={handleStartAnalysisClick}
           >
-            Check OpticSpectra FSO Link Feasibility
+            Start Link Analysis
           </Button>
         </div>
       )}
@@ -319,7 +307,7 @@ export default function Home() {
             </div>
         )}
 
-        {(isActionPending && (!analysisResult || (analysisResult && clientError && clientError !== "No analysis performed yet.") ) ) && (
+        {isActionPending && (
              <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex flex-col items-center justify-center z-50 print:hidden">
                 <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
                 <p className="text-slate-200 text-lg font-medium">Loading Analysis Data...</p>
@@ -347,3 +335,4 @@ export default function Home() {
     </div>
   );
 }
+

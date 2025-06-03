@@ -380,7 +380,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$imag
 ;
 function AppHeader() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("header", {
-        className: "bg-transparent backdrop-blur-2px px-2 py-1 h-10 flex items-center justify-between hover:bg-slate-900/10 transition-all duration-200 z-50 relative",
+        className: "bg-transparent px-2 py-1 h-10 flex items-center justify-between hover:bg-slate-900/10 transition-all duration-200 z-50 relative print:hidden",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "flex items-center gap-2",
             children: [
@@ -394,26 +394,26 @@ function AppHeader() {
                     priority: true
                 }, void 0, false, {
                     fileName: "[project]/src/components/layout/app-header.tsx",
-                    lineNumber: 11,
+                    lineNumber: 10,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
                     className: "text-base font-medium tracking-wider text-slate-100/90",
-                    children: "LiFi Feasibility Checker"
+                    children: "LiFi Link Pro"
                 }, void 0, false, {
                     fileName: "[project]/src/components/layout/app-header.tsx",
-                    lineNumber: 20,
+                    lineNumber: 19,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/components/layout/app-header.tsx",
-            lineNumber: 10,
+            lineNumber: 9,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/layout/app-header.tsx",
-        lineNumber: 9,
+        lineNumber: 8,
         columnNumber: 5
     }, this);
 }

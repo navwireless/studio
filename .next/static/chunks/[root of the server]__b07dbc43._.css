@@ -795,6 +795,10 @@ body {
   margin-top: 1.5rem;
 }
 
+.mr-1 {
+  margin-right: .25rem;
+}
+
 .block {
   display: block;
 }
@@ -928,6 +932,10 @@ body {
   height: 100svh;
 }
 
+.h-\[calc\(100\%_-_45vh\)\] {
+  height: calc(100% - 45vh);
+}
+
 .max-h-96 {
   max-height: 24rem;
 }
@@ -1036,6 +1044,10 @@ body {
   width: 100%;
 }
 
+.w-14 {
+  width: 3.5rem;
+}
+
 .min-w-0 {
   min-width: 0;
 }
@@ -1054,6 +1066,10 @@ body {
 
 .min-w-\[var\(--radix-select-trigger-width\)\] {
   min-width: var(--radix-select-trigger-width);
+}
+
+.min-w-fit {
+  min-width: fit-content;
 }
 
 .max-w-4xl {
@@ -1716,6 +1732,11 @@ body {
   padding-bottom: 1rem;
 }
 
+.px-1\.5 {
+  padding-left: .375rem;
+  padding-right: .375rem;
+}
+
 .pb-3 {
   padding-bottom: .75rem;
 }
@@ -1811,6 +1832,10 @@ body {
 .text-xs {
   font-size: .75rem;
   line-height: 1rem;
+}
+
+.text-\[0\.65rem\] {
+  font-size: .65rem;
 }
 
 .font-bold {
@@ -3224,6 +3249,10 @@ body {
     grid-template-columns: 23% minmax(0, 1fr) 23%;
   }
 
+  .md\:grid-cols-\[minmax\(200px\,_1fr\)_minmax\(300px\,_2fr\)_minmax\(200px\,_1fr\)\] {
+    grid-template-columns: minmax(200px, 1fr) minmax(300px, 2fr) minmax(200px, 1fr);
+  }
+
   .md\:flex-row {
     flex-direction: row;
   }
@@ -3232,6 +3261,12 @@ body {
     --tw-space-x-reverse: 0;
     margin-right: calc(1rem * var(--tw-space-x-reverse));
     margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+  }
+
+  .md\:space-x-3 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 0;
+    margin-right: calc(.75rem * var(--tw-space-x-reverse));
+    margin-left: calc(.75rem * calc(1 - var(--tw-space-x-reverse)));
   }
 
   .md\:overflow-y-auto {
@@ -3262,6 +3297,11 @@ body {
   .md\:py-2 {
     padding-top: .5rem;
     padding-bottom: .5rem;
+  }
+
+  .md\:py-1\.5 {
+    padding-top: .375rem;
+    padding-bottom: .375rem;
   }
 
   .md\:text-\[0\.65rem\] {

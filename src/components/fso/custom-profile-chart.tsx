@@ -1,4 +1,3 @@
-
 // src/components/fso/custom-profile-chart.tsx
 "use client";
 
@@ -12,13 +11,13 @@ interface CustomProfileChartProps {
   pointBName?: string;
   isStale?: boolean;
   totalDistanceKm?: number;
-  isLoading?: boolean; 
-  onTowerHeightChangeFromGraph?: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
+  isActionPending?: boolean; 
+  onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
 }
 
-const PADDING = { top: 20, right: 30, bottom: 40, left: 50 }; 
-const TEXT_COLOR = 'hsl(210, 20%, 55%)'; // Muted foreground for axes
-const GRID_COLOR = 'hsla(217, 33%, 20%, 0.7)'; // Darker grid, increased visibility
+const PADDING_BASE = { top: 20, right: 30, bottom: 40, left: 50 }; 
+const TEXT_COLOR = 'hsl(210, 20%, 55%)'; 
+const GRID_COLOR = 'hsla(217, 33%, 20%, 0.7)'; 
 
 const TERRAIN_FILL_COLOR = 'rgba(99, 102, 241, 0.35)';
 const TERRAIN_STROKE_COLOR = 'rgba(99, 102, 241, 0.6)';
@@ -27,10 +26,9 @@ const TOWER_LINE_COLOR = '#eab308';
 const HOVER_GUIDE_LINE_COLOR = 'rgba(200, 200, 200, 0.5)';
 const HOVER_DOT_COLOR = '#22d3ee'; 
 
-// Updated Tooltip Colors for Dark Style
-const TOOLTIP_BG_COLOR = 'hsla(222, 40%, 10%, 0.9)'; // Dark, semi-transparent popover-like bg
-const TOOLTIP_TEXT_COLOR = 'hsl(210, 40%, 95%)';   // Light popover-like foreground
-const TOOLTIP_BORDER_COLOR = 'hsl(217, 33%, 20%)'; // Subtle border
+const TOOLTIP_BG_COLOR = 'hsla(222, 40%, 10%, 0.9)';
+const TOOLTIP_TEXT_COLOR = 'hsl(210, 40%, 95%)';  
+const TOOLTIP_BORDER_COLOR = 'hsl(217, 33%, 20%)'; 
 
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
   ctx.beginPath();
@@ -46,6 +44,20 @@ function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, wi
   ctx.closePath();
 }
 
+interface ChartMetrics {
+  padding: typeof PADDING_BASE;
+  canvasRect: DOMRect | null;
+  chartPixelWidth: number;
+  chartPixelHeight: number;
+  minYData: number;
+  maxYData: number;
+  maxXKm: number;
+  getPixelXFromKm: (distanceKm: number) => number;
+  getPixelYFromElevation: (elevation: number) => number;
+  getElevationFromPixelY: (pixelY: number) => number;
+  getKmFromPixelX: (pixelX: number) => number;
+}
+
 
 export default function CustomProfileChart({
   data,
@@ -53,7 +65,7 @@ export default function CustomProfileChart({
   pointBName = "Site B",
   isStale,
   totalDistanceKm,
-  isLoading,
+  isActionPending, // Changed from isLoading
   onTowerHeightChangeFromGraph
 }: CustomProfileChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,10 +73,10 @@ export default function CustomProfileChart({
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
 
   const [draggingTower, setDraggingTower] = useState<'A' | 'B' | null>(null);
-  const [towerDragStartY, setTowerDragStartY] = useState(0); 
-  const [initialTowerHeightValue, setInitialTowerHeightValue] = useState(0); 
-  const [isGraphUpdatingByDrag, setIsGraphUpdatingByDrag] = useState(false);
+  const [dragStartInfo, setDragStartInfo] = useState<{ clientY: number; initialTowerHeightMeters: number; siteTerrainElevation: number} | null>(null);
+  const [isInteractingByDrag, setIsInteractingByDrag] = useState(false);
 
+  const chartMetricsRef = useRef<ChartMetrics | null>(null);
 
   const drawChart = useCallback(() => {
     const canvas = canvasRef.current;
@@ -84,6 +96,7 @@ export default function CustomProfileChart({
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
     
+    const PADDING = PADDING_BASE;
     const chartWidth = rect.width - PADDING.left - PADDING.right;
     const chartHeight = rect.height - PADDING.top - PADDING.bottom;
 
@@ -101,13 +114,29 @@ export default function CustomProfileChart({
     if (maxY === minY) { maxY +=10; minY -=10; }
     if (maxY < minY) [maxY, minY] = [minY, maxY]; 
 
-    const maxXKm = totalDistanceKm; 
-    const maxX = maxXKm * 1000; 
+    const maxXKmActual = totalDistanceKm; 
 
-    const getX = (distanceKm: number) => (distanceKm / maxXKm) * chartWidth;
+    const getX = (distanceKm: number) => (distanceKm / maxXKmActual) * chartWidth;
     const getY = (elevation: number) => chartHeight - ((elevation - minY) / (maxY - minY)) * chartHeight;
+    const getElevationFromY = (pixelY: number) => minY + ((chartHeight - pixelY) / chartHeight) * (maxY - minY);
+    const getKmFromX = (pixelX: number) => (pixelX / chartWidth) * maxXKmActual;
 
-    // 1. Draw Grid Lines
+
+    chartMetricsRef.current = {
+        padding: PADDING,
+        canvasRect: rect,
+        chartPixelWidth: chartWidth,
+        chartPixelHeight: chartHeight,
+        minYData: minY,
+        maxYData: maxY,
+        maxXKm: maxXKmActual,
+        getPixelXFromKm: getX,
+        getPixelYFromElevation: getY,
+        getElevationFromPixelY: getElevationFromY,
+        getKmFromPixelX: getKmFromX,
+    };
+
+
     ctx.strokeStyle = GRID_COLOR;
     ctx.lineWidth = 0.5;
     ctx.font = "9px Inter, sans-serif";
@@ -118,28 +147,27 @@ export default function CustomProfileChart({
     ctx.textBaseline = "middle";
     for (let i = 0; i <= numYTicks; i++) {
       const val = minY + (i / numYTicks) * (maxY - minY);
-      const y = getY(val);
+      const yPx = getY(val);
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(chartWidth, y);
+      ctx.moveTo(0, yPx);
+      ctx.lineTo(chartWidth, yPx);
       ctx.stroke();
-      ctx.fillText(val.toFixed(0) + "m", -8, y);
+      ctx.fillText(val.toFixed(0) + "m", -8, yPx);
     }
 
-    const numXTicks = Math.min(5, Math.max(1, Math.floor(totalDistanceKm / (totalDistanceKm > 5 ? 2 : 1) ) ) ); 
+    const numXTicks = Math.min(5, Math.max(1, Math.floor(maxXKmActual / (maxXKmActual > 5 ? 2 : 1) ) ) ); 
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     for (let i = 0; i <= numXTicks; i++) {
-      const distKm = (i / numXTicks) * maxXKm;
-      const x = getX(distKm);
+      const distKm = (i / numXTicks) * maxXKmActual;
+      const xPx = getX(distKm);
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, chartHeight);
+      ctx.moveTo(xPx, 0);
+      ctx.lineTo(xPx, chartHeight);
       ctx.stroke();
-      ctx.fillText((distKm*1000).toFixed(0) + "m", x, chartHeight + 8);
+      ctx.fillText((distKm*1000).toFixed(0) + "m", xPx, chartHeight + 8);
     }
     
-    // 2. Draw Terrain Profile
     ctx.beginPath();
     ctx.moveTo(getX(data[0].distance), getY(data[0].terrainElevation));
     data.forEach(p => ctx.lineTo(getX(p.distance), getY(p.terrainElevation)));
@@ -155,7 +183,6 @@ export default function CustomProfileChart({
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // 3. Draw LOS Line
     ctx.beginPath();
     ctx.moveTo(getX(data[0].distance), getY(data[0].losHeight));
     ctx.lineTo(getX(data[data.length - 1].distance), getY(data[data.length - 1].losHeight));
@@ -163,7 +190,6 @@ export default function CustomProfileChart({
     ctx.lineWidth = 1.5; 
     ctx.stroke();
 
-    // 4. Draw Tower Lines and Site Names (with interactive handles)
     ctx.fillStyle = TEXT_COLOR; 
     ctx.font = "bold 10px Inter, sans-serif";
     ctx.textAlign = "center";
@@ -171,7 +197,6 @@ export default function CustomProfileChart({
 
     const towerHandleRadiusVisual = 6;
 
-    // Site A Tower
     const xA = getX(data[0].distance);
     const yTerrainA = getY(data[0].terrainElevation);
     const yLosA = getY(data[0].losHeight);
@@ -181,18 +206,16 @@ export default function CustomProfileChart({
     ctx.moveTo(xA, yTerrainA);
     ctx.lineTo(xA, yLosA);
     ctx.stroke();
-    // Handle
     ctx.beginPath();
     ctx.arc(xA, yLosA, towerHandleRadiusVisual, 0, 2 * Math.PI); 
     ctx.fillStyle = TOWER_LINE_COLOR; 
     ctx.fill();
-    ctx.strokeStyle = TOOLTIP_BG_COLOR; // Outline handle
+    ctx.strokeStyle = TOOLTIP_BG_COLOR; 
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.fillStyle = TEXT_COLOR; 
     ctx.fillText(pointAName, xA, yLosA - (towerHandleRadiusVisual + 2)); 
 
-    // Site B Tower
     const xB = getX(data[data.length - 1].distance);
     const yTerrainB = getY(data[data.length - 1].terrainElevation);
     const yLosB = getY(data[data.length - 1].losHeight);
@@ -202,7 +225,6 @@ export default function CustomProfileChart({
     ctx.moveTo(xB, yTerrainB);
     ctx.lineTo(xB, yLosB);
     ctx.stroke();
-    // Handle
     ctx.beginPath();
     ctx.arc(xB, yLosB, towerHandleRadiusVisual, 0, 2 * Math.PI); 
     ctx.fillStyle = TOWER_LINE_COLOR;
@@ -214,7 +236,6 @@ export default function CustomProfileChart({
     ctx.fillText(pointBName, xB, yLosB - (towerHandleRadiusVisual + 2));
 
 
-    // 5. Draw Hover Effects
     if (hoverData && !draggingTower) { 
       const hxPx = hoverData.xPx; 
       const hyPxLos = hoverData.yPx; 
@@ -239,7 +260,6 @@ export default function CustomProfileChart({
     
     ctx.setTransform(originalTransform);
 
-    // 6. Draw Tooltip
     if (hoverData && mousePosition && !draggingTower) { 
         const p = hoverData.point;
         const lines = [
@@ -300,38 +320,19 @@ export default function CustomProfileChart({
     if (!canvas) return;
 
     const handleMouseMoveForTooltip = (event: MouseEvent) => {
-        if (draggingTower) return; 
+        if (draggingTower || !chartMetricsRef.current || !data || data.length < 2) return; 
 
-        if (!data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null) {
-            setHoverData(null);
-            setMousePosition(null);
-            return;
-        }
+        const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation, getKmFromPixelX } = chartMetricsRef.current;
+        if (!canvasRect) return;
 
-        const rect = canvas.getBoundingClientRect();
-        const mouseCanvasX = event.clientX - rect.left;
-        const mouseCanvasY = event.clientY - rect.top;
+        const mouseCanvasX = event.clientX - canvasRect.left;
+        const mouseCanvasY = event.clientY - canvasRect.top;
         setMousePosition({ x: mouseCanvasX, y: mouseCanvasY });
 
-        const chartWidth = rect.width - PADDING.left - PADDING.right;
-        const chartHeight = rect.height - PADDING.top - PADDING.bottom;
-        const mouseXInChartArea = mouseCanvasX - PADDING.left;
+        const mouseXInChartArea = mouseCanvasX - padding.left;
         
-        const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
-        let tempMinY = Math.min(...elevations);
-        let tempMaxY = Math.max(...elevations);
-        const yDataRange = tempMaxY - tempMinY;
-        tempMinY -= yDataRange * 0.15;
-        tempMaxY += yDataRange * 0.15;
-        if (tempMaxY === tempMinY) { tempMaxY +=10; tempMinY -=10; }
-        if (tempMaxY < tempMinY) [tempMaxY, tempMinY] = [tempMinY, tempMaxY];
-
-        const getXPx = (distKm: number) => (distKm / totalDistanceKm) * chartWidth;
-        const getYPx = (elev: number) => chartHeight - ((elev - tempMinY) / (tempMaxY - tempMinY)) * chartHeight;
-
-
-        if (mouseXInChartArea >= 0 && mouseXInChartArea <= chartWidth) {
-            const distanceKmHovered = (mouseXInChartArea / chartWidth) * totalDistanceKm;
+        if (mouseXInChartArea >= 0 && mouseXInChartArea <= chartMetricsRef.current.chartPixelWidth) {
+            const distanceKmHovered = getKmFromPixelX(mouseXInChartArea);
             let closestPoint = data[0];
             let minDiff = Math.abs(data[0].distance - distanceKmHovered);
             for (let i = 1; i < data.length; i++) {
@@ -343,8 +344,8 @@ export default function CustomProfileChart({
             }
             
             setHoverData({
-                xPx: getXPx(closestPoint.distance), 
-                yPx: getYPx(closestPoint.losHeight), 
+                xPx: getPixelXFromKm(closestPoint.distance) + padding.left, 
+                yPx: getPixelYFromElevation(closestPoint.losHeight) + padding.top, 
                 point: { ...closestPoint, distanceMeters: closestPoint.distance * 1000 }
             });
         } else {
@@ -359,51 +360,45 @@ export default function CustomProfileChart({
     };
 
     const handleCanvasMouseDown = (event: MouseEvent) => {
-        if (!canvasRef.current || !data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null || !onTowerHeightChangeFromGraph) return;
+        if (!canvasRef.current || !data || data.length < 2 || !chartMetricsRef.current || !onTowerHeightChangeFromGraph) return;
     
-        const rect = canvasRef.current.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
+        const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation } = chartMetricsRef.current;
+        if (!canvasRect) return;
+
+        const clickX = event.clientX - canvasRect.left;
+        const clickY = event.clientY - canvasRect.top;
     
-        const chartWidth = rect.width - PADDING.left - PADDING.right;
-        const chartHeight = rect.height - PADDING.top - PADDING.bottom;
+        const towerHandleClickRadius = 10; // Increased hit area
     
-        const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
-        let tempMinY = Math.min(...elevations);
-        let tempMaxY = Math.max(...elevations);
-        const yDataRange = tempMaxY - tempMinY;
-        tempMinY -= yDataRange * 0.15; tempMaxY += yDataRange * 0.15;
-        if (tempMaxY === tempMinY) { tempMaxY +=10; tempMinY -=10; }
-        if (tempMaxY < tempMinY) [tempMaxY, tempMinY] = [tempMinY, tempMaxY];
-    
-        const getCanvasX = (distanceKm: number) => PADDING.left + (distanceKm / totalDistanceKm) * chartWidth;
-        const getCanvasY = (elevation: number) => PADDING.top + (chartHeight - ((elevation - tempMinY) / (tempMaxY - tempMinY)) * chartHeight);
-    
-        const towerHandleClickRadius = 8; 
-    
-        const towerAx = getCanvasX(data[0].distance);
-        const towerAy = getCanvasY(data[0].losHeight);
+        const towerAx = getPixelXFromKm(data[0].distance) + padding.left;
+        const towerAy = getPixelYFromElevation(data[0].losHeight) + padding.top;
         const distA = Math.sqrt(Math.pow(clickX - towerAx, 2) + Math.pow(clickY - towerAy, 2));
     
         if (distA < towerHandleClickRadius) {
             setDraggingTower('A');
-            setTowerDragStartY(event.clientY);
-            setInitialTowerHeightValue(data[0].losHeight - data[0].terrainElevation);
-            setIsGraphUpdatingByDrag(true);
+            setDragStartInfo({
+                clientY: event.clientY,
+                initialTowerHeightMeters: data[0].losHeight - data[0].terrainElevation,
+                siteTerrainElevation: data[0].terrainElevation
+            });
+            setIsInteractingByDrag(true);
             if(canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
             event.preventDefault();
             return;
         }
     
-        const towerBx = getCanvasX(data[data.length - 1].distance);
-        const towerBy = getCanvasY(data[data.length - 1].losHeight);
+        const towerBx = getPixelXFromKm(data[data.length - 1].distance) + padding.left;
+        const towerBy = getPixelYFromElevation(data[data.length - 1].losHeight) + padding.top;
         const distB = Math.sqrt(Math.pow(clickX - towerBx, 2) + Math.pow(clickY - towerBy, 2));
     
         if (distB < towerHandleClickRadius) {
             setDraggingTower('B');
-            setTowerDragStartY(event.clientY);
-            setInitialTowerHeightValue(data[data.length - 1].losHeight - data[data.length - 1].terrainElevation);
-            setIsGraphUpdatingByDrag(true);
+            setDragStartInfo({
+                clientY: event.clientY,
+                initialTowerHeightMeters: data[data.length - 1].losHeight - data[data.length - 1].terrainElevation,
+                siteTerrainElevation: data[data.length-1].terrainElevation
+            });
+            setIsInteractingByDrag(true);
             if(canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
             event.preventDefault();
             return;
@@ -427,75 +422,58 @@ export default function CustomProfileChart({
       canvas.removeEventListener('mouseout', handleMouseOutForTooltip);
       canvas.removeEventListener('mousedown', handleCanvasMouseDown);
     };
-  }, [drawChart, data, totalDistanceKm, PADDING.left, PADDING.top, onTowerHeightChangeFromGraph, draggingTower]); 
+  }, [drawChart, data, totalDistanceKm, onTowerHeightChangeFromGraph, draggingTower]); 
   
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!draggingTower || !canvas || !data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null || !onTowerHeightChangeFromGraph) {
+    if (!draggingTower || !dragStartInfo || !canvas || !chartMetricsRef.current || !onTowerHeightChangeFromGraph) {
         if (canvas && canvas.style.cursor === 'grabbing') canvas.style.cursor = 'crosshair'; 
         return;
     }
 
+    const { chartPixelHeight, minYData, maxYData } = chartMetricsRef.current;
+
     const handleGlobalMouseMove = (event: MouseEvent) => {
-        if (!canvasRef.current) return;
-        const rect = canvasRef.current.getBoundingClientRect();
-        const chartHeightPixels = rect.height - PADDING.top - PADDING.bottom;
+        if (!dragStartInfo || chartPixelHeight <= 0) return;
 
-        if (chartHeightPixels <=0) return; 
-
-        const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
-        let dataMinY = Math.min(...elevations);
-        let dataMaxY = Math.max(...elevations);
-        const yDataRangeVal = dataMaxY - dataMinY; // Renamed to avoid conflict
-        dataMinY -= yDataRangeVal * 0.15; dataMaxY += yDataRangeVal * 0.15;
-        if (dataMaxY === dataMinY) { dataMaxY +=10; dataMinY -=10; }
-        if (dataMaxY < dataMinY) [dataMaxY, dataMinY] = [dataMinY, dataMaxY];
-
-
-        const heightPerPixel = (dataMaxY - dataMinY) / chartHeightPixels;
-        const clientYDelta = event.clientY - towerDragStartY;
-        const heightChange = clientYDelta * heightPerPixel * -1; 
-        let newTowerHeight = initialTowerHeightValue + heightChange;
-        newTowerHeight = Math.max(0, Math.min(100, newTowerHeight)); 
+        const heightPerPixel = (maxYData - minYData) / chartPixelHeight;
+        const clientYDelta = event.clientY - dragStartInfo.clientY;
+        const heightChangeInElevationUnits = clientYDelta * heightPerPixel * -1; 
+        
+        let newTowerAbsoluteElevation = (dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation) + heightChangeInElevationUnits;
+        let newTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
+        
+        newTowerHeightRelativeToTerrain = Math.max(0, Math.min(100, parseFloat(newTowerHeightRelativeToTerrain.toFixed(1))));
+        
+        // For immediate visual feedback (optional, can be complex to implement smoothly without full re-render)
+        // You might temporarily update a visual representation here if desired,
+        // but the primary update will happen via onTowerHeightChangeFromGraph -> form update -> re-analysis -> chart re-render.
     };
 
     const handleGlobalMouseUp = (event: MouseEvent) => {
-        if (!canvasRef.current) {
+        if (!dragStartInfo || chartPixelHeight <= 0) {
             setDraggingTower(null);
-            setIsGraphUpdatingByDrag(false);
-            return;
-        }
-        const rect = canvasRef.current.getBoundingClientRect();
-        const chartHeightPixels = rect.height - PADDING.top - PADDING.bottom;
-
-        if (chartHeightPixels <=0) { 
-            setDraggingTower(null);
+            setDragStartInfo(null);
             if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
-            setIsGraphUpdatingByDrag(false);
+            setIsInteractingByDrag(false);
             return;
         }
 
-        const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
-        let dataMinY = Math.min(...elevations);
-        let dataMaxY = Math.max(...elevations);
-        const yDataRangeVal = dataMaxY - dataMinY; // Renamed
-        dataMinY -= yDataRangeVal * 0.15; dataMaxY += yDataRangeVal * 0.15;
-        if (dataMaxY === dataMinY) { dataMaxY +=10; dataMinY -=10; }
-        if (dataMaxY < dataMinY) [dataMaxY, dataMinY] = [dataMinY, dataMaxY];
-
-        const heightPerPixel = (dataMaxY - dataMinY) / chartHeightPixels;
-        const clientYDelta = event.clientY - towerDragStartY;
-        const heightChange = clientYDelta * heightPerPixel * -1;
-        let finalNewTowerHeight = initialTowerHeightValue + heightChange;
-        finalNewTowerHeight = Math.max(0, Math.min(100, parseFloat(finalNewTowerHeight.toFixed(1))));
+        const heightPerPixel = (maxYData - minYData) / chartPixelHeight;
+        const clientYDelta = event.clientY - dragStartInfo.clientY;
+        const heightChangeInElevationUnits = clientYDelta * heightPerPixel * -1;
         
-        if (draggingTower && onTowerHeightChangeFromGraph) {
-             onTowerHeightChangeFromGraph(draggingTower === 'A' ? 'pointA' : 'pointB', finalNewTowerHeight);
-        }
+        let newTowerAbsoluteElevation = (dragStartInfo.initialTowerHeightMeters + dragStartInfo.siteTerrainElevation) + heightChangeInElevationUnits;
+        let finalNewTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
+
+        finalNewTowerHeightRelativeToTerrain = Math.max(0, Math.min(100, parseFloat(finalNewTowerHeightRelativeToTerrain.toFixed(1))));
+        
+        onTowerHeightChangeFromGraph(draggingTower === 'A' ? 'pointA' : 'pointB', finalNewTowerHeightRelativeToTerrain);
         
         setDraggingTower(null);
+        setDragStartInfo(null);
         if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
-        setIsGraphUpdatingByDrag(false); 
+        setIsInteractingByDrag(false); 
     };
 
     window.addEventListener('mousemove', handleGlobalMouseMove);
@@ -506,24 +484,24 @@ export default function CustomProfileChart({
         window.removeEventListener('mouseup', handleGlobalMouseUp);
         if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
     };
-  }, [draggingTower, towerDragStartY, initialTowerHeightValue, data, totalDistanceKm, onTowerHeightChangeFromGraph, PADDING.top, PADDING.bottom]); // Removed isGraphUpdatingByDrag from deps
+  }, [draggingTower, dragStartInfo, data, totalDistanceKm, onTowerHeightChangeFromGraph, chartMetricsRef]);
 
   useEffect(() => { 
       drawChart();
-  }, [hoverData, mousePosition, drawChart]);
+  }, [hoverData, mousePosition, drawChart, data]); // Added data to re-draw if data changes
 
 
-  if (isGraphUpdatingByDrag) { 
+  if (isInteractingByDrag) { 
       return (
           <div className={cn("h-full flex items-center justify-center p-2 bg-slate-700/30 rounded-md relative", isStale && "opacity-50")}>
               <p className="text-slate-300 text-xs text-center">Adjusting tower height...</p>
           </div>
       );
   }
-  if (isLoading && !isGraphUpdatingByDrag) { // Only show parent's loading if not internally drag-loading
+  if (isActionPending && !isInteractingByDrag) {
       return (
           <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md", isStale && "opacity-50")}>
-              <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
+              <p className="text-muted-foreground text-xs text-center">Analyzing...</p>
           </div>
       );
   }
@@ -533,18 +511,16 @@ export default function CustomProfileChart({
     return (
         <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md", isStale && "opacity-50")}>
           <p className="text-muted-foreground text-xs text-center">
-            Not enough data to display profile. Perform analysis.
+            Not enough data to display profile.
           </p>
         </div>
     );
   }
 
   return (
-    <div className={cn("w-full h-full relative", isStale && "opacity-50")}>
+    <div className={cn("w-full h-full relative", isStale && "opacity-50 pointer-events-auto", (isActionPending || isInteractingByDrag) && "pointer-events-none")}>
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', cursor: draggingTower ? 'grabbing': 'crosshair' }} />
     </div>
   );
 }
-    
-
     
