@@ -19,32 +19,41 @@ const defaultZoom = 5; // Zoom level to show most of India
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { name?: string });
   pointB?: (PointCoordinates & { name?: string });
-  // analyzedData?: { pointA: PointCoordinates; pointB: PointCoordinates; losPossible: boolean; } | null; // Commented for simplification
-  // isStale?: boolean; // Commented for simplification
-  // isActionPending?: boolean; // Commented for simplification
-  // onMarkerDragStartA?: () => void; // Commented for simplification
-  // onMarkerDragStartB?: () => void; // Commented for simplification
-  // onMarkerDragEndA?: (coords: PointCoordinates) => void; // Commented for simplification
-  // onMarkerDragEndB?: (coords: PointCoordinates) => void; // Commented for simplification
   mapContainerClassName?: string;
 }
 
 export default function InteractiveMap({
-  pointA: formPointA, // Will be undefined in current page.tsx simplified state
-  pointB: formPointB, // Will be undefined
+  pointA: formPointA,
+  pointB: formPointB,
   mapContainerClassName = "w-full h-full",
 }: InteractiveMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
-  const [isMapInstanceLoaded, setIsMapInstanceLoaded] = useState(false); // To track if GoogleMap's onLoad fired
+  const [isMapInstanceLoaded, setIsMapInstanceLoaded] = useState(false);
 
   console.log("[InteractiveMap] Rendering component.");
 
   const handleActualMapLoad = useCallback((mapInstance: google.maps.Map) => {
     console.log("[InteractiveMap] GoogleMap onLoad callback fired. Map instance:", mapInstance);
     mapRef.current = mapInstance;
-    mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE); // Explicitly set map type
+
+    // Check if google object is available before using its properties
+    if (window.google && window.google.maps) {
+      mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      mapInstance.setOptions({
+        streetViewControl: true,
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+          position: google.maps.ControlPosition.TOP_RIGHT,
+        },
+        fullscreenControl: true,
+        zoomControl: true,
+        gestureHandling: 'cooperative',
+      });
+    } else {
+      console.error("[InteractiveMap] google.maps object not available in handleActualMapLoad");
+    }
     setIsMapInstanceLoaded(true);
-    // No need to setCenter/Zoom here if GoogleMap component has them directly
   }, []);
 
   const handleMapUnmount = useCallback(() => {
@@ -53,16 +62,15 @@ export default function InteractiveMap({
     setIsMapInstanceLoaded(false);
   }, []);
 
-  // Effect to fit bounds if points are provided and map is loaded
   useEffect(() => {
     if (isMapInstanceLoaded && mapRef.current && formPointA && formPointB && formPointA.lat && formPointA.lng && formPointB.lat && formPointB.lng) {
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(new google.maps.LatLng(formPointA.lat, formPointA.lng));
-      bounds.extend(new google.maps.LatLng(formPointB.lat, formPointB.lng));
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
+      bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
       if (!bounds.isEmpty()) {
         console.log("[InteractiveMap] Fitting bounds to markers.");
         mapRef.current.fitBounds(bounds);
-        const listener = google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
+        const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
           if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
             mapRef.current.setZoom(17);
           } else if (mapRef.current?.getZoom() && mapRef.current.getZoom()! < 3) {
@@ -70,20 +78,21 @@ export default function InteractiveMap({
           }
         });
         return () => {
-          if (listener) google.maps.event.removeListener(listener);
+          if (listener && window.google && window.google.maps) {
+             window.google.maps.event.removeListener(listener);
+          }
         };
       }
     } else if (isMapInstanceLoaded && mapRef.current && (!formPointA || !formPointB)) {
         console.log("[InteractiveMap] mapRef and instance loaded, but no valid points. Ensuring default view.");
-        mapRef.current.setCenter(defaultCenter); // Ensure default center if points disappear
+        mapRef.current.setCenter(defaultCenter);
         mapRef.current.setZoom(defaultZoom);
     }
   }, [formPointA, formPointB, isMapInstanceLoaded]);
 
 
   return (
-    // This div gets mapContainerClassName (w-full h-full)
-    <div className={`${mapContainerClassName} bg-lime-500/20`}> {/* Changed debug color */}
+    <div className={`${mapContainerClassName} bg-lime-500/20`}> {/* DEBUG BG for InteractiveMap root */}
       <LoadScript
         googleMapsApiKey={GOOGLE_MAPS_API_KEY}
         loadingElement={
@@ -94,38 +103,34 @@ export default function InteractiveMap({
         }
         onError={(error) => {
           console.error("[InteractiveMap] CRITICAL LoadScript.onError:", error);
-          // This component should display a more user-friendly error UI based on this
+        }}
+        onLoad={() => {
+          console.log("[InteractiveMap] LoadScript.onLoad: Google Maps API script should be loaded.");
         }}
       >
         <GoogleMap
           mapContainerStyle={{
-            width: '100%', // Takes width of its direct parent (the LoadScript-rendered div or the lime div)
-            height: '100%', // Takes height of its direct parent
-            border: '5px solid magenta' // Changed border color for visibility
+            width: '100%',
+            height: '100%',
+            border: '5px solid magenta' // DEBUG BORDER for GoogleMap container
           }}
-          center={defaultCenter} // Provide initial center
-          zoom={defaultZoom}     // Provide initial zoom
+          center={defaultCenter}
+          zoom={defaultZoom}
           onLoad={handleActualMapLoad}
           onUnmount={handleMapUnmount}
+          // Options that do not depend on google.maps.* can remain here if needed,
+          // but it's cleaner to set most map-specific options in onLoad.
+          // For this fix, we move all problematic options to handleActualMapLoad.
           options={{
-            streetViewControl: true,
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-              style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-              position: google.maps.ControlPosition.TOP_RIGHT,
-            },
-            fullscreenControl: true,
-            zoomControl: true,
-            gestureHandling: 'cooperative',
-            // mapTypeId: google.maps.MapTypeId.SATELLITE, // Set in onLoad for clarity
+            // Basic options can stay, e.g. minZoom, maxZoom, if not google.maps dependent.
+            // gestureHandling: 'cooperative', // Moved to setOptions
+            // streetViewControl: false, // Moved
+            // mapTypeControl: false, // Moved
+            // fullscreenControl: false, // Moved
+            // zoomControl: false // Moved
           }}
         >
           {/* Markers, Polylines, Overlays are commented out for this test */}
-          {/* Example:
-          {formPointA && !isNaN(Number(formPointA.lat)) && !isNaN(Number(formPointA.lng)) && (
-            <Marker key="marker-a" position={{ lat: Number(formPointA.lat), lng: Number(formPointA.lng) }} />
-          )}
-          */}
         </GoogleMap>
       </LoadScript>
     </div>
