@@ -5,10 +5,10 @@ export type PointCoordinates = {
 };
 
 export type PointInput = {
-  name: string;
-  lat: string; // Keep as string for form input
-  lng: string; // Keep as string for form input
-  height: number; // Number for controlled component (slider/TowerHeightControl)
+  name: string; 
+  lat: string; 
+  lng: string; 
+  height: number; 
 };
 
 export type AnalysisFormValues = {
@@ -34,20 +34,29 @@ export type LOSPoint = {
   terrainElevation: number;
   losHeight: number;
   clearance: number;
-  fresnelRadius?: number; // Optional: For future Fresnel zone display
+  fresnelRadius?: number; 
 };
 
 export type AnalysisResult = {
-  id: string; // Unique identifier for history
+  id: string; 
   losPossible: boolean;
   distanceKm: number;
   minClearance: number | null;
   additionalHeightNeeded: number | null;
   profile: LOSPoint[];
   message: string;
-  pointA: PointCoordinates & { towerHeight: number; name?: string }; // Made pointA and pointB non-optional
-  pointB: PointCoordinates & { towerHeight: number; name?: string }; // Made pointA and pointB non-optional
+  pointA: PointCoordinates & { towerHeight: number; name?: string }; 
+  pointB: PointCoordinates & { towerHeight: number; name?: string }; 
   clearanceThresholdUsed: number;
-  timestamp: number; // To sort or display history items
+  timestamp: number; 
 };
+
+// Add this new type for TypeScript to recognize the file-saver saveAs function
+declare module 'file-saver' {
+  export function saveAs(data: Blob | string, filename?: string, options?: FileSaverOptions): void;
+}
+
+export interface FileSaverOptions {
+    autoBom?: boolean;
+}
 

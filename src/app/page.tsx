@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useId } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, Waypoints, MapPin } from 'lucide-react'; // Added MapPin
+import { Loader2, AlertTriangle, Waypoints, MapPin } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
 import HistoryPanel from '@/components/layout/history-panel';
 import { calculateDistanceKm } from '@/lib/los-calculator';
+import { generateReportDocx } from '@/lib/report-generator';
 
 
 const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
@@ -91,16 +92,12 @@ export default function Home() {
           duration: 7000,
         });
       } else if ('losPossible' in serverState) {
-        // Explicitly type assertion for successful result
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>; 
         
         const newResultWithId: AnalysisResult = {
           ...successfulResult,
-          id: new Date().toISOString() + Math.random().toString(36).substring(2,9), // Simple unique ID
+          id: new Date().toISOString() + Math.random().toString(36).substring(2,9), 
           timestamp: Date.now(),
-          // Ensure pointA and pointB from params are correctly structured if they were part of serverState
-          // If serverState already includes full pointA/pointB from params, this might be redundant
-          // but ensures they are present as per AnalysisResult type.
           pointA: { 
             name: getValues('pointA.name'), 
             lat: parseFloat(getValues('pointA.lat')), 
@@ -117,7 +114,7 @@ export default function Home() {
         };
 
         setAnalysisResult(newResultWithId);
-        setHistoryList(prev => [newResultWithId, ...prev.slice(0, 19)]); // Keep last 20 history items
+        setHistoryList(prev => [newResultWithId, ...prev.slice(0, 19)]); 
         setLiveDistanceKm(newResultWithId.distanceKm);
         
         const currentFormValues = getValues(); 
@@ -138,23 +135,19 @@ export default function Home() {
   }, [serverState, toast, reset, getValues, isAnalysisPanelGloballyOpen, setValue]);
   
   // Effect to determine if form data is stale compared to current analysisResult
-  useEffect(() => {
+   useEffect(() => {
     const formValues = getValues();
     const currentPointA = formValues.pointA;
     const currentPointB = formValues.pointB;
     const currentClearanceStr = formValues.clearanceThreshold;
 
-    let newIsStale = false;
+    let stale = false;
     const isValidNumeric = (val: string) => val && !isNaN(parseFloat(val));
-    const isPointDataSufficient = (p: PointFormInputType) => 
+    const isPointDataSufficientForStalenessCheck = (p: PointFormInputType) => 
         isValidNumeric(p.lat) && isValidNumeric(p.lng) && typeof p.height === 'number';
 
-    const canPerformAnalysisWithCurrentForm = 
-        isPointDataSufficient(currentPointA) &&
-        isPointDataSufficient(currentPointB) &&
-        isValidNumeric(currentClearanceStr);
-
     if (analysisResult && analysisResult.pointA && analysisResult.pointB) {
+        // Analysis exists, check if form has diverged
         const formLatA = parseFloat(currentPointA.lat);
         const formLngA = parseFloat(currentPointA.lng);
         const formHeightA = currentPointA.height;
@@ -172,20 +165,19 @@ export default function Home() {
             analysisResult.pointB.towerHeight !== formHeightB ||
             analysisResult.clearanceThresholdUsed !== formClearanceNum
         ) {
-            newIsStale = true;
-        } else {
-            newIsStale = false;
+            stale = true;
         }
     } else { // No analysisResult exists
-        if (canPerformAnalysisWithCurrentForm) {
-            newIsStale = true; // Ready for a new analysis
-        } else {
-            newIsStale = false; // Not ready, or form is pristine matching no analysis
+        // If form has enough data to perform an analysis, it's "stale" in the sense that it's ready for a new one
+        if (isPointDataSufficientForStalenessCheck(currentPointA) &&
+            isPointDataSufficientForStalenessCheck(currentPointB) &&
+            isValidNumeric(currentClearanceStr)) {
+            stale = true;
         }
     }
-    setIsStale(newIsStale);
+    setIsStale(stale);
 
-  }, [getValues, analysisResult, watchedPointA, watchedPointB, watchedClearanceThreshold, isActionPending]);
+  }, [getValues, analysisResult, watchedPointA, watchedPointB, watchedClearanceThreshold]);
 
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
@@ -202,6 +194,7 @@ export default function Home() {
       } else {
         setLiveDistanceKm(null);
       }
+      // No automatic analysis submission here
     }
   }, [setValue, getValues]);
 
@@ -219,6 +212,7 @@ export default function Home() {
       } else {
         setLiveDistanceKm(null);
       }
+      // No automatic analysis submission here
     }
   }, [setValue, getValues]);
   
@@ -228,7 +222,6 @@ export default function Home() {
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
     const currentValues = getValues();
-    // Auto-analyze on tower height change from graph IS desired
     handleSubmit(processSubmit)(currentValues); 
   }, [setValue, handleSubmit, processSubmit, getValues]);
 
@@ -254,7 +247,7 @@ export default function Home() {
   };
 
   const dismissErrorModal = useCallback(() => {
-    // This is primarily a visual dismissal. Error remains in serverState until a new action.
+    // Visually dismiss by not re-rendering modal, actual serverState.error remains
   }, []);
 
   const handleToggleHistoryPanel = () => {
@@ -265,11 +258,10 @@ export default function Home() {
     reset(defaultFormStateValues);
     setAnalysisResult(null);
     setLiveDistanceKm(null);
-    setIsStale(false);
-    // setHistoryList([]); // Optionally clear history too
+    setIsStale(false); 
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     if (isAnalysisPanelGloballyOpen) {
-        setIsAnalysisPanelGloballyOpen(false); // Close bottom panel if open
+        setIsAnalysisPanelGloballyOpen(false); 
     }
   };
   
@@ -278,7 +270,6 @@ export default function Home() {
     if (itemToLoad) {
       setAnalysisResult(itemToLoad);
       
-      // Populate form with history item's data
       const formValuesFromHistory: AnalysisFormValues = {
         pointA: {
           name: itemToLoad.pointA.name || 'Site A',
@@ -294,10 +285,10 @@ export default function Home() {
         },
         clearanceThreshold: itemToLoad.clearanceThresholdUsed.toString(),
       };
-      reset(formValuesFromHistory);
+      reset(formValuesFromHistory); // Reset form to history values
       setLiveDistanceKm(itemToLoad.distanceKm);
-      setIsStale(false); // Loaded state is not stale initially
-      setIsAnalysisPanelGloballyOpen(true); // Open bottom panel
+      setIsStale(false); 
+      setIsAnalysisPanelGloballyOpen(true); 
       setIsBottomPanelContentExpanded(true);
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
     }
@@ -308,9 +299,25 @@ export default function Home() {
     toast({ title: "History Cleared" });
   };
 
+  const handleGenerateReport = async () => {
+    if (analysisResult && !isStale) {
+      const formData = getValues();
+      try {
+        toast({ title: "Generating Report...", description: "Please wait." });
+        await generateReportDocx(analysisResult, formData);
+        toast({ title: "Report Generated", description: "Your DOCX report has been downloaded." });
+      } catch (error) {
+        console.error("Error generating report:", error);
+        toast({ title: "Report Generation Failed", description: String(error), variant: "destructive" });
+      }
+    } else {
+      toast({ title: "Cannot Generate Report", description: "Please complete or re-analyze the link first.", variant: "destructive" });
+    }
+  };
+
 
   return (
-    <> {/* Using fragment to wrap AppHeader and the main content div */}
+    <> 
       <AppHeader 
         onToggleHistory={handleToggleHistoryPanel}
         onClearMap={handleClearMap}
@@ -369,7 +376,7 @@ export default function Home() {
                   <Button 
                     variant="outline" 
                     className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-                    onClick={(e) => e.stopPropagation()} // Allow main div onClick to dismiss visually
+                    onClick={(e) => e.stopPropagation()} 
                   >
                     Dismiss
                   </Button>
@@ -395,6 +402,7 @@ export default function Home() {
           getValues={getValues}
           setValue={setValue}
           onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
+          onGenerateReport={handleGenerateReport} // Pass down the handler
         />
         <HistoryPanel 
           historyList={historyList}
