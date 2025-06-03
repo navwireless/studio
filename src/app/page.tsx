@@ -69,7 +69,6 @@ export default function Home() {
     React.startTransition(() => {
       formAction(formData);
     });
-    setIsStale(false); // Mark as not stale before starting analysis
   }, [formAction]);
 
   useEffect(() => {
@@ -104,22 +103,50 @@ export default function Home() {
   }, [serverState, toast, reset, getValues, setIsAnalysisPanelGloballyOpen, setIsBottomPanelContentExpanded, isAnalysisPanelGloballyOpen]);
   
  useEffect(() => {
-    if (analysisResult) { 
-      const isActuallyDirty = Object.keys(dirtyFields).length > 0;
-      if (isActuallyDirty && !isActionPending) {
-         // Check if only tower height changed (which triggers auto-analysis and shouldn't make it stale)
-         const pointAHeightChangedOnly = dirtyFields.pointA && 'height' in dirtyFields.pointA && Object.keys(dirtyFields.pointA).length === 1 && !dirtyFields.pointB && !dirtyFields.clearanceThreshold;
-         const pointBHeightChangedOnly = dirtyFields.pointB && 'height' in dirtyFields.pointB && Object.keys(dirtyFields.pointB).length === 1 && !dirtyFields.pointA && !dirtyFields.clearanceThreshold;
-         
-         if (!(pointAHeightChangedOnly || pointBHeightChangedOnly)) {
-             setIsStale(true); 
-         }
+    let stale = false;
+    // Check if form coordinates differ from last analysis result
+    if (analysisResult && analysisResult.pointA && analysisResult.pointB) {
+      const formLatA = parseFloat(getValues('pointA.lat'));
+      const formLngA = parseFloat(getValues('pointA.lng'));
+      const formLatB = parseFloat(getValues('pointB.lat'));
+      const formLngB = parseFloat(getValues('pointB.lng'));
+      const formClearance = parseFloat(getValues('clearanceThreshold'));
+
+      if (
+        (analysisResult.pointA.lat !== formLatA || analysisResult.pointA.lng !== formLngA) ||
+        (analysisResult.pointB.lat !== formLatB || analysisResult.pointB.lng !== formLngB) ||
+        analysisResult.clearanceThresholdUsed !== formClearance
+      ) {
+        stale = true;
       }
-    } else if (Object.keys(dirtyFields).length > 0 && !isActionPending && !analysisResult) {
-        // If there's no result yet, but fields are dirty, it should be considered stale/needs analysis
-        setIsStale(true);
     }
-  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, dirtyFields, isActionPending]);
+
+    // If not already stale by coordinate/clearance mismatch, check general dirty fields
+    // (excluding tower height changes that trigger auto-analysis from graph)
+    if (!stale && Object.keys(dirtyFields).length > 0) {
+      const isGeoOrNameDirty = (site: 'pointA' | 'pointB') => 
+        dirtyFields[site] && (dirtyFields[site]?.lat || dirtyFields[site]?.lng || dirtyFields[site]?.name);
+      
+      const isHeightOnlyDirtyFromGraph = (site: 'pointA' | 'pointB') =>
+        dirtyFields[site] && 'height' in dirtyFields[site]! && Object.keys(dirtyFields[site]!).length === 1;
+
+      if (
+        (isGeoOrNameDirty('pointA') && !isHeightOnlyDirtyFromGraph('pointA')) ||
+        (isGeoOrNameDirty('pointB') && !isHeightOnlyDirtyFromGraph('pointB')) ||
+        dirtyFields.clearanceThreshold
+      ) {
+        stale = true;
+      }
+    }
+    
+    // If no analysis result yet, but form has been touched (is dirty), it's stale
+    if (!analysisResult && Object.keys(dirtyFields).length > 0) {
+      stale = true;
+    }
+
+    setIsStale(stale); // Set stale regardless of isActionPending
+
+  }, [watchedPointA, watchedPointB, watchedClearanceThreshold, analysisResult, dirtyFields, isActionPending, getValues]);
 
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
@@ -128,14 +155,8 @@ export default function Home() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
-      
-      // DO NOT auto-analyze here, let user click the button.
-      // const currentValues = getValues();
-      // if (currentValues.pointA.lat && currentValues.pointA.lng && currentValues.pointB.lat && currentValues.pointB.lng) {
-      //   handleSubmit(processSubmit)();
-      // }
     }
-  }, [setValue, getValues, handleSubmit, processSubmit]);
+  }, [setValue]);
 
   const handleMarkerDrag = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     if (event.latLng) {
@@ -143,15 +164,15 @@ export default function Home() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
-      // DO NOT auto-analyze here, let user click the button.
-      // handleSubmit(processSubmit)(); 
     }
-  }, [setValue, handleSubmit, processSubmit]);
+  }, [setValue]);
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
-    handleSubmit(processSubmit)(); // Auto-analyze on tower height change from graph IS desired
-  }, [setValue, handleSubmit, processSubmit]);
+    // Auto-analyze on tower height change from graph IS desired
+    const currentValues = getValues();
+    handleSubmit(processSubmit)(currentValues); // Pass currentValues directly
+  }, [setValue, handleSubmit, processSubmit, getValues]);
 
 
   const toggleGlobalPanelVisibility = useCallback(() => {
@@ -261,3 +282,4 @@ export default function Home() {
     </div>
   );
 }
+
