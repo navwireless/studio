@@ -18,41 +18,42 @@ interface TowerHeightControlProps {
 
 const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
   label,
-  height,
-  onChange,
-  min = 0, 
-  max = 100, 
-  step = 1, // Default Slider step
+  height, // This is field.value from RHF Controller
+  onChange, // This is field.onChange from RHF Controller
+  min = 0,
+  max = 100,
+  step = 1, // Default Slider step is 1, meaning integer values
   idSuffix,
 }) => {
 
-  // This is the value passed to the Slider's `value` prop.
-  // It's derived from the RHF `height` and always rounded to an integer.
+  // Value for the Slider's thumb position. Always an integer.
+  // Derives from RHF's `height`. If `height` is not a finite number, defaults to `min`.
   const sliderDisplayValue = Number.isFinite(height) ? Math.round(height) : min;
 
-  const handleSliderChange = (newSliderValues: number[]) => {
+  // Handler for when the user finishes interacting with the slider
+  const handleSliderCommit = (newSliderValues: number[]) => {
     // Slider with step=1 should emit integer values in newSliderValues[0]
-    // We round it just to be absolutely sure.
-    const newRoundedValue = Math.round(newSliderValues[0]);
+    // We round it just to be absolutely sure it's an integer.
+    const newIntValue = Math.round(newSliderValues[0]);
     // Update RHF state with the new integer value.
-    // RHF's onChange should handle not causing a re-render if the value is identical.
-    onChange(newRoundedValue);
+    onChange(newIntValue);
   };
 
+  // Handler for direct input field changes
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = event.target.value;
     if (rawValue === "") {
       // If input is cleared, send NaN to RHF. Schema validation can handle if it's required.
-      // Or, one could send `min` or the current `height`. Sending NaN allows more flexible validation.
-      onChange(NaN); 
+      onChange(NaN);
       return;
     }
     const numValue = parseFloat(rawValue);
     // Send the parsed float (or NaN if parsing fails) to RHF.
     // This allows temporary float values in the form state from direct input.
-    onChange(numValue); 
+    onChange(numValue);
   };
 
+  // Handler for when the input field loses focus
   const validateAndSetHeightOnBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     let numValue = parseFloat(event.target.value);
     if (isNaN(numValue)) {
@@ -64,9 +65,9 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
   };
 
   return (
-    <div className="space-y-0.5"> 
+    <div className="space-y-0.5">
       <div className="flex justify-between items-center">
-        <Label htmlFor={`height-input-${idSuffix}`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal"> 
+        <Label htmlFor={`height-input-${idSuffix}`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">
           {label} (m)
         </Label>
         {/* The text display always shows the rounded integer version of the height */}
@@ -74,13 +75,13 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
           {Number.isFinite(height) ? Math.round(height) : min}m
         </span>
       </div>
-      <div className="flex items-center space-x-1"> 
+      <div className="flex items-center space-x-1">
         <Input
           id={`height-input-${idSuffix}`}
           type="number"
           // The input field shows the RHF height directly (can be float temporarily)
           // or an empty string if height is NaN (e.g., after clearing the input).
-          value={Number.isFinite(height) ? height.toString() : ""} 
+          value={Number.isFinite(height) ? height.toString() : ""}
           onChange={handleInputChange}
           onBlur={validateAndSetHeightOnBlur}
           min={min}
@@ -91,7 +92,7 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
         <Slider
           id={`height-slider-${idSuffix}`}
           value={[sliderDisplayValue]} // Slider always receives a rounded integer value
-          onValueChange={handleSliderChange}
+          onValueCommit={handleSliderCommit} // Use onValueCommit
           min={min}
           max={max}
           step={step} // Slider step is 1

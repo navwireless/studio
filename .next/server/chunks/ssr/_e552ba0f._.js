@@ -99,22 +99,22 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$i
 ;
 ;
 const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step = 1, idSuffix })=>{
-    // This is the value passed to the Slider's `value` prop.
-    // It's derived from the RHF `height` and always rounded to an integer.
+    // Value for the Slider's thumb position. Always an integer.
+    // Derives from RHF's `height`. If `height` is not a finite number, defaults to `min`.
     const sliderDisplayValue = Number.isFinite(height) ? Math.round(height) : min;
-    const handleSliderChange = (newSliderValues)=>{
+    // Handler for when the user finishes interacting with the slider
+    const handleSliderCommit = (newSliderValues)=>{
         // Slider with step=1 should emit integer values in newSliderValues[0]
-        // We round it just to be absolutely sure.
-        const newRoundedValue = Math.round(newSliderValues[0]);
+        // We round it just to be absolutely sure it's an integer.
+        const newIntValue = Math.round(newSliderValues[0]);
         // Update RHF state with the new integer value.
-        // RHF's onChange should handle not causing a re-render if the value is identical.
-        onChange(newRoundedValue);
+        onChange(newIntValue);
     };
+    // Handler for direct input field changes
     const handleInputChange = (event)=>{
         const rawValue = event.target.value;
         if (rawValue === "") {
             // If input is cleared, send NaN to RHF. Schema validation can handle if it's required.
-            // Or, one could send `min` or the current `height`. Sending NaN allows more flexible validation.
             onChange(NaN);
             return;
         }
@@ -123,6 +123,7 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
         // This allows temporary float values in the form state from direct input.
         onChange(numValue);
     };
+    // Handler for when the input field loses focus
     const validateAndSetHeightOnBlur = (event)=>{
         let numValue = parseFloat(event.target.value);
         if (isNaN(numValue)) {
@@ -147,7 +148,7 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 69,
+                        lineNumber: 70,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -158,13 +159,13 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 73,
+                        lineNumber: 74,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                lineNumber: 68,
+                lineNumber: 69,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -185,7 +186,7 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         className: "w-12 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 text-xs h-6 px-1 py-0.5 rounded-none focus:ring-0"
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 78,
+                        lineNumber: 79,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$slider$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Slider"], {
@@ -193,7 +194,7 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         value: [
                             sliderDisplayValue
                         ],
-                        onValueChange: handleSliderChange,
+                        onValueCommit: handleSliderCommit,
                         min: min,
                         max: max,
                         step: step,
@@ -201,19 +202,19 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         "aria-labelledby": `label-${idSuffix}-height`
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 91,
+                        lineNumber: 92,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                lineNumber: 77,
+                lineNumber: 78,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-        lineNumber: 67,
+        lineNumber: 68,
         columnNumber: 5
     }, this);
 };
