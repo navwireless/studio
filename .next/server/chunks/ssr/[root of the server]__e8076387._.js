@@ -1590,7 +1590,6 @@ const LinksProvider = ({ children })=>{
         if (selectedLinkId === linkId) {
             setSelectedLinkId(null);
         }
-        // Remove from localStorage cache
         try {
             localStorage.removeItem(getLocalStorageKey(linkId));
         } catch (error) {
@@ -1602,12 +1601,44 @@ const LinksProvider = ({ children })=>{
     const selectLink = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId)=>{
         setSelectedLinkId(linkId);
     }, []);
-    const updateLinkDetails = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId, details)=>{
-        setLinks((prevLinks)=>prevLinks.map((link)=>link.id === linkId ? {
-                    ...link,
-                    ...details,
-                    isDirty: true
-                } : link));
+    const updateLinkDetails = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId, newPartialDetails)=>{
+        setLinks((prevLinks)=>{
+            const linkIndex = prevLinks.findIndex((l)=>l.id === linkId);
+            if (linkIndex === -1) return prevLinks;
+            const currentLink = prevLinks[linkIndex];
+            // Construct the prospective new link state by merging
+            const prospectivePointA = newPartialDetails.pointA ? {
+                ...currentLink.pointA,
+                ...newPartialDetails.pointA
+            } : currentLink.pointA;
+            const prospectivePointB = newPartialDetails.pointB ? {
+                ...currentLink.pointB,
+                ...newPartialDetails.pointB
+            } : currentLink.pointB;
+            const prospectiveClearance = newPartialDetails.clearanceThreshold !== undefined ? newPartialDetails.clearanceThreshold : currentLink.clearanceThreshold;
+            // Determine if there's a meaningful change in data or if it needs to be marked dirty
+            let hasMeaningfulChange = false;
+            if (prospectivePointA.name !== currentLink.pointA.name || prospectivePointA.lat !== currentLink.pointA.lat || prospectivePointA.lng !== currentLink.pointA.lng || prospectivePointA.towerHeight !== currentLink.pointA.towerHeight || prospectivePointB.name !== currentLink.pointB.name || prospectivePointB.lat !== currentLink.pointB.lat || prospectivePointB.lng !== currentLink.pointB.lng || prospectivePointB.towerHeight !== currentLink.pointB.towerHeight || prospectiveClearance !== currentLink.clearanceThreshold || newPartialDetails.isDirty === true && !currentLink.isDirty // Explicitly becoming dirty
+            ) {
+                hasMeaningfulChange = true;
+            }
+            if (hasMeaningfulChange) {
+                const updatedLinks = [
+                    ...prevLinks
+                ];
+                updatedLinks[linkIndex] = {
+                    ...currentLink,
+                    pointA: prospectivePointA,
+                    pointB: prospectivePointB,
+                    clearanceThreshold: prospectiveClearance,
+                    // isDirty is explicitly managed by the caller of updateLinkDetails if it's part of newPartialDetails
+                    // or defaults to true if it was the reason for hasMeaningfulChange
+                    isDirty: newPartialDetails.isDirty !== undefined ? newPartialDetails.isDirty : true
+                };
+                return updatedLinks;
+            }
+            return prevLinks; // No meaningful change, return original array to prevent unnecessary re-renders
+        });
     }, []);
     const updateLinkAnalysis = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId, result)=>{
         const analysisTimestamp = Date.now();
@@ -1617,7 +1648,6 @@ const LinksProvider = ({ children })=>{
                     analysisTimestamp,
                     isDirty: false
                 } : link));
-        // Cache in localStorage
         try {
             localStorage.setItem(getLocalStorageKey(linkId), JSON.stringify({
                 ...result,
@@ -1634,7 +1664,14 @@ const LinksProvider = ({ children })=>{
             const parsedItem = JSON.parse(cachedItem);
             if (parsedItem && parsedItem.analysisTimestamp) {
                 if (Date.now() - parsedItem.analysisTimestamp < CACHE_EXPIRY_MS) {
-                    return parsedItem;
+                    // Ensure the structure matches AnalysisResult, especially pointA and pointB names
+                    const result = parsedItem;
+                    const linkInContext = links.find((l)=>l.id === linkId);
+                    if (linkInContext) {
+                        result.pointA.name = linkInContext.pointA.name;
+                        result.pointB.name = linkInContext.pointB.name;
+                    }
+                    return result;
                 } else {
                     localStorage.removeItem(getLocalStorageKey(linkId)); // Expired
                 }
@@ -1643,7 +1680,9 @@ const LinksProvider = ({ children })=>{
             console.error("Failed to retrieve or parse cached analysis:", error);
         }
         return null;
-    }, []);
+    }, [
+        links
+    ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(LinksContext.Provider, {
         value: {
             links,
@@ -1659,7 +1698,7 @@ const LinksProvider = ({ children })=>{
         children: children
     }, void 0, false, {
         fileName: "[project]/src/context/links-context.tsx",
-        lineNumber: 129,
+        lineNumber: 174,
         columnNumber: 5
     }, this);
 };
