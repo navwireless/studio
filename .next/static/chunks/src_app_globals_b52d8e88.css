@@ -856,6 +856,10 @@ body {
   max-height: 90vh;
 }
 
+.max-h-32 {
+  max-height: 8rem;
+}
+
 .min-h-0 {
   min-height: 0;
 }
@@ -1307,6 +1311,10 @@ body {
   white-space: nowrap;
 }
 
+.whitespace-pre-wrap {
+  white-space: pre-wrap;
+}
+
 .rounded {
   border-radius: .25rem;
 }
@@ -1585,6 +1593,10 @@ body {
 
 .bg-background\/90 {
   background-color: hsl(var(--background) / .9);
+}
+
+.bg-black\/20 {
+  background-color: #0003;
 }
 
 .fill-current {
@@ -1962,6 +1974,10 @@ body {
 
 .text-primary\/90 {
   color: hsl(var(--primary) / .9);
+}
+
+.text-destructive-foreground\/80 {
+  color: hsl(var(--destructive-foreground) / .8);
 }
 
 .underline {

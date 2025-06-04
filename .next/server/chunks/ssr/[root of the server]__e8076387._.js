@@ -1758,9 +1758,8 @@ const BottomPanel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_mod
     ssr: false,
     loading: ()=>null
 });
-// Helper to parse 'lat,lng' string
 const parseCoordinatesString = (coordsString)=>{
-    if (!coordsString || typeof coordsString !== 'string' || !coordsString.includes(',')) return null;
+    if (!coordsString || typeof coordsString !== 'string') return null;
     const parts = coordsString.split(',').map((part)=>part.trim());
     if (parts.length !== 2) return null;
     const lat = parseFloat(parts[0]);
@@ -1777,6 +1776,8 @@ function HomePageContent() {
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useToast"])();
     const { links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLinks"])();
     const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performLosAnalysis"], null);
+    const [displayedError, setDisplayedError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [displayedFieldErrors, setDisplayedFieldErrors] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [historyList, setHistoryList] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
@@ -1789,37 +1790,33 @@ function HomePageContent() {
         selectedLinkId,
         getLinkById,
         links
-    ]); // `links` is needed here for memoization
+    ]);
     const form = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useForm"])({
         resolver: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$hookform$2f$resolvers$2f$zod$2f$dist$2f$zod$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["zodResolver"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["AnalysisFormSchema"]),
         defaultValues: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"],
         mode: 'onBlur'
     });
-    const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
+    const { handleSubmit, control, getValues, setValue, reset, watch } = form;
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (selectedLink) {
             const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
-            let pointA_coords = '';
+            let pointA_coords_str = '';
             if (selectedLink.pointA.lat !== null && selectedLink.pointA.lng !== null) {
-                pointA_coords = `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`;
-            } else {
-                pointA_coords = '';
+                pointA_coords_str = `${selectedLink.pointA.lat}, ${selectedLink.pointA.lng}`;
             }
-            let pointB_coords = '';
+            let pointB_coords_str = '';
             if (selectedLink.pointB.lat !== null && selectedLink.pointB.lng !== null) {
-                pointB_coords = `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`;
-            } else {
-                pointB_coords = '';
+                pointB_coords_str = `${selectedLink.pointB.lat}, ${selectedLink.pointB.lng}`;
             }
             const formVals = {
                 pointA: {
                     name: isNewLink ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name : selectedLink.pointA.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
-                    coordinates: pointA_coords,
+                    coordinates: pointA_coords_str,
                     height: selectedLink.pointA.towerHeight ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.height
                 },
                 pointB: {
                     name: isNewLink ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name : selectedLink.pointB.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
-                    coordinates: pointB_coords,
+                    coordinates: pointB_coords_str,
                     height: selectedLink.pointB.towerHeight ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.height
                 },
                 clearanceThreshold: selectedLink.clearanceThreshold?.toString() ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
@@ -1840,29 +1837,29 @@ function HomePageContent() {
         const subscription = watch((formValues, { name, type })=>{
             if (type === 'change' && selectedLinkId) {
                 const currentLinkInContext = getLinkById(selectedLinkId);
-                if (!currentLinkInContext) return; // Link might have been removed
-                const parsedPointA = parseCoordinatesString(formValues.pointA.coordinates);
-                const parsedPointB = parseCoordinatesString(formValues.pointB.coordinates);
-                const towerAHeight = typeof formValues.pointA.height === 'number' ? formValues.pointA.height : parseFloat(String(formValues.pointA.height)) || 0;
-                const towerBHeight = typeof formValues.pointB.height === 'number' ? formValues.pointB.height : parseFloat(String(formValues.pointB.height)) || 0;
-                const clearance = parseFloat(formValues.clearanceThreshold) || 0;
+                if (!currentLinkInContext) return;
+                const parsedPointA = parseCoordinatesString(formValues.pointA?.coordinates || '');
+                const parsedPointB = parseCoordinatesString(formValues.pointB?.coordinates || '');
+                const towerAHeight = typeof formValues.pointA?.height === 'number' ? formValues.pointA.height : parseFloat(String(formValues.pointA?.height)) || 0;
+                const towerBHeight = typeof formValues.pointB?.height === 'number' ? formValues.pointB.height : parseFloat(String(formValues.pointB?.height)) || 0;
+                const clearance = parseFloat(formValues.clearanceThreshold || "0") || 0;
                 const newDetails = {
                     pointA: {
-                        name: formValues.pointA.name,
+                        name: formValues.pointA?.name || currentLinkInContext.pointA.name,
                         lat: parsedPointA?.lat ?? currentLinkInContext.pointA.lat,
                         lng: parsedPointA?.lng ?? currentLinkInContext.pointA.lng,
                         towerHeight: towerAHeight
                     },
                     pointB: {
-                        name: formValues.pointB.name,
+                        name: formValues.pointB?.name || currentLinkInContext.pointB.name,
                         lat: parsedPointB?.lat ?? currentLinkInContext.pointB.lat,
                         lng: parsedPointB?.lng ?? currentLinkInContext.pointB.lng,
                         towerHeight: towerBHeight
                     },
                     clearanceThreshold: clearance
                 };
-                // Perform a comparison to prevent unnecessary updates
-                if (newDetails.pointA.name !== currentLinkInContext.pointA.name || newDetails.pointA.lat !== currentLinkInContext.pointA.lat || newDetails.pointA.lng !== currentLinkInContext.pointA.lng || newDetails.pointA.towerHeight !== currentLinkInContext.pointA.towerHeight || newDetails.pointB.name !== currentLinkInContext.pointB.name || newDetails.pointB.lat !== currentLinkInContext.pointB.lat || newDetails.pointB.lng !== currentLinkInContext.pointB.lng || newDetails.pointB.towerHeight !== currentLinkInContext.pointB.towerHeight || newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold) {
+                const detailsChanged = newDetails.pointA.name !== currentLinkInContext.pointA.name || newDetails.pointA.lat !== currentLinkInContext.pointA.lat || newDetails.pointA.lng !== currentLinkInContext.pointA.lng || newDetails.pointA.towerHeight !== currentLinkInContext.pointA.towerHeight || newDetails.pointB.name !== currentLinkInContext.pointB.name || newDetails.pointB.lat !== currentLinkInContext.pointB.lat || newDetails.pointB.lng !== currentLinkInContext.pointB.lng || newDetails.pointB.towerHeight !== currentLinkInContext.pointB.towerHeight || newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold;
+                if (detailsChanged) {
                     updateLinkDetails(selectedLinkId, newDetails);
                 }
             }
@@ -1901,23 +1898,23 @@ function HomePageContent() {
             });
             setIsAnalysisPanelGloballyOpen(true);
             setIsBottomPanelContentExpanded(true);
-            let cached_pointA_coords = '';
-            if (cachedResult.pointA.lat !== null && cachedResult.pointB.lng !== null) {
-                cached_pointA_coords = `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`;
+            let cached_pointA_coords_str = '';
+            if (cachedResult.pointA.lat !== null && cachedResult.pointA.lng !== null) {
+                cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointA.lng}`;
             }
-            let cached_pointB_coords = '';
+            let cached_pointB_coords_str = '';
             if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
-                cached_pointB_coords = `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`;
+                cached_pointB_coords_str = `${cachedResult.pointB.lat}, ${cachedResult.pointB.lng}`;
             }
             reset({
                 pointA: {
                     name: cachedResult.pointA.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
-                    coordinates: cached_pointA_coords,
+                    coordinates: cached_pointA_coords_str,
                     height: cachedResult.pointA.towerHeight
                 },
                 pointB: {
                     name: cachedResult.pointB.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
-                    coordinates: cached_pointB_coords,
+                    coordinates: cached_pointB_coords_str,
                     height: cachedResult.pointB.towerHeight
                 },
                 clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
@@ -1938,11 +1935,11 @@ function HomePageContent() {
         formData.append('pointA.name', data.pointA.name);
         formData.append('pointA.lat', parsedPointA.lat.toString());
         formData.append('pointA.lng', parsedPointA.lng.toString());
-        formData.append('pointA.height', String(data.pointA.height)); // Ensure height is string
+        formData.append('pointA.height', String(data.pointA.height));
         formData.append('pointB.name', data.pointB.name);
         formData.append('pointB.lat', parsedPointB.lat.toString());
         formData.append('pointB.lng', parsedPointB.lng.toString());
-        formData.append('pointB.height', String(data.pointB.height)); // Ensure height is string
+        formData.append('pointB.height', String(data.pointB.height));
         formData.append('clearanceThreshold', data.clearanceThreshold);
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].startTransition(()=>{
             formAction(formData);
@@ -1957,55 +1954,66 @@ function HomePageContent() {
         reset
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        if (serverState && selectedLinkId) {
-            const currentLink = getLinkById(selectedLinkId); // Get the link *before* potential state update
-            if (!currentLink) return;
+        if (serverState) {
             if (serverState.error) {
-                // updateLinkDetails already marks as dirty, but ensure analysisResult is cleared
-                updateLinkDetails(selectedLinkId, {
-                    ...currentLink,
-                    analysisResult: undefined,
-                    isDirty: true
-                });
-                toast({
-                    title: "Analysis Error",
-                    description: serverState.error,
-                    variant: "destructive",
-                    duration: 7000
-                });
+                setDisplayedError(serverState.error);
+                setDisplayedFieldErrors(serverState.fieldErrors || null);
             } else if ('losPossible' in serverState) {
-                const successfulResult = serverState;
-                const currentFormData = getValues();
-                const newAnalysisResult = {
-                    ...successfulResult,
-                    pointA: {
-                        name: currentFormData.pointA.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
-                        lat: successfulResult.pointA.lat,
-                        lng: successfulResult.pointA.lng,
-                        towerHeight: successfulResult.pointA.towerHeight
-                    },
-                    pointB: {
-                        name: currentFormData.pointB.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
-                        lat: successfulResult.pointB.lat,
-                        lng: successfulResult.pointB.lng,
-                        towerHeight: successfulResult.pointB.towerHeight
-                    },
-                    clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
-                    id: selectedLinkId + '_analysis_' + Date.now(),
-                    timestamp: Date.now()
-                };
-                updateLinkAnalysis(selectedLinkId, newAnalysisResult);
-                setHistoryList((prev)=>[
-                        newAnalysisResult,
-                        ...prev.slice(0, 19)
-                    ]);
-                setIsAnalysisPanelGloballyOpen(true);
-                setIsBottomPanelContentExpanded(true);
-                toast({
-                    title: "Analysis Complete",
-                    description: newAnalysisResult.message || "LOS analysis performed successfully."
-                });
+                setDisplayedError(null);
+                setDisplayedFieldErrors(null);
             }
+        }
+    }, [
+        serverState
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (!selectedLinkId && !serverState?.error) return; // Don't run if no link or if error is already displayed
+        const currentLink = selectedLinkId ? getLinkById(selectedLinkId) : null;
+        if (serverState?.error && currentLink) {
+            updateLinkDetails(selectedLinkId, {
+                ...currentLink,
+                analysisResult: undefined,
+                isDirty: true
+            });
+        // Toast is handled by the error modal now, but can keep if desired for non-modal notifications
+        // toast({
+        //   title: "Analysis Error",
+        //   description: serverState.error,
+        //   variant: "destructive",
+        //   duration: 7000,
+        // });
+        } else if (serverState && 'losPossible' in serverState && currentLink && selectedLinkId) {
+            const successfulResult = serverState;
+            const currentFormData = getValues();
+            const newAnalysisResult = {
+                ...successfulResult,
+                pointA: {
+                    name: currentFormData.pointA.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
+                    lat: successfulResult.pointA.lat,
+                    lng: successfulResult.pointA.lng,
+                    towerHeight: successfulResult.pointA.towerHeight
+                },
+                pointB: {
+                    name: currentFormData.pointB.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
+                    lat: successfulResult.pointB.lat,
+                    lng: successfulResult.pointB.lng,
+                    towerHeight: successfulResult.pointB.towerHeight
+                },
+                clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
+                id: selectedLinkId + '_analysis_' + Date.now(),
+                timestamp: Date.now()
+            };
+            updateLinkAnalysis(selectedLinkId, newAnalysisResult);
+            setHistoryList((prev)=>[
+                    newAnalysisResult,
+                    ...prev.slice(0, 19)
+                ]);
+            setIsAnalysisPanelGloballyOpen(true);
+            setIsBottomPanelContentExpanded(true);
+            toast({
+                title: "Analysis Complete",
+                description: newAnalysisResult.message || "LOS analysis performed successfully."
+            });
         }
     }, [
         serverState,
@@ -2017,7 +2025,7 @@ function HomePageContent() {
         getValues
     ]);
     const handleMapClick = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((event, pointId)=>{
-        const currentSelectedLink = getLinkById(selectedLinkId || ''); // Get latest link from context
+        const currentSelectedLink = getLinkById(selectedLinkId || '');
         if (event.latLng && currentSelectedLink) {
             const lat = event.latLng.lat();
             const lng = event.latLng.lng();
@@ -2030,13 +2038,11 @@ function HomePageContent() {
             updateLinkDetails(currentSelectedLink.id, {
                 [fieldToUpdate]: newPointDetails
             });
-        // Form update is handled by useEffect watching selectedLink
         } else if (event.latLng && !currentSelectedLink) {
             const newId = addLink({
                 lat: event.latLng.lat(),
                 lng: event.latLng.lng()
             });
-        // Form reset and panel opening handled by useEffect on selectedLink change
         }
     }, [
         selectedLinkId,
@@ -2059,7 +2065,6 @@ function HomePageContent() {
             updateLinkDetails(linkId, {
                 [fieldToUpdate]: newPointDetails
             });
-        // Form update is handled by useEffect watching selectedLink for the currently selected link
         }
     }, [
         getLinkById,
@@ -2076,8 +2081,6 @@ function HomePageContent() {
             updateLinkDetails(currentSelectedLink.id, {
                 [fieldToUpdate]: newPointDetails
             });
-            // Form update for height is handled by useEffect on selectedLink
-            // Trigger re-analysis automatically if a valid analysis was present
             if (currentSelectedLink.analysisResult && !currentSelectedLink.isDirty) {
                 const currentFormValues = getValues();
                 handleSubmit(processSubmit)({
@@ -2098,12 +2101,14 @@ function HomePageContent() {
         getValues
     ]);
     const toggleGlobalPanelVisibility = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
-        setIsAnalysisPanelGloballyOpen((prev)=>!prev);
-        if (isAnalysisPanelGloballyOpen && selectedLinkId) {
-            selectLink(null);
-        }
+        setIsAnalysisPanelGloballyOpen((prev)=>{
+            const newIsOpen = !prev;
+            if (!newIsOpen && selectedLinkId) {
+                setTimeout(()=>selectLink(null), 0);
+            }
+            return newIsOpen;
+        });
     }, [
-        isAnalysisPanelGloballyOpen,
         selectedLinkId,
         selectLink
     ]);
@@ -2219,13 +2224,11 @@ function HomePageContent() {
         }
     };
     const handleAddNewLink = ()=>{
-        const newId = addLink(); // Context handles setting selectedLinkId and default structure
-    // Form resets and panel opening are handled by useEffect on selectedLink change
+        const newId = addLink();
     };
     const handleRemoveSelectedLink = ()=>{
         if (selectedLinkId) {
             removeLink(selectedLinkId);
-        // selectedLink will become null, triggering form reset and panel closure via useEffect
         }
     };
     const liveDistanceKm = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useMemo(()=>{
@@ -2249,7 +2252,7 @@ function HomePageContent() {
                 isHistoryPanelSupported: true
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 477,
+                lineNumber: 471,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2264,14 +2267,14 @@ function HomePageContent() {
                                 className: "mr-2 h-4 w-4"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 485,
+                                lineNumber: 479,
                                 columnNumber: 17
                             }, this),
                             "Add New Link"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 484,
+                        lineNumber: 478,
                         columnNumber: 13
                     }, this),
                     selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -2285,14 +2288,14 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 492,
+                                        lineNumber: 486,
                                         columnNumber: 17
                                     }, this),
                                     "Add Another Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 491,
+                                lineNumber: 485,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2304,14 +2307,14 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 496,
+                                        lineNumber: 490,
                                         columnNumber: 17
                                     }, this),
                                     " Remove Selected Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 495,
+                                lineNumber: 489,
                                 columnNumber: 13
                             }, this)
                         ]
@@ -2319,7 +2322,7 @@ function HomePageContent() {
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 482,
+                lineNumber: 476,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2336,12 +2339,12 @@ function HomePageContent() {
                             mapContainerClassName: "w-full h-full"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 503,
+                            lineNumber: 497,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 502,
+                        lineNumber: 496,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && !selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2356,19 +2359,19 @@ function HomePageContent() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 521,
+                                    lineNumber: 515,
                                     columnNumber: 15
                                 }, this),
                                 "Add New Link"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 515,
+                            lineNumber: 509,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 514,
+                        lineNumber: 508,
                         columnNumber: 11
                     }, this),
                     isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2382,7 +2385,7 @@ function HomePageContent() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 531,
+                                        lineNumber: 525,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2390,7 +2393,7 @@ function HomePageContent() {
                                         children: "Analyzing Link..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 532,
+                                        lineNumber: 526,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2398,30 +2401,34 @@ function HomePageContent() {
                                         children: "Please wait while we process the elevation data."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 533,
+                                        lineNumber: 527,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 530,
+                                lineNumber: 524,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 529,
+                            lineNumber: 523,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 528,
+                        lineNumber: 522,
                         columnNumber: 11
                     }, this),
-                    serverState?.error && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]",
-                        onClick: ()=>{},
+                        onClick: ()=>{
+                            setDisplayedError(null);
+                            setDisplayedFieldErrors(null);
+                        },
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Card"], {
                             className: "p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4",
+                            onClick: (e)=>e.stopPropagation(),
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardHeader"], {
                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardTitle"], {
@@ -2431,58 +2438,74 @@ function HomePageContent() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 544,
+                                                lineNumber: 538,
                                                 columnNumber: 21
                                             }, this),
                                             " Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 543,
+                                        lineNumber: 537,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 542,
+                                    lineNumber: 536,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                             className: "text-destructive-foreground mb-4",
-                                            children: serverState.error
+                                            children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 548,
+                                            lineNumber: 542,
                                             columnNumber: 19
+                                        }, this),
+                                        displayedFieldErrors && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "text-xs text-destructive-foreground/80 mb-3 bg-black/20 p-2 rounded custom-scrollbar overflow-auto max-h-32",
+                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("pre", {
+                                                className: "whitespace-pre-wrap",
+                                                children: JSON.stringify(displayedFieldErrors, null, 2)
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/page.tsx",
+                                                lineNumber: 545,
+                                                columnNumber: 23
+                                            }, this)
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/page.tsx",
+                                            lineNumber: 544,
+                                            columnNumber: 21
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
                                             variant: "outline",
                                             className: "w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90",
-                                            onClick: (e)=>{
-                                                e.stopPropagation(); /* Clear serverState.error by setting it to null */ 
+                                            onClick: ()=>{
+                                                setDisplayedError(null);
+                                                setDisplayedFieldErrors(null);
                                             },
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 549,
+                                            lineNumber: 548,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 547,
+                                    lineNumber: 541,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 541,
+                            lineNumber: 535,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 540,
+                        lineNumber: 534,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FormProvider"], {
@@ -2505,12 +2528,12 @@ function HomePageContent() {
                             selectedLinkPointB: selectedLink?.pointB
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 562,
+                            lineNumber: 561,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 561,
+                        lineNumber: 560,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -2521,7 +2544,7 @@ function HomePageContent() {
                         onToggle: ()=>setIsHistoryPanelOpen((prev)=>!prev)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 581,
+                        lineNumber: 580,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$report$2d$selection$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -2535,13 +2558,13 @@ function HomePageContent() {
                         onGenerateReport: handleGenerateSelectedReports
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 588,
+                        lineNumber: 587,
                         columnNumber: 10
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 501,
+                lineNumber: 495,
                 columnNumber: 7
             }, this)
         ]
@@ -2551,12 +2574,12 @@ function Home() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LinksProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(HomePageContent, {}, void 0, false, {
             fileName: "[project]/src/app/page.tsx",
-            lineNumber: 606,
+            lineNumber: 605,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 605,
+        lineNumber: 604,
         columnNumber: 5
     }, this);
 }

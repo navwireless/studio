@@ -1,15 +1,15 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { useForm, useWatch, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, Waypoints, PlusCircle, Trash2Icon } from 'lucide-react';
+import { Loader2, AlertTriangle, PlusCircle, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, AnalysisFormValues, PointCoordinates, LOSLink } from '@/types';
+import type { AnalysisResult, AnalysisFormValues, PointCoordinates } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
@@ -33,9 +33,8 @@ const BottomPanel = dynamic(() => import('@/components/fso/bottom-panel'), {
   loading: () => null,
 });
 
-// Helper to parse 'lat,lng' string
 const parseCoordinatesString = (coordsString: string): PointCoordinates | null => {
-  if (!coordsString || typeof coordsString !== 'string' || !coordsString.includes(',')) return null;
+  if (!coordsString || typeof coordsString !== 'string') return null;
   const parts = coordsString.split(',').map(part => part.trim());
   if (parts.length !== 2) return null;
   const lat = parseFloat(parts[0]);
@@ -62,6 +61,9 @@ function HomePageContent() {
   } = useLinks();
 
   const [serverState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
+  const [displayedError, setDisplayedError] = useState<string | null>(null);
+  const [displayedFieldErrors, setDisplayedFieldErrors] = useState<any | null>(null);
+
 
   const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
@@ -73,7 +75,7 @@ function HomePageContent() {
   const selectedLink = React.useMemo(() => {
     if (!selectedLinkId) return null;
     return getLinkById(selectedLinkId);
-  }, [selectedLinkId, getLinkById, links]); // `links` is needed here for memoization
+  }, [selectedLinkId, getLinkById, links]);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
@@ -81,34 +83,29 @@ function HomePageContent() {
     mode: 'onBlur',
   });
 
-  const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
+  const { handleSubmit, control, getValues, setValue, reset, watch } = form;
 
   useEffect(() => {
     if (selectedLink) {
       const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
-
-      let pointA_coords = '';
+      let pointA_coords_str = '';
       if (selectedLink.pointA.lat !== null && selectedLink.pointA.lng !== null) {
-        pointA_coords = `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`;
-      } else {
-        pointA_coords = '';
+        pointA_coords_str = `${selectedLink.pointA.lat}, ${selectedLink.pointA.lng}`;
       }
-      let pointB_coords = '';
+      let pointB_coords_str = '';
       if (selectedLink.pointB.lat !== null && selectedLink.pointB.lng !== null) {
-        pointB_coords = `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`;
-      } else {
-        pointB_coords = '';
+        pointB_coords_str = `${selectedLink.pointB.lat}, ${selectedLink.pointB.lng}`;
       }
 
       const formVals: AnalysisFormValues = {
         pointA: {
           name: isNewLink ? defaultFormStateValues.pointA.name : (selectedLink.pointA.name || defaultFormStateValues.pointA.name),
-          coordinates: pointA_coords,
+          coordinates: pointA_coords_str,
           height: selectedLink.pointA.towerHeight ?? defaultFormStateValues.pointA.height,
         },
         pointB: {
           name: isNewLink ? defaultFormStateValues.pointB.name : (selectedLink.pointB.name || defaultFormStateValues.pointB.name),
-          coordinates: pointB_coords,
+          coordinates: pointB_coords_str,
           height: selectedLink.pointB.towerHeight ?? defaultFormStateValues.pointB.height,
         },
         clearanceThreshold: selectedLink.clearanceThreshold?.toString() ?? defaultFormStateValues.clearanceThreshold,
@@ -126,35 +123,34 @@ function HomePageContent() {
     if (!selectedLinkId) return;
 
     const subscription = watch((formValues, { name, type }) => {
-      if (type === 'change' && selectedLinkId) { // Ensure selectedLinkId is still valid within callback
+      if (type === 'change' && selectedLinkId) {
         const currentLinkInContext = getLinkById(selectedLinkId);
-        if (!currentLinkInContext) return; // Link might have been removed
+        if (!currentLinkInContext) return;
 
-        const parsedPointA = parseCoordinatesString(formValues.pointA.coordinates);
-        const parsedPointB = parseCoordinatesString(formValues.pointB.coordinates);
+        const parsedPointA = parseCoordinatesString(formValues.pointA?.coordinates || '');
+        const parsedPointB = parseCoordinatesString(formValues.pointB?.coordinates || '');
 
-        const towerAHeight = typeof formValues.pointA.height === 'number' ? formValues.pointA.height : (parseFloat(String(formValues.pointA.height)) || 0);
-        const towerBHeight = typeof formValues.pointB.height === 'number' ? formValues.pointB.height : (parseFloat(String(formValues.pointB.height)) || 0);
-        const clearance = parseFloat(formValues.clearanceThreshold) || 0;
+        const towerAHeight = typeof formValues.pointA?.height === 'number' ? formValues.pointA.height : (parseFloat(String(formValues.pointA?.height)) || 0);
+        const towerBHeight = typeof formValues.pointB?.height === 'number' ? formValues.pointB.height : (parseFloat(String(formValues.pointB?.height)) || 0);
+        const clearance = parseFloat(formValues.clearanceThreshold || "0") || 0;
 
         const newDetails = {
           pointA: {
-            name: formValues.pointA.name,
+            name: formValues.pointA?.name || currentLinkInContext.pointA.name,
             lat: parsedPointA?.lat ?? currentLinkInContext.pointA.lat,
             lng: parsedPointA?.lng ?? currentLinkInContext.pointA.lng,
             towerHeight: towerAHeight,
           },
           pointB: {
-            name: formValues.pointB.name,
+            name: formValues.pointB?.name || currentLinkInContext.pointB.name,
             lat: parsedPointB?.lat ?? currentLinkInContext.pointB.lat,
             lng: parsedPointB?.lng ?? currentLinkInContext.pointB.lng,
             towerHeight: towerBHeight,
           },
           clearanceThreshold: clearance,
         };
-
-        // Perform a comparison to prevent unnecessary updates
-        if (
+        
+        const detailsChanged =
             newDetails.pointA.name !== currentLinkInContext.pointA.name ||
             newDetails.pointA.lat !== currentLinkInContext.pointA.lat ||
             newDetails.pointA.lng !== currentLinkInContext.pointA.lng ||
@@ -163,8 +159,9 @@ function HomePageContent() {
             newDetails.pointB.lat !== currentLinkInContext.pointB.lat ||
             newDetails.pointB.lng !== currentLinkInContext.pointB.lng ||
             newDetails.pointB.towerHeight !== currentLinkInContext.pointB.towerHeight ||
-            newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold
-        ) {
+            newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold;
+
+        if (detailsChanged) {
           updateLinkDetails(selectedLinkId, newDetails);
         }
       }
@@ -191,24 +188,23 @@ function HomePageContent() {
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
 
-      let cached_pointA_coords = '';
-      if (cachedResult.pointA.lat !== null && cachedResult.pointB.lng !== null) { // Corrected to pointB.lng
-         cached_pointA_coords = `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`;
+      let cached_pointA_coords_str = '';
+      if (cachedResult.pointA.lat !== null && cachedResult.pointA.lng !== null) {
+         cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointA.lng}`;
       }
-      let cached_pointB_coords = '';
+      let cached_pointB_coords_str = '';
       if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
-         cached_pointB_coords = `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`;
+         cached_pointB_coords_str = `${cachedResult.pointB.lat}, ${cachedResult.pointB.lng}`;
       }
-
       reset({
         pointA: {
           name: cachedResult.pointA.name || defaultFormStateValues.pointA.name,
-          coordinates: cached_pointA_coords,
+          coordinates: cached_pointA_coords_str,
           height: cachedResult.pointA.towerHeight
         },
         pointB: {
           name: cachedResult.pointB.name || defaultFormStateValues.pointB.name,
-          coordinates: cached_pointB_coords,
+          coordinates: cached_pointB_coords_str,
           height: cachedResult.pointB.towerHeight
         },
         clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
@@ -228,11 +224,11 @@ function HomePageContent() {
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', parsedPointA.lat.toString());
     formData.append('pointA.lng', parsedPointA.lng.toString());
-    formData.append('pointA.height', String(data.pointA.height)); // Ensure height is string
+    formData.append('pointA.height', String(data.pointA.height));
     formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', parsedPointB.lat.toString());
     formData.append('pointB.lng', parsedPointB.lng.toString());
-    formData.append('pointB.height', String(data.pointB.height)); // Ensure height is string
+    formData.append('pointB.height', String(data.pointB.height));
     formData.append('clearanceThreshold', data.clearanceThreshold);
 
     React.startTransition(() => {
@@ -241,25 +237,34 @@ function HomePageContent() {
   }, [selectedLinkId, getLinkById, formAction, toast, updateLinkAnalysis, getCachedAnalysis, reset]);
 
   useEffect(() => {
-    if (serverState && selectedLinkId) {
-      const currentLink = getLinkById(selectedLinkId); // Get the link *before* potential state update
-      if (!currentLink) return;
-
-
+    if (serverState) {
       if (serverState.error) {
-        // updateLinkDetails already marks as dirty, but ensure analysisResult is cleared
-        updateLinkDetails(selectedLinkId, { ...currentLink, analysisResult: undefined, isDirty: true });
-        toast({
-          title: "Analysis Error",
-          description: serverState.error,
-          variant: "destructive",
-          duration: 7000,
-        });
+        setDisplayedError(serverState.error);
+        setDisplayedFieldErrors(serverState.fieldErrors || null);
       } else if ('losPossible' in serverState) {
+        setDisplayedError(null);
+        setDisplayedFieldErrors(null);
+      }
+    }
+  }, [serverState]);
+
+  useEffect(() => {
+    if (!selectedLinkId && !serverState?.error) return; // Don't run if no link or if error is already displayed
+
+    const currentLink = selectedLinkId ? getLinkById(selectedLinkId) : null;
+    
+    if (serverState?.error && currentLink) {
+        updateLinkDetails(selectedLinkId!, { ...currentLink, analysisResult: undefined, isDirty: true });
+        // Toast is handled by the error modal now, but can keep if desired for non-modal notifications
+        // toast({
+        //   title: "Analysis Error",
+        //   description: serverState.error,
+        //   variant: "destructive",
+        //   duration: 7000,
+        // });
+    } else if (serverState && 'losPossible' in serverState && currentLink && selectedLinkId) {
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
-
         const currentFormData = getValues();
-
         const newAnalysisResult: AnalysisResult = {
           ...successfulResult,
           pointA: {
@@ -281,37 +286,30 @@ function HomePageContent() {
 
         updateLinkAnalysis(selectedLinkId, newAnalysisResult);
         setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]);
-
         setIsAnalysisPanelGloballyOpen(true);
         setIsBottomPanelContentExpanded(true);
-
         toast({
           title: "Analysis Complete",
           description: newAnalysisResult.message || "LOS analysis performed successfully.",
         });
-      }
     }
   }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues]);
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
-    const currentSelectedLink = getLinkById(selectedLinkId || ''); // Get latest link from context
+    const currentSelectedLink = getLinkById(selectedLinkId || '');
 
     if (event.latLng && currentSelectedLink) {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
       const fieldToUpdate = pointId === 'pointA' ? 'pointA' : 'pointB';
-
       const newPointDetails = {
-        ...(currentSelectedLink[fieldToUpdate]), // Spread existing details
+        ...(currentSelectedLink[fieldToUpdate]),
         lat: lat,
         lng: lng,
       };
-
       updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails });
-       // Form update is handled by useEffect watching selectedLink
-    } else if (event.latLng && !currentSelectedLink) { // No link selected, create a new one
+    } else if (event.latLng && !currentSelectedLink) {
         const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
-        // Form reset and panel opening handled by useEffect on selectedLink change
     }
   }, [selectedLinkId, updateLinkDetails, addLink, getLinkById]);
 
@@ -323,14 +321,12 @@ function HomePageContent() {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
       const fieldToUpdate = pointId;
-
       const newPointDetails = {
         ...draggedLink[fieldToUpdate],
         lat: lat,
         lng: lng,
       };
       updateLinkDetails(linkId, { [fieldToUpdate]: newPointDetails });
-      // Form update is handled by useEffect watching selectedLink for the currently selected link
     }
   }, [getLinkById, updateLinkDetails]);
 
@@ -343,9 +339,6 @@ function HomePageContent() {
         towerHeight: Math.round(newHeight),
       };
       updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails });
-      // Form update for height is handled by useEffect on selectedLink
-
-      // Trigger re-analysis automatically if a valid analysis was present
       if (currentSelectedLink.analysisResult && !currentSelectedLink.isDirty) {
           const currentFormValues = getValues();
           handleSubmit(processSubmit)({
@@ -357,11 +350,14 @@ function HomePageContent() {
   }, [selectedLinkId, getLinkById, updateLinkDetails, handleSubmit, processSubmit, getValues]);
 
   const toggleGlobalPanelVisibility = useCallback(() => {
-     setIsAnalysisPanelGloballyOpen(prev => !prev);
-     if (isAnalysisPanelGloballyOpen && selectedLinkId) {
-        selectLink(null);
-     }
-  }, [isAnalysisPanelGloballyOpen, selectedLinkId, selectLink]);
+     setIsAnalysisPanelGloballyOpen(prev => {
+        const newIsOpen = !prev;
+        if (!newIsOpen && selectedLinkId) {
+             setTimeout(() => selectLink(null), 0);
+        }
+        return newIsOpen;
+     });
+  }, [selectedLinkId, selectLink]);
 
   const toggleBottomPanelContentExpansion = useCallback(() => {
     setIsBottomPanelContentExpanded(prev => !prev);
@@ -448,14 +444,12 @@ function HomePageContent() {
   };
 
   const handleAddNewLink = () => {
-    const newId = addLink(); // Context handles setting selectedLinkId and default structure
-    // Form resets and panel opening are handled by useEffect on selectedLink change
+    const newId = addLink();
   };
 
   const handleRemoveSelectedLink = () => {
     if (selectedLinkId) {
       removeLink(selectedLinkId);
-      // selectedLink will become null, triggering form reset and panel closure via useEffect
     }
   };
 
@@ -536,20 +530,25 @@ function HomePageContent() {
           </div>
         )}
 
-        {serverState?.error && !isActionPending && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={() => { /* Consider clearing serverState.error by setting it to null */ }}>
-              <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4">
+        {displayedError && !isActionPending && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={() => { setDisplayedError(null); setDisplayedFieldErrors(null); }}>
+              <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
                 <CardHeader>
                   <CardTitle className="text-destructive-foreground flex items-center">
                     <AlertTriangle className="mr-2 h-6 w-6"/> Analysis Failed
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-destructive-foreground mb-4">{serverState.error}</p>
+                  <p className="text-destructive-foreground mb-4">{displayedError}</p>
+                  {displayedFieldErrors && (
+                    <div className="text-xs text-destructive-foreground/80 mb-3 bg-black/20 p-2 rounded custom-scrollbar overflow-auto max-h-32">
+                      <pre className="whitespace-pre-wrap">{JSON.stringify(displayedFieldErrors, null, 2)}</pre>
+                    </div>
+                  )}
                   <Button
                     variant="outline"
                     className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-                    onClick={(e) => { e.stopPropagation(); /* Clear serverState.error by setting it to null */ }}
+                    onClick={() => { setDisplayedError(null); setDisplayedFieldErrors(null); }}
                   >
                     Dismiss
                   </Button>
@@ -607,5 +606,3 @@ export default function Home() {
     </LinksProvider>
   );
 }
-
-    
