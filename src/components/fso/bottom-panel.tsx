@@ -129,7 +129,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
   return (
     <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0 min-w-[320px] md:min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
+      <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
         <div className="flex-shrink-0 order-1">
           {(isStale && !isActionPending && analysisResult) || (isStale && !analysisResult) ? (
             <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow">
@@ -157,13 +157,13 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
         {analysisResult && !isStale && (
           <>
-            <div className="flex flex-col items-center order-2">
+            <div className="flex flex-col items-center order-2 flex-shrink-0">
               <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Aerial Dist.</span>
               <span className="font-bold text-foreground text-xs md:text-sm">
                 {currentDistanceKm !== null ? (currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`) : "N/A"}
               </span>
             </div>
-            <div className="flex flex-col items-center order-4">
+            <div className="flex flex-col items-center order-4 flex-shrink-0">
               <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Min. Clear.</span>
               <span className={cn(
                 "font-bold text-xs md:text-sm",
@@ -242,7 +242,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         </p>
       }
       {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
-        <div className="text-center text-los-failure text-[0.7rem] py-0.5">
+        <div className="text-center text-los-failure text-[0.7rem] py-0.5 px-1">
           Add&nbsp;
           <span className="font-semibold">{deficit.toFixed(0)}m</span>
           &nbsp;to tower(s) for clearance.
@@ -332,7 +332,7 @@ export default function BottomPanel({
         )}
       >
         <div className="p-1.5 md:p-2 h-full overflow-hidden">
-          <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2.5fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
+          <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_0.8fr)_minmax(300px,_2.4fr)_minmax(200px,_0.8fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
             <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-1">
               <SiteInputGroup id="pointA" />
             </div>
@@ -371,3 +371,4 @@ export default function BottomPanel({
     </form>
   );
 }
+

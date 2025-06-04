@@ -1227,6 +1227,10 @@ body {
   align-items: stretch;
 }
 
+.justify-start {
+  justify-content: flex-start;
+}
+
 .justify-center {
   justify-content: center;
 }
@@ -1257,6 +1261,10 @@ body {
 
 .gap-y-2 {
   row-gap: .5rem;
+}
+
+.gap-x-4 {
+  column-gap: 1rem;
 }
 
 .space-x-1 > :not([hidden]) ~ :not([hidden]) {
@@ -3267,6 +3275,10 @@ body {
 
   .md\:grid-cols-\[minmax\(200px\,_1fr\)_minmax\(300px\,_2\.5fr\)_minmax\(200px\,_1fr\)\] {
     grid-template-columns: minmax(200px, 1fr) minmax(300px, 2.5fr) minmax(200px, 1fr);
+  }
+
+  .md\:grid-cols-\[minmax\(200px\,_0\.8fr\)_minmax\(300px\,_2\.4fr\)_minmax\(200px\,_0\.8fr\)\] {
+    grid-template-columns: minmax(200px, .8fr) minmax(300px, 2.4fr) minmax(200px, .8fr);
   }
 
   .md\:overflow-x-visible {
