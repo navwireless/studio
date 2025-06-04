@@ -55,10 +55,10 @@ var _s = __turbopack_context__.k.signature();
 ;
 // Adjusted Padding for more chart space
 const PADDING_BASE = {
-    top: 30,
-    right: 20,
-    bottom: 30,
-    left: 45
+    top: 20,
+    right: 15,
+    bottom: 25,
+    left: 40
 };
 const TEXT_COLOR = 'hsl(210, 25%, 90%)';
 const GRID_COLOR = 'hsla(217, 30%, 50%, 0.4)';
@@ -74,9 +74,9 @@ const TOOLTIP_TEXT_COLOR = 'hsl(210, 40%, 95%)';
 const TOOLTIP_BORDER_COLOR = 'hsl(217, 33%, 35%)';
 const MIN_TOWER_HEIGHT = 0;
 const MAX_TOWER_HEIGHT = 100;
-const TOWER_HANDLE_RADIUS_VISUAL = 6;
+const TOWER_HANDLE_RADIUS_VISUAL = 5; // Slightly smaller for compact view
 const TOWER_HANDLE_CLICK_RADIUS = 10;
-const HORIZONTAL_PADDING_PERCENTAGE = 0.05;
+const HORIZONTAL_PADDING_PERCENTAGE = 0.05; // 5% padding on each side of the x-axis
 const WATERMARK_TEXT = "LiFi Link Pro";
 const WATERMARK_COLOR = 'hsla(210, 30%, 60%, 0.1)'; // Subtle greyish-blue
 function drawRoundedRect(ctx, x, y, width, height, radius) {
@@ -111,7 +111,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
             if (rect.width === 0 || rect.height === 0) {
-                requestAnimationFrame(drawChart);
+                requestAnimationFrame(drawChart); // If canvas not yet sized, retry
                 return;
             }
             canvas.width = rect.width * dpr;
@@ -120,11 +120,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             const PADDING = PADDING_BASE;
             const chartWidth = rect.width - PADDING.left - PADDING.right;
             const chartHeight = rect.height - PADDING.top - PADDING.bottom;
+            // Calculate effective width for data plotting after applying horizontal padding
             const xOffsetPx = chartWidth * HORIZONTAL_PADDING_PERCENTAGE;
             const effectiveChartWidthPx = chartWidth * (1 - 2 * HORIZONTAL_PADDING_PERCENTAGE);
             ctx.clearRect(0, 0, rect.width, rect.height);
             const originalTransform = ctx.getTransform();
-            ctx.translate(PADDING.left, PADDING.top);
+            ctx.translate(PADDING.left, PADDING.top); // Move origin to top-left of chart area
             const elevations = data.flatMap({
                 "CustomProfileChart.useCallback[drawChart].elevations": (p)=>[
                         p.terrainElevation,
@@ -134,8 +135,8 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             let minY = Math.min(...elevations);
             let maxY = Math.max(...elevations);
             const yDataRange = maxY - minY;
-            minY -= yDataRange * 0.15;
-            maxY += yDataRange * 0.15;
+            minY -= yDataRange * 0.1; // Reduced vertical padding for Y-axis scale
+            maxY += yDataRange * 0.1;
             if (maxY === minY) {
                 maxY += 10;
                 minY -= 10;
@@ -143,8 +144,9 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             if (maxY < minY) [maxY, minY] = [
                 minY,
                 maxY
-            ];
+            ]; // Ensure minY < maxY
             const maxXKmActual = totalDistanceKm;
+            // Map data value (km) to pixel X position within the chart area (considering visual padding)
             const getX = {
                 "CustomProfileChart.useCallback[drawChart].getX": (distanceKm)=>xOffsetPx + distanceKm / maxXKmActual * effectiveChartWidthPx
             }["CustomProfileChart.useCallback[drawChart].getX"];
@@ -154,10 +156,11 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             const getElevationFromY = {
                 "CustomProfileChart.useCallback[drawChart].getElevationFromY": (pixelY_ChartArea)=>minY + (chartHeight - pixelY_ChartArea) / chartHeight * (maxY - minY)
             }["CustomProfileChart.useCallback[drawChart].getElevationFromY"];
+            // Converts pixel X relative to the chart area's left edge (after canvas PADDING.left) back to km
             const getKmFromX = {
                 "CustomProfileChart.useCallback[drawChart].getKmFromX": (pixelX_ChartArea_relative_to_padding_left)=>{
                     const effectivePx = pixelX_ChartArea_relative_to_padding_left - xOffsetPx;
-                    if (effectiveChartWidthPx === 0) return 0;
+                    if (effectiveChartWidthPx === 0) return 0; // Avoid division by zero
                     return effectivePx / effectiveChartWidthPx * maxXKmActual;
                 }
             }["CustomProfileChart.useCallback[drawChart].getKmFromX"];
@@ -197,8 +200,9 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
             for(let i = 0; i <= numXTicks; i++){
+                // For X ticks, ensure they align with the effective plotting area
                 const distKm = i / numXTicks * maxXKmActual;
-                const xPx = getX(distKm);
+                const xPx = getX(distKm); // xPx is already relative to chart area's left
                 ctx.beginPath();
                 ctx.moveTo(xPx, 0);
                 ctx.lineTo(xPx, chartHeight);
@@ -209,7 +213,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.save();
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            const watermarkFontSize = Math.max(24, Math.min(chartWidth / 8, chartHeight / 5)); // Dynamic font size
+            const watermarkFontSize = Math.max(20, Math.min(chartWidth / 9, chartHeight / 6)); // Dynamic font size
             ctx.font = `bold ${watermarkFontSize}px Inter, sans-serif`;
             ctx.fillStyle = WATERMARK_COLOR;
             ctx.translate(chartWidth / 2, chartHeight / 2); // Move to center
@@ -222,8 +226,8 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             data.forEach({
                 "CustomProfileChart.useCallback[drawChart]": (p)=>ctx.lineTo(getX(p.distance), getY(p.terrainElevation))
             }["CustomProfileChart.useCallback[drawChart]"]);
-            ctx.lineTo(getX(data[data.length - 1].distance), chartHeight);
-            ctx.lineTo(getX(data[0].distance), chartHeight);
+            ctx.lineTo(getX(data[data.length - 1].distance), chartHeight); // Line to bottom right
+            ctx.lineTo(getX(data[0].distance), chartHeight); // Line to bottom left
             ctx.closePath();
             ctx.fillStyle = TERRAIN_FILL_COLOR;
             ctx.fill();
@@ -236,6 +240,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.strokeStyle = TERRAIN_STROKE_COLOR;
             ctx.lineWidth = 1;
             ctx.stroke();
+            // Line of Sight (LOS) path
             let yLosA_px_ChartArea = getY(data[0].losHeight);
             let yLosB_px_ChartArea = getY(data[data.length - 1].losHeight);
             if (liveDragVisuals) {
@@ -253,6 +258,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.strokeStyle = LOS_LINE_COLOR;
             ctx.lineWidth = 1.5;
             ctx.stroke();
+            // LOS Distance Text
             if (totalDistanceKm !== undefined) {
                 const midXLos = (xA_px_ChartArea + xB_px_ChartArea) / 2;
                 const midYLos = (yLosA_px_ChartArea + yLosB_px_ChartArea) / 2;
@@ -263,13 +269,16 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 const distanceText = totalDistanceKm < 1 ? `${(totalDistanceKm * 1000).toFixed(0)}m` : `${totalDistanceKm.toFixed(1)}km`;
                 ctx.fillText(`Aerial Dist: ${distanceText}`, midXLos, midYLos - 5);
             }
+            // Obstruction dots (iterate over pixels of the effective chart width)
             if (data.length > 1 && maxXKmActual > 0 && effectiveChartWidthPx > 0) {
                 for(let px_on_effective_width = 0; px_on_effective_width <= effectiveChartWidthPx; px_on_effective_width++){
                     const currentX_on_chart_area = xOffsetPx + px_on_effective_width;
                     const currentKm = px_on_effective_width / effectiveChartWidthPx * maxXKmActual;
+                    // LOS line equation based on current (possibly dragged) tower heights
                     const losSlope = xB_px_ChartArea - xA_px_ChartArea === 0 ? 0 : (yLosB_px_ChartArea - yLosA_px_ChartArea) / (xB_px_ChartArea - xA_px_ChartArea);
                     const los_y_at_currentX = yLosA_px_ChartArea + losSlope * (currentX_on_chart_area - xA_px_ChartArea);
-                    let terrain_elevation_at_currentKm = data[0].terrainElevation;
+                    // Interpolate terrain elevation at currentKm
+                    let terrain_elevation_at_currentKm = data[0].terrainElevation; // Default to start if out of bounds
                     if (data.length > 1) {
                         for(let j = 0; j < data.length - 1; j++){
                             if (currentKm >= data[j].distance && currentKm <= data[j + 1].distance) {
@@ -283,7 +292,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                                     const t_interp = (currentKm - d1) / (d2 - d1);
                                     terrain_elevation_at_currentKm = e1 + t_interp * (e2 - e1);
                                 }
-                                break;
+                                break; // Found segment
                             } else if (currentKm > data[data.length - 1].distance && j === data.length - 2) {
                                 terrain_elevation_at_currentKm = data[data.length - 1].terrainElevation;
                             }
@@ -292,14 +301,16 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                         terrain_elevation_at_currentKm = data[0].terrainElevation;
                     }
                     const terrain_y_at_currentX = getY(terrain_elevation_at_currentKm);
+                    // If LOS line is at or below terrain, draw obstruction dot
                     if (los_y_at_currentX >= terrain_y_at_currentX - 1) {
                         ctx.beginPath();
-                        ctx.arc(currentX_on_chart_area, los_y_at_currentX, 2.5, 0, 2 * Math.PI);
+                        ctx.arc(currentX_on_chart_area, los_y_at_currentX, 2.5, 0, 2 * Math.PI); // Small dot
                         ctx.fillStyle = OBSTRUCTION_DOT_COLOR;
                         ctx.fill();
                     }
                 }
             }
+            // Tower A
             const yTerrainA_px_ChartArea = getY(data[0].terrainElevation);
             ctx.strokeStyle = TOWER_LINE_COLOR;
             ctx.lineWidth = 2;
@@ -313,12 +324,13 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.fill();
             ctx.strokeStyle = TOOLTIP_BG_COLOR;
             ctx.lineWidth = 1.5;
-            ctx.stroke();
+            ctx.stroke(); // Border for handle
             ctx.fillStyle = TEXT_COLOR;
             ctx.font = "bold 10px Inter, sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "bottom";
             ctx.fillText(pointAName, xA_px_ChartArea, yLosA_px_ChartArea - (TOWER_HANDLE_RADIUS_VISUAL + 2));
+            // Tower B
             const yTerrainB_px_ChartArea = getY(data[data.length - 1].terrainElevation);
             ctx.strokeStyle = TOWER_LINE_COLOR;
             ctx.lineWidth = 2;
@@ -332,9 +344,10 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             ctx.fill();
             ctx.strokeStyle = TOOLTIP_BG_COLOR;
             ctx.lineWidth = 1.5;
-            ctx.stroke();
+            ctx.stroke(); // Border for handle
             ctx.fillStyle = TEXT_COLOR;
             ctx.fillText(pointBName, xB_px_ChartArea, yLosB_px_ChartArea - (TOWER_HANDLE_RADIUS_VISUAL + 2));
+            // Display dragged tower height
             if (liveDragVisuals) {
                 ctx.fillStyle = TOWER_LINE_COLOR;
                 ctx.font = "bold 11px Inter, sans-serif";
@@ -350,10 +363,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                     ctx.fillText(`${liveDragVisuals.currentHeightMeters.toFixed(0)}m`, textX, yLosB_px_ChartArea);
                 }
             }
+            // Hover effects (guide line and dot)
             if (hoverData && !isInteractingByDrag) {
-                const hxPx_Canvas = hoverData.xPx;
-                const hyPxLos_Canvas = hoverData.yPx;
-                const hxPx_ChartArea = hxPx_Canvas - PADDING.left;
+                const hxPx_Canvas = hoverData.xPx; // x position on canvas (includes canvas padding)
+                const hyPxLos_Canvas = hoverData.yPx; // y position on canvas (includes canvas padding)
+                const hxPx_ChartArea = hxPx_Canvas - PADDING.left; // x position relative to chart area
+                // Vertical guide line
                 ctx.beginPath();
                 ctx.setLineDash([
                     3,
@@ -365,16 +380,18 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 ctx.lineTo(hxPx_ChartArea, chartHeight);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                const hyPxLos_ChartArea = hyPxLos_Canvas - PADDING.top;
+                // Dot on LOS line
+                const hyPxLos_ChartArea = hyPxLos_Canvas - PADDING.top; // y position relative to chart area
                 ctx.beginPath();
                 ctx.arc(hxPx_ChartArea, hyPxLos_ChartArea, 4, 0, 2 * Math.PI);
                 ctx.fillStyle = HOVER_DOT_COLOR;
                 ctx.fill();
                 ctx.strokeStyle = TOOLTIP_BG_COLOR;
                 ctx.lineWidth = 1.5;
-                ctx.stroke();
+                ctx.stroke(); // Border for dot
             }
-            ctx.setTransform(originalTransform);
+            ctx.setTransform(originalTransform); // Restore original canvas transform
+            // Tooltip (drawn in canvas coordinates, not chart area coordinates)
             if (hoverData && mousePosition && !isInteractingByDrag) {
                 const p = hoverData.point;
                 const lines = [
@@ -390,8 +407,9 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                     "CustomProfileChart.useCallback[drawChart].textWidth": (line)=>ctx.measureText(line).width
                 }["CustomProfileChart.useCallback[drawChart].textWidth"]));
                 const tooltipWidth = textWidth + 2 * tooltipPadding;
-                const tooltipHeight = lines.length * lineHeight + 2 * tooltipPadding - (lineHeight - 10);
+                const tooltipHeight = lines.length * lineHeight + 2 * tooltipPadding - (lineHeight - 10); // Adjust for tighter line spacing
                 const cornerRadius = 4;
+                // Position tooltip relative to mouse, avoiding edges
                 let tipX = mousePosition.x + 15;
                 let tipY = mousePosition.y - tooltipHeight - 5;
                 if (tipX + tooltipWidth > rect.width - PADDING.right / 2) tipX = mousePosition.x - tooltipWidth - 15;
@@ -433,7 +451,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             const handleMouseMoveForTooltip = {
                 "CustomProfileChart.useEffect.handleMouseMoveForTooltip": (event)=>{
                     if (isInteractingByDrag || !chartMetricsRef.current || !data || data.length < 2) {
-                        if (hoverData) setHoverData(null);
+                        if (hoverData) setHoverData(null); // Clear hover if dragging or no data/metrics
                         return;
                     }
                     const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation, getKmFromPixelX, xOffsetPx, effectivePixelWidth } = chartMetricsRef.current;
@@ -445,8 +463,9 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                         y: mouseCanvasY
                     });
                     const mouseXInChartArea = mouseCanvasX - padding.left;
+                    // Check if mouse is within the effective plotting area (between the visual paddings)
                     if (mouseXInChartArea >= xOffsetPx && mouseXInChartArea <= xOffsetPx + effectivePixelWidth) {
-                        const distanceKmHovered = getKmFromPixelX(mouseXInChartArea);
+                        const distanceKmHovered = getKmFromPixelX(mouseXInChartArea); // Get km based on position within effective area
                         let closestPoint = data[0];
                         let minDiff = Math.abs(data[0].distance - distanceKmHovered);
                         for(let i = 0; i < data.length; i++){
@@ -487,7 +506,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 "CustomProfileChart.useEffect": ()=>requestAnimationFrame(drawChart)
             }["CustomProfileChart.useEffect"]);
             resizeObserver.observe(canvas);
-            drawChart();
+            drawChart(); // Initial draw
             return ({
                 "CustomProfileChart.useEffect": ()=>{
                     resizeObserver.unobserve(canvas);
@@ -501,7 +520,8 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         data,
         isInteractingByDrag,
         hoverData
-    ]);
+    ]); // isInteractingByDrag and hoverData are important here
+    // Mouse down handler for starting tower drag
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "CustomProfileChart.useEffect": ()=>{
             const canvas = canvasRef.current;
@@ -513,6 +533,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                     if (!canvasRect) return;
                     const clickX_Canvas = event.clientX - canvasRect.left;
                     const clickY_Canvas = event.clientY - canvasRect.top;
+                    // Tower A handle check
                     const towerAx_px_ChartArea = getPixelXFromKm(data[0].distance);
                     const towerAy_px_ChartArea = getPixelYFromElevation(data[0].losHeight);
                     const distA = Math.sqrt(Math.pow(clickX_Canvas - (towerAx_px_ChartArea + padding.left), 2) + Math.pow(clickY_Canvas - (towerAy_px_ChartArea + padding.top), 2));
@@ -524,11 +545,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                             siteTerrainElevation: data[0].terrainElevation,
                             initialLosY_px_ChartArea: towerAy_px_ChartArea
                         });
-                        setLiveDragVisuals(null);
+                        setLiveDragVisuals(null); // Clear previous live visuals
                         if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
                         event.preventDefault();
                         return;
                     }
+                    // Tower B handle check
                     const towerBx_px_ChartArea = getPixelXFromKm(data[data.length - 1].distance);
                     const towerBy_px_ChartArea = getPixelYFromElevation(data[data.length - 1].losHeight);
                     const distB = Math.sqrt(Math.pow(clickX_Canvas - (towerBx_px_ChartArea + padding.left), 2) + Math.pow(clickY_Canvas - (towerBy_px_ChartArea + padding.top), 2));
@@ -555,7 +577,8 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
     }["CustomProfileChart.useEffect"], [
         data,
         onTowerHeightChangeFromGraph
-    ]);
+    ]); // Depends on data for tower positions
+    // Global mouse move and up handlers for active dragging
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "CustomProfileChart.useEffect": ()=>{
             if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) {
@@ -565,14 +588,17 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             const { getElevationFromPixelY, chartPixelHeight, getPixelYFromElevation: getPixelY } = chartMetricsRef.current;
             const handleGlobalMouseMove = {
                 "CustomProfileChart.useEffect.handleGlobalMouseMove": (event)=>{
-                    if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) return;
+                    if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) return; // Should not happen if effect dependency is correct
                     const clientYDelta = event.clientY - dragStartInfo.clientY;
-                    let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta;
+                    let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta; // Inverted Y
+                    // Clamp Y to chart boundaries
                     newTowerLosY_px_ChartArea = Math.max(0, Math.min(chartPixelHeight, newTowerLosY_px_ChartArea));
                     const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px_ChartArea);
                     let currentHeightMeters = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
-                    currentHeightMeters = Math.round(currentHeightMeters);
+                    // Clamp height to MIN/MAX tower height
+                    currentHeightMeters = Math.round(currentHeightMeters); // Round to nearest integer
                     currentHeightMeters = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, currentHeightMeters));
+                    // Recalculate Y pixel for the clamped height
                     const clampedAbsoluteElevation = currentHeightMeters + dragStartInfo.siteTerrainElevation;
                     newTowerLosY_px_ChartArea = getPixelY(clampedAbsoluteElevation);
                     setLiveDragVisuals({
@@ -593,6 +619,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                     }
                     let finalNewTowerHeightRelativeToTerrain;
                     if (liveDragVisuals) {
+                        // Use the height from the last live visual update
                         finalNewTowerHeightRelativeToTerrain = liveDragVisuals.currentHeightMeters;
                     } else {
                         const clientYDelta = event.clientY - dragStartInfo.clientY;
@@ -616,7 +643,7 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 "CustomProfileChart.useEffect": ()=>{
                     window.removeEventListener('mousemove', handleGlobalMouseMove);
                     window.removeEventListener('mouseup', handleGlobalMouseUp);
-                    if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
+                    if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair'; // Reset cursor on cleanup
                 }
             })["CustomProfileChart.useEffect"];
         }
@@ -626,10 +653,11 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
         onTowerHeightChangeFromGraph,
         data,
         liveDragVisuals
-    ]);
+    ]); // Include liveDragVisuals
+    // Trigger re-draw when liveDragVisuals change
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "CustomProfileChart.useEffect": ()=>{
-            drawChart();
+            drawChart(); // Re-draw the chart with live drag updates
         }
     }["CustomProfileChart.useEffect"], [
         liveDragVisuals,
@@ -643,12 +671,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 children: "Analyzing..."
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 553,
+                lineNumber: 581,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 552,
+            lineNumber: 580,
             columnNumber: 7
         }, this);
     }
@@ -661,12 +689,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                     children: "Loading analysis data..."
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                    lineNumber: 562,
+                    lineNumber: 590,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 561,
+                lineNumber: 589,
                 columnNumber: 13
             }, this);
         }
@@ -677,17 +705,18 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
                 children: "Not enough data to display profile."
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-                lineNumber: 568,
+                lineNumber: 596,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 567,
+            lineNumber: 595,
             columnNumber: 7
         }, this);
     }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("w-full h-full relative", isStale && !isInteractingByDrag && "opacity-50", isActionPending && !isInteractingByDrag && "pointer-events-none"),
+        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("w-full h-full relative", isStale && !isInteractingByDrag && "opacity-50", isActionPending && !isInteractingByDrag && "pointer-events-none" // Disable interactions if pending AND not dragging
+        ),
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("canvas", {
             ref: canvasRef,
             style: {
@@ -697,12 +726,12 @@ function CustomProfileChart({ data, pointAName = "Site A", pointBName = "Site B"
             }
         }, void 0, false, {
             fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-            lineNumber: 580,
+            lineNumber: 608,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/custom-profile-chart.tsx",
-        lineNumber: 574,
+        lineNumber: 602,
         columnNumber: 5
     }, this);
 }
@@ -784,110 +813,112 @@ const SiteInputGroup = ({ id })=>{
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
                 className: "p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between",
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "space-y-1.5",
-                    children: [
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
-                                    htmlFor: `${id}.name`,
-                                    className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
-                                    children: "Name"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 35,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
-                                    id: `${id}.name`,
-                                    ...register(`${id}.name`),
-                                    placeholder: `e.g. ${id === 'pointA' ? 'Main Building' : 'Remote Tower'}`,
-                                    className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 36,
-                                    columnNumber: 13
-                                }, this),
-                                clientFormErrors[id]?.name && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                    className: "text-xs text-destructive/80 mt-0.5",
-                                    children: clientFormErrors[id]?.name?.message
-                                }, void 0, false, {
-                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 43,
-                                    columnNumber: 15
-                                }, this)
-                            ]
-                        }, void 0, true, {
-                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 34,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
-                                    htmlFor: `${id}.coordinates`,
-                                    className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
-                                    children: "Coordinates (Lat, Lng)"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 46,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
-                                    id: `${id}.coordinates`,
-                                    ...register(`${id}.coordinates`),
-                                    placeholder: "e.g., 20.123, -78.456",
-                                    className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 47,
-                                    columnNumber: 13
-                                }, this),
-                                clientFormErrors[id]?.coordinates && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                    className: "text-xs text-destructive/80 mt-0.5",
-                                    children: clientFormErrors[id]?.coordinates?.message
-                                }, void 0, false, {
-                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 54,
-                                    columnNumber: 15
-                                }, this)
-                            ]
-                        }, void 0, true, {
-                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 45,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
-                            name: `${id}.height`,
-                            control: control,
-                            render: ({ field })=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                    type: "hidden",
-                                    ...field
-                                }, void 0, false, {
-                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 61,
-                                    columnNumber: 15
-                                }, void 0)
-                        }, void 0, false, {
-                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 57,
-                            columnNumber: 12
-                        }, this),
-                        clientFormErrors[id]?.height && !clientFormErrors[id]?.height?.message?.includes("Maximum tower height") && !clientFormErrors[id]?.height?.message?.includes("Minimum tower height") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                            className: "text-xs text-destructive/80 mt-0.5",
-                            children: clientFormErrors[id]?.height?.message
-                        }, void 0, false, {
-                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 65,
-                            columnNumber: 13
-                        }, this)
-                    ]
-                }, void 0, true, {
-                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 33,
-                    columnNumber: 9
-                }, this)
-            }, void 0, false, {
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "space-y-1.5",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
+                                        htmlFor: `${id}.name`,
+                                        className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
+                                        children: "Name"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                        lineNumber: 35,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
+                                        id: `${id}.name`,
+                                        ...register(`${id}.name`),
+                                        placeholder: `e.g. ${id === 'pointA' ? 'Main Building' : 'Remote Tower'}`,
+                                        className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                        lineNumber: 36,
+                                        columnNumber: 13
+                                    }, this),
+                                    clientFormErrors[id]?.name && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-xs text-destructive/80 mt-0.5",
+                                        children: clientFormErrors[id]?.name?.message
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                        lineNumber: 43,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                lineNumber: 34,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
+                                        htmlFor: `${id}.coordinates`,
+                                        className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
+                                        children: "Coordinates (Lat, Lng)"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                        lineNumber: 46,
+                                        columnNumber: 13
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
+                                        id: `${id}.coordinates`,
+                                        ...register(`${id}.coordinates`),
+                                        placeholder: "e.g., 20.123, -78.456",
+                                        className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                        lineNumber: 47,
+                                        columnNumber: 13
+                                    }, this),
+                                    clientFormErrors[id]?.coordinates && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-xs text-destructive/80 mt-0.5",
+                                        children: clientFormErrors[id]?.coordinates?.message
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                        lineNumber: 54,
+                                        columnNumber: 15
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                lineNumber: 45,
+                                columnNumber: 11
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
+                                name: `${id}.height`,
+                                control: control,
+                                render: ({ field })=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                        type: "hidden",
+                                        ...field
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                        lineNumber: 61,
+                                        columnNumber: 15
+                                    }, void 0)
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                lineNumber: 57,
+                                columnNumber: 12
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                        lineNumber: 33,
+                        columnNumber: 9
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "text-[0.65rem] text-muted-foreground/70 italic mt-1.5",
+                        children: "Tower height adjusted via chart."
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                        lineNumber: 67,
+                        columnNumber: 9
+                    }, this)
+                ]
+            }, void 0, true, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
                 lineNumber: 32,
                 columnNumber: 7
@@ -948,33 +979,33 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: "mr-1 h-3 w-3"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 135,
+                                    lineNumber: 138,
                                     columnNumber: 15
                                 }, this),
                                 " NEEDS RE-ANALYZE"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 134,
+                            lineNumber: 137,
                             columnNumber: 13
                         }, this) : analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("px-3 py-1.5 rounded-md text-xs font-bold shadow-md", isClearBasedOnAnalysis ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground"),
                             children: isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 138,
+                            lineNumber: 141,
                             columnNumber: 13
                         }, this) : !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: "px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic",
                             children: "Perform analysis"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 150,
+                            lineNumber: 153,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 132,
+                        lineNumber: 135,
                         columnNumber: 9
                     }, this),
                     analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -987,7 +1018,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: "Aerial Dist."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 160,
+                                        lineNumber: 163,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -995,13 +1026,13 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: currentDistanceKm !== null ? currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km` : "N/A"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 161,
+                                        lineNumber: 164,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 159,
+                                lineNumber: 162,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1012,7 +1043,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: "Min. Clear."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 166,
+                                        lineNumber: 169,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1020,13 +1051,13 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 167,
+                                        lineNumber: 170,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 165,
+                                lineNumber: 168,
                                 columnNumber: 13
                             }, this)
                         ]
@@ -1044,19 +1075,19 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 185,
+                                    lineNumber: 188,
                                     columnNumber: 13
                                 }, this),
                                 buttonText
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 178,
+                            lineNumber: 181,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 177,
+                        lineNumber: 180,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1068,7 +1099,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                 children: "Req. Fresnel (m):"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 191,
+                                lineNumber: 194,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
@@ -1082,18 +1113,18 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         className: "bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 196,
+                                        lineNumber: 199,
                                         columnNumber: 15
                                     }, void 0)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 192,
+                                lineNumber: 195,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 190,
+                        lineNumber: 193,
                         columnNumber: 9
                     }, this),
                     analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1109,19 +1140,19 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: "mr-1.5 h-3.5 w-3.5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 216,
+                                    lineNumber: 219,
                                     columnNumber: 15
                                 }, this),
                                 "Make Report"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 209,
+                            lineNumber: 212,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 208,
+                        lineNumber: 211,
                         columnNumber: 11
                     }, this),
                     analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1137,25 +1168,25 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: "mr-1.5 h-3.5 w-3.5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 231,
+                                    lineNumber: 234,
                                     columnNumber: 15
                                 }, this),
                                 "Add Another Link"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 224,
+                            lineNumber: 227,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 223,
+                        lineNumber: 226,
                         columnNumber: 12
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 131,
+                lineNumber: 134,
                 columnNumber: 7
             }, this),
             clientFormErrors.clearanceThreshold && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1163,7 +1194,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                 children: clientFormErrors.clearanceThreshold.message
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 239,
+                lineNumber: 242,
                 columnNumber: 9
             }, this),
             analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1178,14 +1209,14 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 246,
+                        lineNumber: 249,
                         columnNumber: 11
                     }, this),
                     " to tower(s) for clearance."
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 244,
+                lineNumber: 247,
                 columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1200,7 +1231,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                     onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph
                 }, chartKey, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 253,
+                    lineNumber: 256,
                     columnNumber: 11
                 }, this) : isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "h-full flex items-center justify-center p-2 bg-muted/30 rounded-md",
@@ -1209,12 +1240,12 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                         children: "Loading analysis data..."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 265,
+                        lineNumber: 268,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 264,
+                    lineNumber: 267,
                     columnNumber: 11
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground",
@@ -1222,23 +1253,23 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                         children: "Select a link and perform analysis to see profile."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 269,
+                        lineNumber: 272,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 268,
+                    lineNumber: 271,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 251,
+                lineNumber: 254,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 130,
+        lineNumber: 133,
         columnNumber: 5
     }, this);
 };
@@ -1267,28 +1298,29 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
         className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden", isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full", "z-[50]"),
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("w-full overflow-hidden transition-[height] duration-500 ease-in-out", isContentExpanded && isPanelGloballyVisible ? "h-[33vh]" : "h-0"),
+                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("w-full overflow-hidden transition-[height] duration-500 ease-in-out", isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0" // Slightly taller on md+ for better chart view
+                ),
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "p-1.5 md:p-2 h-full overflow-hidden",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar",
+                        className: "flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2.5fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1",
+                                className: "flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(SiteInputGroup, {
                                     id: "pointA"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 336,
+                                    lineNumber: 341,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 335,
+                                lineNumber: 340,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex-shrink-0 w-auto md:w-auto snap-start order-2",
+                                className: "flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start order-2",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ProfilePanelMiddleColumn, {
                                     analysisResult: analysisResult,
                                     isStale: isStale,
@@ -1303,42 +1335,42 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     selectedLinkClearanceThreshold: selectedLinkClearanceThreshold
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 339,
+                                    lineNumber: 345,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 338,
+                                lineNumber: 344,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3",
+                                className: "flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-3",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(SiteInputGroup, {
                                     id: "pointB"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 354,
+                                    lineNumber: 361,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 353,
+                                lineNumber: 360,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 334,
+                        lineNumber: 338,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 333,
+                    lineNumber: 336,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 327,
+                lineNumber: 330,
                 columnNumber: 7
             }, this),
             isPanelGloballyVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1349,24 +1381,24 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 366,
+                    lineNumber: 373,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 367,
+                    lineNumber: 374,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 360,
+                lineNumber: 367,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 319,
+        lineNumber: 322,
         columnNumber: 5
     }, this);
 }

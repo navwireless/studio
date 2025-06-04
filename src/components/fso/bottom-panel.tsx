@@ -61,8 +61,11 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
               <input type="hidden" {...field} />
             )}
           />
-          {clientFormErrors[id]?.height && !clientFormErrors[id]?.height?.message?.includes("Maximum tower height") && !clientFormErrors[id]?.height?.message?.includes("Minimum tower height") && 
-            <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.height?.message}</p>}
+          {/* Removed direct tower height input/slider and specific error messages for height from here */}
+          {/* Tower height is now managed via the interactive chart */}
+        </div>
+        <div className="text-[0.65rem] text-muted-foreground/70 italic mt-1.5">
+          Tower height adjusted via chart.
         </div>
       </CardContent>
     </Card>
@@ -327,15 +330,18 @@ export default function BottomPanel({
       <div
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[33vh]" : "h-0"
+          isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0" // Slightly taller on md+ for better chart view
         )}
       >
         <div className="p-1.5 md:p-2 h-full overflow-hidden">
-          <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1">
+          {/* Flex container for horizontal scrolling on mobile, grid on md+ */}
+          <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2.5fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
+            {/* Point A Card */}
+            <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-1">
               <SiteInputGroup id="pointA" />
             </div>
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start order-2">
+            {/* Profile/Chart Panel */}
+            <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start order-2">
               <ProfilePanelMiddleColumn
                 analysisResult={analysisResult}
                 isStale={isStale}
@@ -350,7 +356,8 @@ export default function BottomPanel({
                 selectedLinkClearanceThreshold={selectedLinkClearanceThreshold}
               />
             </div>
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3">
+            {/* Point B Card */}
+            <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-3">
               <SiteInputGroup id="pointB" />
             </div>
           </div>
@@ -370,3 +377,4 @@ export default function BottomPanel({
     </form>
   );
 }
+
