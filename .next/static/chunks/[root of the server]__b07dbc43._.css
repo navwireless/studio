@@ -1154,6 +1154,10 @@ body {
   min-width: var(--radix-select-trigger-width);
 }
 
+.min-w-\[calc\(100vw-4rem\)\] {
+  min-width: calc(100vw - 4rem);
+}
+
 .max-w-4xl {
   max-width: 56rem;
 }
@@ -3367,6 +3371,10 @@ body {
 
   .md\:min-w-0 {
     min-width: 0;
+  }
+
+  .md\:min-w-\[320px\] {
+    min-width: 320px;
   }
 
   .md\:max-w-\[420px\] {

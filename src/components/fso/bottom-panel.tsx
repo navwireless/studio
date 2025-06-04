@@ -23,7 +23,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
   const cardStaticTitle = id === 'pointA' ? 'Point A' : 'Point B';
 
   return (
-    <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full min-w-[280px] md:min-w-0">
+    <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col w-full min-w-[280px] md:min-w-0">
       <CardHeader className="p-1">
         <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
           <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {cardStaticTitle}
@@ -98,7 +98,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   selectedLinkClearanceThreshold,
 }) => {
   const { control, formState: { errors: clientFormErrors } } = useFormContext<AnalysisFormValues>();
-  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold' });
+  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: selectedLinkClearanceThreshold?.toString() });
   
   const minRequiredClearance = selectedLinkClearanceThreshold ?? parseFloat(watchedClearanceThresholdString || "0");
 
@@ -128,9 +128,9 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
 
   return (
-    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0 min-w-[320px] md:min-w-0">
-      <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
-        <div className="flex-shrink-0 order-1">
+    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg min-w-[calc(100vw-4rem)] md:min-w-[320px]">
+      <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-2 py-1 px-2 md:px-3 border-b border-border mb-0.5">
+        <div className="flex-shrink-0">
           {(isStale && !isActionPending && analysisResult) || (isStale && !analysisResult) ? (
             <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow">
               <AlertTriangle className="mr-1 h-3 w-3" /> NEEDS RE-ANALYZE
@@ -157,14 +157,14 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
         {analysisResult && !isStale && (
           <>
-            <div className="flex flex-col items-center order-2 flex-shrink-0">
-              <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Aerial Dist.</span>
+            <div className="flex flex-col items-center flex-shrink-0">
+              <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Dist.</span>
               <span className="font-bold text-foreground text-xs md:text-sm">
                 {currentDistanceKm !== null ? (currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`) : "N/A"}
               </span>
             </div>
-            <div className="flex flex-col items-center order-4 flex-shrink-0">
-              <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Min. Clear.</span>
+            <div className="flex flex-col items-center flex-shrink-0">
+              <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Clear.</span>
               <span className={cn(
                 "font-bold text-xs md:text-sm",
                 isStale ? "text-muted-foreground" : (actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure")
@@ -175,7 +175,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </>
         )}
 
-        <div className="order-3 flex-grow-0 md:flex-grow-0 text-center">
+        <div className="flex-grow-0 md:flex-grow-0 text-center">
           <Button
             type="button" 
             onClick={onAnalyzeSubmit}
@@ -188,7 +188,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </Button>
         </div>
         
-        <div className="order-5 flex items-center space-x-1">
+        <div className="flex items-center space-x-1">
           <Label htmlFor="clearanceThresholdProfile" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Req. Fresnel (m):</Label>
           <Controller
             name="clearanceThreshold"
@@ -206,7 +206,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         </div>
 
         {(analysisResult && !isStale) && (
-          <div className="order-6 flex-grow-0 md:flex-grow-0 text-center">
+          <div className="flex-grow-0 md:flex-grow-0 text-center">
             <Button
               type="button"
               onClick={onOpenReportDialog}
@@ -221,7 +221,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         )}
         
         {(analysisResult && !isStale) && (
-           <div className="order-7 flex-grow-0 md:flex-grow-0 text-center">
+           <div className="flex-grow-0 md:flex-grow-0 text-center">
             <Button
               type="button"
               onClick={onAddNewLink}
@@ -333,7 +333,7 @@ export default function BottomPanel({
       >
         <div className="p-1.5 md:p-2 h-full overflow-hidden">
           <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_0.8fr)_minmax(300px,_2.4fr)_minmax(200px,_0.8fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
-            <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-1">
+            <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start order-1">
               <SiteInputGroup id="pointA" />
             </div>
             <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start order-2">
@@ -351,7 +351,7 @@ export default function BottomPanel({
                 selectedLinkClearanceThreshold={selectedLinkClearanceThreshold}
               />
             </div>
-            <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-3">
+            <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start order-3">
               <SiteInputGroup id="pointB" />
             </div>
           </div>
