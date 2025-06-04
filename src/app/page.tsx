@@ -88,13 +88,19 @@ function HomePageContent() {
   useEffect(() => {
     if (selectedLink) {
       const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
+      
       let pointA_coords_str = '';
       if (selectedLink.pointA.lat !== null && selectedLink.pointA.lng !== null) {
         pointA_coords_str = `${selectedLink.pointA.lat}, ${selectedLink.pointA.lng}`;
+      } else {
+        pointA_coords_str = ''; // Ensure empty string if coords are null
       }
+
       let pointB_coords_str = '';
       if (selectedLink.pointB.lat !== null && selectedLink.pointB.lng !== null) {
         pointB_coords_str = `${selectedLink.pointB.lat}, ${selectedLink.pointB.lng}`;
+      } else {
+        pointB_coords_str = ''; // Ensure empty string if coords are null
       }
 
       const formVals: AnalysisFormValues = {
@@ -117,7 +123,21 @@ function HomePageContent() {
       reset(defaultFormStateValues);
       setIsAnalysisPanelGloballyOpen(false);
     }
-  }, [selectedLink, reset]);
+  }, [
+    selectedLinkId, // Use selectedLinkId as the primary key
+    selectedLink?.pointA?.name,
+    selectedLink?.pointA?.lat,
+    selectedLink?.pointA?.lng,
+    selectedLink?.pointA?.towerHeight,
+    selectedLink?.pointB?.name,
+    selectedLink?.pointB?.lat,
+    selectedLink?.pointB?.lng,
+    selectedLink?.pointB?.towerHeight,
+    selectedLink?.clearanceThreshold,
+    selectedLink?.isDirty,
+    !!selectedLink?.analysisResult, // Boolean presence of analysisResult
+    reset // reset function from RHF
+  ]);
 
   useEffect(() => {
     if (!selectedLinkId) return;
@@ -183,7 +203,7 @@ function HomePageContent() {
 
     const cachedResult = getCachedAnalysis(selectedLinkId);
     if (cachedResult) {
-      updateLinkAnalysis(selectedLinkId, cachedResult);
+      updateLinkAnalysis(selectedLinkId, cachedResult); // This also sets isDirty: false
       toast({ title: "Analysis Loaded from Cache", description: cachedResult.message });
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
@@ -224,11 +244,11 @@ function HomePageContent() {
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', parsedPointA.lat.toString());
     formData.append('pointA.lng', parsedPointA.lng.toString());
-    formData.append('pointA.height', String(data.pointA.height));
+    formData.append('pointA.height', String(data.pointA.height)); // RHF value is number
     formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', parsedPointB.lat.toString());
     formData.append('pointB.lng', parsedPointB.lng.toString());
-    formData.append('pointB.height', String(data.pointB.height));
+    formData.append('pointB.height', String(data.pointB.height)); // RHF value is number
     formData.append('clearanceThreshold', data.clearanceThreshold);
 
     React.startTransition(() => {
@@ -244,25 +264,27 @@ function HomePageContent() {
       } else if ('losPossible' in serverState) {
         setDisplayedError(null);
         setDisplayedFieldErrors(null);
+        // The actual result processing is now in the effect below based on selectedLink
       }
     }
   }, [serverState]);
 
   useEffect(() => {
-    if (!selectedLinkId && !serverState?.error) return; // Don't run if no link or if error is already displayed
+    // This effect handles the aftermath of a server action (success or error)
+    // by updating the context or showing errors based on `serverState`
+    // It also needs to ensure it doesn't conflict with cached results being applied
+    if (!selectedLinkId) return;
 
-    const currentLink = selectedLinkId ? getLinkById(selectedLinkId) : null;
-    
-    if (serverState?.error && currentLink) {
-        updateLinkDetails(selectedLinkId!, { ...currentLink, analysisResult: undefined, isDirty: true });
-        // Toast is handled by the error modal now, but can keep if desired for non-modal notifications
-        // toast({
-        //   title: "Analysis Error",
-        //   description: serverState.error,
-        //   variant: "destructive",
-        //   duration: 7000,
-        // });
-    } else if (serverState && 'losPossible' in serverState && currentLink && selectedLinkId) {
+    const currentLink = getLinkById(selectedLinkId);
+    if (!currentLink) return;
+
+    if (serverState?.error) {
+        // Only update if this error belongs to the currently selected link's attempt
+        // This might need more sophisticated tracking if actions can be fired for non-selected links
+        // For now, assume error is for the selectedLink's analysis attempt
+        updateLinkDetails(selectedLinkId, { ...currentLink, analysisResult: undefined, isDirty: true });
+        // Error modal is handled by displayedError state
+    } else if (serverState && 'losPossible' in serverState && currentLink.isDirty) { // Process if link was dirty (expecting this analysis)
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
         const currentFormData = getValues();
         const newAnalysisResult: AnalysisResult = {
@@ -284,16 +306,16 @@ function HomePageContent() {
           timestamp: Date.now(),
         };
 
-        updateLinkAnalysis(selectedLinkId, newAnalysisResult);
+        updateLinkAnalysis(selectedLinkId, newAnalysisResult); // This will set isDirty to false
         setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]);
-        setIsAnalysisPanelGloballyOpen(true);
+        setIsAnalysisPanelGloballyOpen(true); // Ensure panel is open to show results
         setIsBottomPanelContentExpanded(true);
         toast({
           title: "Analysis Complete",
           description: newAnalysisResult.message || "LOS analysis performed successfully.",
         });
     }
-  }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues]);
+  }, [serverState, selectedLinkId, getLinkById, updateLinkDetails, updateLinkAnalysis, getValues, toast]);
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     const currentSelectedLink = getLinkById(selectedLinkId || '');
@@ -307,9 +329,11 @@ function HomePageContent() {
         lat: lat,
         lng: lng,
       };
-      updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails });
+      // This will mark the link as dirty if lat/lng changed
+      updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails, isDirty: true });
     } else if (event.latLng && !currentSelectedLink) {
         const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
+        // New link is selected, form reset effect will handle UI
     }
   }, [selectedLinkId, updateLinkDetails, addLink, getLinkById]);
 
@@ -326,7 +350,8 @@ function HomePageContent() {
         lat: lat,
         lng: lng,
       };
-      updateLinkDetails(linkId, { [fieldToUpdate]: newPointDetails });
+      // This will mark the link as dirty
+      updateLinkDetails(linkId, { [fieldToUpdate]: newPointDetails, isDirty: true });
     }
   }, [getLinkById, updateLinkDetails]);
 
@@ -338,14 +363,20 @@ function HomePageContent() {
         ...currentSelectedLink[fieldToUpdate],
         towerHeight: Math.round(newHeight),
       };
-      updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails });
-      if (currentSelectedLink.analysisResult && !currentSelectedLink.isDirty) {
-          const currentFormValues = getValues();
-          handleSubmit(processSubmit)({
-              ...currentFormValues,
-              [siteId]: { ...currentFormValues[siteId], height: Math.round(newHeight)}
-          });
-      }
+      // This will mark the link as dirty
+      updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails, isDirty: true });
+      
+      // If the link was previously analyzed and clean, re-trigger analysis after height change
+      // if (currentSelectedLink.analysisResult && !currentSelectedLink.isDirty) { 
+      // The above isDirty check is tricky as updateLinkDetails marks it dirty immediately.
+      // Instead, we rely on the user to click "Analyze" again if they change height on an analyzed link.
+      // Or, we could auto-trigger:
+      // const currentFormValues = getValues();
+      // handleSubmit(processSubmit)({ // This will re-submit the form
+      //     ...currentFormValues,
+      //     [siteId]: { ...currentFormValues[siteId], height: Math.round(newHeight)}
+      // });
+      // For now, let's require manual re-analysis via button.
     }
   }, [selectedLinkId, getLinkById, updateLinkDetails, handleSubmit, processSubmit, getValues]);
 
@@ -353,6 +384,7 @@ function HomePageContent() {
      setIsAnalysisPanelGloballyOpen(prev => {
         const newIsOpen = !prev;
         if (!newIsOpen && selectedLinkId) {
+             // If closing panel and a link is selected, deselect the link.
              setTimeout(() => selectLink(null), 0);
         }
         return newIsOpen;
@@ -363,40 +395,55 @@ function HomePageContent() {
     setIsBottomPanelContentExpanded(prev => !prev);
   }, []);
 
-  const handleStartAnalysisClick = () => {
-    if (selectedLink) {
-      setIsAnalysisPanelGloballyOpen(true);
-      setIsBottomPanelContentExpanded(true);
-      const formValues = getValues();
-      handleSubmit(processSubmit)(formValues);
-    } else {
-      handleAddNewLink();
+
+  const handleAddNewLink = () => {
+    const newId = addLink(); // Context handles selecting it and setting defaults
+    // Form reset useEffect will open/expand panel and set form values.
+  };
+
+  const handleRemoveSelectedLink = () => {
+    if (selectedLinkId) {
+      removeLink(selectedLinkId); // Context handles deselecting if it was selected
     }
   };
 
+  const liveDistanceKm = React.useMemo(() => {
+    if (selectedLink) {
+      if (selectedLink.analysisResult && !selectedLink.isDirty) {
+        return selectedLink.analysisResult.distanceKm;
+      }
+      if (selectedLink.pointA.lat && selectedLink.pointA.lng && selectedLink.pointB.lat && selectedLink.pointB.lng) {
+        return calculateDistanceKm(selectedLink.pointA as PointCoordinates, selectedLink.pointB as PointCoordinates);
+      }
+    }
+    return null;
+  }, [selectedLink]);
+
+
   const handleClearMap = () => {
-    links.forEach(link => removeLink(link.id));
-    selectLink(null);
-    reset(defaultFormStateValues);
-    setHistoryList([]);
+    links.forEach(link => removeLink(link.id)); // This also clears localStorage for each
+    selectLink(null); // Deselect any current link
+    reset(defaultFormStateValues); // Reset form to defaults
+    setHistoryList([]); // Clear UI history list
     toast({ title: "Map Cleared", description: "All links removed and form reset." });
-    setIsAnalysisPanelGloballyOpen(false);
+    setIsAnalysisPanelGloballyOpen(false); // Close bottom panel
   };
 
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      const newLinkId = addLink(itemToLoad.pointA, itemToLoad.pointB);
-      updateLinkDetails(newLinkId, {
-        pointA: { ...itemToLoad.pointA, towerHeight: itemToLoad.pointA.towerHeight },
-        pointB: { ...itemToLoad.pointB, towerHeight: itemToLoad.pointB.towerHeight },
+      // Add as a new link with the history item's data
+      const newLinkId = addLink(itemToLoad.pointA, itemToLoad.pointB); // This selects the new link
+      updateLinkDetails(newLinkId, { // Then update its specific details
+        pointA: { ...itemToLoad.pointA, towerHeight: itemToLoad.pointA.towerHeight, name: itemToLoad.pointA.name || defaultFormStateValues.pointA.name },
+        pointB: { ...itemToLoad.pointB, towerHeight: itemToLoad.pointB.towerHeight, name: itemToLoad.pointB.name || defaultFormStateValues.pointB.name },
         clearanceThreshold: itemToLoad.clearanceThresholdUsed,
+        isDirty: false, // Mark as not dirty since we are loading a complete analysis
       });
-      updateLinkAnalysis(newLinkId, itemToLoad);
-      selectLink(newLinkId);
-      setIsAnalysisPanelGloballyOpen(true);
-      setIsBottomPanelContentExpanded(true);
-      toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name} as a new link.` });
+      updateLinkAnalysis(newLinkId, itemToLoad); // Store the analysis result
+      
+      // Panel opening/form reset will be handled by selectedLink change effect
+      toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name || 'Site A'} - ${itemToLoad.pointB.name || 'Site B'} as a new link.` });
     }
   };
 
@@ -431,6 +478,7 @@ function HomePageContent() {
     if (reportsToGenerate.length > 0) {
       try {
         toast({ title: "Generating Report...", description: `Processing ${reportsToGenerate.length} link(s).` });
+        // Dynamically import report generator
         const { generateReportDocx } = await import('@/lib/report-generator');
         await generateReportDocx(reportsToGenerate);
         toast({ title: "Report Generated", description: "Your DOCX report has been downloaded." });
@@ -443,28 +491,6 @@ function HomePageContent() {
     }
   };
 
-  const handleAddNewLink = () => {
-    const newId = addLink();
-  };
-
-  const handleRemoveSelectedLink = () => {
-    if (selectedLinkId) {
-      removeLink(selectedLinkId);
-    }
-  };
-
-  const liveDistanceKm = React.useMemo(() => {
-    if (selectedLink) {
-      if (selectedLink.analysisResult && !selectedLink.isDirty) {
-        return selectedLink.analysisResult.distanceKm;
-      }
-      if (selectedLink.pointA.lat && selectedLink.pointA.lng && selectedLink.pointB.lat && selectedLink.pointB.lng) {
-        return calculateDistanceKm(selectedLink.pointA as PointCoordinates, selectedLink.pointB as PointCoordinates);
-      }
-    }
-    return null;
-  }, [selectedLink]);
-
 
   return (
     <>
@@ -474,13 +500,12 @@ function HomePageContent() {
         isHistoryPanelSupported={true}
       />
       <div className="p-2 space-x-2 print:hidden">
-        {!selectedLinkId && (
+        {!selectedLinkId ? (
             <Button onClick={handleAddNewLink} variant="outline" size="sm">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add New Link
             </Button>
-        )}
-        {selectedLinkId && (
+        ) : (
           <>
             <Button onClick={handleAddNewLink} variant="outline" size="sm">
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -569,7 +594,7 @@ function HomePageContent() {
               isActionPending={isActionPending}
               onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
               onOpenReportDialog={handleOpenReportDialog}
-              onAddNewLink={handleAddNewLink}
+              onAddNewLink={handleAddNewLink} // Pass this down
               currentDistanceKm={liveDistanceKm}
               selectedLinkClearanceThreshold={selectedLink?.clearanceThreshold}
               selectedLinkPointA={selectedLink?.pointA}
