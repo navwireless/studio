@@ -11,9 +11,10 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@react-google-maps/api/dist/esm.js [app-ssr] (ecmascript)");
+// import { Loader2, SearchIcon } from 'lucide-react'; // SearchIcon commented out
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript) <export default as Loader2>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/utils.ts [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/los-calculator.ts [app-ssr] (ecmascript)"); // Import for live distance
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/los-calculator.ts [app-ssr] (ecmascript)");
 "use client";
 ;
 ;
@@ -21,6 +22,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calcula
 ;
 ;
 ;
+// import { Input } from '@/components/ui/input'; // Input for search commented out
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
 const defaultCenter = {
     lat: 20.5937,
@@ -47,11 +49,13 @@ const getCustomMarkerIcon = (label, color, isMapLoaded)=>{
 };
 function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLinkSelect, mapContainerClassName = "w-full h-full" }) {
     const mapRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
+    // const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null); // Search ref commented out
+    // const searchInputRef = useRef<HTMLInputElement | null>(null); // Search ref commented out
     const [isMapInstanceLoaded, setIsMapInstanceLoaded] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [currentMapClickTarget, setCurrentMapClickTarget] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('pointA');
     const handleActualMapLoad = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((mapInstance)=>{
         mapRef.current = mapInstance;
-        if (window.google && window.google.maps) {
+        if (window.google && window.google.maps && window.google.maps.places /* && searchInputRef.current */ ) {
             mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
             mapInstance.setOptions({
                 streetViewControl: true,
@@ -65,19 +69,44 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                 gestureHandling: 'cooperative',
                 clickableIcons: false
             });
+        // // Initialize SearchBox - All SearchBox logic commented out
+        // const searchBox = new google.maps.places.SearchBox(searchInputRef.current!);
+        // searchBoxRef.current = searchBox;
+        // // Ensure parentElement exists before trying to push it.
+        // if (searchInputRef.current?.parentElement) {
+        //    mapInstance.controls[google.maps.ControlPosition.TOP_CENTER].push(searchInputRef.current.parentElement);
+        // }
+        // searchBox.addListener('places_changed', () => {
+        //     const places = searchBox.getPlaces();
+        //     if (!places || places.length === 0) {
+        //         return;
+        //     }
+        //     const bounds = new google.maps.LatLngBounds();
+        //     places.forEach(place => {
+        //         if (!place.geometry || !place.geometry.location) {
+        //         return;
+        //         }
+        //         if (place.geometry.viewport) {
+        //         bounds.union(place.geometry.viewport);
+        //         } else {
+        //         bounds.extend(place.geometry.location);
+        //         }
+        //     });
+        //     mapRef.current?.fitBounds(bounds);
+        // });
         }
         setIsMapInstanceLoaded(true);
     }, []);
     const handleMapUnmount = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])(()=>{
+        // if (searchBoxRef.current && window.google && google.maps.event) { // SearchBox cleanup commented out
+        //     google.maps.event.clearInstanceListeners(searchBoxRef.current);
+        // }
         mapRef.current = null;
         setIsMapInstanceLoaded(false);
     }, []);
     const handleInternalMapClick = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((event)=>{
         if (onMapClick) {
-            // If a link is selected, delegate to page.tsx to decide point placement.
-            // If no link is selected, page.tsx might initiate a new link.
             onMapClick(event, currentMapClickTarget);
-        // Toggling point target might be handled by parent based on new link state
         // setCurrentMapClickTarget(prev => prev === 'pointA' ? 'pointB' : 'pointA');
         }
     }, [
@@ -125,9 +154,10 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
         isMapInstanceLoaded
     ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: `${mapContainerClassName}`,
+        className: `${mapContainerClassName} relative`,
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LoadScript"], {
             googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+            // libraries={['places']} // 'places' library commented out
             loadingElement: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground",
                 children: [
@@ -135,7 +165,7 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                         className: "w-12 h-12 animate-spin mb-3"
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 156,
+                        lineNumber: 202,
                         columnNumber: 13
                     }, void 0),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -143,13 +173,13 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                         children: "Initializing Map Service..."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 157,
+                        lineNumber: 203,
                         columnNumber: 13
                     }, void 0)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 155,
+                lineNumber: 201,
                 columnNumber: 11
             }, void 0),
             onError: (error)=>{
@@ -165,7 +195,8 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                 onLoad: handleActualMapLoad,
                 onUnmount: handleMapUnmount,
                 onClick: handleInternalMapClick,
-                options: {},
+                options: {
+                },
                 children: links.map((link, index)=>{
                     const pALat = typeof link.pointA.lat === 'number' ? link.pointA.lat : undefined;
                     const pALng = typeof link.pointA.lng === 'number' ? link.pointA.lng : undefined;
@@ -213,7 +244,7 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                                         zIndex: isSelected ? 10 : 5
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                        lineNumber: 202,
+                                        lineNumber: 254,
                                         columnNumber: 21
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -228,12 +259,12 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                                             children: link.pointA.name || `Site A (${index + 1})`
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                            lineNumber: 216,
+                                            lineNumber: 268,
                                             columnNumber: 23
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                        lineNumber: 211,
+                                        lineNumber: 263,
                                         columnNumber: 21
                                     }, this)
                                 ]
@@ -258,7 +289,7 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                                         zIndex: isSelected ? 10 : 5
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                        lineNumber: 225,
+                                        lineNumber: 277,
                                         columnNumber: 21
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -273,12 +304,12 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                                             children: link.pointB.name || `Site B (${index + 1})`
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                            lineNumber: 239,
+                                            lineNumber: 291,
                                             columnNumber: 23
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                        lineNumber: 234,
+                                        lineNumber: 286,
                                         columnNumber: 21
                                     }, this)
                                 ]
@@ -304,7 +335,7 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                                 onClick: ()=>onLinkSelect && onLinkSelect(link.id)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 247,
+                                lineNumber: 299,
                                 columnNumber: 19
                             }, this),
                             midPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && isSelected && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -316,34 +347,34 @@ function InteractiveMap({ links, selectedLinkId, onMapClick, onMarkerDrag, onLin
                                     children: currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                    lineNumber: 265,
+                                    lineNumber: 317,
                                     columnNumber: 21
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 260,
+                                lineNumber: 312,
                                 columnNumber: 21
                             }, this)
                         ]
                     }, link.id, true, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 199,
+                        lineNumber: 251,
                         columnNumber: 15
                     }, this);
                 })
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 164,
+                lineNumber: 210,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/interactive-map.tsx",
-            lineNumber: 152,
+            lineNumber: 197,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 151,
+        lineNumber: 183,
         columnNumber: 5
     }, this);
 }
