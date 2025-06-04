@@ -45,14 +45,14 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       id: newLinkId,
       pointA: {
         name: `Site A (${links.length + 1})`,
-        lat: startPoint?.lat ?? 0, // Or some default/map center based lat
-        lng: startPoint?.lng ?? 0, // Or some default/map center based lng
+        lat: startPoint?.lat ?? null, 
+        lng: startPoint?.lng ?? null, 
         towerHeight: defaultFormStateValues.pointA.height,
       },
       pointB: {
         name: `Site B (${links.length + 1})`,
-        lat: endPoint?.lat ?? (startPoint?.lat ?? 0) + 0.01, // Offset for visibility
-        lng: endPoint?.lng ?? (startPoint?.lng ?? 0) + 0.01,
+        lat: endPoint?.lat ?? null, 
+        lng: endPoint?.lng ?? null,
         towerHeight: defaultFormStateValues.pointB.height,
       },
       clearanceThreshold: parseFloat(defaultFormStateValues.clearanceThreshold),
@@ -113,9 +113,6 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const parsedItem = JSON.parse(cachedItem);
       if (parsedItem && parsedItem.analysisTimestamp) {
         if (Date.now() - parsedItem.analysisTimestamp < CACHE_EXPIRY_MS) {
-          // Update context if this cached item is newer than what's in memory (e.g., after page reload)
-          // This part needs careful handling to avoid infinite loops if context also writes to localStorage
-          // For now, just return it. The main analysis flow will decide to use it.
           return parsedItem as AnalysisResult & { analysisTimestamp: number };
         } else {
           localStorage.removeItem(getLocalStorageKey(linkId)); // Expired
@@ -127,10 +124,6 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return null;
   }, []);
   
-  // Effect to load links from localStorage on initial mount (optional persistence)
-  // For simplicity, this example does not implement full persistence of the links array itself,
-  // only the analysis results for individual links. Persisting the whole links array
-  // would require more complex serialization/deserialization logic.
 
   return (
     <LinksContext.Provider value={{ links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis }}>
@@ -146,3 +139,4 @@ export const useLinks = (): LinksContextType => {
   }
   return context;
 };
+

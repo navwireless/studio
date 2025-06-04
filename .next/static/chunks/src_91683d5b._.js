@@ -1686,14 +1686,14 @@ const LinksProvider = ({ children })=>{
                 id: newLinkId,
                 pointA: {
                     name: `Site A (${links.length + 1})`,
-                    lat: startPoint?.lat ?? 0,
-                    lng: startPoint?.lng ?? 0,
+                    lat: startPoint?.lat ?? null,
+                    lng: startPoint?.lng ?? null,
                     towerHeight: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.height
                 },
                 pointB: {
                     name: `Site B (${links.length + 1})`,
-                    lat: endPoint?.lat ?? (startPoint?.lat ?? 0) + 0.01,
-                    lng: endPoint?.lng ?? (startPoint?.lng ?? 0) + 0.01,
+                    lat: endPoint?.lat ?? null,
+                    lng: endPoint?.lng ?? null,
                     towerHeight: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.height
                 },
                 clearanceThreshold: parseFloat(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold),
@@ -1786,9 +1786,6 @@ const LinksProvider = ({ children })=>{
                 const parsedItem = JSON.parse(cachedItem);
                 if (parsedItem && parsedItem.analysisTimestamp) {
                     if (Date.now() - parsedItem.analysisTimestamp < CACHE_EXPIRY_MS) {
-                        // Update context if this cached item is newer than what's in memory (e.g., after page reload)
-                        // This part needs careful handling to avoid infinite loops if context also writes to localStorage
-                        // For now, just return it. The main analysis flow will decide to use it.
                         return parsedItem;
                     } else {
                         localStorage.removeItem(getLocalStorageKey(linkId)); // Expired
@@ -1800,10 +1797,6 @@ const LinksProvider = ({ children })=>{
             return null;
         }
     }["LinksProvider.useCallback[getCachedAnalysis]"], []);
-    // Effect to load links from localStorage on initial mount (optional persistence)
-    // For simplicity, this example does not implement full persistence of the links array itself,
-    // only the analysis results for individual links. Persisting the whole links array
-    // would require more complex serialization/deserialization logic.
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LinksContext.Provider, {
         value: {
             links,
@@ -1819,7 +1812,7 @@ const LinksProvider = ({ children })=>{
         children: children
     }, void 0, false, {
         fileName: "[project]/src/context/links-context.tsx",
-        lineNumber: 136,
+        lineNumber: 129,
         columnNumber: 5
     }, this);
 };
@@ -1975,15 +1968,23 @@ function HomePageContent() {
         "HomePageContent.useEffect": ()=>{
             if (selectedLink) {
                 const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
+                let pointA_coords = '';
+                if (selectedLink.pointA.lat !== null && selectedLink.pointA.lng !== null) {
+                    pointA_coords = `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`;
+                }
+                let pointB_coords = '';
+                if (selectedLink.pointB.lat !== null && selectedLink.pointB.lng !== null) {
+                    pointB_coords = `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`;
+                }
                 const formVals = {
                     pointA: {
                         name: isNewLink ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name : selectedLink.pointA.name,
-                        coordinates: `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`,
+                        coordinates: pointA_coords,
                         height: selectedLink.pointA.towerHeight
                     },
                     pointB: {
                         name: isNewLink ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name : selectedLink.pointB.name,
-                        coordinates: `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`,
+                        coordinates: pointB_coords,
                         height: selectedLink.pointB.towerHeight
                     },
                     clearanceThreshold: selectedLink.clearanceThreshold.toString()
@@ -2066,16 +2067,23 @@ function HomePageContent() {
                 });
                 setIsAnalysisPanelGloballyOpen(true);
                 setIsBottomPanelContentExpanded(true);
-                const isNewCachedLink = !cachedResult.pointA.name && !cachedResult.pointB.name;
+                let cached_pointA_coords = '';
+                if (cachedResult.pointA.lat !== null && cachedResult.pointB.lng !== null) {
+                    cached_pointA_coords = `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`;
+                }
+                let cached_pointB_coords = '';
+                if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
+                    cached_pointB_coords = `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`;
+                }
                 reset({
                     pointA: {
-                        name: isNewCachedLink ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name : cachedResult.pointA.name || '',
-                        coordinates: `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`,
+                        name: cachedResult.pointA.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
+                        coordinates: cached_pointA_coords,
                         height: cachedResult.pointA.towerHeight
                     },
                     pointB: {
-                        name: isNewCachedLink ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name : cachedResult.pointB.name || '',
-                        coordinates: `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`,
+                        name: cachedResult.pointB.name || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
+                        coordinates: cached_pointB_coords,
                         height: cachedResult.pointB.towerHeight
                     },
                     clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
@@ -2087,7 +2095,7 @@ function HomePageContent() {
             if (!parsedPointA || !parsedPointB) {
                 toast({
                     title: "Invalid Coordinates",
-                    description: "Please ensure coordinates are in 'lat, lng' format.",
+                    description: "Point A or Point B coordinates are missing or invalid. Please enter coordinates in 'lat, lng' format or click on the map.",
                     variant: "destructive"
                 });
                 return;
@@ -2137,7 +2145,6 @@ function HomePageContent() {
                 } else if ('losPossible' in serverState) {
                     const successfulResult = serverState;
                     const currentFormData = getValues();
-                    const isNewServerResultLink = !currentFormData.pointA.name && !currentFormData.pointB.name;
                     const newAnalysisResult = {
                         ...successfulResult,
                         pointA: {
@@ -2195,13 +2202,11 @@ function HomePageContent() {
                 updateLinkDetails(selectedLink.id, {
                     [fieldToUpdate]: newPointDetails
                 });
-            // setValue is handled by the useEffect that watches selectedLink
             } else if (event.latLng && !selectedLink) {
                 const newId = addLink({
                     lat: event.latLng.lat(),
                     lng: event.latLng.lng()
                 });
-            // Form resets via useEffect on selectedLink change
             }
         }
     }["HomePageContent.useCallback[handleMapClick]"], [
@@ -2247,7 +2252,7 @@ function HomePageContent() {
                 updateLinkDetails(selectedLink.id, {
                     [fieldToUpdate]: newPointDetails
                 });
-                setValue(`${fieldToUpdate}.height`, Math.round(newHeight)); // RHF height is a number
+                setValue(`${fieldToUpdate}.height`, Math.round(newHeight));
                 const currentFormValues = getValues();
                 handleSubmit(processSubmit)({
                     ...currentFormValues,
@@ -2397,7 +2402,7 @@ function HomePageContent() {
     };
     const handleAddNewLink = ()=>{
         const newId = addLink();
-    // Panel opening is handled by useEffect on selectedLink change
+    // Form resets and panel opening are handled by useEffect on selectedLink change
     };
     const handleRemoveSelectedLink = ()=>{
         if (selectedLinkId) {
@@ -2427,7 +2432,7 @@ function HomePageContent() {
                 isHistoryPanelSupported: true
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 428,
+                lineNumber: 443,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2442,14 +2447,14 @@ function HomePageContent() {
                                 className: "mr-2 h-4 w-4"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 436,
+                                lineNumber: 451,
                                 columnNumber: 17
                             }, this),
                             "Add New Link"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 435,
+                        lineNumber: 450,
                         columnNumber: 13
                     }, this),
                     selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -2463,14 +2468,14 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 443,
+                                        lineNumber: 458,
                                         columnNumber: 17
                                     }, this),
                                     "Add Another Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 442,
+                                lineNumber: 457,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -2482,14 +2487,14 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 447,
+                                        lineNumber: 462,
                                         columnNumber: 17
                                     }, this),
                                     " Remove Selected Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 446,
+                                lineNumber: 461,
                                 columnNumber: 13
                             }, this)
                         ]
@@ -2497,7 +2502,7 @@ function HomePageContent() {
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 433,
+                lineNumber: 448,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2514,12 +2519,12 @@ function HomePageContent() {
                             mapContainerClassName: "w-full h-full"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 454,
+                            lineNumber: 469,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 453,
+                        lineNumber: 468,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && !selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2534,19 +2539,19 @@ function HomePageContent() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 472,
+                                    lineNumber: 487,
                                     columnNumber: 15
                                 }, this),
                                 "Add New Link"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 466,
+                            lineNumber: 481,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 465,
+                        lineNumber: 480,
                         columnNumber: 11
                     }, this),
                     isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2560,7 +2565,7 @@ function HomePageContent() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 482,
+                                        lineNumber: 497,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2568,7 +2573,7 @@ function HomePageContent() {
                                         children: "Analyzing Link..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 483,
+                                        lineNumber: 498,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2576,23 +2581,23 @@ function HomePageContent() {
                                         children: "Please wait while we process the elevation data."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 484,
+                                        lineNumber: 499,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 481,
+                                lineNumber: 496,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 480,
+                            lineNumber: 495,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 479,
+                        lineNumber: 494,
                         columnNumber: 11
                     }, this),
                     serverState?.error && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2609,19 +2614,19 @@ function HomePageContent() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 495,
+                                                lineNumber: 510,
                                                 columnNumber: 21
                                             }, this),
                                             " Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 494,
+                                        lineNumber: 509,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 493,
+                                    lineNumber: 508,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -2631,7 +2636,7 @@ function HomePageContent() {
                                             children: serverState.error
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 499,
+                                            lineNumber: 514,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -2643,24 +2648,24 @@ function HomePageContent() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 500,
+                                            lineNumber: 515,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 498,
+                                    lineNumber: 513,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 492,
+                            lineNumber: 507,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 491,
+                        lineNumber: 506,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["FormProvider"], {
@@ -2683,12 +2688,12 @@ function HomePageContent() {
                             selectedLinkPointB: selectedLink?.pointB
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 513,
+                            lineNumber: 528,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 512,
+                        lineNumber: 527,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2699,7 +2704,7 @@ function HomePageContent() {
                         onToggle: ()=>setIsHistoryPanelOpen((prev)=>!prev)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 532,
+                        lineNumber: 547,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$report$2d$selection$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2713,13 +2718,13 @@ function HomePageContent() {
                         onGenerateReport: handleGenerateSelectedReports
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 539,
+                        lineNumber: 554,
                         columnNumber: 10
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 452,
+                lineNumber: 467,
                 columnNumber: 7
             }, this)
         ]
@@ -2737,12 +2742,12 @@ function Home() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["LinksProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(HomePageContent, {}, void 0, false, {
             fileName: "[project]/src/app/page.tsx",
-            lineNumber: 557,
+            lineNumber: 572,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 556,
+        lineNumber: 571,
         columnNumber: 5
     }, this);
 }

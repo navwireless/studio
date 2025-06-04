@@ -86,15 +86,25 @@ function HomePageContent() {
   useEffect(() => {
     if (selectedLink) {
       const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
+      
+      let pointA_coords = '';
+      if (selectedLink.pointA.lat !== null && selectedLink.pointA.lng !== null) {
+        pointA_coords = `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`;
+      }
+      let pointB_coords = '';
+      if (selectedLink.pointB.lat !== null && selectedLink.pointB.lng !== null) {
+        pointB_coords = `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`;
+      }
+
       const formVals: AnalysisFormValues = {
         pointA: {
           name: isNewLink ? defaultFormStateValues.pointA.name : selectedLink.pointA.name,
-          coordinates: `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`,
+          coordinates: pointA_coords,
           height: selectedLink.pointA.towerHeight,
         },
         pointB: {
           name: isNewLink ? defaultFormStateValues.pointB.name : selectedLink.pointB.name,
-          coordinates: `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`,
+          coordinates: pointB_coords,
           height: selectedLink.pointB.towerHeight,
         },
         clearanceThreshold: selectedLink.clearanceThreshold.toString(),
@@ -120,13 +130,13 @@ function HomePageContent() {
         updateLinkDetails(selectedLinkId, {
           pointA: {
             name: currentFormValues.pointA.name,
-            lat: parsedPointA?.lat ?? selectedLink.pointA.lat, // Fallback to existing if parse fails
+            lat: parsedPointA?.lat ?? selectedLink.pointA.lat, 
             lng: parsedPointA?.lng ?? selectedLink.pointA.lng,
             towerHeight: parseFloat(currentFormValues.pointA.height.toString()) || 0,
           },
           pointB: {
             name: currentFormValues.pointB.name,
-            lat: parsedPointB?.lat ?? selectedLink.pointB.lat, // Fallback to existing
+            lat: parsedPointB?.lat ?? selectedLink.pointB.lat, 
             lng: parsedPointB?.lng ?? selectedLink.pointB.lng,
             towerHeight: parseFloat(currentFormValues.pointB.height.toString()) || 0,
           },
@@ -155,16 +165,25 @@ function HomePageContent() {
       toast({ title: "Analysis Loaded from Cache", description: cachedResult.message });
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
-      const isNewCachedLink = !cachedResult.pointA.name && !cachedResult.pointB.name;
+      
+      let cached_pointA_coords = '';
+      if (cachedResult.pointA.lat !== null && cachedResult.pointB.lng !== null) {
+         cached_pointA_coords = `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`;
+      }
+      let cached_pointB_coords = '';
+      if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
+         cached_pointB_coords = `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`;
+      }
+      
       reset({ 
         pointA: { 
-          name: isNewCachedLink ? defaultFormStateValues.pointA.name : (cachedResult.pointA.name || ''), 
-          coordinates: `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`, 
+          name: cachedResult.pointA.name || defaultFormStateValues.pointA.name, 
+          coordinates: cached_pointA_coords, 
           height: cachedResult.pointA.towerHeight 
         },
         pointB: { 
-          name: isNewCachedLink ? defaultFormStateValues.pointB.name : (cachedResult.pointB.name || ''), 
-          coordinates: `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`, 
+          name: cachedResult.pointB.name || defaultFormStateValues.pointB.name, 
+          coordinates: cached_pointB_coords, 
           height: cachedResult.pointB.towerHeight 
         },
         clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
@@ -176,7 +195,7 @@ function HomePageContent() {
     const parsedPointB = parseCoordinatesString(data.pointB.coordinates);
 
     if (!parsedPointA || !parsedPointB) {
-      toast({ title: "Invalid Coordinates", description: "Please ensure coordinates are in 'lat, lng' format.", variant: "destructive" });
+      toast({ title: "Invalid Coordinates", description: "Point A or Point B coordinates are missing or invalid. Please enter coordinates in 'lat, lng' format or click on the map.", variant: "destructive" });
       return;
     }
 
@@ -213,8 +232,6 @@ function HomePageContent() {
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
         
         const currentFormData = getValues();
-        const isNewServerResultLink = !currentFormData.pointA.name && !currentFormData.pointB.name;
-
 
         const newAnalysisResult: AnalysisResult = {
           ...successfulResult,
@@ -262,10 +279,8 @@ function HomePageContent() {
       };
       
       updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-      // setValue is handled by the useEffect that watches selectedLink
     } else if (event.latLng && !selectedLink) {
         const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
-        // Form resets via useEffect on selectedLink change
     }
   }, [selectedLink, updateLinkDetails, addLink]);
 
@@ -298,10 +313,10 @@ function HomePageContent() {
         towerHeight: Math.round(newHeight),
       };
       updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-      setValue(`${fieldToUpdate}.height`, Math.round(newHeight)); // RHF height is a number
+      setValue(`${fieldToUpdate}.height`, Math.round(newHeight)); 
 
       const currentFormValues = getValues(); 
-      handleSubmit(processSubmit)({ // processSubmit now expects AnalysisFormValues with string coordinates
+      handleSubmit(processSubmit)({ 
           ...currentFormValues, 
           [siteId]: { ...currentFormValues[siteId], height: Math.round(newHeight)}
       });
@@ -401,7 +416,7 @@ function HomePageContent() {
 
   const handleAddNewLink = () => {
     const newId = addLink(); 
-    // Panel opening is handled by useEffect on selectedLink change
+    // Form resets and panel opening are handled by useEffect on selectedLink change
   };
 
   const handleRemoveSelectedLink = () => {
@@ -558,3 +573,4 @@ export default function Home() {
     </LinksProvider>
   );
 }
+

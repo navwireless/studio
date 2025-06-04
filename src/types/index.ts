@@ -6,8 +6,8 @@ export type PointCoordinates = {
 
 export type PointInput = {
   name: string;
-  coordinates: string; // Changed from lat: string, lng: string
-  height: number;
+  coordinates: string; 
+  height: number; // This remains for RHF, though not directly edited in UI
 };
 
 export type AnalysisFormValues = {
@@ -52,9 +52,11 @@ export type AnalysisResult = {
 };
 
 // --- New types for Multi-Link Context ---
-export interface LOSLinkPoint extends PointCoordinates {
+export interface LOSLinkPoint extends Partial<PointCoordinates> { // Lat/Lng can be null initially
   name: string;
   towerHeight: number;
+  lat: number | null; // Allow null for unset coordinates
+  lng: number | null; // Allow null for unset coordinates
 }
 
 export interface LOSLink {
@@ -75,3 +77,4 @@ declare module 'file-saver' {
 export interface FileSaverOptions {
     autoBom?: boolean;
 }
+
