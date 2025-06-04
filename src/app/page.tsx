@@ -13,10 +13,10 @@ import type { AnalysisResult, AnalysisFormValues, PointCoordinates, LOSLink } fr
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
-import HistoryPanel from '@/components/layout/history-panel'; 
+import HistoryPanel from '@/components/layout/history-panel';
 import { calculateDistanceKm } from '@/lib/los-calculator';
 import ReportSelectionDialog from '@/components/fso/report-selection-dialog';
-import { LinksProvider, useLinks } from '@/context/links-context'; 
+import { LinksProvider, useLinks } from '@/context/links-context';
 
 const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
   ssr: false,
@@ -35,7 +35,7 @@ const BottomPanel = dynamic(() => import('@/components/fso/bottom-panel'), {
 
 // Helper to parse 'lat,lng' string
 const parseCoordinatesString = (coordsString: string): PointCoordinates | null => {
-  if (!coordsString || !coordsString.includes(',')) return null;
+  if (!coordsString || typeof coordsString !== 'string' || !coordsString.includes(',')) return null;
   const parts = coordsString.split(',').map(part => part.trim());
   if (parts.length !== 2) return null;
   const lat = parseFloat(parts[0]);
@@ -49,36 +49,36 @@ const parseCoordinatesString = (coordsString: string): PointCoordinates | null =
 
 function HomePageContent() {
   const { toast } = useToast();
-  const { 
-    links, 
-    selectedLinkId, 
-    addLink, 
-    removeLink, 
-    selectLink, 
-    updateLinkDetails, 
-    updateLinkAnalysis, 
+  const {
+    links,
+    selectedLinkId,
+    addLink,
+    removeLink,
+    selectLink,
+    updateLinkDetails,
+    updateLinkAnalysis,
     getLinkById,
-    getCachedAnalysis 
+    getCachedAnalysis
   } = useLinks();
-  
+
   const [serverState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
 
-  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false); 
+  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
-  
-  const [historyList, setHistoryList] = useState<AnalysisResult[]>([]); 
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false); 
+
+  const [historyList, setHistoryList] = useState<AnalysisResult[]>([]);
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
   const selectedLink = React.useMemo(() => {
     if (!selectedLinkId) return null;
     return getLinkById(selectedLinkId);
-  }, [selectedLinkId, getLinkById, links]); 
+  }, [selectedLinkId, getLinkById, links]); // `links` is needed here for memoization
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
     defaultValues: defaultFormStateValues,
-    mode: 'onBlur', 
+    mode: 'onBlur',
   });
 
   const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
@@ -86,66 +86,91 @@ function HomePageContent() {
   useEffect(() => {
     if (selectedLink) {
       const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
-      
+
       let pointA_coords = '';
       if (selectedLink.pointA.lat !== null && selectedLink.pointA.lng !== null) {
         pointA_coords = `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`;
+      } else {
+        pointA_coords = '';
       }
       let pointB_coords = '';
       if (selectedLink.pointB.lat !== null && selectedLink.pointB.lng !== null) {
         pointB_coords = `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`;
+      } else {
+        pointB_coords = '';
       }
 
       const formVals: AnalysisFormValues = {
         pointA: {
-          name: isNewLink ? defaultFormStateValues.pointA.name : selectedLink.pointA.name,
+          name: isNewLink ? defaultFormStateValues.pointA.name : (selectedLink.pointA.name || defaultFormStateValues.pointA.name),
           coordinates: pointA_coords,
-          height: selectedLink.pointA.towerHeight,
+          height: selectedLink.pointA.towerHeight ?? defaultFormStateValues.pointA.height,
         },
         pointB: {
-          name: isNewLink ? defaultFormStateValues.pointB.name : selectedLink.pointB.name,
+          name: isNewLink ? defaultFormStateValues.pointB.name : (selectedLink.pointB.name || defaultFormStateValues.pointB.name),
           coordinates: pointB_coords,
-          height: selectedLink.pointB.towerHeight,
+          height: selectedLink.pointB.towerHeight ?? defaultFormStateValues.pointB.height,
         },
-        clearanceThreshold: selectedLink.clearanceThreshold.toString(),
+        clearanceThreshold: selectedLink.clearanceThreshold?.toString() ?? defaultFormStateValues.clearanceThreshold,
       };
-      reset(formVals); 
+      reset(formVals);
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
     } else {
-      reset(defaultFormStateValues); 
+      reset(defaultFormStateValues);
       setIsAnalysisPanelGloballyOpen(false);
     }
   }, [selectedLink, reset]);
-  
+
   useEffect(() => {
-    if (!selectedLink) return;
+    if (!selectedLinkId) return;
 
-    const subscription = watch((value, { name, type }) => {
-      if (type === 'change' && selectedLinkId && value.pointA && value.pointB && value.clearanceThreshold) {
-        const currentFormValues = getValues();
-        const parsedPointA = parseCoordinatesString(currentFormValues.pointA.coordinates);
-        const parsedPointB = parseCoordinatesString(currentFormValues.pointB.coordinates);
+    const subscription = watch((formValues, { name, type }) => {
+      if (type === 'change' && selectedLinkId) { // Ensure selectedLinkId is still valid within callback
+        const currentLinkInContext = getLinkById(selectedLinkId);
+        if (!currentLinkInContext) return; // Link might have been removed
 
-        updateLinkDetails(selectedLinkId, {
+        const parsedPointA = parseCoordinatesString(formValues.pointA.coordinates);
+        const parsedPointB = parseCoordinatesString(formValues.pointB.coordinates);
+
+        const towerAHeight = typeof formValues.pointA.height === 'number' ? formValues.pointA.height : (parseFloat(String(formValues.pointA.height)) || 0);
+        const towerBHeight = typeof formValues.pointB.height === 'number' ? formValues.pointB.height : (parseFloat(String(formValues.pointB.height)) || 0);
+        const clearance = parseFloat(formValues.clearanceThreshold) || 0;
+
+        const newDetails = {
           pointA: {
-            name: currentFormValues.pointA.name,
-            lat: parsedPointA?.lat ?? selectedLink.pointA.lat, 
-            lng: parsedPointA?.lng ?? selectedLink.pointA.lng,
-            towerHeight: parseFloat(currentFormValues.pointA.height.toString()) || 0,
+            name: formValues.pointA.name,
+            lat: parsedPointA?.lat ?? currentLinkInContext.pointA.lat,
+            lng: parsedPointA?.lng ?? currentLinkInContext.pointA.lng,
+            towerHeight: towerAHeight,
           },
           pointB: {
-            name: currentFormValues.pointB.name,
-            lat: parsedPointB?.lat ?? selectedLink.pointB.lat, 
-            lng: parsedPointB?.lng ?? selectedLink.pointB.lng,
-            towerHeight: parseFloat(currentFormValues.pointB.height.toString()) || 0,
+            name: formValues.pointB.name,
+            lat: parsedPointB?.lat ?? currentLinkInContext.pointB.lat,
+            lng: parsedPointB?.lng ?? currentLinkInContext.pointB.lng,
+            towerHeight: towerBHeight,
           },
-          clearanceThreshold: parseFloat(currentFormValues.clearanceThreshold) || 0,
-        });
+          clearanceThreshold: clearance,
+        };
+
+        // Perform a comparison to prevent unnecessary updates
+        if (
+            newDetails.pointA.name !== currentLinkInContext.pointA.name ||
+            newDetails.pointA.lat !== currentLinkInContext.pointA.lat ||
+            newDetails.pointA.lng !== currentLinkInContext.pointA.lng ||
+            newDetails.pointA.towerHeight !== currentLinkInContext.pointA.towerHeight ||
+            newDetails.pointB.name !== currentLinkInContext.pointB.name ||
+            newDetails.pointB.lat !== currentLinkInContext.pointB.lat ||
+            newDetails.pointB.lng !== currentLinkInContext.pointB.lng ||
+            newDetails.pointB.towerHeight !== currentLinkInContext.pointB.towerHeight ||
+            newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold
+        ) {
+          updateLinkDetails(selectedLinkId, newDetails);
+        }
       }
     });
     return () => subscription.unsubscribe();
-  }, [watch, selectedLinkId, updateLinkDetails, selectedLink, getValues]);
+  }, [watch, selectedLinkId, updateLinkDetails, getLinkById]);
 
 
   const processSubmit = useCallback(async (data: AnalysisFormValues) => {
@@ -161,36 +186,36 @@ function HomePageContent() {
 
     const cachedResult = getCachedAnalysis(selectedLinkId);
     if (cachedResult) {
-      updateLinkAnalysis(selectedLinkId, cachedResult); 
+      updateLinkAnalysis(selectedLinkId, cachedResult);
       toast({ title: "Analysis Loaded from Cache", description: cachedResult.message });
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
-      
+
       let cached_pointA_coords = '';
-      if (cachedResult.pointA.lat !== null && cachedResult.pointB.lng !== null) {
+      if (cachedResult.pointA.lat !== null && cachedResult.pointB.lng !== null) { // Corrected to pointB.lng
          cached_pointA_coords = `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`;
       }
       let cached_pointB_coords = '';
       if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
          cached_pointB_coords = `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`;
       }
-      
-      reset({ 
-        pointA: { 
-          name: cachedResult.pointA.name || defaultFormStateValues.pointA.name, 
-          coordinates: cached_pointA_coords, 
-          height: cachedResult.pointA.towerHeight 
+
+      reset({
+        pointA: {
+          name: cachedResult.pointA.name || defaultFormStateValues.pointA.name,
+          coordinates: cached_pointA_coords,
+          height: cachedResult.pointA.towerHeight
         },
-        pointB: { 
-          name: cachedResult.pointB.name || defaultFormStateValues.pointB.name, 
-          coordinates: cached_pointB_coords, 
-          height: cachedResult.pointB.towerHeight 
+        pointB: {
+          name: cachedResult.pointB.name || defaultFormStateValues.pointB.name,
+          coordinates: cached_pointB_coords,
+          height: cachedResult.pointB.towerHeight
         },
         clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
       });
       return;
     }
-    
+
     const parsedPointA = parseCoordinatesString(data.pointA.coordinates);
     const parsedPointB = parseCoordinatesString(data.pointB.coordinates);
 
@@ -203,86 +228,92 @@ function HomePageContent() {
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', parsedPointA.lat.toString());
     formData.append('pointA.lng', parsedPointA.lng.toString());
-    formData.append('pointA.height', data.pointA.height.toString());
+    formData.append('pointA.height', String(data.pointA.height)); // Ensure height is string
     formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', parsedPointB.lat.toString());
     formData.append('pointB.lng', parsedPointB.lng.toString());
-    formData.append('pointB.height', data.pointB.height.toString());
+    formData.append('pointB.height', String(data.pointB.height)); // Ensure height is string
     formData.append('clearanceThreshold', data.clearanceThreshold);
-    
+
     React.startTransition(() => {
-      formAction(formData); 
+      formAction(formData);
     });
   }, [selectedLinkId, getLinkById, formAction, toast, updateLinkAnalysis, getCachedAnalysis, reset]);
 
   useEffect(() => {
     if (serverState && selectedLinkId) {
+      const currentLink = getLinkById(selectedLinkId); // Get the link *before* potential state update
+      if (!currentLink) return;
+
+
       if (serverState.error) {
-        const currentLink = getLinkById(selectedLinkId);
-        if (currentLink) {
-           updateLinkDetails(selectedLinkId, { analysisResult: undefined, isDirty: true }); 
-        }
+        // updateLinkDetails already marks as dirty, but ensure analysisResult is cleared
+        updateLinkDetails(selectedLinkId, { ...currentLink, analysisResult: undefined, isDirty: true });
         toast({
           title: "Analysis Error",
           description: serverState.error,
           variant: "destructive",
           duration: 7000,
         });
-      } else if ('losPossible' in serverState) { 
+      } else if ('losPossible' in serverState) {
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
-        
+
         const currentFormData = getValues();
 
         const newAnalysisResult: AnalysisResult = {
           ...successfulResult,
-          pointA: { 
-            name: currentFormData.pointA.name || defaultFormStateValues.pointA.name, 
-            lat: successfulResult.pointA.lat, 
-            lng: successfulResult.pointA.lng, 
+          pointA: {
+            name: currentFormData.pointA.name || defaultFormStateValues.pointA.name,
+            lat: successfulResult.pointA.lat,
+            lng: successfulResult.pointA.lng,
             towerHeight: successfulResult.pointA.towerHeight
           },
-          pointB: { 
+          pointB: {
             name: currentFormData.pointB.name || defaultFormStateValues.pointB.name,
             lat: successfulResult.pointB.lat,
             lng: successfulResult.pointB.lng,
             towerHeight: successfulResult.pointB.towerHeight
           },
           clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
-          id: selectedLinkId + '_analysis_' + Date.now(), 
+          id: selectedLinkId + '_analysis_' + Date.now(),
           timestamp: Date.now(),
         };
 
         updateLinkAnalysis(selectedLinkId, newAnalysisResult);
-        setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]); 
-        
+        setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]);
+
         setIsAnalysisPanelGloballyOpen(true);
         setIsBottomPanelContentExpanded(true);
-        
+
         toast({
           title: "Analysis Complete",
           description: newAnalysisResult.message || "LOS analysis performed successfully.",
         });
       }
     }
-  }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues]); 
-  
+  }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues]);
+
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
-    if (event.latLng && selectedLink) {
+    const currentSelectedLink = getLinkById(selectedLinkId || ''); // Get latest link from context
+
+    if (event.latLng && currentSelectedLink) {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
       const fieldToUpdate = pointId === 'pointA' ? 'pointA' : 'pointB';
-      
+
       const newPointDetails = {
-        ...selectedLink[fieldToUpdate],
+        ...(currentSelectedLink[fieldToUpdate]), // Spread existing details
         lat: lat,
         lng: lng,
       };
-      
-      updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-    } else if (event.latLng && !selectedLink) {
+
+      updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails });
+       // Form update is handled by useEffect watching selectedLink
+    } else if (event.latLng && !currentSelectedLink) { // No link selected, create a new one
         const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
+        // Form reset and panel opening handled by useEffect on selectedLink change
     }
-  }, [selectedLink, updateLinkDetails, addLink]);
+  }, [selectedLinkId, updateLinkDetails, addLink, getLinkById]);
 
   const handleMarkerDrag = useCallback((event: google.maps.MapMouseEvent, linkId: string, pointId: 'pointA' | 'pointB') => {
     if (event.latLng) {
@@ -291,7 +322,7 @@ function HomePageContent() {
 
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
-      const fieldToUpdate = pointId; 
+      const fieldToUpdate = pointId;
 
       const newPointDetails = {
         ...draggedLink[fieldToUpdate],
@@ -299,42 +330,44 @@ function HomePageContent() {
         lng: lng,
       };
       updateLinkDetails(linkId, { [fieldToUpdate]: newPointDetails });
-      if(selectedLinkId === linkId){ 
-        setValue(`${fieldToUpdate}.coordinates`, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-      }
+      // Form update is handled by useEffect watching selectedLink for the currently selected link
     }
-  }, [getLinkById, updateLinkDetails, setValue, selectedLinkId]);
-  
+  }, [getLinkById, updateLinkDetails]);
+
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
-    if (selectedLink) {
+    const currentSelectedLink = getLinkById(selectedLinkId || '');
+    if (currentSelectedLink) {
       const fieldToUpdate = siteId;
       const newPointDetails = {
-        ...selectedLink[fieldToUpdate],
+        ...currentSelectedLink[fieldToUpdate],
         towerHeight: Math.round(newHeight),
       };
-      updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-      setValue(`${fieldToUpdate}.height`, Math.round(newHeight)); 
+      updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails });
+      // Form update for height is handled by useEffect on selectedLink
 
-      const currentFormValues = getValues(); 
-      handleSubmit(processSubmit)({ 
-          ...currentFormValues, 
-          [siteId]: { ...currentFormValues[siteId], height: Math.round(newHeight)}
-      });
+      // Trigger re-analysis automatically if a valid analysis was present
+      if (currentSelectedLink.analysisResult && !currentSelectedLink.isDirty) {
+          const currentFormValues = getValues();
+          handleSubmit(processSubmit)({
+              ...currentFormValues,
+              [siteId]: { ...currentFormValues[siteId], height: Math.round(newHeight)}
+          });
+      }
     }
-  }, [selectedLink, updateLinkDetails, handleSubmit, processSubmit, getValues, setValue]);
+  }, [selectedLinkId, getLinkById, updateLinkDetails, handleSubmit, processSubmit, getValues]);
 
   const toggleGlobalPanelVisibility = useCallback(() => {
      setIsAnalysisPanelGloballyOpen(prev => !prev);
-     if (isAnalysisPanelGloballyOpen && selectedLinkId) { 
-        selectLink(null); 
+     if (isAnalysisPanelGloballyOpen && selectedLinkId) {
+        selectLink(null);
      }
   }, [isAnalysisPanelGloballyOpen, selectedLinkId, selectLink]);
 
   const toggleBottomPanelContentExpansion = useCallback(() => {
     setIsBottomPanelContentExpanded(prev => !prev);
   }, []);
-  
-  const handleStartAnalysisClick = () => { 
+
+  const handleStartAnalysisClick = () => {
     if (selectedLink) {
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
@@ -345,15 +378,15 @@ function HomePageContent() {
     }
   };
 
-  const handleClearMap = () => { 
-    links.forEach(link => removeLink(link.id)); 
-    selectLink(null); 
+  const handleClearMap = () => {
+    links.forEach(link => removeLink(link.id));
+    selectLink(null);
     reset(defaultFormStateValues);
-    setHistoryList([]); 
+    setHistoryList([]);
     toast({ title: "Map Cleared", description: "All links removed and form reset." });
     setIsAnalysisPanelGloballyOpen(false);
   };
-  
+
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
@@ -363,7 +396,7 @@ function HomePageContent() {
         pointB: { ...itemToLoad.pointB, towerHeight: itemToLoad.pointB.towerHeight },
         clearanceThreshold: itemToLoad.clearanceThresholdUsed,
       });
-      updateLinkAnalysis(newLinkId, itemToLoad); 
+      updateLinkAnalysis(newLinkId, itemToLoad);
       selectLink(newLinkId);
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
@@ -371,7 +404,7 @@ function HomePageContent() {
     }
   };
 
-  const handleClearHistory = () => { 
+  const handleClearHistory = () => {
     setHistoryList([]);
     toast({ title: "History Cleared" });
   };
@@ -415,13 +448,14 @@ function HomePageContent() {
   };
 
   const handleAddNewLink = () => {
-    const newId = addLink(); 
+    const newId = addLink(); // Context handles setting selectedLinkId and default structure
     // Form resets and panel opening are handled by useEffect on selectedLink change
   };
 
   const handleRemoveSelectedLink = () => {
     if (selectedLinkId) {
       removeLink(selectedLinkId);
+      // selectedLink will become null, triggering form reset and panel closure via useEffect
     }
   };
 
@@ -431,7 +465,7 @@ function HomePageContent() {
         return selectedLink.analysisResult.distanceKm;
       }
       if (selectedLink.pointA.lat && selectedLink.pointA.lng && selectedLink.pointB.lat && selectedLink.pointB.lng) {
-        return calculateDistanceKm(selectedLink.pointA, selectedLink.pointB);
+        return calculateDistanceKm(selectedLink.pointA as PointCoordinates, selectedLink.pointB as PointCoordinates);
       }
     }
     return null;
@@ -443,19 +477,19 @@ function HomePageContent() {
       <AppHeader
         onToggleHistory={() => setIsHistoryPanelOpen(prev => !prev)}
         onClearMap={handleClearMap}
-        isHistoryPanelSupported={true} 
+        isHistoryPanelSupported={true}
       />
       <div className="p-2 space-x-2 print:hidden">
         {!selectedLinkId && (
             <Button onClick={handleAddNewLink} variant="outline" size="sm">
-                <PlusCircle className="mr-2 h-4 w-4" /> 
+                <PlusCircle className="mr-2 h-4 w-4" />
                 Add New Link
             </Button>
         )}
         {selectedLinkId && (
           <>
             <Button onClick={handleAddNewLink} variant="outline" size="sm">
-                <PlusCircle className="mr-2 h-4 w-4" /> 
+                <PlusCircle className="mr-2 h-4 w-4" />
                 Add Another Link
             </Button>
             <Button onClick={handleRemoveSelectedLink} variant="destructive" size="sm">
@@ -469,9 +503,9 @@ function HomePageContent() {
           <InteractiveMap
             links={links}
             selectedLinkId={selectedLinkId}
-            onMapClick={handleMapClick} 
-            onMarkerDrag={handleMarkerDrag} 
-            onLinkSelect={selectLink} 
+            onMapClick={handleMapClick}
+            onMarkerDrag={handleMarkerDrag}
+            onLinkSelect={selectLink}
             mapContainerClassName="w-full h-full"
           />
         </div>
@@ -479,7 +513,7 @@ function HomePageContent() {
         {!isAnalysisPanelGloballyOpen && !selectedLinkId && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
             <Button
-              onClick={handleAddNewLink} 
+              onClick={handleAddNewLink}
               size="lg"
               className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm"
               aria-label="Add New Link"
@@ -489,7 +523,7 @@ function HomePageContent() {
             </Button>
           </div>
         )}
-        
+
         {isActionPending && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
               <Card className="p-6 shadow-2xl bg-card/90">
@@ -523,7 +557,7 @@ function HomePageContent() {
               </Card>
           </div>
         )}
-        
+
         <FormProvider {...form}>
             <BottomPanel
               analysisResult={selectedLink?.analysisResult ?? null}
@@ -531,12 +565,12 @@ function HomePageContent() {
               onToggleGlobalVisibility={toggleGlobalPanelVisibility}
               isContentExpanded={isBottomPanelContentExpanded}
               onToggleContentExpansion={toggleBottomPanelContentExpansion}
-              isStale={selectedLink?.isDirty ?? !selectedLink?.analysisResult} 
-              onAnalyzeSubmit={handleSubmit(processSubmit)} 
+              isStale={selectedLink?.isDirty ?? !selectedLink?.analysisResult}
+              onAnalyzeSubmit={handleSubmit(processSubmit)}
               isActionPending={isActionPending}
               onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
               onOpenReportDialog={handleOpenReportDialog}
-              onAddNewLink={handleAddNewLink} 
+              onAddNewLink={handleAddNewLink}
               currentDistanceKm={liveDistanceKm}
               selectedLinkClearanceThreshold={selectedLink?.clearanceThreshold}
               selectedLinkPointA={selectedLink?.pointA}
@@ -544,7 +578,7 @@ function HomePageContent() {
             />
         </FormProvider>
 
-        <HistoryPanel 
+        <HistoryPanel
           historyList={historyList}
           onLoadHistoryItem={handleLoadHistoryItem}
           onClearHistory={handleClearHistory}
@@ -555,7 +589,7 @@ function HomePageContent() {
             isOpen={isReportDialogOpen}
             onOpenChange={setIsReportDialogOpen}
             linksForReport={links.filter(l => l.analysisResult && !l.isDirty).map(l => ({
-                id: l.id, 
+                id: l.id,
                 name: `${l.pointA.name || 'Site A'} - ${l.pointB.name || 'Site B'}`,
                 analysis: l.analysisResult!
             }))}
@@ -574,3 +608,4 @@ export default function Home() {
   );
 }
 
+    
