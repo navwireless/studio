@@ -923,7 +923,7 @@ __turbopack_context__.s({
     "default": (()=>BottomPanel)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-hook-form/dist/index.esm.mjs [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-hook-form/dist/index.esm.mjs [app-client] (ecmascript)"); // Added useFormContext
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/card.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/input.tsx [app-client] (ecmascript)");
@@ -939,7 +939,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/utils.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 ;
-var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.signature();
+var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.signature(), _s2 = __turbopack_context__.k.signature();
 "use client";
 ;
 ;
@@ -951,10 +951,18 @@ var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.sign
 ;
 ;
 ;
-const SiteInputGroup = ({ id, title, control, register, clientFormErrors, serverFormErrors, getCombinedError })=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
+const SiteInputGroup = ({ id })=>{
+    _s();
+    const { register, control, formState: { errors: clientFormErrors } } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFormContext"])();
+    // serverFormErrors and getCombinedError need to be passed or handled differently if still needed per field
+    // For now, focusing on client errors via RHF context
+    const title = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
+        control,
+        name: `${id}.name`
+    }) || (id === 'pointA' ? "Site A" : "Site B");
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
         className: "bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full min-w-[280px] md:min-w-0",
         children: [
-            " ",
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardHeader"], {
                 className: "p-1",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardTitle"], {
@@ -964,205 +972,209 @@ const SiteInputGroup = ({ id, title, control, register, clientFormErrors, server
                             className: "mr-1.5 h-3.5 w-3.5 text-primary/70"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 39,
-                            columnNumber: 9
+                            lineNumber: 33,
+                            columnNumber: 11
                         }, this),
                         " ",
                         title
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 38,
-                    columnNumber: 7
+                    lineNumber: 32,
+                    columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 37,
-                columnNumber: 5
+                lineNumber: 31,
+                columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
                 className: "p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between",
-                children: [
-                    " ",
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "space-y-1.5",
-                        children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
-                                        htmlFor: `${id}.name`,
-                                        className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
-                                        children: "Name"
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 45,
-                                        columnNumber: 11
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
-                                        id: `${id}.name`,
-                                        ...register(`${id}.name`),
-                                        placeholder: "e.g. Main Site",
-                                        className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 46,
-                                        columnNumber: 11
-                                    }, this),
-                                    (clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                        className: "text-xs text-destructive/80 mt-0.5",
-                                        children: getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 53,
-                                        columnNumber: 13
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 44,
-                                columnNumber: 9
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "grid grid-cols-2 gap-1",
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
-                                                htmlFor: `${id}.lat`,
-                                                className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
-                                                children: "Latitude"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 57,
-                                                columnNumber: 13
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
-                                                id: `${id}.lat`,
-                                                ...register(`${id}.lat`),
-                                                placeholder: "-90 to 90",
-                                                className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 58,
-                                                columnNumber: 13
-                                            }, this),
-                                            (clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                className: "text-xs text-destructive/80 mt-0.5",
-                                                children: getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 65,
-                                                columnNumber: 15
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 56,
-                                        columnNumber: 11
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
-                                                htmlFor: `${id}.lng`,
-                                                className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
-                                                children: "Longitude"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 68,
-                                                columnNumber: 13
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
-                                                id: `${id}.lng`,
-                                                ...register(`${id}.lng`),
-                                                placeholder: "-180 to 180",
-                                                className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 69,
-                                                columnNumber: 13
-                                            }, this),
-                                            (clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                className: "text-xs text-destructive/80 mt-0.5",
-                                                children: getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 76,
-                                                columnNumber: 15
-                                            }, this)
-                                        ]
-                                    }, void 0, true, {
-                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 67,
-                                        columnNumber: 11
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 55,
-                                columnNumber: 9
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
-                                name: `${id}.height`,
-                                control: control,
-                                defaultValue: 20,
-                                render: ({ field })=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$tower$2d$height$2d$control$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                                        label: "Tower Height",
-                                        height: field.value,
-                                        onChange: field.onChange,
-                                        min: 0,
-                                        max: 100,
-                                        idSuffix: id
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 84,
-                                        columnNumber: 13
-                                    }, void 0)
-                            }, void 0, false, {
-                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 79,
-                                columnNumber: 9
-                            }, this),
-                            (clientFormErrors[id]?.height || serverFormErrors?.[`${id}.height`]) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                className: "text-xs text-destructive/80 mt-0.5",
-                                children: getCombinedError(clientFormErrors[id]?.height, serverFormErrors?.[`${id}.height`])
-                            }, void 0, false, {
-                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 95,
-                                columnNumber: 11
-                            }, this)
-                        ]
-                    }, void 0, true, {
-                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 43,
-                        columnNumber: 7
-                    }, this)
-                ]
-            }, void 0, true, {
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "space-y-1.5",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
+                                    htmlFor: `${id}.name`,
+                                    className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
+                                    children: "Name"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 39,
+                                    columnNumber: 13
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
+                                    id: `${id}.name`,
+                                    ...register(`${id}.name`),
+                                    placeholder: "e.g. Main Site",
+                                    className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 40,
+                                    columnNumber: 13
+                                }, this),
+                                clientFormErrors[id]?.name && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: "text-xs text-destructive/80 mt-0.5",
+                                    children: clientFormErrors[id]?.name?.message
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 47,
+                                    columnNumber: 15
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 38,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "grid grid-cols-2 gap-1",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
+                                            htmlFor: `${id}.lat`,
+                                            className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
+                                            children: "Latitude"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 51,
+                                            columnNumber: 15
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
+                                            id: `${id}.lat`,
+                                            ...register(`${id}.lat`),
+                                            placeholder: "-90 to 90",
+                                            className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 52,
+                                            columnNumber: 15
+                                        }, this),
+                                        clientFormErrors[id]?.lat && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                            className: "text-xs text-destructive/80 mt-0.5",
+                                            children: clientFormErrors[id]?.lat?.message
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 59,
+                                            columnNumber: 17
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 50,
+                                    columnNumber: 13
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
+                                            htmlFor: `${id}.lng`,
+                                            className: "text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal",
+                                            children: "Longitude"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 62,
+                                            columnNumber: 15
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
+                                            id: `${id}.lng`,
+                                            ...register(`${id}.lng`),
+                                            placeholder: "-180 to 180",
+                                            className: "mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 63,
+                                            columnNumber: 15
+                                        }, this),
+                                        clientFormErrors[id]?.lng && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                            className: "text-xs text-destructive/80 mt-0.5",
+                                            children: clientFormErrors[id]?.lng?.message
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 70,
+                                            columnNumber: 17
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 61,
+                                    columnNumber: 13
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 49,
+                            columnNumber: 11
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
+                            name: `${id}.height`,
+                            control: control,
+                            defaultValue: 20,
+                            render: ({ field })=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$tower$2d$height$2d$control$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                    label: "Tower Height",
+                                    height: field.value,
+                                    onChange: field.onChange,
+                                    min: 0,
+                                    max: 100,
+                                    idSuffix: id
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 78,
+                                    columnNumber: 15
+                                }, void 0)
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 73,
+                            columnNumber: 11
+                        }, this),
+                        clientFormErrors[id]?.height && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                            className: "text-xs text-destructive/80 mt-0.5",
+                            children: clientFormErrors[id]?.height?.message
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 89,
+                            columnNumber: 13
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                    lineNumber: 37,
+                    columnNumber: 9
+                }, this)
+            }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 42,
-                columnNumber: 5
+                lineNumber: 36,
+                columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 36,
-        columnNumber: 3
+        lineNumber: 30,
+        columnNumber: 5
     }, this);
+};
+_s(SiteInputGroup, "xdUkb/18xmtABQkl+DSfSh8NOVc=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFormContext"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"]
+    ];
+});
 _c = SiteInputGroup;
-const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, control, clientFormErrors, serverFormErrors, getCombinedError, handleSubmit, processSubmit, pointAName, pointBName, onTowerHeightChangeFromGraph, onOpenReportDialog })=>{
-    _s();
+const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, onAnalyzeSubmit, pointANameWatch, pointBNameWatch, onTowerHeightChangeFromGraph, onOpenReportDialog, currentDistanceKm, selectedLinkClearanceThreshold })=>{
+    _s1();
+    const { control, formState: { errors: clientFormErrors } } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFormContext"])();
     const watchedClearanceThresholdString = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
         control,
-        name: 'clearanceThreshold',
-        defaultValue: "10"
+        name: 'clearanceThreshold'
     });
-    const minRequiredClearance = parseFloat(watchedClearanceThresholdString);
+    const minRequiredClearance = selectedLinkClearanceThreshold ?? parseFloat(watchedClearanceThresholdString || "0");
     let isClearBasedOnAnalysis = false;
     let deficit = 0;
     let actualMinClearance = analysisResult?.minClearance ?? null;
     if (analysisResult && analysisResult.minClearance !== null && !isNaN(minRequiredClearance)) {
         isClearBasedOnAnalysis = analysisResult.minClearance >= minRequiredClearance;
-        deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(minRequiredClearance - analysisResult.minClearance);
+        deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(minRequiredClearance - (analysisResult.minClearance || 0));
     }
     const chartKey = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useMemo({
         "ProfilePanelMiddleColumn.useMemo[chartKey]": ()=>{
@@ -1175,49 +1187,50 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
         minRequiredClearance
     ]);
     const buttonText = isActionPending ? "Analyzing..." : isStale || !analysisResult ? "Analyze Link" : "Re-Analyze";
+    const pointANameDisplay = analysisResult?.pointA?.name || pointANameWatch || "Site A";
+    const pointBNameDisplay = analysisResult?.pointB?.name || pointBNameWatch || "Site B";
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0 min-w-[320px] md:min-w-0",
         children: [
-            " ",
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex-shrink-0 order-1",
-                        children: isStale && !isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                        children: isStale && !isActionPending && analysisResult || isStale && !analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: "px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertTriangle$3e$__["AlertTriangle"], {
                                     className: "mr-1 h-3 w-3"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 162,
+                                    lineNumber: 158,
                                     columnNumber: 15
                                 }, this),
                                 " NEEDS RE-ANALYZE"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 161,
+                            lineNumber: 157,
                             columnNumber: 13
                         }, this) : analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("px-3 py-1.5 rounded-md text-xs font-bold shadow-md", isClearBasedOnAnalysis ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground"),
                             children: isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 165,
+                            lineNumber: 161,
                             columnNumber: 13
                         }, this) : !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: "px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic",
                             children: "Perform analysis"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 177,
-                            columnNumber: 17
+                            lineNumber: 173,
+                            columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 159,
+                        lineNumber: 155,
                         columnNumber: 9
                     }, this),
                     analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -1230,21 +1243,21 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                         children: "Aerial Dist."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 187,
+                                        lineNumber: 183,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                         className: "font-bold text-foreground text-xs md:text-sm",
-                                        children: analysisResult.distanceKm < 1 ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m` : `${analysisResult.distanceKm.toFixed(1)}km`
+                                        children: currentDistanceKm !== null ? currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km` : "N/A"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 188,
+                                        lineNumber: 184,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 186,
+                                lineNumber: 182,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1255,7 +1268,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                         children: "Min. Clear."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 196,
+                                        lineNumber: 189,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1263,13 +1276,13 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                         children: actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 197,
+                                        lineNumber: 190,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 195,
+                                lineNumber: 188,
                                 columnNumber: 13
                             }, this)
                         ]
@@ -1277,8 +1290,9 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "order-3 flex-grow-0 md:flex-grow-0 text-center",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                            type: "submit",
-                            onClick: handleSubmit(processSubmit),
+                            type: "button" // Changed from submit as form is now handled by FormProvider
+                            ,
+                            onClick: onAnalyzeSubmit,
                             disabled: isActionPending,
                             size: "sm",
                             className: "bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight",
@@ -1287,22 +1301,22 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 215,
-                                    columnNumber: 17
+                                    lineNumber: 208,
+                                    columnNumber: 13
                                 }, this),
                                 buttonText
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 208,
-                            columnNumber: 14
+                            lineNumber: 201,
+                            columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 207,
+                        lineNumber: 200,
                         columnNumber: 9
                     }, this),
-                    (analysisResult || isStale === false) && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "order-6 flex-grow-0 md:flex-grow-0 text-center",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                             type: "button",
@@ -1315,19 +1329,19 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     className: "mr-1.5 h-3.5 w-3.5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 229,
+                                    lineNumber: 222,
                                     columnNumber: 15
                                 }, this),
                                 "Make Report"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 222,
+                            lineNumber: 215,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 221,
+                        lineNumber: 214,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1339,7 +1353,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                 children: "Req. Fresnel (m):"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 237,
+                                lineNumber: 229,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
@@ -1350,36 +1364,35 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                         type: "number",
                                         step: "any",
                                         ...field,
-                                        onChange: (e)=>field.onChange(e.target.value),
                                         className: "bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 242,
-                                        columnNumber: 19
+                                        lineNumber: 234,
+                                        columnNumber: 15
                                     }, void 0)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 238,
+                                lineNumber: 230,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 236,
+                        lineNumber: 228,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 158,
+                lineNumber: 154,
                 columnNumber: 7
             }, this),
-            (clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+            clientFormErrors.clearanceThreshold && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                 className: "text-xs text-destructive mt-0.5 text-center px-2",
-                children: getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)
+                children: clientFormErrors.clearanceThreshold.message
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 255,
+                lineNumber: 246,
                 columnNumber: 9
             }, this),
             analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1394,29 +1407,29 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 262,
-                        columnNumber: 13
+                        lineNumber: 253,
+                        columnNumber: 11
                     }, this),
                     " to tower(s) for clearance."
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 260,
-                columnNumber: 11
+                lineNumber: 251,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("flex-1 min-h-0 p-0.5"),
                 children: analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$custom$2d$profile$2d$chart$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                     data: analysisResult.profile,
-                    pointAName: pointAName,
-                    pointBName: pointBName,
+                    pointAName: pointANameDisplay,
+                    pointBName: pointBNameDisplay,
                     isStale: isStale,
                     totalDistanceKm: analysisResult.distanceKm,
                     isActionPending: isActionPending,
                     onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph
                 }, chartKey, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 269,
+                    lineNumber: 260,
                     columnNumber: 11
                 }, this) : isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "h-full flex items-center justify-center p-2 bg-muted/30 rounded-md",
@@ -1425,64 +1438,64 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                         children: "Loading analysis data..."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 281,
-                        columnNumber: 17
-                    }, this)
-                }, void 0, false, {
-                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 280,
-                    columnNumber: 13
-                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground",
-                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        children: "Perform analysis to see profile."
-                    }, void 0, false, {
-                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 285,
+                        lineNumber: 272,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 284,
+                    lineNumber: 271,
+                    columnNumber: 11
+                }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                        children: "Select a link and perform analysis to see profile."
+                    }, void 0, false, {
+                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                        lineNumber: 276,
+                        columnNumber: 13
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                    lineNumber: 275,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 267,
+                lineNumber: 258,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 157,
+        lineNumber: 153,
         columnNumber: 5
     }, this);
 };
-_s(ProfilePanelMiddleColumn, "dl8HUQb6+zRQquiQNehxO2ZDhew=", false, function() {
+_s1(ProfilePanelMiddleColumn, "QX6/dfoiHivFdDK/9gf92mwevRg=", false, function() {
     return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFormContext"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"]
     ];
 });
 _c1 = ProfilePanelMiddleColumn;
-function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVisibility, isContentExpanded, onToggleContentExpansion, isStale, control, register, handleSubmit, processSubmit, clientFormErrors, serverFormErrors, isActionPending, getValues, setValue, onTowerHeightChangeFromGraph, onOpenReportDialog }) {
-    _s1();
-    const getCombinedError = (clientFieldError, serverFieldError)=>{
-        if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
-        return clientFieldError?.message;
-    };
-    const pointAName = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
+function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVisibility, isContentExpanded, onToggleContentExpansion, isStale, onAnalyzeSubmit, isActionPending, onTowerHeightChangeFromGraph, onOpenReportDialog, currentDistanceKm, selectedLinkClearanceThreshold, selectedLinkPointA, selectedLinkPointB }) {
+    _s2();
+    const { control } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFormContext"])(); // Get RHF control here
+    const pointANameWatch = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
         control,
         name: 'pointA.name',
-        defaultValue: analysisResult?.pointA?.name || "Site A"
+        defaultValue: selectedLinkPointA?.name || "Site A"
     });
-    const pointBName = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
+    const pointBNameWatch = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
         control,
         name: 'pointB.name',
-        defaultValue: analysisResult?.pointB?.name || "Site B"
+        defaultValue: selectedLinkPointB?.name || "Site B"
     });
-    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
+    // Form submission is now handled by the onAnalyzeSubmit prop from page.tsx
+    // which uses handleSubmit from the FormProvider there.
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form" // Still a form tag, but onSubmit is handled by the parent FormProvider
+    , {
         noValidate: true,
-        onSubmit: handleSubmit(processSubmit),
         className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden", isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full", "z-[50]"),
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1495,21 +1508,15 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(SiteInputGroup, {
-                                    id: "pointA",
-                                    title: pointAName || "Site A",
-                                    control: control,
-                                    register: register,
-                                    clientFormErrors: clientFormErrors,
-                                    serverFormErrors: serverFormErrors,
-                                    getCombinedError: getCombinedError
+                                    id: "pointA"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 363,
+                                    lineNumber: 343,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 362,
+                                lineNumber: 342,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1518,60 +1525,51 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     analysisResult: analysisResult,
                                     isStale: isStale,
                                     isActionPending: isActionPending,
-                                    control: control,
-                                    clientFormErrors: clientFormErrors,
-                                    serverFormErrors: serverFormErrors,
-                                    getCombinedError: getCombinedError,
-                                    handleSubmit: handleSubmit,
-                                    processSubmit: processSubmit,
-                                    pointAName: pointAName || "Site A",
-                                    pointBName: pointBName || "Site B",
+                                    onAnalyzeSubmit: onAnalyzeSubmit,
+                                    pointANameWatch: pointANameWatch,
+                                    pointBNameWatch: pointBNameWatch,
                                     onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph,
-                                    onOpenReportDialog: onOpenReportDialog
+                                    onOpenReportDialog: onOpenReportDialog,
+                                    currentDistanceKm: currentDistanceKm,
+                                    selectedLinkClearanceThreshold: selectedLinkClearanceThreshold
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 375,
+                                    lineNumber: 346,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 374,
+                                lineNumber: 345,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(SiteInputGroup, {
-                                    id: "pointB",
-                                    title: pointBName || "Site B",
-                                    control: control,
-                                    register: register,
-                                    clientFormErrors: clientFormErrors,
-                                    serverFormErrors: serverFormErrors,
-                                    getCombinedError: getCombinedError
+                                    id: "pointB"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 393,
+                                    lineNumber: 360,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 392,
+                                lineNumber: 359,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 360,
-                        columnNumber: 12
+                        lineNumber: 341,
+                        columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 359,
+                    lineNumber: 340,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 353,
+                lineNumber: 334,
                 columnNumber: 7
             }, this),
             isPanelGloballyVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1582,29 +1580,30 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 413,
+                    lineNumber: 372,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 414,
+                    lineNumber: 373,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 407,
+                lineNumber: 366,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 344,
+        lineNumber: 326,
         columnNumber: 5
     }, this);
 }
-_s1(BottomPanel, "9HaTKeL7qXyWRFszNa9/sB88IDA=", false, function() {
+_s2(BottomPanel, "Vj+sBBqTknvHV8Zns0KoDjVCTaI=", false, function() {
     return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useFormContext"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"]
     ];

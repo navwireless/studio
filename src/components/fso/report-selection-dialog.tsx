@@ -17,45 +17,43 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertCircle, FileText, ListChecks, CircleOff } from 'lucide-react';
-import type { AnalysisResult } from '@/types';
-import { formatDistanceStrict } from 'date-fns';
+import type { AnalysisResult } from '@/types'; // Keep AnalysisResult for structure
+// import { formatDistanceStrict } from 'date-fns'; // Not directly using timestamp for display here
 import { cn } from '@/lib/utils';
+
+// New type for items passed to this dialog
+interface ReportableLink {
+  id: string; // This is the LOSLink id
+  name: string; // Formatted name like "Site A - Site B"
+  analysis: AnalysisResult; // The actual analysis data
+}
 
 interface ReportSelectionDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  historyList: AnalysisResult[];
-  currentAnalysisResult: AnalysisResult | null;
-  isCurrentAnalysisStale: boolean;
-  onGenerateReport: (selectedIds: string[]) => void;
+  linksForReport: ReportableLink[]; // Changed from historyList and currentAnalysisResult
+  onGenerateReport: (selectedLOSLinkIds: string[]) => void; // Callback expects LOSLink IDs
 }
-
-const CURRENT_ANALYSIS_ID_PLACEHOLDER = 'current_analysis_placeholder_id';
 
 export default function ReportSelectionDialog({
   isOpen,
   onOpenChange,
-  historyList,
-  currentAnalysisResult,
-  isCurrentAnalysisStale,
+  linksForReport,
   onGenerateReport,
 }: ReportSelectionDialogProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Reset selections when dialog opens or history/current analysis changes
   useEffect(() => {
     if (isOpen) {
-        const newSelectedIds = new Set<string>();
-        // Pre-select current analysis if it's valid and not stale
-        if (currentAnalysisResult && !isCurrentAnalysisStale && currentAnalysisResult.id) {
-            newSelectedIds.add(currentAnalysisResult.id);
-        }
-        setSelectedIds(newSelectedIds);
+      // Pre-select all available, analyzed links by default or based on some logic
+      // For now, let's pre-select all valid links passed to it
+      const initialSelected = new Set<string>();
+      linksForReport.forEach(link => initialSelected.add(link.id));
+      setSelectedIds(initialSelected);
     } else {
-        setSelectedIds(new Set()); // Clear selection when dialog closes
+      setSelectedIds(new Set()); // Clear selection when dialog closes
     }
-  }, [isOpen, currentAnalysisResult, isCurrentAnalysisStale]);
-
+  }, [isOpen, linksForReport]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -71,10 +69,7 @@ export default function ReportSelectionDialog({
 
   const handleSelectAll = () => {
     const allIds = new Set<string>();
-    if (currentAnalysisResult && !isCurrentAnalysisStale && currentAnalysisResult.id) {
-        allIds.add(currentAnalysisResult.id);
-    }
-    historyList.forEach(item => allIds.add(item.id));
+    linksForReport.forEach(item => allIds.add(item.id));
     setSelectedIds(allIds);
   };
 
@@ -83,27 +78,9 @@ export default function ReportSelectionDialog({
   };
 
   const handleSubmit = () => {
-    onGenerateReport(Array.from(selectedIds));
-    onOpenChange(false); // Close dialog after submission
+    onGenerateReport(Array.from(selectedIds)); // Pass LOSLink IDs
+    onOpenChange(false);
   };
-
-  const itemsToShow = [...historyList];
-  let currentItemExistsInHistory = false;
-  if (currentAnalysisResult?.id) {
-      currentItemExistsInHistory = historyList.some(hItem => hItem.id === currentAnalysisResult.id);
-  }
-
-  // Add current analysis to the top if it's valid and not already the exact same as the latest history item
-  let displayableCurrentAnalysis: AnalysisResult | null = null;
-  if (currentAnalysisResult && !currentItemExistsInHistory) {
-      displayableCurrentAnalysis = {
-          ...currentAnalysisResult,
-          // Use a placeholder ID if the current analysis isn't yet in history (e.g., first analysis before save)
-          // Or ensure currentAnalysisResult always has an ID. For now, this helps distinguish.
-          id: currentAnalysisResult.id || CURRENT_ANALYSIS_ID_PLACEHOLDER 
-      };
-  }
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -114,54 +91,29 @@ export default function ReportSelectionDialog({
             Select Links for Report
           </DialogTitle>
           <DialogDescription>
-            Choose one or more completed analyses to include in the DOCX report.
+            Choose one or more analyzed links to include in the DOCX report.
           </DialogDescription>
         </DialogHeader>
 
-        {(itemsToShow.length === 0 && !displayableCurrentAnalysis) ? (
+        {(linksForReport.length === 0) ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center py-10">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No analysis history found.</p>
-            <p className="text-xs text-muted-foreground mt-1">Perform an analysis to generate reports.</p>
+            <p className="text-muted-foreground">No analyzed links available for reporting.</p>
+            <p className="text-xs text-muted-foreground mt-1">Analyze some links first.</p>
           </div>
         ) : (
           <>
             <div className="flex justify-between items-center mb-2 px-1">
-                <Button variant="outline" size="sm" onClick={handleSelectAll} className="text-xs">
-                    <ListChecks className="mr-2 h-4 w-4"/> Select All
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleDeselectAll} className="text-xs">
-                    <CircleOff className="mr-2 h-4 w-4"/> Deselect All
-                </Button>
+              <Button variant="outline" size="sm" onClick={handleSelectAll} className="text-xs">
+                <ListChecks className="mr-2 h-4 w-4" /> Select All
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDeselectAll} className="text-xs">
+                <CircleOff className="mr-2 h-4 w-4" /> Deselect All
+              </Button>
             </div>
             <ScrollArea className="flex-1 overflow-y-auto border rounded-md p-0">
               <div className="space-y-1 p-3">
-                {displayableCurrentAnalysis && (
-                  <div key={displayableCurrentAnalysis.id} className="flex items-center space-x-3 p-2.5 rounded-md border bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20">
-                    <Checkbox
-                      id={`report-${displayableCurrentAnalysis.id}`}
-                      checked={selectedIds.has(displayableCurrentAnalysis.id)}
-                      onCheckedChange={() => handleToggleSelect(displayableCurrentAnalysis.id)}
-                      disabled={isCurrentAnalysisStale}
-                    />
-                    <Label htmlFor={`report-${displayableCurrentAnalysis.id}`} className={cn("flex-1 cursor-pointer", isCurrentAnalysisStale && "cursor-not-allowed opacity-60")}>
-                      <div className="font-semibold text-sm">
-                        {displayableCurrentAnalysis.pointA.name || 'Site A'} - {displayableCurrentAnalysis.pointB.name || 'Site B'}
-                        <Badge variant="outline" className="ml-2 text-xs bg-amber-400/80 text-amber-900 border-amber-500">Current View</Badge>
-                        {isCurrentAnalysisStale && <Badge variant="destructive" className="ml-2 text-xs">Stale</Badge>}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        LOS: {displayableCurrentAnalysis.losPossible ? 
-                                <span className="text-los-success font-medium">Possible</span> : 
-                                <span className="text-los-failure font-medium">Blocked</span>}
-                        {' / '} Dist: {displayableCurrentAnalysis.distanceKm.toFixed(1)}km
-                        {isCurrentAnalysisStale && " (Needs Re-analysis)"}
-                      </div>
-                    </Label>
-                  </div>
-                )}
-
-                {itemsToShow.map((item) => (
+                {linksForReport.map((item) => (
                   <div key={item.id} className="flex items-center space-x-3 p-2.5 rounded-md border bg-card hover:bg-muted/50">
                     <Checkbox
                       id={`report-${item.id}`}
@@ -170,18 +122,19 @@ export default function ReportSelectionDialog({
                     />
                     <Label htmlFor={`report-${item.id}`} className="flex-1 cursor-pointer">
                       <div className="font-semibold text-sm">
-                        {item.pointA.name || 'Site A'} - {item.pointB.name || 'Site B'}
+                        {item.name}
+                        {/* Could add a badge if it's the currently "selected" link in the main UI */}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {formatDistanceStrict(new Date(item.timestamp), new Date(), { addSuffix: true })}
-                        {' / '} LOS: {item.losPossible ? 
-                                        <span className="text-los-success font-medium">Possible</span> : 
-                                        <span className="text-los-failure font-medium">Blocked</span>}
-                        {' / '} Dist: {item.distanceKm.toFixed(1)}km
+                        {/* item.analysis.timestamp ? formatDistanceStrict(new Date(item.analysis.timestamp), new Date(), { addSuffix: true }) + ' / ' : '' */}
+                        LOS: {item.analysis.losPossible ?
+                          <span className="text-los-success font-medium">Possible</span> :
+                          <span className="text-los-failure font-medium">Blocked</span>}
+                        {' / '} Dist: {item.analysis.distanceKm.toFixed(1)}km
                       </div>
                     </Label>
-                    {item.losPossible ? 
-                      <CheckCircle className="h-5 w-5 text-los-success" /> : 
+                    {item.analysis.losPossible ?
+                      <CheckCircle className="h-5 w-5 text-los-success" /> :
                       <XCircle className="h-5 w-5 text-los-failure" />}
                   </div>
                 ))}
@@ -189,16 +142,16 @@ export default function ReportSelectionDialog({
             </ScrollArea>
           </>
         )}
-        
+
         <DialogFooter className="mt-auto pt-4 border-t">
           <DialogClose asChild>
             <Button type="button" variant="outline">
               Cancel
             </Button>
           </DialogClose>
-          <Button 
-            type="button" 
-            onClick={handleSubmit} 
+          <Button
+            type="button"
+            onClick={handleSubmit}
             disabled={selectedIds.size === 0}
           >
             Generate Report ({selectedIds.size})

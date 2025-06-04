@@ -1,163 +1,159 @@
 
 "use client";
 
-import type { Control, UseFormRegister, UseFormHandleSubmit, UseFormGetValues, UseFormSetValue, FieldErrors } from 'react-hook-form';
-import { Controller, useWatch } from 'react-hook-form';
-import type { AnalysisResult, AnalysisFormValues } from '@/types';
+import type { Control, UseFormRegister, UseFormHandleSubmit, UseFormGetValues, UseFormSetValue, FieldErrors, UseFormReset } from 'react-hook-form';
+import { Controller, useWatch, useFormContext } from 'react-hook-form'; // Added useFormContext
+import type { AnalysisResult, AnalysisFormValues, LOSLinkPoint } from '@/types'; // Added LOSLinkPoint
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
-import CustomProfileChart from './custom-profile-chart'; 
+import CustomProfileChart from './custom-profile-chart';
 import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React from 'react'; 
+import React from 'react';
 
 interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
-  title: string;
-  control: Control<AnalysisFormValues>;
-  register: UseFormRegister<AnalysisFormValues>;
-  clientFormErrors: FieldErrors<AnalysisFormValues>;
-  serverFormErrors?: Record<string, string[] | undefined>;
-  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+  // control, register, clientFormErrors, serverFormErrors, getCombinedError are now from useFormContext
 }
 
-const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ 
-  id, 
-  title, 
-  control, 
-  register, 
-  clientFormErrors, 
-  serverFormErrors, 
-  getCombinedError,
-}) => (
-  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full min-w-[280px] md:min-w-0"> {/* Added min-w for mobile horizontal scroll */}
-    <CardHeader className="p-1">
-      <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
-        <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between"> {/* Keep overflow-y-auto for individual column content if needed */}
-      <div className="space-y-1.5">
-        <div>
-          <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Name</Label>
-          <Input 
-            id={`${id}.name`} 
-            {...register(`${id}.name`)} 
-            placeholder="e.g. Main Site" 
-            className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
+const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
+  const { register, control, formState: { errors: clientFormErrors } } = useFormContext<AnalysisFormValues>();
+  // serverFormErrors and getCombinedError need to be passed or handled differently if still needed per field
+  // For now, focusing on client errors via RHF context
+
+  const title = useWatch({ control, name: `${id}.name` }) || (id === 'pointA' ? "Site A" : "Site B");
+
+  return (
+    <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full min-w-[280px] md:min-w-0">
+      <CardHeader className="p-1">
+        <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
+          <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
+        <div className="space-y-1.5">
+          <div>
+            <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Name</Label>
+            <Input
+              id={`${id}.name`}
+              {...register(`${id}.name`)}
+              placeholder="e.g. Main Site"
+              className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+            />
+            {clientFormErrors[id]?.name &&
+              <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.name?.message}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-1">
+            <div>
+              <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Latitude</Label>
+              <Input
+                id={`${id}.lat`}
+                {...register(`${id}.lat`)}
+                placeholder="-90 to 90"
+                className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+              />
+              {clientFormErrors[id]?.lat &&
+                <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.lat?.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Longitude</Label>
+              <Input
+                id={`${id}.lng`}
+                {...register(`${id}.lng`)}
+                placeholder="-180 to 180"
+                className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+              />
+              {clientFormErrors[id]?.lng &&
+                <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.lng?.message}</p>}
+            </div>
+          </div>
+          <Controller
+            name={`${id}.height`}
+            control={control}
+            defaultValue={20}
+            render={({ field }) => (
+              <TowerHeightControl
+                label="Tower Height"
+                height={field.value}
+                onChange={field.onChange}
+                min={0}
+                max={100}
+                idSuffix={id}
+              />
+            )}
           />
-          {(clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) && 
-            <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])}</p>}
+          {clientFormErrors[id]?.height &&
+            <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.height?.message}</p>}
         </div>
-        <div className="grid grid-cols-2 gap-1">
-          <div>
-            <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Latitude</Label>
-            <Input 
-              id={`${id}.lat`} 
-              {...register(`${id}.lat`)} 
-              placeholder="-90 to 90" 
-              className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
-            />
-            {(clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) && 
-              <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
-          </div>
-          <div>
-            <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Longitude</Label>
-            <Input 
-              id={`${id}.lng`} 
-              {...register(`${id}.lng`)} 
-              placeholder="-180 to 180" 
-              className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0" 
-            />
-            {(clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) && 
-              <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])}</p>}
-          </div>
-        </div>
-        <Controller
-          name={`${id}.height`}
-          control={control}
-          defaultValue={20} 
-          render={({ field }) => (
-            <TowerHeightControl
-              label="Tower Height"
-              height={field.value}
-              onChange={field.onChange}
-              min={0}
-              max={100}
-              idSuffix={id}
-            />
-          )}
-        />
-        {(clientFormErrors[id]?.height || serverFormErrors?.[`${id}.height`]) && 
-          <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.height, serverFormErrors?.[`${id}.height`])}</p>}
-      </div>
-    </CardContent>
-  </Card>
-);
+      </CardContent>
+    </Card>
+  );
+};
 
 interface ProfilePanelMiddleColumnProps {
   analysisResult: AnalysisResult | null;
   isStale?: boolean;
   isActionPending: boolean;
-  control: Control<AnalysisFormValues>;
-  clientFormErrors: FieldErrors<AnalysisFormValues>;
-  serverFormErrors?: Record<string, string[] | undefined>;
-  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
-  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
-  processSubmit: (data: AnalysisFormValues) => void;
-  pointAName: string;
-  pointBName: string;
+  // control, clientFormErrors etc from RHF context
+  onAnalyzeSubmit: () => void; // Changed from handleSubmit & processSubmit
+  pointANameWatch: string; // From useWatch on form
+  pointBNameWatch: string; // From useWatch on form
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
-  onOpenReportDialog: () => void; // Changed from onGenerateReport
+  onOpenReportDialog: () => void;
+  currentDistanceKm: number | null;
+  selectedLinkClearanceThreshold?: number; // For displaying required clearance
 }
 
 const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   analysisResult,
   isStale,
   isActionPending,
-  control,
-  clientFormErrors,
-  serverFormErrors,
-  getCombinedError,
-  handleSubmit,
-  processSubmit,
-  pointAName,
-  pointBName,
+  onAnalyzeSubmit,
+  pointANameWatch,
+  pointBNameWatch,
   onTowerHeightChangeFromGraph,
-  onOpenReportDialog, // Changed
+  onOpenReportDialog,
+  currentDistanceKm,
+  selectedLinkClearanceThreshold,
 }) => {
-  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
-  const minRequiredClearance = parseFloat(watchedClearanceThresholdString); 
+  const { control, formState: { errors: clientFormErrors } } = useFormContext<AnalysisFormValues>();
+  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold' });
+  
+  const minRequiredClearance = selectedLinkClearanceThreshold ?? parseFloat(watchedClearanceThresholdString || "0");
 
   let isClearBasedOnAnalysis = false;
   let deficit = 0;
-  let actualMinClearance = analysisResult?.minClearance ?? null; 
+  let actualMinClearance = analysisResult?.minClearance ?? null;
 
   if (analysisResult && analysisResult.minClearance !== null && !isNaN(minRequiredClearance)) {
     isClearBasedOnAnalysis = analysisResult.minClearance >= minRequiredClearance;
-    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(minRequiredClearance - analysisResult.minClearance);
+    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(minRequiredClearance - (analysisResult.minClearance || 0));
   }
-  
+
   const chartKey = React.useMemo(() => {
     if (!analysisResult) return 'no-result';
-    const profileDataSignature = analysisResult.profile.length > 0 
-      ? `${analysisResult.profile[0].distance}-${analysisResult.profile[0].terrainElevation}-${analysisResult.profile[0].losHeight}-${analysisResult.profile[analysisResult.profile.length-1].distance}-${analysisResult.profile[analysisResult.profile.length-1].terrainElevation}-${analysisResult.profile[analysisResult.profile.length-1].losHeight}`
+    const profileDataSignature = analysisResult.profile.length > 0
+      ? `${analysisResult.profile[0].distance}-${analysisResult.profile[0].terrainElevation}-${analysisResult.profile[0].losHeight}-${analysisResult.profile[analysisResult.profile.length - 1].distance}-${analysisResult.profile[analysisResult.profile.length - 1].terrainElevation}-${analysisResult.profile[analysisResult.profile.length - 1].losHeight}`
       : 'empty-profile';
     return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${profileDataSignature}-${minRequiredClearance}`;
   }, [analysisResult, minRequiredClearance]);
 
-  const buttonText = isActionPending 
-    ? "Analyzing..." 
+  const buttonText = isActionPending
+    ? "Analyzing..."
     : (isStale || !analysisResult ? "Analyze Link" : "Re-Analyze");
+    
+  const pointANameDisplay = analysisResult?.pointA?.name || pointANameWatch || "Site A";
+  const pointBNameDisplay = analysisResult?.pointB?.name || pointBNameWatch || "Site B";
+
 
   return (
-    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0 min-w-[320px] md:min-w-0"> {/* Added min-w for mobile horizontal scroll */}
+    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0 min-w-[320px] md:min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
         <div className="flex-shrink-0 order-1">
-          {isStale && !isActionPending ? (
+          {(isStale && !isActionPending && analysisResult) || (isStale && !analysisResult) ? (
             <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow">
               <AlertTriangle className="mr-1 h-3 w-3" /> NEEDS RE-ANALYZE
             </span>
@@ -166,18 +162,18 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
               className={cn(
                 "px-3 py-1.5 rounded-md text-xs font-bold shadow-md",
                 isClearBasedOnAnalysis
-                  ? "bg-los-success text-los-success-foreground" 
-                  : "bg-los-failure text-los-failure-foreground" 
+                  ? "bg-los-success text-los-success-foreground"
+                  : "bg-los-failure text-los-failure-foreground"
               )}
             >
               {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
             </span>
           ) : (
-             !isActionPending && (
-                <span className="px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic">
-                    Perform analysis
-                </span>
-             )
+            !isActionPending && (
+              <span className="px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic">
+                Perform analysis
+              </span>
+            )
           )}
         </div>
 
@@ -186,12 +182,9 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             <div className="flex flex-col items-center order-2">
               <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Aerial Dist.</span>
               <span className="font-bold text-foreground text-xs md:text-sm">
-                {analysisResult.distanceKm < 1
-                  ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m`
-                  : `${analysisResult.distanceKm.toFixed(1)}km`}
+                {currentDistanceKm !== null ? (currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`) : "N/A"}
               </span>
             </div>
-            
             <div className="flex flex-col items-center order-4">
               <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Min. Clear.</span>
               <span className={cn(
@@ -203,25 +196,25 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             </div>
           </>
         )}
-        
+
         <div className="order-3 flex-grow-0 md:flex-grow-0 text-center">
-             <Button
-                type="submit" 
-                onClick={handleSubmit(processSubmit)}
-                disabled={isActionPending}
-                size="sm"
-                className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight"
-            >
-                <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
-                {buttonText}
-            </Button>
+          <Button
+            type="button" // Changed from submit as form is now handled by FormProvider
+            onClick={onAnalyzeSubmit}
+            disabled={isActionPending}
+            size="sm"
+            className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight"
+          >
+            <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")} />
+            {buttonText}
+          </Button>
         </div>
-        
-        {(analysisResult || isStale === false) && !isActionPending && ( // Show if there is a result OR if it's not stale (e.g. initial load)
+
+        {(analysisResult && !isStale) && (
           <div className="order-6 flex-grow-0 md:flex-grow-0 text-center">
             <Button
-              type="button" 
-              onClick={onOpenReportDialog} // Changed
+              type="button"
+              onClick={onOpenReportDialog}
               size="sm"
               variant="outline"
               className="text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight"
@@ -232,64 +225,61 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </div>
         )}
 
-
         <div className="flex items-center space-x-1 order-5">
           <Label htmlFor="clearanceThresholdProfile" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Req. Fresnel (m):</Label>
           <Controller
-              name="clearanceThreshold"
-              control={control}
-              render={({ field, fieldState: { error } }) => (
-                  <Input
-                  id="clearanceThresholdProfile"
-                  type="number"
-                  step="any"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value)} 
-                  className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
-                  />
-              )}
+            name="clearanceThreshold"
+            control={control}
+            render={({ field, fieldState: { error } }) => (
+              <Input
+                id="clearanceThresholdProfile"
+                type="number"
+                step="any"
+                {...field}
+                className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
+              />
+            )}
           />
         </div>
       </div>
-      {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) && 
+      {clientFormErrors.clearanceThreshold &&
         <p className="text-xs text-destructive mt-0.5 text-center px-2">
-          {getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}
+          {clientFormErrors.clearanceThreshold.message}
         </p>
       }
-       {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
-          <div className="text-center text-los-failure text-[0.7rem] py-0.5"> 
-            Add&nbsp;
-            <span className="font-semibold">{deficit.toFixed(0)}m</span>
-            &nbsp;to tower(s) for clearance.
-          </div>
-        )}
-      
+      {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
+        <div className="text-center text-los-failure text-[0.7rem] py-0.5">
+          Add&nbsp;
+          <span className="font-semibold">{deficit.toFixed(0)}m</span>
+          &nbsp;to tower(s) for clearance.
+        </div>
+      )}
+
       <div className={cn("flex-1 min-h-0 p-0.5")}>
-        {analysisResult ? ( 
+        {analysisResult ? (
           <CustomProfileChart
-            key={chartKey} 
+            key={chartKey}
             data={analysisResult.profile}
-            pointAName={pointAName}
-            pointBName={pointBName}
+            pointAName={pointANameDisplay}
+            pointBName={pointBNameDisplay}
             isStale={isStale}
             totalDistanceKm={analysisResult.distanceKm}
-            isActionPending={isActionPending} 
+            isActionPending={isActionPending}
             onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
           />
-        ) : isActionPending ? ( 
-            <div className="h-full flex items-center justify-center p-2 bg-muted/30 rounded-md">
-                <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
-            </div>
+        ) : isActionPending ? (
+          <div className="h-full flex items-center justify-center p-2 bg-muted/30 rounded-md">
+            <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
+          </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground">
-            <p>Perform analysis to see profile.</p>
+            <p>Select a link and perform analysis to see profile.</p>
           </div>
         )}
       </div>
     </div>
   );
 };
-
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
@@ -298,123 +288,91 @@ interface BottomPanelProps {
   isContentExpanded: boolean;
   onToggleContentExpansion: () => void;
   isStale?: boolean;
-  
-  control: Control<AnalysisFormValues>;
-  register: UseFormRegister<AnalysisFormValues>;
-  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
-  processSubmit: (data: AnalysisFormValues) => void; 
-  clientFormErrors: FieldErrors<AnalysisFormValues>;
-  serverFormErrors?: Record<string, string[] | undefined>;
+  onAnalyzeSubmit: () => void; // Submit handler from page.tsx
   isActionPending: boolean;
-  getValues: UseFormGetValues<AnalysisFormValues>;
-  setValue: UseFormSetValue<AnalysisFormValues>;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
-  onOpenReportDialog: () => void; // Changed
+  onOpenReportDialog: () => void;
+  currentDistanceKm: number | null;
+  selectedLinkClearanceThreshold?: number;
+  selectedLinkPointA?: LOSLinkPoint;
+  selectedLinkPointB?: LOSLinkPoint;
 }
 
-export default function BottomPanel({ 
-  analysisResult, 
+export default function BottomPanel({
+  analysisResult,
   isPanelGloballyVisible,
   onToggleGlobalVisibility,
-  isContentExpanded, 
+  isContentExpanded,
   onToggleContentExpansion,
   isStale,
-  control,
-  register,
-  handleSubmit,
-  processSubmit, 
-  clientFormErrors,
-  serverFormErrors,
+  onAnalyzeSubmit,
   isActionPending,
-  getValues, 
-  setValue, 
   onTowerHeightChangeFromGraph,
-  onOpenReportDialog, // Changed
+  onOpenReportDialog,
+  currentDistanceKm,
+  selectedLinkClearanceThreshold,
+  selectedLinkPointA,
+  selectedLinkPointB,
 }: BottomPanelProps) {
-  
-  const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
-    if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
-    return clientFieldError?.message;
-  };
-  
-  const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: analysisResult?.pointA?.name || "Site A" });
-  const pointBName = useWatch({ control, name: 'pointB.name', defaultValue: analysisResult?.pointB?.name || "Site B" });
-  
+
+  const { control } = useFormContext<AnalysisFormValues>(); // Get RHF control here
+  const pointANameWatch = useWatch({ control, name: 'pointA.name', defaultValue: selectedLinkPointA?.name || "Site A" });
+  const pointBNameWatch = useWatch({ control, name: 'pointB.name', defaultValue: selectedLinkPointB?.name || "Site B" });
+
+  // Form submission is now handled by the onAnalyzeSubmit prop from page.tsx
+  // which uses handleSubmit from the FormProvider there.
+
   return (
-    <form 
-      noValidate 
-      onSubmit={handleSubmit(processSubmit)} 
+    <form // Still a form tag, but onSubmit is handled by the parent FormProvider
+      noValidate
       className={cn(
         "fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
         isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full",
-        "z-[50]" 
+        "z-[50]"
       )}
     >
-      <div 
+      <div
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[33vh]" : "h-0" 
+          isContentExpanded && isPanelGloballyVisible ? "h-[33vh]" : "h-0"
         )}
       >
-        <div className="p-1.5 md:p-2 h-full overflow-hidden"> 
-           <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar"> 
-            
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1"> 
-              <SiteInputGroup 
-                id="pointA" 
-                title={pointAName || "Site A"} 
-                control={control} 
-                register={register}
-                clientFormErrors={clientFormErrors}
-                serverFormErrors={serverFormErrors}
-                getCombinedError={getCombinedError}
-              />
+        <div className="p-1.5 md:p-2 h-full overflow-hidden">
+          <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1">
+              <SiteInputGroup id="pointA" />
             </div>
-            
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start order-2"> 
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start order-2">
               <ProfilePanelMiddleColumn
                 analysisResult={analysisResult}
                 isStale={isStale}
                 isActionPending={isActionPending}
-                control={control}
-                clientFormErrors={clientFormErrors}
-                serverFormErrors={serverFormErrors}
-                getCombinedError={getCombinedError}
-                handleSubmit={handleSubmit}
-                processSubmit={processSubmit}
-                pointAName={pointAName || "Site A"}
-                pointBName={pointBName || "Site B"}
+                onAnalyzeSubmit={onAnalyzeSubmit}
+                pointANameWatch={pointANameWatch}
+                pointBNameWatch={pointBNameWatch}
                 onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
-                onOpenReportDialog={onOpenReportDialog} // Changed
+                onOpenReportDialog={onOpenReportDialog}
+                currentDistanceKm={currentDistanceKm}
+                selectedLinkClearanceThreshold={selectedLinkClearanceThreshold}
               />
             </div>
-            
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3"> 
-              <SiteInputGroup 
-                id="pointB" 
-                title={pointBName || "Site B"} 
-                control={control} 
-                register={register}
-                clientFormErrors={clientFormErrors}
-                serverFormErrors={serverFormErrors}
-                getCombinedError={getCombinedError}
-              />
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3">
+              <SiteInputGroup id="pointB" />
             </div>
           </div>
         </div>
       </div>
-      {isPanelGloballyVisible && ( 
-        <div 
+      {isPanelGloballyVisible && (
+        <div
           className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 p-1.5 bg-slate-800/50 backdrop-blur-sm rounded-t-lg border-t border-x border-slate-700/50 shadow-lg cursor-pointer hover:bg-slate-700/70 group"
           onClick={onToggleContentExpansion}
           aria-label={isContentExpanded ? "Collapse Panel Content" : "Expand Panel Content"}
         >
-          {isContentExpanded ? 
-            <ChevronDown className="h-4 w-4 text-slate-300 group-hover:text-slate-100" /> : 
+          {isContentExpanded ?
+            <ChevronDown className="h-4 w-4 text-slate-300 group-hover:text-slate-100" /> :
             <ChevronUp className="h-4 w-4 text-slate-300 group-hover:text-slate-100" />}
         </div>
       )}
     </form>
   );
 }
-
