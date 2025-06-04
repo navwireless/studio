@@ -2,14 +2,12 @@
 "use client";
 
 import type { Control, UseFormRegister, UseFormHandleSubmit, UseFormGetValues, UseFormSetValue, FieldErrors, UseFormReset } from 'react-hook-form';
-import { Controller, useWatch, useFormContext } from 'react-hook-form'; // Added useFormContext
-import type { AnalysisResult, AnalysisFormValues, LOSLinkPoint } from '@/types'; // Added LOSLinkPoint
+import { Controller, useWatch, useFormContext } from 'react-hook-form'; 
+import type { AnalysisResult, AnalysisFormValues, LOSLinkPoint } from '@/types'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-// TowerHeightControl removed as per request
-// import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart';
 import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, FileText, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,22 +15,18 @@ import React from 'react';
 
 interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
-  // control, register, clientFormErrors, serverFormErrors, getCombinedError are now from useFormContext
 }
 
 const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
   const { register, control, formState: { errors: clientFormErrors } } = useFormContext<AnalysisFormValues>();
   
-  const siteName = id === 'pointA' ? 'Site A' : 'Site B';
-  // Use the name from the form for display if available, otherwise default
-  const dynamicTitle = useWatch({ control, name: `${id}.name` }) || siteName;
-
+  const cardStaticTitle = id === 'pointA' ? 'Point A' : 'Point B';
 
   return (
     <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full min-w-[280px] md:min-w-0">
       <CardHeader className="p-1">
         <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
-          <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {dynamicTitle}
+          <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {cardStaticTitle}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
@@ -42,7 +36,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
             <Input
               id={`${id}.name`}
               {...register(`${id}.name`)}
-              placeholder={`e.g. ${siteName} Building`}
+              placeholder={`e.g. ${id === 'pointA' ? 'Site A Building' : 'Site B Tower'}`}
               className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
             />
             {clientFormErrors[id]?.name &&
@@ -72,20 +66,16 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
                 <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.lng?.message}</p>}
             </div>
           </div>
-          {/* TowerHeightControl removed from here */}
-          {/* Displaying current tower height as text, adjusted in chart */}
+          {/* Tower height display and control removed from here */}
+          {/* Hidden input for tower height to keep RHF happy, value is managed by chart */}
            <Controller
             name={`${id}.height`}
             control={control}
             render={({ field }) => (
-              <div className="mt-1.5">
-                <span className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Tower Height (AGL): </span>
-                <span className="text-xs font-medium text-foreground">{Number.isFinite(field.value) ? Math.round(field.value) : 'N/A'}m</span>
-                <p className="text-[0.65rem] text-muted-foreground/70">(Adjust height using the elevation profile chart)</p>
-              </div>
+              <input type="hidden" {...field} />
             )}
           />
-          {clientFormErrors[id]?.height &&
+          {clientFormErrors[id]?.height && !clientFormErrors[id]?.height?.message?.includes("Maximum tower height") && !clientFormErrors[id]?.height?.message?.includes("Minimum tower height") && // Only show general errors not specific to chart
             <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.height?.message}</p>}
         </div>
       </CardContent>
@@ -102,7 +92,7 @@ interface ProfilePanelMiddleColumnProps {
   pointBNameWatch: string; 
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
   onOpenReportDialog: () => void;
-  onAddNewLink: () => void; // For "Add Another Link" button
+  onAddNewLink: () => void; 
   currentDistanceKm: number | null;
   selectedLinkClearanceThreshold?: number; 
 }
@@ -309,7 +299,7 @@ interface BottomPanelProps {
   isActionPending: boolean;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
   onOpenReportDialog: () => void;
-  onAddNewLink: () => void; // For "Add Another Link"
+  onAddNewLink: () => void; 
   currentDistanceKm: number | null;
   selectedLinkClearanceThreshold?: number;
   selectedLinkPointA?: LOSLinkPoint;

@@ -59,7 +59,7 @@ function HomePageContent() {
   const selectedLink = React.useMemo(() => {
     if (!selectedLinkId) return null;
     return getLinkById(selectedLinkId);
-  }, [selectedLinkId, getLinkById, links]); // Added links to dependency array
+  }, [selectedLinkId, getLinkById, links]); 
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
@@ -87,17 +87,14 @@ function HomePageContent() {
         clearanceThreshold: selectedLink.clearanceThreshold.toString(),
       };
       reset(formVals); 
-      if (selectedLink.analysisResult) {
-        setIsAnalysisPanelGloballyOpen(true);
-      }
-       // Keep panel open if a link is selected, allow user to close if needed
-      if (!isAnalysisPanelGloballyOpen) setIsAnalysisPanelGloballyOpen(true);
-      if (!isBottomPanelContentExpanded) setIsBottomPanelContentExpanded(true);
+      // Keep panel open and expanded if a link is selected
+      setIsAnalysisPanelGloballyOpen(true);
+      setIsBottomPanelContentExpanded(true);
     } else {
       reset(defaultFormStateValues); 
       setIsAnalysisPanelGloballyOpen(false);
     }
-  }, [selectedLink, reset]); // Removed isAnalysisPanelGloballyOpen, isBottomPanelContentExpanded from deps
+  }, [selectedLink, reset]);
   
   useEffect(() => {
     if (!selectedLink) return;
@@ -110,13 +107,13 @@ function HomePageContent() {
             name: currentFormValues.pointA.name,
             lat: parseFloat(currentFormValues.pointA.lat) || 0,
             lng: parseFloat(currentFormValues.pointA.lng) || 0,
-            towerHeight: parseFloat(currentFormValues.pointA.height.toString()) || 0, // Ensure height is number
+            towerHeight: parseFloat(currentFormValues.pointA.height.toString()) || 0,
           },
           pointB: {
             name: currentFormValues.pointB.name,
             lat: parseFloat(currentFormValues.pointB.lat) || 0,
             lng: parseFloat(currentFormValues.pointB.lng) || 0,
-            towerHeight: parseFloat(currentFormValues.pointB.height.toString()) || 0, // Ensure height is number
+            towerHeight: parseFloat(currentFormValues.pointB.height.toString()) || 0,
           },
           clearanceThreshold: parseFloat(currentFormValues.clearanceThreshold) || 0,
         });
@@ -189,13 +186,13 @@ function HomePageContent() {
             name: getValues('pointA.name'), 
             lat: parseFloat(getValues('pointA.lat')), 
             lng: parseFloat(getValues('pointA.lng')), 
-            towerHeight: getValues('pointA.height') 
+            towerHeight: parseFloat(getValues('pointA.height').toString())
           },
           pointB: { 
             name: getValues('pointB.name'),
             lat: parseFloat(getValues('pointB.lat')),
             lng: parseFloat(getValues('pointB.lng')),
-            towerHeight: getValues('pointB.height')
+            towerHeight: parseFloat(getValues('pointB.height').toString())
           },
           clearanceThresholdUsed: parseFloat(getValues('clearanceThreshold')),
           id: selectedLinkId + '_analysis_' + Date.now(), 
@@ -205,12 +202,8 @@ function HomePageContent() {
         updateLinkAnalysis(selectedLinkId, newAnalysisResult);
         setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]); 
         
-        if (!isAnalysisPanelGloballyOpen) {
-            setIsAnalysisPanelGloballyOpen(true);
-        }
-        if (!isBottomPanelContentExpanded && newAnalysisResult.profile.length > 0) {
-            setIsBottomPanelContentExpanded(true);
-        }
+        setIsAnalysisPanelGloballyOpen(true);
+        setIsBottomPanelContentExpanded(true);
         
         toast({
           title: "Analysis Complete",
@@ -218,7 +211,7 @@ function HomePageContent() {
         });
       }
     }
-  }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues, isAnalysisPanelGloballyOpen, isBottomPanelContentExpanded]); // Added isBottomPanelContentExpanded
+  }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues]); 
   
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     if (event.latLng && selectedLink) {
@@ -269,7 +262,6 @@ function HomePageContent() {
         towerHeight: Math.round(newHeight),
       };
       updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-      // Update form value directly as well for RHF
       setValue(`${fieldToUpdate}.height`, Math.round(newHeight));
 
       const currentFormValues = getValues(); 
@@ -282,8 +274,8 @@ function HomePageContent() {
 
   const toggleGlobalPanelVisibility = useCallback(() => {
      setIsAnalysisPanelGloballyOpen(prev => !prev);
-     if (isAnalysisPanelGloballyOpen && selectedLinkId) { // If closing panel while a link is selected
-        selectLink(null); // Deselect the link
+     if (isAnalysisPanelGloballyOpen && selectedLinkId) { 
+        selectLink(null); 
      }
   }, [isAnalysisPanelGloballyOpen, selectedLinkId, selectLink]);
 
@@ -298,7 +290,6 @@ function HomePageContent() {
       const formValues = getValues();
       handleSubmit(processSubmit)(formValues);
     } else {
-      // If no link selected, this button should function as "Add New Link"
       handleAddNewLink();
     }
   };
@@ -374,7 +365,7 @@ function HomePageContent() {
 
   const handleAddNewLink = () => {
     const newId = addLink(); 
-    // Panel opens due to useEffect on selectedLink change
+    // Panel opening is handled by useEffect on selectedLink change
   };
 
   const handleRemoveSelectedLink = () => {
@@ -404,17 +395,22 @@ function HomePageContent() {
         isHistoryPanelSupported={true} 
       />
       <div className="p-2 space-x-2 print:hidden">
-        {/* Primary "Add New Link" button if no link is selected, or to add more */}
-        {(!selectedLinkId || (selectedLink && selectedLink.analysisResult)) && (
+        {!selectedLinkId && (
             <Button onClick={handleAddNewLink} variant="outline" size="sm">
                 <PlusCircle className="mr-2 h-4 w-4" /> 
-                {selectedLink && selectedLink.analysisResult ? "Add Another Link" : "Add New Link"}
+                Add New Link
             </Button>
         )}
         {selectedLinkId && (
+          <>
+            <Button onClick={handleAddNewLink} variant="outline" size="sm">
+                <PlusCircle className="mr-2 h-4 w-4" /> 
+                Add Another Link
+            </Button>
             <Button onClick={handleRemoveSelectedLink} variant="destructive" size="sm">
                 <Trash2Icon className="mr-2 h-4 w-4" /> Remove Selected Link
             </Button>
+          </>
         )}
       </div>
       <div className="flex-1 flex flex-col overflow-hidden relative h-full">
@@ -429,7 +425,6 @@ function HomePageContent() {
           />
         </div>
 
-        {/* This button is shown only if no link is selected, and panel is closed */}
         {!isAnalysisPanelGloballyOpen && !selectedLinkId && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
             <Button
@@ -490,7 +485,7 @@ function HomePageContent() {
               isActionPending={isActionPending}
               onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
               onOpenReportDialog={handleOpenReportDialog}
-              onAddNewLink={handleAddNewLink} // Pass handler for "Add Another Link"
+              onAddNewLink={handleAddNewLink} 
               currentDistanceKm={liveDistanceKm}
               selectedLinkClearanceThreshold={selectedLink?.clearanceThreshold}
               selectedLinkPointA={selectedLink?.pointA}
