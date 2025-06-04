@@ -61,8 +61,6 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
               <input type="hidden" {...field} />
             )}
           />
-          {/* Removed direct tower height input/slider and specific error messages for height from here */}
-          {/* Tower height is now managed via the interactive chart */}
         </div>
         <div className="text-[0.65rem] text-muted-foreground/70 italic mt-1.5">
           Tower height adjusted via chart.
@@ -322,7 +320,7 @@ export default function BottomPanel({
     <form 
       noValidate
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
+        "fixed bottom-12 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
         isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full",
         "z-[50]"
       )}
@@ -377,4 +375,3 @@ export default function BottomPanel({
     </form>
   );
 }
-

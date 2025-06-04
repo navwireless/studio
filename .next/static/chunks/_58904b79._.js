@@ -914,7 +914,7 @@ const SiteInputGroup = ({ id })=>{
                         children: "Tower height adjusted via chart."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 67,
+                        lineNumber: 65,
                         columnNumber: 9
                     }, this)
                 ]
@@ -979,33 +979,33 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: "mr-1 h-3 w-3"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 138,
+                                    lineNumber: 136,
                                     columnNumber: 15
                                 }, this),
                                 " NEEDS RE-ANALYZE"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 137,
+                            lineNumber: 135,
                             columnNumber: 13
                         }, this) : analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("px-3 py-1.5 rounded-md text-xs font-bold shadow-md", isClearBasedOnAnalysis ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground"),
                             children: isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 141,
+                            lineNumber: 139,
                             columnNumber: 13
                         }, this) : !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: "px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic",
                             children: "Perform analysis"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 153,
+                            lineNumber: 151,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 135,
+                        lineNumber: 133,
                         columnNumber: 9
                     }, this),
                     analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -1018,7 +1018,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: "Aerial Dist."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 163,
+                                        lineNumber: 161,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1026,13 +1026,13 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: currentDistanceKm !== null ? currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km` : "N/A"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 164,
+                                        lineNumber: 162,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 162,
+                                lineNumber: 160,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1043,7 +1043,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: "Min. Clear."
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 169,
+                                        lineNumber: 167,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1051,13 +1051,13 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         children: actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 170,
+                                        lineNumber: 168,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 168,
+                                lineNumber: 166,
                                 columnNumber: 13
                             }, this)
                         ]
@@ -1075,19 +1075,19 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 188,
+                                    lineNumber: 186,
                                     columnNumber: 13
                                 }, this),
                                 buttonText
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 181,
+                            lineNumber: 179,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 180,
+                        lineNumber: 178,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1099,7 +1099,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                 children: "Req. Fresnel (m):"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 194,
+                                lineNumber: 192,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
@@ -1113,18 +1113,18 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                         className: "bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 199,
+                                        lineNumber: 197,
                                         columnNumber: 15
                                     }, void 0)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 195,
+                                lineNumber: 193,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 193,
+                        lineNumber: 191,
                         columnNumber: 9
                     }, this),
                     analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1140,19 +1140,19 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: "mr-1.5 h-3.5 w-3.5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 219,
+                                    lineNumber: 217,
                                     columnNumber: 15
                                 }, this),
                                 "Make Report"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 212,
+                            lineNumber: 210,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 211,
+                        lineNumber: 209,
                         columnNumber: 11
                     }, this),
                     analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1168,25 +1168,25 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                                     className: "mr-1.5 h-3.5 w-3.5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 234,
+                                    lineNumber: 232,
                                     columnNumber: 15
                                 }, this),
                                 "Add Another Link"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 227,
+                            lineNumber: 225,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 226,
+                        lineNumber: 224,
                         columnNumber: 12
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 134,
+                lineNumber: 132,
                 columnNumber: 7
             }, this),
             clientFormErrors.clearanceThreshold && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1194,7 +1194,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                 children: clientFormErrors.clearanceThreshold.message
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 242,
+                lineNumber: 240,
                 columnNumber: 9
             }, this),
             analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1209,14 +1209,14 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 249,
+                        lineNumber: 247,
                         columnNumber: 11
                     }, this),
                     " to tower(s) for clearance."
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 247,
+                lineNumber: 245,
                 columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1231,7 +1231,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                     onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph
                 }, chartKey, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 256,
+                    lineNumber: 254,
                     columnNumber: 11
                 }, this) : isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "h-full flex items-center justify-center p-2 bg-muted/30 rounded-md",
@@ -1240,12 +1240,12 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                         children: "Loading analysis data..."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 268,
+                        lineNumber: 266,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 267,
+                    lineNumber: 265,
                     columnNumber: 11
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground",
@@ -1253,23 +1253,23 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, on
                         children: "Select a link and perform analysis to see profile."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 272,
+                        lineNumber: 270,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 271,
+                    lineNumber: 269,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 254,
+                lineNumber: 252,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 133,
+        lineNumber: 131,
         columnNumber: 5
     }, this);
 };
@@ -1295,7 +1295,7 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
     });
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
         noValidate: true,
-        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden", isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full", "z-[50]"),
+        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("fixed bottom-12 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden", isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full", "z-[50]"),
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("w-full overflow-hidden transition-[height] duration-500 ease-in-out", isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0" // Slightly taller on md+ for better chart view
@@ -1311,12 +1311,12 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     id: "pointA"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 341,
+                                    lineNumber: 339,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 340,
+                                lineNumber: 338,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1335,12 +1335,12 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     selectedLinkClearanceThreshold: selectedLinkClearanceThreshold
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 345,
+                                    lineNumber: 343,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 344,
+                                lineNumber: 342,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1349,28 +1349,28 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     id: "pointB"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 361,
+                                    lineNumber: 359,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 360,
+                                lineNumber: 358,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 338,
+                        lineNumber: 336,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 336,
+                    lineNumber: 334,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 330,
+                lineNumber: 328,
                 columnNumber: 7
             }, this),
             isPanelGloballyVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1381,24 +1381,24 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 373,
+                    lineNumber: 371,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 374,
+                    lineNumber: 372,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 367,
+                lineNumber: 365,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 322,
+        lineNumber: 320,
         columnNumber: 5
     }, this);
 }
