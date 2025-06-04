@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
 import HistoryPanel from '@/components/layout/history-panel'; // Existing history panel
 import { calculateDistanceKm } from '@/lib/los-calculator';
-import { generateReportDocx } from '@/lib/report-generator';
+// import { generateReportDocx } from '@/lib/report-generator'; // Removed static import
 import ReportSelectionDialog from '@/components/fso/report-selection-dialog';
 import { LinksProvider, useLinks } from '@/context/links-context'; // Import new context
 
@@ -375,6 +375,8 @@ function HomePageContent() {
     if (reportsToGenerate.length > 0) {
       try {
         toast({ title: "Generating Report...", description: `Processing ${reportsToGenerate.length} link(s).` });
+        // Dynamically import here
+        const { generateReportDocx } = await import('@/lib/report-generator');
         await generateReportDocx(reportsToGenerate);
         toast({ title: "Report Generated", description: "Your DOCX report has been downloaded." });
       } catch (error) {
@@ -415,7 +417,7 @@ function HomePageContent() {
   return (
     <>
       <AppHeader
-        onToggleHistory={setIsHistoryPanelOpen.bind(null, (prev: boolean) => !prev)}
+        onToggleHistory={() => setIsHistoryPanelOpen(prev => !prev)}
         onClearMap={handleClearMap}
         isHistoryPanelSupported={true} 
       />
@@ -520,7 +522,7 @@ function HomePageContent() {
           onLoadHistoryItem={handleLoadHistoryItem}
           onClearHistory={handleClearHistory}
           isOpen={isHistoryPanelOpen}
-          onToggle={setIsHistoryPanelOpen.bind(null, (prev: boolean) => !prev)}
+          onToggle={() => setIsHistoryPanelOpen(prev => !prev)}
         />
          <ReportSelectionDialog
             isOpen={isReportDialogOpen}
@@ -545,3 +547,5 @@ export default function Home() {
     </LinksProvider>
   );
 }
+
+    
