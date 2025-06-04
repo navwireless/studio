@@ -2,16 +2,18 @@
 import { z } from 'zod';
 import type { AnalysisFormValues } from '@/types';
 
+const coordinatePairSchema = z.string().refine(val => {
+  if (!val.includes(',')) return false;
+  const parts = val.split(',').map(part => part.trim());
+  if (parts.length !== 2) return false;
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  return !isNaN(lat) && lat >= -90 && lat <= 90 && !isNaN(lng) && lng >= -180 && lng <= 180;
+}, "Enter as 'lat, lng' (e.g., 20.5, 78.9). Latitude must be -90 to 90, Longitude -180 to 180.");
+
 export const PointInputSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name too long"),
-  lat: z.string().refine(val => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -90 && num <= 90;
-  }, "Latitude must be between -90 and 90"),
-  lng: z.string().refine(val => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= -180 && num <= 180;
-  }, "Longitude must be between -180 and 180"),
+  coordinates: coordinatePairSchema,
   height: z.number({
     required_error: "Tower height is required",
     invalid_type_error: "Tower height must be a number",
@@ -28,7 +30,7 @@ export const AnalysisFormSchema = z.object({
 });
 
 export const defaultFormStateValues: AnalysisFormValues = {
-  pointA: { name: 'Site A', lat: '', lng: '', height: 20 },
-  pointB: { name: 'Site B', lat: '', lng: '', height: 20 },
-  clearanceThreshold: '10', // Stored as string in form, converted to number on submission
+  pointA: { name: 'Site A', coordinates: '', height: 20 },
+  pointB: { name: 'Site B', coordinates: '', height: 20 },
+  clearanceThreshold: '10',
 };

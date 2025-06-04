@@ -36,38 +36,24 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
             <Input
               id={`${id}.name`}
               {...register(`${id}.name`)}
-              placeholder={`e.g. ${id === 'pointA' ? 'Site A Building' : 'Site B Tower'}`}
+              placeholder={`e.g. ${id === 'pointA' ? 'Main Building' : 'Remote Tower'}`}
               className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
             />
             {clientFormErrors[id]?.name &&
               <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.name?.message}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-1">
-            <div>
-              <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Latitude</Label>
-              <Input
-                id={`${id}.lat`}
-                {...register(`${id}.lat`)}
-                placeholder="-90 to 90"
-                className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-              />
-              {clientFormErrors[id]?.lat &&
-                <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.lat?.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Longitude</Label>
-              <Input
-                id={`${id}.lng`}
-                {...register(`${id}.lng`)}
-                placeholder="-180 to 180"
-                className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-              />
-              {clientFormErrors[id]?.lng &&
-                <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.lng?.message}</p>}
-            </div>
+          <div>
+            <Label htmlFor={`${id}.coordinates`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Coordinates (Lat, Lng)</Label>
+            <Input
+              id={`${id}.coordinates`}
+              {...register(`${id}.coordinates`)}
+              placeholder="e.g., 20.123, -78.456"
+              className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
+            />
+            {clientFormErrors[id]?.coordinates &&
+              <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.coordinates?.message}</p>}
           </div>
-          {/* Tower height display and control removed from here */}
-          {/* Hidden input for tower height to keep RHF happy, value is managed by chart */}
+          
            <Controller
             name={`${id}.height`}
             control={control}
@@ -75,7 +61,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
               <input type="hidden" {...field} />
             )}
           />
-          {clientFormErrors[id]?.height && !clientFormErrors[id]?.height?.message?.includes("Maximum tower height") && !clientFormErrors[id]?.height?.message?.includes("Minimum tower height") && // Only show general errors not specific to chart
+          {clientFormErrors[id]?.height && !clientFormErrors[id]?.height?.message?.includes("Maximum tower height") && !clientFormErrors[id]?.height?.message?.includes("Minimum tower height") && 
             <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.height?.message}</p>}
         </div>
       </CardContent>
@@ -384,6 +370,3 @@ export default function BottomPanel({
     </form>
   );
 }
-
-
-    

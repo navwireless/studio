@@ -9,7 +9,7 @@ import { Loader2, AlertTriangle, Waypoints, PlusCircle, Trash2Icon } from 'lucid
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, AnalysisFormValues, PointInput as PointFormInputType, PointCoordinates, LOSLink } from '@/types';
+import type { AnalysisResult, AnalysisFormValues, PointCoordinates, LOSLink } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
@@ -32,6 +32,20 @@ const BottomPanel = dynamic(() => import('@/components/fso/bottom-panel'), {
   ssr: false,
   loading: () => null,
 });
+
+// Helper to parse 'lat,lng' string
+const parseCoordinatesString = (coordsString: string): PointCoordinates | null => {
+  if (!coordsString || !coordsString.includes(',')) return null;
+  const parts = coordsString.split(',').map(part => part.trim());
+  if (parts.length !== 2) return null;
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lng) || lng < -180 || lng > 180) {
+    return null;
+  }
+  return { lat, lng };
+};
+
 
 function HomePageContent() {
   const { toast } = useToast();
@@ -71,23 +85,21 @@ function HomePageContent() {
 
   useEffect(() => {
     if (selectedLink) {
+      const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
       const formVals: AnalysisFormValues = {
         pointA: {
-          name: selectedLink.pointA.name,
-          lat: selectedLink.pointA.lat.toString(),
-          lng: selectedLink.pointA.lng.toString(),
+          name: isNewLink ? defaultFormStateValues.pointA.name : selectedLink.pointA.name,
+          coordinates: `${selectedLink.pointA.lat.toString()}, ${selectedLink.pointA.lng.toString()}`,
           height: selectedLink.pointA.towerHeight,
         },
         pointB: {
-          name: selectedLink.pointB.name,
-          lat: selectedLink.pointB.lat.toString(),
-          lng: selectedLink.pointB.lng.toString(),
+          name: isNewLink ? defaultFormStateValues.pointB.name : selectedLink.pointB.name,
+          coordinates: `${selectedLink.pointB.lat.toString()}, ${selectedLink.pointB.lng.toString()}`,
           height: selectedLink.pointB.towerHeight,
         },
         clearanceThreshold: selectedLink.clearanceThreshold.toString(),
       };
       reset(formVals); 
-      // Keep panel open and expanded if a link is selected
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
     } else {
@@ -102,17 +114,20 @@ function HomePageContent() {
     const subscription = watch((value, { name, type }) => {
       if (type === 'change' && selectedLinkId && value.pointA && value.pointB && value.clearanceThreshold) {
         const currentFormValues = getValues();
+        const parsedPointA = parseCoordinatesString(currentFormValues.pointA.coordinates);
+        const parsedPointB = parseCoordinatesString(currentFormValues.pointB.coordinates);
+
         updateLinkDetails(selectedLinkId, {
           pointA: {
             name: currentFormValues.pointA.name,
-            lat: parseFloat(currentFormValues.pointA.lat) || 0,
-            lng: parseFloat(currentFormValues.pointA.lng) || 0,
+            lat: parsedPointA?.lat ?? selectedLink.pointA.lat, // Fallback to existing if parse fails
+            lng: parsedPointA?.lng ?? selectedLink.pointA.lng,
             towerHeight: parseFloat(currentFormValues.pointA.height.toString()) || 0,
           },
           pointB: {
             name: currentFormValues.pointB.name,
-            lat: parseFloat(currentFormValues.pointB.lat) || 0,
-            lng: parseFloat(currentFormValues.pointB.lng) || 0,
+            lat: parsedPointB?.lat ?? selectedLink.pointB.lat, // Fallback to existing
+            lng: parsedPointB?.lng ?? selectedLink.pointB.lng,
             towerHeight: parseFloat(currentFormValues.pointB.height.toString()) || 0,
           },
           clearanceThreshold: parseFloat(currentFormValues.clearanceThreshold) || 0,
@@ -140,22 +155,39 @@ function HomePageContent() {
       toast({ title: "Analysis Loaded from Cache", description: cachedResult.message });
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
+      const isNewCachedLink = !cachedResult.pointA.name && !cachedResult.pointB.name;
       reset({ 
-        pointA: { name: cachedResult.pointA.name || '', lat: cachedResult.pointA.lat.toString(), lng: cachedResult.pointA.lng.toString(), height: cachedResult.pointA.towerHeight },
-        pointB: { name: cachedResult.pointB.name || '', lat: cachedResult.pointB.lat.toString(), lng: cachedResult.pointB.lng.toString(), height: cachedResult.pointB.towerHeight },
+        pointA: { 
+          name: isNewCachedLink ? defaultFormStateValues.pointA.name : (cachedResult.pointA.name || ''), 
+          coordinates: `${cachedResult.pointA.lat.toString()}, ${cachedResult.pointA.lng.toString()}`, 
+          height: cachedResult.pointA.towerHeight 
+        },
+        pointB: { 
+          name: isNewCachedLink ? defaultFormStateValues.pointB.name : (cachedResult.pointB.name || ''), 
+          coordinates: `${cachedResult.pointB.lat.toString()}, ${cachedResult.pointB.lng.toString()}`, 
+          height: cachedResult.pointB.towerHeight 
+        },
         clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
       });
+      return;
+    }
+    
+    const parsedPointA = parseCoordinatesString(data.pointA.coordinates);
+    const parsedPointB = parseCoordinatesString(data.pointB.coordinates);
+
+    if (!parsedPointA || !parsedPointB) {
+      toast({ title: "Invalid Coordinates", description: "Please ensure coordinates are in 'lat, lng' format.", variant: "destructive" });
       return;
     }
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
-    formData.append('pointA.lat', data.pointA.lat);
-    formData.append('pointA.lng', data.pointA.lng);
+    formData.append('pointA.lat', parsedPointA.lat.toString());
+    formData.append('pointA.lng', parsedPointA.lng.toString());
     formData.append('pointA.height', data.pointA.height.toString());
     formData.append('pointB.name', data.pointB.name);
-    formData.append('pointB.lat', data.pointB.lat);
-    formData.append('pointB.lng', data.pointB.lng);
+    formData.append('pointB.lat', parsedPointB.lat.toString());
+    formData.append('pointB.lng', parsedPointB.lng.toString());
     formData.append('pointB.height', data.pointB.height.toString());
     formData.append('clearanceThreshold', data.clearanceThreshold);
     
@@ -180,21 +212,25 @@ function HomePageContent() {
       } else if ('losPossible' in serverState) { 
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
         
+        const currentFormData = getValues();
+        const isNewServerResultLink = !currentFormData.pointA.name && !currentFormData.pointB.name;
+
+
         const newAnalysisResult: AnalysisResult = {
           ...successfulResult,
           pointA: { 
-            name: getValues('pointA.name'), 
-            lat: parseFloat(getValues('pointA.lat')), 
-            lng: parseFloat(getValues('pointA.lng')), 
-            towerHeight: parseFloat(getValues('pointA.height').toString())
+            name: currentFormData.pointA.name || defaultFormStateValues.pointA.name, 
+            lat: successfulResult.pointA.lat, 
+            lng: successfulResult.pointA.lng, 
+            towerHeight: successfulResult.pointA.towerHeight
           },
           pointB: { 
-            name: getValues('pointB.name'),
-            lat: parseFloat(getValues('pointB.lat')),
-            lng: parseFloat(getValues('pointB.lng')),
-            towerHeight: parseFloat(getValues('pointB.height').toString())
+            name: currentFormData.pointB.name || defaultFormStateValues.pointB.name,
+            lat: successfulResult.pointB.lat,
+            lng: successfulResult.pointB.lng,
+            towerHeight: successfulResult.pointB.towerHeight
           },
-          clearanceThresholdUsed: parseFloat(getValues('clearanceThreshold')),
+          clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
           id: selectedLinkId + '_analysis_' + Date.now(), 
           timestamp: Date.now(),
         };
@@ -226,6 +262,7 @@ function HomePageContent() {
       };
       
       updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
+      // setValue is handled by the useEffect that watches selectedLink
     } else if (event.latLng && !selectedLink) {
         const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
         // Form resets via useEffect on selectedLink change
@@ -248,8 +285,7 @@ function HomePageContent() {
       };
       updateLinkDetails(linkId, { [fieldToUpdate]: newPointDetails });
       if(selectedLinkId === linkId){ 
-        setValue(`${fieldToUpdate}.lat`, lat.toFixed(6));
-        setValue(`${fieldToUpdate}.lng`, lng.toFixed(6));
+        setValue(`${fieldToUpdate}.coordinates`, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
       }
     }
   }, [getLinkById, updateLinkDetails, setValue, selectedLinkId]);
@@ -262,10 +298,10 @@ function HomePageContent() {
         towerHeight: Math.round(newHeight),
       };
       updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-      setValue(`${fieldToUpdate}.height`, Math.round(newHeight));
+      setValue(`${fieldToUpdate}.height`, Math.round(newHeight)); // RHF height is a number
 
       const currentFormValues = getValues(); 
-      handleSubmit(processSubmit)({
+      handleSubmit(processSubmit)({ // processSubmit now expects AnalysisFormValues with string coordinates
           ...currentFormValues, 
           [siteId]: { ...currentFormValues[siteId], height: Math.round(newHeight)}
       });
@@ -522,5 +558,3 @@ export default function Home() {
     </LinksProvider>
   );
 }
-
-    
