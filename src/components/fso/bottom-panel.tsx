@@ -328,17 +328,14 @@ export default function BottomPanel({
       <div
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0" // Slightly taller on md+ for better chart view
+          isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0"
         )}
       >
         <div className="p-1.5 md:p-2 h-full overflow-hidden">
-          {/* Flex container for horizontal scrolling on mobile, grid on md+ */}
           <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2.5fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
-            {/* Point A Card */}
             <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-1">
               <SiteInputGroup id="pointA" />
             </div>
-            {/* Profile/Chart Panel */}
             <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start order-2">
               <ProfilePanelMiddleColumn
                 analysisResult={analysisResult}
@@ -354,7 +351,6 @@ export default function BottomPanel({
                 selectedLinkClearanceThreshold={selectedLinkClearanceThreshold}
               />
             </div>
-            {/* Point B Card */}
             <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start p-1 md:p-0 order-3">
               <SiteInputGroup id="pointB" />
             </div>

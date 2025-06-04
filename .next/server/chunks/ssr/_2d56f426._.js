@@ -1217,8 +1217,7 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
         className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("fixed bottom-12 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden", isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full", "z-[50]"),
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("w-full overflow-hidden transition-[height] duration-500 ease-in-out", isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0" // Slightly taller on md+ for better chart view
-                ),
+                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])("w-full overflow-hidden transition-[height] duration-500 ease-in-out", isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0"),
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "p-1.5 md:p-2 h-full overflow-hidden",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1230,12 +1229,12 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     id: "pointA"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 339,
+                                    lineNumber: 337,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 338,
+                                lineNumber: 336,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1254,12 +1253,12 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     selectedLinkClearanceThreshold: selectedLinkClearanceThreshold
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 343,
+                                    lineNumber: 340,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 342,
+                                lineNumber: 339,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1268,18 +1267,18 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     id: "pointB"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 359,
+                                    lineNumber: 355,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 358,
+                                lineNumber: 354,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 336,
+                        lineNumber: 335,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
@@ -1300,18 +1299,18 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 371,
+                    lineNumber: 367,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-slate-300 group-hover:text-slate-100"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 372,
+                    lineNumber: 368,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 365,
+                lineNumber: 361,
                 columnNumber: 9
             }, this)
         ]
