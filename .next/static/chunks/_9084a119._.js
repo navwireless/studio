@@ -104,64 +104,69 @@ __turbopack_context__.s({
     "default": (()=>__TURBOPACK__default__export__)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/label.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$slider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/slider.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/input.tsx [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
 "use client";
 ;
 ;
 ;
 ;
 const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step = 1, idSuffix })=>{
-    // Value for the Slider's thumb position. Always an integer.
-    // Derives from RHF's `height`. If `height` is not a finite number, defaults to `min`.
-    const sliderValueForProp = Number.isFinite(height) ? Math.round(height) : min;
-    const currentRoundedRhfHeight = Number.isFinite(height) ? Math.round(height) : min;
+    _s();
+    // Local state for the input field's string value for responsive typing
+    const [inputValue, setInputValue] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useState(Number.isFinite(height) ? Math.round(height).toString() : "");
+    // Effect to synchronize local inputValue when the RHF height prop changes externally
+    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useEffect({
+        "TowerHeightControl.useEffect": ()=>{
+            const currentRHFHeightRounded = Number.isFinite(height) ? Math.round(height) : min;
+            if (inputValue !== currentRHFHeightRounded.toString() && parseFloat(inputValue) !== currentRHFHeightRounded) {
+                setInputValue(currentRHFHeightRounded.toString());
+            }
+        }
+    }["TowerHeightControl.useEffect"], [
+        height,
+        min
+    ]);
     // Handler for when the user finishes interacting with the slider
     const handleSliderValueCommit = (newSliderValues)=>{
         const committedIntValue = Math.round(newSliderValues[0]);
-        // Only call onChange if the committed integer value is different from the current rounded RHF height.
-        if (currentRoundedRhfHeight !== committedIntValue) {
-            onChange(committedIntValue);
+        const currentRhfIntValue = Number.isFinite(height) ? Math.round(height) : min;
+        if (currentRhfIntValue !== committedIntValue) {
+            onChange(committedIntValue); // Update RHF
+        // No need to setInputValue here if useEffect handles it, but can be explicit:
+        // setInputValue(committedIntValue.toString());
         }
     };
-    // Handler for direct input field changes
+    // Handler for direct input field changes - updates local state only
     const handleInputChange = (event)=>{
-        const rawValue = event.target.value;
-        if (rawValue === "") {
-            // If input is cleared, send NaN to RHF. Schema validation can handle if it's required.
-            // Check if current RHF height is already effectively NaN (or represented by min) before calling onChange
-            if (Number.isFinite(height)) {
-                onChange(NaN);
-            }
-            return;
-        }
-        const numValue = parseFloat(rawValue);
-        // Send the parsed float (or NaN if parsing fails) to RHF.
-        // This allows temporary float values in the form state from direct input.
-        // Avoid calling onChange if numValue is the same as current height to prevent loops during typing
-        if (height !== numValue) {
-            onChange(numValue);
-        }
+        setInputValue(event.target.value);
     };
-    // Handler for when the input field loses focus
-    const handleInputBlur = (event)=>{
-        let numValue = parseFloat(event.target.value);
+    // Handler for when the input field loses focus - commit to RHF
+    const handleInputBlur = ()=>{
+        let numValue = parseFloat(inputValue);
         let finalClampedIntValue;
         if (isNaN(numValue)) {
             finalClampedIntValue = min; // Default to min if input is invalid or empty on blur
         } else {
-            // On blur, round to the nearest integer and clamp it.
             finalClampedIntValue = Math.max(min, Math.min(max, Math.round(numValue)));
         }
-        // Only call onChange if the final clamped integer value is different from the current rounded RHF height.
-        if (currentRoundedRhfHeight !== finalClampedIntValue) {
-            onChange(finalClampedIntValue);
-        } else if (!Number.isFinite(height) && finalClampedIntValue !== min) {
-            // If original RHF height was NaN and now it's a valid number different from min default
-            onChange(finalClampedIntValue);
+        // Update local input to reflect clamped and rounded value
+        // This will also be caught by useEffect if RHF was already at this value,
+        // but good to keep input consistent.
+        setInputValue(finalClampedIntValue.toString());
+        const currentRhfIntValue = Number.isFinite(height) ? Math.round(height) : min;
+        if (currentRhfIntValue !== finalClampedIntValue) {
+            onChange(finalClampedIntValue); // Update RHF
         }
     };
+    // Value for the Slider's thumb position. Always an integer from RHF.
+    const sliderValueForDisplay = Number.isFinite(height) ? Math.round(height) : min;
+    // Text display always shows the rounded integer version of the RHF height.
+    const textDisplayHeight = sliderValueForDisplay;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "space-y-0.5",
         children: [
@@ -177,24 +182,24 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 88,
+                        lineNumber: 90,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                         className: "text-[0.7rem] font-medium text-primary/80",
                         children: [
-                            Number.isFinite(height) ? Math.round(height) : min,
+                            textDisplayHeight,
                             "m"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 92,
+                        lineNumber: 93,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                lineNumber: 87,
+                lineNumber: 89,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -202,26 +207,25 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
                         id: `height-input-${idSuffix}`,
-                        type: "number",
-                        // The input field shows the RHF height directly (can be float temporarily)
-                        // or an empty string if height is NaN (e.g., after clearing the input).
-                        value: Number.isFinite(height) ? height.toString() : "",
+                        type: "number" // Keeps browser native number input behavior (arrows, etc.)
+                        ,
+                        value: inputValue,
                         onChange: handleInputChange,
                         onBlur: handleInputBlur,
                         min: min,
                         max: max,
-                        step: "any" // Allow any decimal input, rounding happens on blur or slider interaction
+                        step: "any" // Allows decimal typing
                         ,
                         className: "w-12 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 text-xs h-6 px-1 py-0.5 rounded-none focus:ring-0"
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 97,
+                        lineNumber: 98,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$slider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Slider"], {
                         id: `height-slider-${idSuffix}`,
                         value: [
-                            sliderValueForProp
+                            sliderValueForDisplay
                         ],
                         onValueCommit: handleSliderValueCommit,
                         min: min,
@@ -231,22 +235,23 @@ const TowerHeightControl = ({ label, height, onChange, min = 0, max = 100, step 
                         "aria-labelledby": `label-${idSuffix}-height`
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                        lineNumber: 110,
+                        lineNumber: 109,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/tower-height-control.tsx",
-                lineNumber: 96,
+                lineNumber: 97,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/tower-height-control.tsx",
-        lineNumber: 86,
+        lineNumber: 88,
         columnNumber: 5
     }, this);
 };
+_s(TowerHeightControl, "uLH1Z3IA+oT1bUssekogo6xs3QY=");
 _c = TowerHeightControl;
 const __TURBOPACK__default__export__ = TowerHeightControl;
 var _c;
