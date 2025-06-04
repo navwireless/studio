@@ -652,6 +652,18 @@ body {
   top: 50%;
 }
 
+.left-3 {
+  left: .75rem;
+}
+
+.top-1\/2 {
+  top: 50%;
+}
+
+.top-3 {
+  top: .75rem;
+}
+
 .z-10 {
   z-index: 10;
 }
@@ -702,6 +714,10 @@ body {
 
 .order-6 {
   order: 6;
+}
+
+.order-7 {
+  order: 7;
 }
 
 .-mx-1 {
@@ -805,6 +821,10 @@ body {
 
 .mt-auto {
   margin-top: auto;
+}
+
+.mt-1\.5 {
+  margin-top: .375rem;
 }
 
 .block {
@@ -1108,6 +1128,10 @@ body {
   max-width: 28rem;
 }
 
+.max-w-sm {
+  max-width: 24rem;
+}
+
 .flex-1 {
   flex: 1;
 }
@@ -1177,6 +1201,11 @@ body {
 
 .translate-y-full {
   --tw-translate-y: 100%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.-translate-y-1\/2 {
+  --tw-translate-y: -50%;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
@@ -1526,6 +1555,10 @@ body {
   border-color: #f59e0b4d;
 }
 
+.border-primary\/50 {
+  border-color: hsl(var(--primary) / .5);
+}
+
 .border-l-transparent {
   border-left-color: #0000;
 }
@@ -1660,6 +1693,10 @@ body {
 
 .bg-amber-500\/10 {
   background-color: #f59e0b1a;
+}
+
+.bg-background\/90 {
+  background-color: hsl(var(--background) / .9);
 }
 
 .fill-current {
@@ -1814,6 +1851,10 @@ body {
 
 .pt-4 {
   padding-top: 1rem;
+}
+
+.pl-9 {
+  padding-left: 2.25rem;
 }
 
 .text-left {
@@ -2025,6 +2066,14 @@ body {
 .text-amber-900 {
   --tw-text-opacity: 1;
   color: rgb(120 53 15 / var(--tw-text-opacity, 1));
+}
+
+.text-muted-foreground\/70 {
+  color: hsl(var(--muted-foreground) / .7);
+}
+
+.text-primary\/90 {
+  color: hsl(var(--primary) / .9);
 }
 
 .underline {
@@ -2534,6 +2583,10 @@ body {
   background-color: #f59e0b33;
 }
 
+.hover\:bg-primary\/10:hover {
+  background-color: hsl(var(--primary) / .1);
+}
+
 .hover\:text-accent-foreground:hover {
   color: hsl(var(--accent-foreground));
 }
@@ -2631,6 +2684,10 @@ body {
 
 .focus\:ring-ring:focus {
   --tw-ring-color: hsl(var(--ring));
+}
+
+.focus\:ring-primary:focus {
+  --tw-ring-color: hsl(var(--primary));
 }
 
 .focus\:ring-offset-2:focus {

@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import TowerHeightControl from './tower-height-control';
+// TowerHeightControl removed as per request
+// import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart';
-import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, FileText, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
 
@@ -21,16 +22,17 @@ interface SiteInputGroupProps {
 
 const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
   const { register, control, formState: { errors: clientFormErrors } } = useFormContext<AnalysisFormValues>();
-  // serverFormErrors and getCombinedError need to be passed or handled differently if still needed per field
-  // For now, focusing on client errors via RHF context
+  
+  const siteName = id === 'pointA' ? 'Site A' : 'Site B';
+  // Use the name from the form for display if available, otherwise default
+  const dynamicTitle = useWatch({ control, name: `${id}.name` }) || siteName;
 
-  const title = useWatch({ control, name: `${id}.name` }) || (id === 'pointA' ? "Site A" : "Site B");
 
   return (
     <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full min-w-[280px] md:min-w-0">
       <CardHeader className="p-1">
         <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
-          <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
+          <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {dynamicTitle}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
@@ -40,7 +42,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
             <Input
               id={`${id}.name`}
               {...register(`${id}.name`)}
-              placeholder="e.g. Main Site"
+              placeholder={`e.g. ${siteName} Building`}
               className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
             />
             {clientFormErrors[id]?.name &&
@@ -70,19 +72,17 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
                 <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.lng?.message}</p>}
             </div>
           </div>
-          <Controller
+          {/* TowerHeightControl removed from here */}
+          {/* Displaying current tower height as text, adjusted in chart */}
+           <Controller
             name={`${id}.height`}
             control={control}
-            defaultValue={20}
             render={({ field }) => (
-              <TowerHeightControl
-                label="Tower Height"
-                height={field.value}
-                onChange={field.onChange}
-                min={0}
-                max={100}
-                idSuffix={id}
-              />
+              <div className="mt-1.5">
+                <span className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Tower Height (AGL): </span>
+                <span className="text-xs font-medium text-foreground">{Number.isFinite(field.value) ? Math.round(field.value) : 'N/A'}m</span>
+                <p className="text-[0.65rem] text-muted-foreground/70">(Adjust height using the elevation profile chart)</p>
+              </div>
             )}
           />
           {clientFormErrors[id]?.height &&
@@ -97,14 +97,14 @@ interface ProfilePanelMiddleColumnProps {
   analysisResult: AnalysisResult | null;
   isStale?: boolean;
   isActionPending: boolean;
-  // control, clientFormErrors etc from RHF context
-  onAnalyzeSubmit: () => void; // Changed from handleSubmit & processSubmit
-  pointANameWatch: string; // From useWatch on form
-  pointBNameWatch: string; // From useWatch on form
+  onAnalyzeSubmit: () => void; 
+  pointANameWatch: string; 
+  pointBNameWatch: string; 
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
   onOpenReportDialog: () => void;
+  onAddNewLink: () => void; // For "Add Another Link" button
   currentDistanceKm: number | null;
-  selectedLinkClearanceThreshold?: number; // For displaying required clearance
+  selectedLinkClearanceThreshold?: number; 
 }
 
 const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
@@ -116,6 +116,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   pointBNameWatch,
   onTowerHeightChangeFromGraph,
   onOpenReportDialog,
+  onAddNewLink,
   currentDistanceKm,
   selectedLinkClearanceThreshold,
 }) => {
@@ -199,7 +200,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
         <div className="order-3 flex-grow-0 md:flex-grow-0 text-center">
           <Button
-            type="button" // Changed from submit as form is now handled by FormProvider
+            type="button" 
             onClick={onAnalyzeSubmit}
             disabled={isActionPending}
             size="sm"
@@ -208,6 +209,23 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")} />
             {buttonText}
           </Button>
+        </div>
+        
+        <div className="order-5 flex items-center space-x-1">
+          <Label htmlFor="clearanceThresholdProfile" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Req. Fresnel (m):</Label>
+          <Controller
+            name="clearanceThreshold"
+            control={control}
+            render={({ field, fieldState: { error } }) => (
+              <Input
+                id="clearanceThresholdProfile"
+                type="number"
+                step="any"
+                {...field}
+                className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
+              />
+            )}
+          />
         </div>
 
         {(analysisResult && !isStale) && (
@@ -224,23 +242,22 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             </Button>
           </div>
         )}
+        
+        {(analysisResult && !isStale) && (
+           <div className="order-7 flex-grow-0 md:flex-grow-0 text-center">
+            <Button
+              type="button"
+              onClick={onAddNewLink}
+              size="sm"
+              variant="outline"
+              className="text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 text-primary/90 hover:bg-primary/10"
+            >
+              <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
+              Add Another Link
+            </Button>
+          </div>
+        )}
 
-        <div className="flex items-center space-x-1 order-5">
-          <Label htmlFor="clearanceThresholdProfile" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Req. Fresnel (m):</Label>
-          <Controller
-            name="clearanceThreshold"
-            control={control}
-            render={({ field, fieldState: { error } }) => (
-              <Input
-                id="clearanceThresholdProfile"
-                type="number"
-                step="any"
-                {...field}
-                className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
-              />
-            )}
-          />
-        </div>
       </div>
       {clientFormErrors.clearanceThreshold &&
         <p className="text-xs text-destructive mt-0.5 text-center px-2">
@@ -288,10 +305,11 @@ interface BottomPanelProps {
   isContentExpanded: boolean;
   onToggleContentExpansion: () => void;
   isStale?: boolean;
-  onAnalyzeSubmit: () => void; // Submit handler from page.tsx
+  onAnalyzeSubmit: () => void; 
   isActionPending: boolean;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
   onOpenReportDialog: () => void;
+  onAddNewLink: () => void; // For "Add Another Link"
   currentDistanceKm: number | null;
   selectedLinkClearanceThreshold?: number;
   selectedLinkPointA?: LOSLinkPoint;
@@ -309,21 +327,20 @@ export default function BottomPanel({
   isActionPending,
   onTowerHeightChangeFromGraph,
   onOpenReportDialog,
+  onAddNewLink,
   currentDistanceKm,
   selectedLinkClearanceThreshold,
   selectedLinkPointA,
   selectedLinkPointB,
 }: BottomPanelProps) {
 
-  const { control } = useFormContext<AnalysisFormValues>(); // Get RHF control here
+  const { control } = useFormContext<AnalysisFormValues>(); 
   const pointANameWatch = useWatch({ control, name: 'pointA.name', defaultValue: selectedLinkPointA?.name || "Site A" });
   const pointBNameWatch = useWatch({ control, name: 'pointB.name', defaultValue: selectedLinkPointB?.name || "Site B" });
 
-  // Form submission is now handled by the onAnalyzeSubmit prop from page.tsx
-  // which uses handleSubmit from the FormProvider there.
 
   return (
-    <form // Still a form tag, but onSubmit is handled by the parent FormProvider
+    <form 
       noValidate
       className={cn(
         "fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
@@ -352,6 +369,7 @@ export default function BottomPanel({
                 pointBNameWatch={pointBNameWatch}
                 onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
                 onOpenReportDialog={onOpenReportDialog}
+                onAddNewLink={onAddNewLink}
                 currentDistanceKm={currentDistanceKm}
                 selectedLinkClearanceThreshold={selectedLinkClearanceThreshold}
               />
@@ -376,3 +394,6 @@ export default function BottomPanel({
     </form>
   );
 }
+
+
+    

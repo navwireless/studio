@@ -13,11 +13,10 @@ import type { AnalysisResult, AnalysisFormValues, PointInput as PointFormInputTy
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
-import HistoryPanel from '@/components/layout/history-panel'; // Existing history panel
+import HistoryPanel from '@/components/layout/history-panel'; 
 import { calculateDistanceKm } from '@/lib/los-calculator';
-// import { generateReportDocx } from '@/lib/report-generator'; // Removed static import
 import ReportSelectionDialog from '@/components/fso/report-selection-dialog';
-import { LinksProvider, useLinks } from '@/context/links-context'; // Import new context
+import { LinksProvider, useLinks } from '@/context/links-context'; 
 
 const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
   ssr: false,
@@ -50,28 +49,26 @@ function HomePageContent() {
   
   const [serverState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
 
-  // Local component state for things not directly tied to a single link's data in context
-  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false); // For bottom panel
+  const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false); 
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
   
-  const [historyList, setHistoryList] = useState<AnalysisResult[]>([]); // Old history, may deprecate or merge
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false); // For old history panel
+  const [historyList, setHistoryList] = useState<AnalysisResult[]>([]); 
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false); 
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
   const selectedLink = React.useMemo(() => {
     if (!selectedLinkId) return null;
     return getLinkById(selectedLinkId);
-  }, [selectedLinkId, getLinkById]);
+  }, [selectedLinkId, getLinkById, links]); // Added links to dependency array
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
     defaultValues: defaultFormStateValues,
-    mode: 'onBlur', // Or 'onChange' if preferred
+    mode: 'onBlur', 
   });
 
   const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
 
-  // Effect to populate form when a link is selected or its details change
   useEffect(() => {
     if (selectedLink) {
       const formVals: AnalysisFormValues = {
@@ -89,37 +86,37 @@ function HomePageContent() {
         },
         clearanceThreshold: selectedLink.clearanceThreshold.toString(),
       };
-      reset(formVals); // Reset form with selected link's data
+      reset(formVals); 
       if (selectedLink.analysisResult) {
-        // If a link with existing analysis is selected, open the panel
         setIsAnalysisPanelGloballyOpen(true);
       }
+       // Keep panel open if a link is selected, allow user to close if needed
+      if (!isAnalysisPanelGloballyOpen) setIsAnalysisPanelGloballyOpen(true);
+      if (!isBottomPanelContentExpanded) setIsBottomPanelContentExpanded(true);
     } else {
-      reset(defaultFormStateValues); // Reset to defaults if no link selected
+      reset(defaultFormStateValues); 
       setIsAnalysisPanelGloballyOpen(false);
     }
-  }, [selectedLink, reset]);
+  }, [selectedLink, reset]); // Removed isAnalysisPanelGloballyOpen, isBottomPanelContentExpanded from deps
   
-   // Effect to update link details in context when form changes for the selected link
   useEffect(() => {
     if (!selectedLink) return;
 
     const subscription = watch((value, { name, type }) => {
       if (type === 'change' && selectedLinkId && value.pointA && value.pointB && value.clearanceThreshold) {
-        // Ensure all parts of the form value are defined before trying to update
         const currentFormValues = getValues();
         updateLinkDetails(selectedLinkId, {
           pointA: {
             name: currentFormValues.pointA.name,
             lat: parseFloat(currentFormValues.pointA.lat) || 0,
             lng: parseFloat(currentFormValues.pointA.lng) || 0,
-            towerHeight: currentFormValues.pointA.height,
+            towerHeight: parseFloat(currentFormValues.pointA.height.toString()) || 0, // Ensure height is number
           },
           pointB: {
             name: currentFormValues.pointB.name,
             lat: parseFloat(currentFormValues.pointB.lat) || 0,
             lng: parseFloat(currentFormValues.pointB.lng) || 0,
-            towerHeight: currentFormValues.pointB.height,
+            towerHeight: parseFloat(currentFormValues.pointB.height.toString()) || 0, // Ensure height is number
           },
           clearanceThreshold: parseFloat(currentFormValues.clearanceThreshold) || 0,
         });
@@ -140,14 +137,12 @@ function HomePageContent() {
        return;
     }
 
-    // Check cache first
     const cachedResult = getCachedAnalysis(selectedLinkId);
     if (cachedResult) {
-      updateLinkAnalysis(selectedLinkId, cachedResult); // Update context with cached data
+      updateLinkAnalysis(selectedLinkId, cachedResult); 
       toast({ title: "Analysis Loaded from Cache", description: cachedResult.message });
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
-      // Populate form again in case cache was from a slightly different prior state of form
       reset({ 
         pointA: { name: cachedResult.pointA.name || '', lat: cachedResult.pointA.lat.toString(), lng: cachedResult.pointA.lng.toString(), height: cachedResult.pointA.towerHeight },
         pointB: { name: cachedResult.pointB.name || '', lat: cachedResult.pointB.lat.toString(), lng: cachedResult.pointB.lng.toString(), height: cachedResult.pointB.towerHeight },
@@ -156,7 +151,6 @@ function HomePageContent() {
       return;
     }
 
-    // Construct FormData for the server action
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', data.pointA.lat);
@@ -169,17 +163,16 @@ function HomePageContent() {
     formData.append('clearanceThreshold', data.clearanceThreshold);
     
     React.startTransition(() => {
-      formAction(formData); // This will trigger the serverState useEffect
+      formAction(formData); 
     });
   }, [selectedLinkId, getLinkById, formAction, toast, updateLinkAnalysis, getCachedAnalysis, reset]);
 
-  // Effect to handle server action response
   useEffect(() => {
     if (serverState && selectedLinkId) {
       if (serverState.error) {
         const currentLink = getLinkById(selectedLinkId);
         if (currentLink) {
-           updateLinkDetails(selectedLinkId, { analysisResult: undefined, isDirty: true }); // Clear previous result on error
+           updateLinkDetails(selectedLinkId, { analysisResult: undefined, isDirty: true }); 
         }
         toast({
           title: "Analysis Error",
@@ -187,13 +180,11 @@ function HomePageContent() {
           variant: "destructive",
           duration: 7000,
         });
-      } else if ('losPossible' in serverState) { // Indicates a successful AnalysisResult structure
+      } else if ('losPossible' in serverState) { 
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
         
         const newAnalysisResult: AnalysisResult = {
           ...successfulResult,
-          // The server action's result structure might not have id/timestamp for THIS specific analysis instance
-          // We ensure the points data in the result matches what was submitted for THIS link.
           pointA: { 
             name: getValues('pointA.name'), 
             lat: parseFloat(getValues('pointA.lat')), 
@@ -207,17 +198,17 @@ function HomePageContent() {
             towerHeight: getValues('pointB.height')
           },
           clearanceThresholdUsed: parseFloat(getValues('clearanceThreshold')),
-          id: selectedLinkId + '_analysis_' + Date.now(), // Make a unique ID for this specific analysis run
+          id: selectedLinkId + '_analysis_' + Date.now(), 
           timestamp: Date.now(),
         };
 
         updateLinkAnalysis(selectedLinkId, newAnalysisResult);
-        
-        // Add to old history panel for now (can be refactored later)
         setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]); 
         
         if (!isAnalysisPanelGloballyOpen) {
             setIsAnalysisPanelGloballyOpen(true);
+        }
+        if (!isBottomPanelContentExpanded && newAnalysisResult.profile.length > 0) {
             setIsBottomPanelContentExpanded(true);
         }
         
@@ -227,12 +218,9 @@ function HomePageContent() {
         });
       }
     }
-  }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues, isAnalysisPanelGloballyOpen]);
+  }, [serverState, toast, selectedLinkId, updateLinkAnalysis, updateLinkDetails, getLinkById, getValues, isAnalysisPanelGloballyOpen, isBottomPanelContentExpanded]); // Added isBottomPanelContentExpanded
   
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
-    // This logic needs to be adapted for multi-link.
-    // For now, if a link is selected, it updates that link's point.
-    // Otherwise, it could potentially start a new link.
     if (event.latLng && selectedLink) {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
@@ -245,11 +233,9 @@ function HomePageContent() {
       };
       
       updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-      // Form will auto-update via useEffect on selectedLink change
     } else if (event.latLng && !selectedLink) {
-        // No link selected, create a new one with this as point A
         const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
-        // The form will reset to this new link's defaults. User can then click for point B.
+        // Form resets via useEffect on selectedLink change
     }
   }, [selectedLink, updateLinkDetails, addLink]);
 
@@ -260,7 +246,7 @@ function HomePageContent() {
 
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
-      const fieldToUpdate = pointId; // Already 'pointA' or 'pointB'
+      const fieldToUpdate = pointId; 
 
       const newPointDetails = {
         ...draggedLink[fieldToUpdate],
@@ -268,7 +254,7 @@ function HomePageContent() {
         lng: lng,
       };
       updateLinkDetails(linkId, { [fieldToUpdate]: newPointDetails });
-      if(selectedLinkId === linkId){ // if dragged marker is of selected link, update form
+      if(selectedLinkId === linkId){ 
         setValue(`${fieldToUpdate}.lat`, lat.toFixed(6));
         setValue(`${fieldToUpdate}.lng`, lng.toFixed(6));
       }
@@ -283,60 +269,59 @@ function HomePageContent() {
         towerHeight: Math.round(newHeight),
       };
       updateLinkDetails(selectedLink.id, { [fieldToUpdate]: newPointDetails });
-      // Trigger re-analysis for the current link
-      const currentFormValues = getValues(); // Get potentially updated name/lat/lng from form
+      // Update form value directly as well for RHF
+      setValue(`${fieldToUpdate}.height`, Math.round(newHeight));
+
+      const currentFormValues = getValues(); 
       handleSubmit(processSubmit)({
-          ...currentFormValues, // Use current form state
+          ...currentFormValues, 
           [siteId]: { ...currentFormValues[siteId], height: Math.round(newHeight)}
       });
     }
-  }, [selectedLink, updateLinkDetails, handleSubmit, processSubmit, getValues]);
+  }, [selectedLink, updateLinkDetails, handleSubmit, processSubmit, getValues, setValue]);
 
   const toggleGlobalPanelVisibility = useCallback(() => {
-    // This will now effectively be controlled by whether a link is selected
-    // If a link is selected, panel opens. If deselected, panel closes.
-    // This function might not be needed if panel visibility is tied to selectedLinkId
      setIsAnalysisPanelGloballyOpen(prev => !prev);
-  }, []);
+     if (isAnalysisPanelGloballyOpen && selectedLinkId) { // If closing panel while a link is selected
+        selectLink(null); // Deselect the link
+     }
+  }, [isAnalysisPanelGloballyOpen, selectedLinkId, selectLink]);
 
   const toggleBottomPanelContentExpansion = useCallback(() => {
     setIsBottomPanelContentExpanded(prev => !prev);
   }, []);
   
-  const handleStartAnalysisClick = () => { // This button might be repurposed to "Analyze Selected Link"
+  const handleStartAnalysisClick = () => { 
     if (selectedLink) {
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
       const formValues = getValues();
       handleSubmit(processSubmit)(formValues);
     } else {
-      toast({title: "No Link Selected", description: "Please add or select a link first."});
+      // If no link selected, this button should function as "Add New Link"
+      handleAddNewLink();
     }
   };
 
-  const handleClearMap = () => { // This will now clear all links from context
-    links.forEach(link => removeLink(link.id)); // remove all links
-    selectLink(null); // Deselect
+  const handleClearMap = () => { 
+    links.forEach(link => removeLink(link.id)); 
+    selectLink(null); 
     reset(defaultFormStateValues);
-    setHistoryList([]); // Clear old history as well
+    setHistoryList([]); 
     toast({ title: "Map Cleared", description: "All links removed and form reset." });
     setIsAnalysisPanelGloballyOpen(false);
   };
   
-  // Old history load, adapt or remove later
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      // This needs to be integrated with the new multi-link system
-      // Potentially, load this into a NEW link, or replace selected?
-      // For now, it just populates the form as before.
       const newLinkId = addLink(itemToLoad.pointA, itemToLoad.pointB);
       updateLinkDetails(newLinkId, {
         pointA: { ...itemToLoad.pointA, towerHeight: itemToLoad.pointA.towerHeight },
         pointB: { ...itemToLoad.pointB, towerHeight: itemToLoad.pointB.towerHeight },
         clearanceThreshold: itemToLoad.clearanceThresholdUsed,
       });
-      updateLinkAnalysis(newLinkId, itemToLoad); // Treat as a freshly "analyzed" link from history
+      updateLinkAnalysis(newLinkId, itemToLoad); 
       selectLink(newLinkId);
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
@@ -344,7 +329,7 @@ function HomePageContent() {
     }
   };
 
-  const handleClearHistory = () => { // Clears old history panel
+  const handleClearHistory = () => { 
     setHistoryList([]);
     toast({ title: "History Cleared" });
   };
@@ -375,7 +360,6 @@ function HomePageContent() {
     if (reportsToGenerate.length > 0) {
       try {
         toast({ title: "Generating Report...", description: `Processing ${reportsToGenerate.length} link(s).` });
-        // Dynamically import here
         const { generateReportDocx } = await import('@/lib/report-generator');
         await generateReportDocx(reportsToGenerate);
         toast({ title: "Report Generated", description: "Your DOCX report has been downloaded." });
@@ -389,9 +373,8 @@ function HomePageContent() {
   };
 
   const handleAddNewLink = () => {
-    const newId = addLink(); // Creates a link with default points, auto-selects
-    setIsAnalysisPanelGloballyOpen(true); // Open panel for the new link
-    setIsBottomPanelContentExpanded(true);
+    const newId = addLink(); 
+    // Panel opens due to useEffect on selectedLink change
   };
 
   const handleRemoveSelectedLink = () => {
@@ -405,7 +388,6 @@ function HomePageContent() {
       if (selectedLink.analysisResult && !selectedLink.isDirty) {
         return selectedLink.analysisResult.distanceKm;
       }
-      // Calculate live distance if points are valid
       if (selectedLink.pointA.lat && selectedLink.pointA.lng && selectedLink.pointB.lat && selectedLink.pointB.lng) {
         return calculateDistanceKm(selectedLink.pointA, selectedLink.pointB);
       }
@@ -422,9 +404,13 @@ function HomePageContent() {
         isHistoryPanelSupported={true} 
       />
       <div className="p-2 space-x-2 print:hidden">
-        <Button onClick={handleAddNewLink} variant="outline" size="sm">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New Link
-        </Button>
+        {/* Primary "Add New Link" button if no link is selected, or to add more */}
+        {(!selectedLinkId || (selectedLink && selectedLink.analysisResult)) && (
+            <Button onClick={handleAddNewLink} variant="outline" size="sm">
+                <PlusCircle className="mr-2 h-4 w-4" /> 
+                {selectedLink && selectedLink.analysisResult ? "Add Another Link" : "Add New Link"}
+            </Button>
+        )}
         {selectedLinkId && (
             <Button onClick={handleRemoveSelectedLink} variant="destructive" size="sm">
                 <Trash2Icon className="mr-2 h-4 w-4" /> Remove Selected Link
@@ -436,17 +422,18 @@ function HomePageContent() {
           <InteractiveMap
             links={links}
             selectedLinkId={selectedLinkId}
-            onMapClick={handleMapClick} // Adapting this for multi-link point placement
-            onMarkerDrag={handleMarkerDrag} // Passes linkId and pointId
-            onLinkSelect={selectLink} // New prop for map to tell page a link was clicked
+            onMapClick={handleMapClick} 
+            onMarkerDrag={handleMarkerDrag} 
+            onLinkSelect={selectLink} 
             mapContainerClassName="w-full h-full"
           />
         </div>
 
+        {/* This button is shown only if no link is selected, and panel is closed */}
         {!isAnalysisPanelGloballyOpen && !selectedLinkId && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
             <Button
-              onClick={handleAddNewLink} // Changed from handleStartAnalysisClick
+              onClick={handleAddNewLink} 
               size="lg"
               className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm"
               aria-label="Add New Link"
@@ -470,7 +457,7 @@ function HomePageContent() {
         )}
 
         {serverState?.error && !isActionPending && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={() => { /* Consider clearing serverState.error */}}>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={() => { /* Consider clearing serverState.error by setting it to null */ }}>
               <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4">
                 <CardHeader>
                   <CardTitle className="text-destructive-foreground flex items-center">
@@ -482,7 +469,7 @@ function HomePageContent() {
                   <Button
                     variant="outline"
                     className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-                    onClick={(e) => { e.stopPropagation(); /* Clear serverState.error */ }}
+                    onClick={(e) => { e.stopPropagation(); /* Clear serverState.error by setting it to null */ }}
                   >
                     Dismiss
                   </Button>
@@ -491,25 +478,19 @@ function HomePageContent() {
           </div>
         )}
         
-        {/* FormProvider wraps BottomPanel for RHF context */}
         <FormProvider {...form}>
             <BottomPanel
-              // Pass selectedLink's data if available
               analysisResult={selectedLink?.analysisResult ?? null}
               isPanelGloballyVisible={isAnalysisPanelGloballyOpen && !!selectedLink}
               onToggleGlobalVisibility={toggleGlobalPanelVisibility}
               isContentExpanded={isBottomPanelContentExpanded}
               onToggleContentExpansion={toggleBottomPanelContentExpansion}
-              isStale={selectedLink?.isDirty ?? !selectedLink?.analysisResult} // A link is stale if dirty or no analysis
-              
-              // RHF props are now implicitly available via FormProvider context within BottomPanel
-              // control, register, handleSubmit, clientFormErrors, serverFormErrors, getValues, setValue
-              // processSubmit needs to be adapted or called directly
-              onAnalyzeSubmit={handleSubmit(processSubmit)} // Pass the bound submit handler
-              
+              isStale={selectedLink?.isDirty ?? !selectedLink?.analysisResult} 
+              onAnalyzeSubmit={handleSubmit(processSubmit)} 
               isActionPending={isActionPending}
               onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
               onOpenReportDialog={handleOpenReportDialog}
+              onAddNewLink={handleAddNewLink} // Pass handler for "Add Another Link"
               currentDistanceKm={liveDistanceKm}
               selectedLinkClearanceThreshold={selectedLink?.clearanceThreshold}
               selectedLinkPointA={selectedLink?.pointA}
@@ -517,7 +498,7 @@ function HomePageContent() {
             />
         </FormProvider>
 
-        <HistoryPanel // Old history panel
+        <HistoryPanel 
           historyList={historyList}
           onLoadHistoryItem={handleLoadHistoryItem}
           onClearHistory={handleClearHistory}
@@ -527,10 +508,9 @@ function HomePageContent() {
          <ReportSelectionDialog
             isOpen={isReportDialogOpen}
             onOpenChange={setIsReportDialogOpen}
-            // Pass all analyzed links from context for report selection
             linksForReport={links.filter(l => l.analysisResult && !l.isDirty).map(l => ({
-                id: l.id, // Use LOSLink id
-                name: `${l.pointA.name} - ${l.pointB.name}`,
+                id: l.id, 
+                name: `${l.pointA.name || 'Site A'} - ${l.pointB.name || 'Site B'}`,
                 analysis: l.analysisResult!
             }))}
             onGenerateReport={handleGenerateSelectedReports}

@@ -3,10 +3,11 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, LoadScript, Marker, Polyline, OverlayView } from '@react-google-maps/api';
-import { Loader2 } from 'lucide-react';
-import type { PointCoordinates, AnalysisResult, LOSLink } from '@/types'; // Added LOSLink
+import { Loader2, SearchIcon } from 'lucide-react'; // Added SearchIcon
+import type { PointCoordinates, AnalysisResult, LOSLink } from '@/types'; 
 import { cn } from '@/lib/utils';
-import { calculateDistanceKm } from '@/lib/los-calculator'; // Import for live distance
+import { calculateDistanceKm } from '@/lib/los-calculator'; 
+import { Input } from '@/components/ui/input'; // For search input
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
 
@@ -19,17 +20,17 @@ const defaultZoom = 5;
 const STYLES = {
   mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
   distanceOverlayLabel: "p-1.5 text-sm font-bold text-white bg-primary/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap",
+  mapSearchInputContainer: "absolute top-3 left-1/2 -translate-x-1/2 z-10 w-full max-w-sm px-4 print:hidden",
+  mapSearchInput: "w-full p-2 text-sm rounded-md shadow-lg border-0 focus:ring-2 focus:ring-primary bg-background/90 placeholder:text-muted-foreground",
 };
 
 interface InteractiveMapProps {
-  links: LOSLink[]; // Now receives an array of links
+  links: LOSLink[]; 
   selectedLinkId: string | null;
-  onMapClick?: (event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => void; // May need rework for multi-link
+  onMapClick?: (event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => void; 
   onMarkerDrag?: (event: google.maps.MapMouseEvent, linkId: string, pointId: 'pointA' | 'pointB') => void;
-  onLinkSelect?: (linkId: string | null) => void; // Callback to select a link
+  onLinkSelect?: (linkId: string | null) => void; 
   mapContainerClassName?: string;
-  // analysisResult and isStale are now per-link, managed in context
-  // currentDistanceKm can be calculated per link or for selected link
 }
 
 const getPixelPositionOffset = (width: number, height: number) => ({
@@ -46,7 +47,7 @@ const getCustomMarkerIcon = (label: string, color: string, isMapLoaded: boolean)
   if (isMapLoaded && typeof window !== 'undefined' && window.google && window.google.maps) {
     return {
       path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-      fillColor: color, // Use link's color
+      fillColor: color, 
       fillOpacity: 1,
       strokeColor: '#424242',
       strokeWeight: 1.5,
@@ -68,41 +69,68 @@ export default function InteractiveMap({
   mapContainerClassName = "w-full h-full",
 }: InteractiveMapProps) {
   const mapRef = useRef<google.maps.Map | null>(null);
+  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null); // Ref for the input element
   const [isMapInstanceLoaded, setIsMapInstanceLoaded] = useState(false);
   const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
 
 
   const handleActualMapLoad = useCallback((mapInstance: google.maps.Map) => {
     mapRef.current = mapInstance;
-    if (window.google && window.google.maps) {
-      mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
-      mapInstance.setOptions({
-        streetViewControl: true,
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-          position: google.maps.ControlPosition.TOP_RIGHT,
-        },
-        fullscreenControl: true,
-        zoomControl: true,
-        gestureHandling: 'cooperative',
-        clickableIcons: false,
-      });
+    if (window.google && window.google.maps && window.google.maps.places && searchInputRef.current) {
+        mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+        mapInstance.setOptions({
+            streetViewControl: true,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            position: google.maps.ControlPosition.TOP_RIGHT,
+            },
+            fullscreenControl: true,
+            zoomControl: true,
+            gestureHandling: 'cooperative',
+            clickableIcons: false,
+        });
+
+        // Initialize SearchBox
+        const searchBox = new google.maps.places.SearchBox(searchInputRef.current);
+        searchBoxRef.current = searchBox;
+        mapInstance.controls[google.maps.ControlPosition.TOP_LEFT].push(searchInputRef.current.parentElement as HTMLElement);
+
+
+        searchBox.addListener('places_changed', () => {
+            const places = searchBox.getPlaces();
+            if (!places || places.length === 0) {
+                return;
+            }
+            const bounds = new google.maps.LatLngBounds();
+            places.forEach(place => {
+                if (!place.geometry || !place.geometry.location) {
+                return;
+                }
+                if (place.geometry.viewport) {
+                bounds.union(place.geometry.viewport);
+                } else {
+                bounds.extend(place.geometry.location);
+                }
+            });
+            mapRef.current?.fitBounds(bounds);
+        });
     }
     setIsMapInstanceLoaded(true);
   }, []);
 
   const handleMapUnmount = useCallback(() => {
+    if (searchBoxRef.current && window.google) {
+        google.maps.event.clearInstanceListeners(searchBoxRef.current);
+    }
     mapRef.current = null;
     setIsMapInstanceLoaded(false);
   }, []);
 
   const handleInternalMapClick = useCallback((event: google.maps.MapMouseEvent) => {
     if (onMapClick) {
-      // If a link is selected, delegate to page.tsx to decide point placement.
-      // If no link is selected, page.tsx might initiate a new link.
       onMapClick(event, currentMapClickTarget); 
-      // Toggling point target might be handled by parent based on new link state
       // setCurrentMapClickTarget(prev => prev === 'pointA' ? 'pointB' : 'pointA');
     }
   }, [onMapClick, currentMapClickTarget]);
@@ -148,9 +176,22 @@ export default function InteractiveMap({
 
 
   return (
-    <div className={`${mapContainerClassName}`}>
+    <div className={`${mapContainerClassName} relative`}>
+       {/* Search Input Container - to be pushed to map controls */}
+      <div className={STYLES.mapSearchInputContainer} style={{ display: isMapInstanceLoaded ? 'block' : 'none' }}>
+        <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search location..."
+            className={cn(STYLES.mapSearchInput, "pl-9")}
+            />
+        </div>
+      </div>
       <LoadScript
         googleMapsApiKey={GOOGLE_MAPS_API_KEY}
+        libraries={['places']} // Ensure 'places' library is loaded
         loadingElement={
           <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
             <Loader2 className="w-12 h-12 animate-spin mb-3" />
@@ -168,7 +209,15 @@ export default function InteractiveMap({
           onLoad={handleActualMapLoad}
           onUnmount={handleMapUnmount}
           onClick={handleInternalMapClick}
-          options={{}}
+          options={{
+            // Disable default SearchBox control if you are adding a custom one
+            // mapTypeControlOptions: {
+            //    mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.SATELLITE, google.maps.MapTypeId.HYBRID, google.maps.MapTypeId.TERRAIN],
+            //    style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            //    position: google.maps.ControlPosition.TOP_RIGHT,
+            // },
+            // controls TODO: remove default search box.
+          }}
         >
           {links.map((link, index) => {
             const pALat = typeof link.pointA.lat === 'number' ? link.pointA.lat : undefined;
@@ -278,3 +327,5 @@ export default function InteractiveMap({
 
 // Default link colors if not specified in LOSLink object (should be assigned by context)
 const LINK_COLORS = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFA1'];
+
+    
