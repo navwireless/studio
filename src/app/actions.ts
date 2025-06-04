@@ -28,7 +28,7 @@ const AnalysisFormSchema = z.object({
 
 
 /**
- * Fetches elevation data from Google Elevation API.
+ * Fetches elevation data from Google Elevation API with a timeout.
  */
 async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
   if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "") {
@@ -38,10 +38,19 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
   const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
   const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY.trim()}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+
   let response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId); // Clear timeout if fetch completes or errors normally
   } catch (networkError) {
+    clearTimeout(timeoutId); // Ensure timeout is cleared on error
+    if (networkError instanceof Error && networkError.name === 'AbortError') {
+      console.error("Google Elevation API request timed out after 30 seconds.");
+      throw new Error("Google Elevation API request timed out. The service might be temporarily unavailable or there could be network issues.");
+    }
     console.error("Network error fetching elevation data:", networkError);
     throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${networkError instanceof Error ? networkError.message : String(networkError)}`);
   }
@@ -136,8 +145,8 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
     if (errorMessage.includes("Google Elevation API key is not configured")) {
         return { error: "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console."};
     }
-    if (errorMessage.includes("Google Elevation API request failed") || errorMessage.includes("Google Elevation API error")) {
-        return { error: `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, or billing issues with Google Cloud Platform. Details: ${errorMessage}` };
+    if (errorMessage.includes("Google Elevation API request failed") || errorMessage.includes("Google Elevation API error") || errorMessage.includes("Google Elevation API request timed out")) {
+        return { error: `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${errorMessage}` };
     }
      if (errorMessage.includes("Network error while trying to reach Google Elevation API")) {
         return { error: errorMessage }; // Pass through the detailed network error
@@ -145,3 +154,4 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
     return { error: `Analysis failed due to an unexpected issue: ${errorMessage}` };
   }
 }
+
