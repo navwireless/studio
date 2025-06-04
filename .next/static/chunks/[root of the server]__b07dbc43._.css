@@ -795,6 +795,14 @@ body {
   margin-top: 1.5rem;
 }
 
+.mb-2 {
+  margin-bottom: .5rem;
+}
+
+.mt-auto {
+  margin-top: auto;
+}
+
 .block {
   display: block;
 }
@@ -930,6 +938,10 @@ body {
 
 .max-h-screen {
   max-height: 100vh;
+}
+
+.max-h-\[90vh\] {
+  max-height: 90vh;
 }
 
 .min-h-0 {
@@ -1196,6 +1208,10 @@ body {
   cursor: pointer;
 }
 
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
 .touch-none {
   touch-action: none;
 }
@@ -1336,6 +1352,12 @@ body {
   --tw-space-y-reverse: 0;
   margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+
+.space-x-3 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(.75rem * var(--tw-space-x-reverse));
+  margin-left: calc(.75rem * calc(1 - var(--tw-space-x-reverse)));
 }
 
 .overflow-auto {
@@ -1485,6 +1507,15 @@ body {
   border-color: #fff3;
 }
 
+.border-amber-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(245 158 11 / var(--tw-border-opacity, 1));
+}
+
+.border-amber-500\/30 {
+  border-color: #f59e0b4d;
+}
+
 .border-l-transparent {
   border-left-color: #0000;
 }
@@ -1613,6 +1644,14 @@ body {
   background-color: #eab308cc;
 }
 
+.bg-amber-400\/80 {
+  background-color: #fbbf24cc;
+}
+
+.bg-amber-500\/10 {
+  background-color: #f59e0b1a;
+}
+
 .fill-current {
   fill: currentColor;
 }
@@ -1651,6 +1690,10 @@ body {
 
 .p-\[1px\] {
   padding: 1px;
+}
+
+.p-2\.5 {
+  padding: .625rem;
 }
 
 .px-1 {
@@ -1718,6 +1761,11 @@ body {
   padding-bottom: 1.5rem;
 }
 
+.py-10 {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
 .pb-3 {
   padding-bottom: .75rem;
 }
@@ -1752,6 +1800,10 @@ body {
 
 .pt-3 {
   padding-top: .75rem;
+}
+
+.pt-4 {
+  padding-top: 1rem;
 }
 
 .text-left {
@@ -1958,6 +2010,11 @@ body {
 .text-yellow-900 {
   --tw-text-opacity: 1;
   color: rgb(113 63 18 / var(--tw-text-opacity, 1));
+}
+
+.text-amber-900 {
+  --tw-text-opacity: 1;
+  color: rgb(120 53 15 / var(--tw-text-opacity, 1));
 }
 
 .underline {
@@ -2446,6 +2503,10 @@ body {
 
 .hover\:bg-slate-900\/10:hover {
   background-color: #0f172a1a;
+}
+
+.hover\:bg-amber-500\/20:hover {
+  background-color: #f59e0b33;
 }
 
 .hover\:text-accent-foreground:hover {
@@ -3116,6 +3177,10 @@ body {
 
   .sm\:max-w-sm {
     max-width: 24rem;
+  }
+
+  .sm\:max-w-\[525px\] {
+    max-width: 525px;
   }
 
   .sm\:flex-row {

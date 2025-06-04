@@ -111,7 +111,7 @@ interface ProfilePanelMiddleColumnProps {
   pointAName: string;
   pointBName: string;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
-  onGenerateReport: () => void;
+  onOpenReportDialog: () => void; // Changed from onGenerateReport
 }
 
 const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
@@ -127,7 +127,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   pointAName,
   pointBName,
   onTowerHeightChangeFromGraph,
-  onGenerateReport,
+  onOpenReportDialog, // Changed
 }) => {
   const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
   const minRequiredClearance = parseFloat(watchedClearanceThresholdString); 
@@ -217,11 +217,11 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             </Button>
         </div>
         
-        {analysisResult && !isStale && !isActionPending && (
+        {(analysisResult || isStale === false) && !isActionPending && ( // Show if there is a result OR if it's not stale (e.g. initial load)
           <div className="order-6 flex-grow-0 md:flex-grow-0 text-center">
             <Button
               type="button" 
-              onClick={onGenerateReport}
+              onClick={onOpenReportDialog} // Changed
               size="sm"
               variant="outline"
               className="text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight"
@@ -309,7 +309,7 @@ interface BottomPanelProps {
   getValues: UseFormGetValues<AnalysisFormValues>;
   setValue: UseFormSetValue<AnalysisFormValues>;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
-  onGenerateReport: () => void;
+  onOpenReportDialog: () => void; // Changed
 }
 
 export default function BottomPanel({ 
@@ -329,7 +329,7 @@ export default function BottomPanel({
   getValues, 
   setValue, 
   onTowerHeightChangeFromGraph,
-  onGenerateReport,
+  onOpenReportDialog, // Changed
 }: BottomPanelProps) {
   
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
@@ -353,13 +353,13 @@ export default function BottomPanel({
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[33vh]" : "h-0" // Fixed height using vh
+          isContentExpanded && isPanelGloballyVisible ? "h-[33vh]" : "h-0" 
         )}
       >
-        <div className="p-1.5 md:p-2 h-full overflow-hidden"> {/* Panel itself does not scroll vertically */}
-           <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar"> {/* This inner div scrolls horizontally on mobile */}
+        <div className="p-1.5 md:p-2 h-full overflow-hidden"> 
+           <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar"> 
             
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1"> {/* w-auto for shrinkwrap on mobile */}
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-1"> 
               <SiteInputGroup 
                 id="pointA" 
                 title={pointAName || "Site A"} 
@@ -371,7 +371,7 @@ export default function BottomPanel({
               />
             </div>
             
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start order-2"> {/* w-auto for shrinkwrap on mobile */}
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start order-2"> 
               <ProfilePanelMiddleColumn
                 analysisResult={analysisResult}
                 isStale={isStale}
@@ -385,11 +385,11 @@ export default function BottomPanel({
                 pointAName={pointAName || "Site A"}
                 pointBName={pointBName || "Site B"}
                 onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
-                onGenerateReport={onGenerateReport}
+                onOpenReportDialog={onOpenReportDialog} // Changed
               />
             </div>
             
-            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3"> {/* w-auto for shrinkwrap on mobile */}
+            <div className="flex-shrink-0 w-auto md:w-auto snap-start p-1 md:p-0 order-3"> 
               <SiteInputGroup 
                 id="pointB" 
                 title={pointBName || "Site B"} 

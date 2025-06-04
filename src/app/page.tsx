@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback, useId } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, Waypoints, MapPin } from 'lucide-react'; 
+import { Loader2, AlertTriangle, Waypoints } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
@@ -16,6 +16,7 @@ import AppHeader from '@/components/layout/app-header';
 import HistoryPanel from '@/components/layout/history-panel';
 import { calculateDistanceKm } from '@/lib/los-calculator';
 import { generateReportDocx } from '@/lib/report-generator';
+import ReportSelectionDialog from '@/components/fso/report-selection-dialog';
 
 
 const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
@@ -46,6 +47,7 @@ export default function Home() {
   const [historyList, setHistoryList] = useState<AnalysisResult[]>([]);
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
   const [liveDistanceKm, setLiveDistanceKm] = useState<number | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
 
   const form = useForm<AnalysisFormValues>({
@@ -54,7 +56,7 @@ export default function Home() {
     mode: 'onBlur',
   });
 
-  const { register, handleSubmit, control, formState: { errors: clientFormErrors, dirtyFields }, getValues, setValue, reset, watch } = form;
+  const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
 
   const watchedPointA = watch('pointA');
   const watchedPointB = watch('pointB');
@@ -80,7 +82,6 @@ export default function Home() {
     });
   }, [formAction]);
 
-  // Effect to handle server action results
   useEffect(() => {
     if (serverState) {
       if (serverState.error) {
@@ -134,7 +135,6 @@ export default function Home() {
     }
   }, [serverState, toast, reset, getValues, isAnalysisPanelGloballyOpen, setValue]);
   
-  // Effect to determine if form data is stale compared to current analysisResult
    useEffect(() => {
     const formValues = getValues();
     const currentPointA = formValues.pointA;
@@ -142,18 +142,17 @@ export default function Home() {
     const currentClearanceStr = formValues.clearanceThreshold;
 
     let stale = false;
-    const isValidNumeric = (val: string) => val && !isNaN(parseFloat(val));
+    const isValidNumeric = (val: string | number) => val != null && val !== '' && !isNaN(parseFloat(String(val)));
     const isPointDataSufficientForStalenessCheck = (p: PointFormInputType) => 
-        isValidNumeric(p.lat) && isValidNumeric(p.lng) && typeof p.height === 'number';
+        isValidNumeric(p.lat) && isValidNumeric(p.lng) && isValidNumeric(p.height);
 
     if (analysisResult && analysisResult.pointA && analysisResult.pointB) {
-        // Analysis exists, check if form has diverged
         const formLatA = parseFloat(currentPointA.lat);
         const formLngA = parseFloat(currentPointA.lng);
-        const formHeightA = currentPointA.height;
+        const formHeightA = currentPointA.height; // Already a number
         const formLatB = parseFloat(currentPointB.lat);
         const formLngB = parseFloat(currentPointB.lng);
-        const formHeightB = currentPointB.height;
+        const formHeightB = currentPointB.height; // Already a number
         const formClearanceNum = parseFloat(currentClearanceStr);
 
         if (
@@ -167,8 +166,7 @@ export default function Home() {
         ) {
             stale = true;
         }
-    } else { // No analysisResult exists
-        // If form has enough data to perform an analysis, it's "stale" in the sense that it's ready for a new one
+    } else { 
         if (isPointDataSufficientForStalenessCheck(currentPointA) &&
             isPointDataSufficientForStalenessCheck(currentPointB) &&
             isValidNumeric(currentClearanceStr)) {
@@ -194,7 +192,6 @@ export default function Home() {
       } else {
         setLiveDistanceKm(null);
       }
-      // No automatic analysis submission here
     }
   }, [setValue, getValues]);
 
@@ -212,7 +209,6 @@ export default function Home() {
       } else {
         setLiveDistanceKm(null);
       }
-      // No automatic analysis submission here
     }
   }, [setValue, getValues]);
   
@@ -285,7 +281,7 @@ export default function Home() {
         },
         clearanceThreshold: itemToLoad.clearanceThresholdUsed.toString(),
       };
-      reset(formValuesFromHistory); // Reset form to history values
+      reset(formValuesFromHistory); 
       setLiveDistanceKm(itemToLoad.distanceKm);
       setIsStale(false); 
       setIsAnalysisPanelGloballyOpen(true); 
@@ -299,19 +295,43 @@ export default function Home() {
     toast({ title: "History Cleared" });
   };
 
-  const handleGenerateReport = async () => {
-    if (analysisResult && !isStale) {
-      const formData = getValues();
+  const handleOpenReportDialog = () => {
+    if (historyList.length === 0 && !analysisResult) {
+        toast({ title: "No Data for Report", description: "Please perform an analysis or load history first.", variant: "default" });
+        return;
+    }
+    setIsReportDialogOpen(true);
+  };
+
+  const handleGenerateSelectedReports = async (selectedIds: string[]) => {
+    setIsReportDialogOpen(false);
+    if (selectedIds.length === 0) {
+      toast({ title: "No Links Selected", description: "Please select at least one link to generate a report.", variant: "default" });
+      return;
+    }
+
+    const reportsToGenerate = historyList.filter(item => selectedIds.includes(item.id));
+    if (reportsToGenerate.length === 0) {
+        // If current analysis result should be considered even if not explicitly in history (e.g. first analysis)
+        if (analysisResult && !isStale && selectedIds.includes(analysisResult.id)) { // Assuming current analysisResult also has an ID
+           reportsToGenerate.push(analysisResult);
+        } else if (analysisResult && !isStale && selectedIds.length === 1 && selectedIds[0] === 'current_analysis_placeholder_id') { // Special case if dialog allows current
+           reportsToGenerate.push(analysisResult);
+        }
+    }
+
+
+    if (reportsToGenerate.length > 0) {
       try {
-        toast({ title: "Generating Report...", description: "Please wait." });
-        await generateReportDocx(analysisResult, formData);
+        toast({ title: "Generating Report...", description: `Processing ${reportsToGenerate.length} link(s). Please wait.` });
+        await generateReportDocx(reportsToGenerate); // Pass array of AnalysisResult
         toast({ title: "Report Generated", description: "Your DOCX report has been downloaded." });
       } catch (error) {
         console.error("Error generating report:", error);
         toast({ title: "Report Generation Failed", description: String(error), variant: "destructive" });
       }
     } else {
-      toast({ title: "Cannot Generate Report", description: "Please complete or re-analyze the link first.", variant: "destructive" });
+      toast({ title: "No Valid Links for Report", description: "Could not find selected links for report generation.", variant: "destructive" });
     }
   };
 
@@ -376,7 +396,7 @@ export default function Home() {
                   <Button 
                     variant="outline" 
                     className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-                    onClick={(e) => e.stopPropagation()} 
+                    onClick={(e) => { e.stopPropagation(); /* Clear serverState.error here if needed */ }} 
                   >
                     Dismiss
                   </Button>
@@ -402,7 +422,7 @@ export default function Home() {
           getValues={getValues}
           setValue={setValue}
           onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
-          onGenerateReport={handleGenerateReport} // Pass down the handler
+          onOpenReportDialog={handleOpenReportDialog}
         />
         <HistoryPanel 
           historyList={historyList}
@@ -411,7 +431,16 @@ export default function Home() {
           isOpen={isHistoryPanelOpen}
           onToggle={handleToggleHistoryPanel}
         />
+         <ReportSelectionDialog
+            isOpen={isReportDialogOpen}
+            onOpenChange={setIsReportDialogOpen}
+            historyList={historyList}
+            currentAnalysisResult={analysisResult}
+            isCurrentAnalysisStale={isStale}
+            onGenerateReport={handleGenerateSelectedReports}
+        />
       </div>
     </>
   );
 }
+
