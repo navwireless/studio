@@ -28,15 +28,17 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
 
   // Value for the Slider's thumb position. Always an integer.
   // Derives from RHF's `height`. If `height` is not a finite number, defaults to `min`.
-  const sliderDisplayValue = Number.isFinite(height) ? Math.round(height) : min;
+  const sliderValueForProp = Number.isFinite(height) ? Math.round(height) : min;
+  const currentRoundedRhfHeight = Number.isFinite(height) ? Math.round(height) : min;
+
 
   // Handler for when the user finishes interacting with the slider
-  const handleSliderCommit = (newSliderValues: number[]) => {
-    // Slider with step=1 should emit integer values in newSliderValues[0]
-    // We round it just to be absolutely sure it's an integer.
-    const newIntValue = Math.round(newSliderValues[0]);
-    // Update RHF state with the new integer value.
-    onChange(newIntValue);
+  const handleSliderValueCommit = (newSliderValues: number[]) => {
+    const committedIntValue = Math.round(newSliderValues[0]);
+    // Only call onChange if the committed integer value is different from the current rounded RHF height.
+    if (currentRoundedRhfHeight !== committedIntValue) {
+      onChange(committedIntValue);
+    }
   };
 
   // Handler for direct input field changes
@@ -44,24 +46,40 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
     const rawValue = event.target.value;
     if (rawValue === "") {
       // If input is cleared, send NaN to RHF. Schema validation can handle if it's required.
-      onChange(NaN);
+      // Check if current RHF height is already effectively NaN (or represented by min) before calling onChange
+      if (Number.isFinite(height)) { // Only change if it wasn't already NaN/defaulted
+          onChange(NaN);
+      }
       return;
     }
     const numValue = parseFloat(rawValue);
     // Send the parsed float (or NaN if parsing fails) to RHF.
     // This allows temporary float values in the form state from direct input.
-    onChange(numValue);
+    // Avoid calling onChange if numValue is the same as current height to prevent loops during typing
+    if (height !== numValue) {
+        onChange(numValue);
+    }
   };
 
   // Handler for when the input field loses focus
-  const validateAndSetHeightOnBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+  const handleInputBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     let numValue = parseFloat(event.target.value);
+    let finalClampedIntValue: number;
+
     if (isNaN(numValue)) {
-      numValue = min; // Default to min if input is invalid or empty on blur
+      finalClampedIntValue = min; // Default to min if input is invalid or empty on blur
+    } else {
+      // On blur, round to the nearest integer and clamp it.
+      finalClampedIntValue = Math.max(min, Math.min(max, Math.round(numValue)));
     }
-    // On blur, round to the nearest integer and clamp it.
-    const finalValue = Math.max(min, Math.min(max, Math.round(numValue)));
-    onChange(finalValue);
+    
+    // Only call onChange if the final clamped integer value is different from the current rounded RHF height.
+    if (currentRoundedRhfHeight !== finalClampedIntValue) {
+      onChange(finalClampedIntValue);
+    } else if (!Number.isFinite(height) && finalClampedIntValue !== min) {
+      // If original RHF height was NaN and now it's a valid number different from min default
+      onChange(finalClampedIntValue);
+    }
   };
 
   return (
@@ -83,7 +101,7 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
           // or an empty string if height is NaN (e.g., after clearing the input).
           value={Number.isFinite(height) ? height.toString() : ""}
           onChange={handleInputChange}
-          onBlur={validateAndSetHeightOnBlur}
+          onBlur={handleInputBlur}
           min={min}
           max={max}
           step="any" // Allow any decimal input, rounding happens on blur or slider interaction
@@ -91,8 +109,8 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
         />
         <Slider
           id={`height-slider-${idSuffix}`}
-          value={[sliderDisplayValue]} // Slider always receives a rounded integer value
-          onValueCommit={handleSliderCommit} // Use onValueCommit
+          value={[sliderValueForProp]} // Slider always receives a rounded integer value
+          onValueCommit={handleSliderValueCommit} // Use onValueCommit
           min={min}
           max={max}
           step={step} // Slider step is 1
