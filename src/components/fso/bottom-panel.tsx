@@ -12,7 +12,6 @@ import CustomProfileChart from './custom-profile-chart';
 import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, FileText, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
-import TowerHeightControl from './tower-height-control'; // Import TowerHeightControl
 
 interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
@@ -55,25 +54,17 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
               <p className="text-xs text-destructive/80 mt-0.5">{clientFormErrors[id]?.coordinates?.message}</p>}
           </div>
           
-          <Controller
+           <Controller
             name={`${id}.height`}
             control={control}
-            render={({ field, fieldState }) => (
-              <>
-                <TowerHeightControl
-                  label="Tower Height"
-                  height={field.value}
-                  onChange={field.onChange}
-                  idSuffix={id}
-                />
-                {fieldState.error && (
-                  <p className="text-xs text-destructive/80 mt-0.5">{fieldState.error.message}</p>
-                )}
-              </>
+            render={({ field }) => (
+              <input type="hidden" {...field} />
             )}
           />
         </div>
-        {/* Removed: "Tower height adjusted via chart." text */}
+        <div className="text-[0.65rem] text-muted-foreground/70 italic mt-1.5">
+          Tower height adjusted via chart.
+        </div>
       </CardContent>
     </Card>
   );
@@ -203,7 +194,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             name="clearanceThreshold"
             control={control}
             render={({ field, fieldState: { error } }) => (
-              <>
               <Input
                 id="clearanceThresholdProfile"
                 type="number"
@@ -211,7 +201,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                 {...field}
                 className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
               />
-              </>
             )}
           />
         </div>
@@ -248,7 +237,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
       </div>
       {clientFormErrors.clearanceThreshold &&
-        <p className="text-xs text-destructive mt-0.5 text-center px-1">
+        <p className="text-xs text-destructive mt-0.5 text-center px-2">
           {clientFormErrors.clearanceThreshold.message}
         </p>
       }
@@ -342,8 +331,8 @@ export default function BottomPanel({
           isContentExpanded && isPanelGloballyVisible ? "h-[33vh] md:h-[35vh]" : "h-0"
         )}
       >
-        <div className="p-1.5 md:p-2 h-full overflow-hidden"> {/* Overall padding for content area */}
-          <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_0.8fr)_minmax(300px,_2.4fr)_minmax(200px,_0.8fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar"> {/* Added h-full here */}
+        <div className="p-1.5 md:p-2 h-full overflow-hidden">
+          <div className="flex flex-row md:grid md:grid-cols-[minmax(200px,_0.8fr)_minmax(300px,_2.4fr)_minmax(200px,_0.8fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
             <div className="flex-shrink-0 w-[calc(100vw-theme(spacing.12))] sm:w-[calc(100vw-theme(spacing.16))] md:w-auto snap-start order-1">
               <SiteInputGroup id="pointA" />
             </div>

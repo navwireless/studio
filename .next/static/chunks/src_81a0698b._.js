@@ -20,7 +20,7 @@ var { g: global, __dirname } = __turbopack_context__;
 {
 __turbopack_context__.v((parentImport) => {
     return Promise.all([
-  "static/chunks/_e4d5d3d5._.js",
+  "static/chunks/_58904b79._.js",
   "static/chunks/src_components_fso_bottom-panel_tsx_7b766f6f._.js"
 ].map((chunk) => __turbopack_context__.l(chunk))).then(() => {
         return parentImport("[project]/src/components/fso/bottom-panel.tsx [app-client] (ecmascript, next/dynamic entry)");
