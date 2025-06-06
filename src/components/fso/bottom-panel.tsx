@@ -24,7 +24,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({ id }) => {
   const cardStaticTitle = id === 'pointA' ? 'Point A' : 'Point B';
 
   return (
-    <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col w-full min-w-[280px] md:min-w-0">
+    <Card className="bg-transparent backdrop-blur-2px shadow-none border-0  flex flex-col w-full min-w-[280px] md:min-w-0">
       <CardHeader className="p-1">
         <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
           <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {cardStaticTitle}
@@ -331,7 +331,7 @@ export default function BottomPanel({
     <form 
       noValidate
       className={cn(
-        "fixed bottom-12 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
+        " bottom-12 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
         isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full",
         "z-[50]"
       )}

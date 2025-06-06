@@ -35,7 +35,7 @@ export default function RootLayout({
                    flex flex-col h-screen overflow-hidden`}
       >
         {/* AppHeader will be part of the children, typically in page.tsx */}
-        <main className="flex-1 overflow-hidden relative flex flex-col"> {/* Ensure main can flex its children */}
+        <main className="flex-1 overflow-hidden relative flex flex-col"> {/ * Ensure main can flex its children */}
           {children}
         </main>
         <Footer />

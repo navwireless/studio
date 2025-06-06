@@ -123,7 +123,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 ;
 ;
 // --- Google Elevation API Configuration ---
-// WARNING: Storing API keys directly in code is insecure for production. 
+// WARNING: Storing API keys directly in code is insecure for production.
 // Consider using environment variables and restricting API key usage.
 const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
 const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
@@ -162,7 +162,8 @@ const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_
             throw new Error("Google Elevation API request timed out. The service might be temporarily unavailable or there could be network issues.");
         }
         console.error("Network error fetching elevation data:", networkError);
-        throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${networkError instanceof Error ? networkError.message : String(networkError)}`);
+        const networkErrorMessageSource = networkError instanceof Error ? networkError.message : networkError;
+        throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${String(networkErrorMessageSource)}`);
     }
     if (!response.ok) {
         let errorBody = "Could not retrieve error body.";
@@ -178,8 +179,9 @@ const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_
     try {
         data = await response.json();
     } catch (jsonError) {
-        console.error("Failed to parse JSON response from Google Elevation API:", jsonError);
-        throw new Error(`Failed to parse response from Google Elevation API. Details: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+        const jsonErrorMsgSource = jsonError instanceof Error ? jsonError.message : jsonError;
+        console.error("Failed to parse JSON response from Google Elevation API:", jsonErrorMsgSource);
+        throw new Error(`Failed to parse response from Google Elevation API. Details: ${String(jsonErrorMsgSource)}`);
     }
     if (data.status !== 'OK') {
         console.error("Google Elevation API error:", data.status, data.error_message);
@@ -198,68 +200,86 @@ const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_
         }));
 }
 async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prevState, formData) {
-    const rawFormData = {
-        pointA: {
-            lat: formData.get('pointA.lat'),
-            lng: formData.get('pointA.lng'),
-            height: formData.get('pointA.height')
-        },
-        pointB: {
-            lat: formData.get('pointB.lat'),
-            lng: formData.get('pointB.lng'),
-            height: formData.get('pointB.height')
-        },
-        clearanceThreshold: formData.get('clearanceThreshold')
-    };
-    const validationResult = AnalysisFormSchema.safeParse(rawFormData);
-    if (!validationResult.success) {
-        console.error("Validation errors:", validationResult.error.flatten().fieldErrors);
-        return {
-            error: "Invalid input.",
-            fieldErrors: validationResult.error.flatten().fieldErrors
-        };
-    }
-    const validatedData = validationResult.data;
-    const params = {
-        pointA: {
-            lat: parseFloat(validatedData.pointA.lat),
-            lng: parseFloat(validatedData.pointA.lng),
-            towerHeight: parseFloat(validatedData.pointA.height)
-        },
-        pointB: {
-            lat: parseFloat(validatedData.pointB.lat),
-            lng: parseFloat(validatedData.pointB.lng),
-            towerHeight: parseFloat(validatedData.pointB.height)
-        },
-        clearanceThreshold: parseFloat(validatedData.clearanceThreshold)
-    };
     try {
-        const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
-        const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["analyzeLOS"])(params, elevationData);
-        return {
-            ...result,
-            message: `${result.message} Using Google Elevation API data.`
+        const rawFormData = {
+            pointA: {
+                lat: formData.get('pointA.lat'),
+                lng: formData.get('pointA.lng'),
+                height: formData.get('pointA.height')
+            },
+            pointB: {
+                lat: formData.get('pointB.lat'),
+                lng: formData.get('pointB.lng'),
+                height: formData.get('pointB.height')
+            },
+            clearanceThreshold: formData.get('clearanceThreshold')
         };
-    } catch (err) {
-        console.error("Error during LOS analysis:", err);
-        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
-        if (errorMessage.includes("Google Elevation API key is not configured")) {
+        const validationResult = AnalysisFormSchema.safeParse(rawFormData);
+        if (!validationResult.success) {
+            console.error("Validation errors:", validationResult.error.flatten().fieldErrors);
+            const fieldErrors = validationResult.error.flatten().fieldErrors;
+            const sanitizedFieldErrors = {};
+            for(const field in fieldErrors){
+                const messages = fieldErrors[field];
+                if (messages) {
+                    sanitizedFieldErrors[field] = messages.map((msg)=>String(msg));
+                }
+            }
             return {
-                error: "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console."
+                error: "Invalid input.",
+                fieldErrors: sanitizedFieldErrors
             };
         }
-        if (errorMessage.includes("Google Elevation API request failed") || errorMessage.includes("Google Elevation API error") || errorMessage.includes("Google Elevation API request timed out")) {
+        const validatedData = validationResult.data;
+        const params = {
+            pointA: {
+                lat: parseFloat(validatedData.pointA.lat),
+                lng: parseFloat(validatedData.pointA.lng),
+                towerHeight: parseFloat(validatedData.pointA.height)
+            },
+            pointB: {
+                lat: parseFloat(validatedData.pointB.lat),
+                lng: parseFloat(validatedData.pointB.lng),
+                towerHeight: parseFloat(validatedData.pointB.height)
+            },
+            clearanceThreshold: parseFloat(validatedData.clearanceThreshold)
+        };
+        try {
+            const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
+            const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["analyzeLOS"])(params, elevationData);
             return {
-                error: `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${errorMessage}`
+                ...result,
+                message: `${result.message} Using Google Elevation API data.`
+            };
+        } catch (err) {
+            console.error("Error during LOS analysis (inner catch):", err);
+            const errorMessageSource = err instanceof Error ? err.message : err;
+            const errorMessageString = String(errorMessageSource);
+            if (errorMessageString.includes("Google Elevation API key is not configured")) {
+                return {
+                    error: "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console."
+                };
+            }
+            if (errorMessageString.includes("Google Elevation API request failed") || errorMessageString.includes("Google Elevation API error") || errorMessageString.includes("Google Elevation API request timed out")) {
+                return {
+                    error: `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${errorMessageString}`
+                };
+            }
+            if (errorMessageString.includes("Network error while trying to reach Google Elevation API")) {
+                return {
+                    error: errorMessageString
+                };
+            }
+            return {
+                error: `Analysis failed due to an unexpected issue: ${errorMessageString}`
             };
         }
-        if (errorMessage.includes("Network error while trying to reach Google Elevation API")) {
-            return {
-                error: errorMessage
-            }; // Pass through the detailed network error
-        }
+    } catch (e) {
+        console.error("Unhandled error in performLosAnalysis (outer catch):", e);
+        const errorMessageSource = e instanceof Error ? e.message : e;
+        const errorMessageString = String(errorMessageSource);
         return {
-            error: `Analysis failed due to an unexpected issue: ${errorMessage}`
+            error: `An unexpected system error occurred: ${errorMessageString}`
         };
     }
 }
