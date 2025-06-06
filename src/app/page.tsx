@@ -182,7 +182,7 @@ function HomePageContent() {
             newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold;
 
         if (detailsChanged) {
-          updateLinkDetails(selectedLinkId, newDetails);
+          updateLinkDetails(selectedLinkId, { ...newDetails, isDirty: true });
         }
       }
     });
@@ -202,7 +202,7 @@ function HomePageContent() {
     }
 
     const cachedResult = getCachedAnalysis(selectedLinkId);
-    if (cachedResult) {
+    if (cachedResult && !currentLink.isDirty) { // Only use cache if link is not dirty
       updateLinkAnalysis(selectedLinkId, cachedResult); 
       toast({ title: "Analysis Loaded from Cache", description: cachedResult.message });
       setIsAnalysisPanelGloballyOpen(true);
@@ -258,12 +258,19 @@ function HomePageContent() {
 
   useEffect(() => {
     if (serverState) {
-      if (serverState.error) {
-        setDisplayedError(serverState.error);
-        setDisplayedFieldErrors(serverState.fieldErrors || null);
-      } else if ('losPossible' in serverState) {
+      if (serverState instanceof Error) {
+        // Handle direct Error objects thrown by the action
+        setDisplayedError(String(serverState.message || "An unexpected server error occurred."));
+        setDisplayedFieldErrors(null); // No field errors if it's a generic Error
+      } else if (serverState.error) {
+        // Handle custom error structure { error: string, fieldErrors?: any }
+        setDisplayedError(String(serverState.error));
+        setDisplayedFieldErrors(serverState.fieldErrors && typeof serverState.fieldErrors === 'object' ? serverState.fieldErrors : null);
+      } else if ('losPossible' in serverState) { 
+        // serverState is AnalysisResult (success)
         setDisplayedError(null);
         setDisplayedFieldErrors(null);
+        // Success state is handled in the next useEffect that depends on selectedLinkId and serverState
       }
     }
   }, [serverState]);
@@ -274,9 +281,14 @@ function HomePageContent() {
     const currentLink = getLinkById(selectedLinkId);
     if (!currentLink) return;
 
-    if (serverState?.error) {
+    // Check if serverState indicates an error (either direct Error or our custom structure)
+    const isErrorState = serverState instanceof Error || (serverState && serverState.error);
+
+    if (isErrorState) {
+        // Error state handled by previous useEffect, just mark link as dirty if needed
         updateLinkDetails(selectedLinkId, { ...currentLink, analysisResult: undefined, isDirty: true });
     } else if (serverState && 'losPossible' in serverState && currentLink.isDirty) { 
+        // serverState is a successful AnalysisResult and the link was dirty
         const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
         const currentFormData = getValues();
         const newAnalysisResult: AnalysisResult = {
@@ -311,8 +323,9 @@ function HomePageContent() {
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     const currentSelectedLink = getLinkById(selectedLinkId || '');
+    if (!currentSelectedLink) return; 
 
-    if (event.latLng && currentSelectedLink) {
+    if (event.latLng) {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
       const fieldToUpdate = pointId === 'pointA' ? 'pointA' : 'pointB';
@@ -324,11 +337,7 @@ function HomePageContent() {
       };
       updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails, isDirty: true });
     }
-     // Removed: No automatic link creation on map click if no link is selected
-     // else if (event.latLng && !currentSelectedLink) {
-     //    const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
-     // }
-  }, [selectedLinkId, updateLinkDetails, addLink, getLinkById]);
+  }, [selectedLinkId, updateLinkDetails, getLinkById]);
 
   const handleMarkerDrag = useCallback((event: google.maps.MapMouseEvent, linkId: string, pointId: 'pointA' | 'pointB') => {
     if (event.latLng) {
@@ -357,7 +366,7 @@ function HomePageContent() {
       };
       updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails, isDirty: true });
     }
-  }, [selectedLinkId, getLinkById, updateLinkDetails, handleSubmit, processSubmit, getValues]);
+  }, [selectedLinkId, getLinkById, updateLinkDetails]);
 
   const toggleGlobalPanelVisibility = useCallback(() => {
      setIsAnalysisPanelGloballyOpen(prev => {
@@ -509,7 +518,7 @@ function HomePageContent() {
           />
         </div>
 
-        {!isAnalysisPanelGloballyOpen && !selectedLinkId && (
+        {!isAnalysisPanelGloballyOpen && !selectedLinkId && links.length === 0 && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
             <Button
               onClick={handleAddNewLink}
@@ -569,7 +578,7 @@ function HomePageContent() {
               onToggleGlobalVisibility={toggleGlobalPanelVisibility}
               isContentExpanded={isBottomPanelContentExpanded}
               onToggleContentExpansion={toggleBottomPanelContentExpansion}
-              isStale={selectedLink?.isDirty ?? !selectedLink?.analysisResult}
+              isStale={(selectedLink?.isDirty ?? false) || (!selectedLink?.analysisResult && !!selectedLink)}
               onAnalyzeSubmit={handleSubmit(processSubmit)}
               isActionPending={isActionPending}
               onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
@@ -612,4 +621,3 @@ export default function Home() {
   );
 }
 
-    
