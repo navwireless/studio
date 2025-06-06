@@ -110,7 +110,7 @@ function analyzeLOS(params, elevationData) {
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-/* __next_internal_action_entry_do_not_use__ {"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"} */ __turbopack_context__.s({
+/* __next_internal_action_entry_do_not_use__ [{"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"},"",""] */ __turbopack_context__.s({
     "performLosAnalysis": (()=>performLosAnalysis)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/server-reference.js [app-rsc] (ecmascript)");
@@ -199,7 +199,7 @@ const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_
             resolution: sample.resolution
         }));
 }
-async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prevState, formData) {
+async function performLosAnalysis(prevState, formData) {
     try {
         const rawFormData = {
             pointA: {
@@ -220,15 +220,15 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
             const fieldErrors = validationResult.error.flatten().fieldErrors;
             const sanitizedFieldErrors = {};
             for(const field in fieldErrors){
-                const messages = fieldErrors[field]; // Treat messages as potentially unknown
+                const messages = fieldErrors[field];
                 if (messages && Array.isArray(messages)) {
-                    sanitizedFieldErrors[field] = messages.map((msg)=>String(msg)); // Ensure each message is a string
+                    sanitizedFieldErrors[field] = messages.map((msg)=>String(msg));
                 }
             }
             return {
                 error: String("Invalid input."),
                 fieldErrors: sanitizedFieldErrors
-            }; // Explicitly stringify main error
+            };
         }
         const validatedData = validationResult.data;
         const params = {
@@ -247,7 +247,6 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
         try {
             const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
             const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["analyzeLOS"])(params, elevationData);
-            // Ensure all parts of the successful result message are strings
             const successMessage = String(result.message);
             const apiSourceMessage = "Using Google Elevation API data.";
             return {
@@ -255,30 +254,30 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
                 message: String(`${successMessage} ${apiSourceMessage}`)
             };
         } catch (err) {
-            console.error("Error during LOS analysis (inner catch):", String(err)); // Log stringified error
             const errorSource = err instanceof Error ? err.message : err;
-            const errorAsString = String(errorSource); // Ensure the core error detail is a string
+            const errorMessageString = String(errorSource);
+            console.error("Error during LOS analysis (inner catch):", errorMessageString);
             let finalMessage;
-            if (errorAsString.includes("Google Elevation API key is not configured")) {
+            if (errorMessageString.includes("Google Elevation API key is not configured")) {
                 finalMessage = "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console.";
-            } else if (errorAsString.includes("Google Elevation API request failed") || errorAsString.includes("Google Elevation API error") || errorAsString.includes("Google Elevation API request timed out")) {
-                finalMessage = `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${errorAsString}`;
-            } else if (errorAsString.includes("Network error while trying to reach Google Elevation API")) {
-                finalMessage = errorAsString; // errorAsString is already guaranteed to be a string
+            } else if (errorMessageString.includes("Google Elevation API request failed") || errorMessageString.includes("Google Elevation API error") || errorMessageString.includes("Google Elevation API request timed out")) {
+                finalMessage = `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${errorMessageString}`;
+            } else if (errorMessageString.includes("Network error while trying to reach Google Elevation API")) {
+                finalMessage = errorMessageString;
             } else {
-                finalMessage = `Analysis failed due to an unexpected issue: ${errorAsString}`;
+                finalMessage = `Analysis failed due to an unexpected issue: ${errorMessageString}`;
             }
             return {
                 error: String(finalMessage),
-                fieldErrors: null
-            }; // Ensure finalMessage is stringified before returning
+                fieldErrors: undefined
+            };
         }
     } catch (e) {
-        console.error("Unhandled error in performLosAnalysis (outer catch):", String(e)); // Log the stringified error
+        console.error("Unhandled error in performLosAnalysis (outer catch):", String(e));
         // Return a generic, simple, and serializable error object
         return {
             error: "An unexpected server error occurred. Please try again.",
-            fieldErrors: null
+            fieldErrors: undefined // Ensure this is undefined for ActionErrorState if no specific field errors
         };
     }
 }
@@ -294,6 +293,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
 var { g: global, __dirname } = __turbopack_context__;
 {
 __turbopack_context__.s({});
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-rsc] (ecmascript)");
 ;
 }}),
 "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <module evaluation>": ((__turbopack_context__) => {

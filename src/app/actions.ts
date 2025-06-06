@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from 'zod';
-import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI } from '@/types';
+import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI, ActionErrorState } from '@/types';
 import { analyzeLOS } from '@/lib/los-calculator';
 
 // --- Google Elevation API Configuration ---
@@ -97,7 +97,10 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
 }
 
 
-export async function performLosAnalysis(prevState: any, formData: FormData): Promise<AnalysisResult | { error: string; fieldErrors?: any }> {
+export async function performLosAnalysis(
+  prevState: AnalysisResult | ActionErrorState | null,
+  formData: FormData
+): Promise<AnalysisResult | ActionErrorState> {
   try { // Outer try-catch for the entire action
     const rawFormData = {
       pointA: {
@@ -120,12 +123,12 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
       const fieldErrors = validationResult.error.flatten().fieldErrors;
       const sanitizedFieldErrors: { [key: string]: string[] } = {};
       for (const field in fieldErrors) {
-        const messages: unknown[] | undefined = fieldErrors[field as keyof typeof fieldErrors]; // Treat messages as potentially unknown
+        const messages: unknown[] | undefined = fieldErrors[field as keyof typeof fieldErrors];
         if (messages && Array.isArray(messages)) {
-          sanitizedFieldErrors[field] = messages.map(msg => String(msg)); // Ensure each message is a string
+          sanitizedFieldErrors[field] = messages.map(msg => String(msg));
         }
       }
-      return { error: String("Invalid input."), fieldErrors: sanitizedFieldErrors }; // Explicitly stringify main error
+      return { error: String("Invalid input."), fieldErrors: sanitizedFieldErrors };
     }
 
     const validatedData = validationResult.data;
@@ -147,35 +150,35 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
     try { // Inner try-catch specifically for elevation fetching and LOS analysis
       const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
       const result = analyzeLOS(params, elevationData);
-      // Ensure all parts of the successful result message are strings
       const successMessage = String(result.message);
       const apiSourceMessage = "Using Google Elevation API data.";
       return { ...result, message: String(`${successMessage} ${apiSourceMessage}`) };
 
     } catch (err) { // Inner catch
-      console.error("Error during LOS analysis (inner catch):", String(err)); // Log stringified error
       const errorSource = err instanceof Error ? err.message : err;
-      const errorAsString = String(errorSource); // Ensure the core error detail is a string
+      const errorMessageString = String(errorSource);
+      console.error("Error during LOS analysis (inner catch):", errorMessageString);
 
       let finalMessage: string;
 
-      if (errorAsString.includes("Google Elevation API key is not configured")) {
+      if (errorMessageString.includes("Google Elevation API key is not configured")) {
           finalMessage = "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console.";
-      } else if (errorAsString.includes("Google Elevation API request failed") || errorAsString.includes("Google Elevation API error") || errorAsString.includes("Google Elevation API request timed out")) {
-          finalMessage = `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${errorAsString}`;
-      } else if (errorAsString.includes("Network error while trying to reach Google Elevation API")) {
-          finalMessage = errorAsString; // errorAsString is already guaranteed to be a string
+      } else if (errorMessageString.includes("Google Elevation API request failed") || errorMessageString.includes("Google Elevation API error") || errorMessageString.includes("Google Elevation API request timed out")) {
+          finalMessage = `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${errorMessageString}`;
+      } else if (errorMessageString.includes("Network error while trying to reach Google Elevation API")) {
+          finalMessage = errorMessageString;
       } else {
-          finalMessage = `Analysis failed due to an unexpected issue: ${errorAsString}`;
+          finalMessage = `Analysis failed due to an unexpected issue: ${errorMessageString}`;
       }
-      return { error: String(finalMessage), fieldErrors: null }; // Ensure finalMessage is stringified before returning
+      return { error: String(finalMessage), fieldErrors: undefined };
     }
   } catch (e) { // Outer catch for any other errors in the action
-    console.error("Unhandled error in performLosAnalysis (outer catch):", String(e)); // Log the stringified error
+    console.error("Unhandled error in performLosAnalysis (outer catch):", String(e));
     // Return a generic, simple, and serializable error object
     return {
       error: "An unexpected server error occurred. Please try again.",
-      fieldErrors: null
+      fieldErrors: undefined // Ensure this is undefined for ActionErrorState if no specific field errors
     };
   }
 }
+
