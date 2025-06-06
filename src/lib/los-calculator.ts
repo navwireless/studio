@@ -72,6 +72,9 @@ export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampl
       pointA: params.pointA,
       pointB: params.pointB,
       clearanceThresholdUsed: params.clearanceThreshold,
+      // id and timestamp will be added by the caller/context
+      id: `temp-analysis-${Date.now()}`,
+      timestamp: Date.now(),
     };
   }
 
@@ -129,6 +132,81 @@ export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampl
     pointA: params.pointA,
     pointB: params.pointB,
     clearanceThresholdUsed: params.clearanceThreshold,
+    // id and timestamp will be added by the caller/context
+    id: `temp-analysis-${Date.now()}`,
+    timestamp: Date.now(),
   };
 }
 
+
+/**
+ * Fetches elevation data from Google Elevation API with a timeout.
+ */
+export async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
+  const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Replace with your actual API key or use environment variables
+  const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
+
+  if (!GOOGLE_ELEVATION_API_KEY || String(GOOGLE_ELEVATION_API_KEY).trim() === "") {
+    throw new Error("Google Elevation API key is not configured or is empty.");
+  }
+
+  const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+  const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${String(GOOGLE_ELEVATION_API_KEY).trim()}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+
+  let response;
+  try {
+    response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId); // Clear timeout if fetch completes or errors normally
+  } catch (networkError) {
+    clearTimeout(timeoutId); // Ensure timeout is cleared on error
+    if (networkError instanceof Error && networkError.name === 'AbortError') {
+      console.error("Google Elevation API request timed out after 30 seconds.");
+      throw new Error("Google Elevation API request timed out. The service might be temporarily unavailable or there could be network issues.");
+    }
+    const networkErrorMessageSource = networkError instanceof Error ? networkError.message : networkError;
+    console.error("Network error fetching elevation data:", String(networkErrorMessageSource));
+    throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${String(networkErrorMessageSource)}`);
+  }
+
+  if (!response.ok) {
+    let errorBody = "Could not retrieve error body.";
+    try {
+      errorBody = await response.text();
+    } catch (textError) {
+      console.error("Failed to read error body from Google API response:", String(textError));
+    }
+    console.error("Google Elevation API request failed:", response.status, String(errorBody));
+    throw new Error(`Google Elevation API request failed with status ${response.status}. Details: ${String(errorBody)}`);
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (jsonError) {
+    const jsonErrorMsgSource = jsonError instanceof Error ? jsonError.message : jsonError;
+    console.error("Failed to parse JSON response from Google Elevation API:", String(jsonErrorMsgSource));
+    throw new Error(`Failed to parse response from Google Elevation API. Details: ${String(jsonErrorMsgSource)}`);
+  }
+
+
+  if (data.status !== 'OK') {
+    console.error("Google Elevation API error:", data.status, String(data.error_message));
+    throw new Error(`Google Elevation API error: ${String(data.status)} - ${String(data.error_message) || 'Unknown API error'}`);
+  }
+
+  if (!data.results || data.results.length === 0) {
+    throw new Error("Google Elevation API returned no results for the given path.");
+  }
+
+  return data.results.map((sample: any) => ({
+      elevation: sample.elevation,
+      location: {
+          lat: sample.location.lat,
+          lng: sample.location.lng,
+      },
+      resolution: sample.resolution,
+  }));
+}

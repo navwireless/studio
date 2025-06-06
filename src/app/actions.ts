@@ -3,15 +3,7 @@
 
 import { z } from 'zod';
 import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI, ActionErrorState } from '@/types';
-import { analyzeLOS } from '@/lib/los-calculator';
-
-// --- Google Elevation API Configuration ---
-// WARNING: Storing API keys directly in code is insecure for production.
-// Consider using environment variables and restricting API key usage.
-const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
-const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
-// --- End Google Elevation API Configuration ---
-
+import { analyzeLOS, getGoogleElevationData } from '@/lib/los-calculator'; // Import getGoogleElevationData
 
 // Define Zod schema for form validation
 const PointInputSchema = z.object({
@@ -25,77 +17,6 @@ const AnalysisFormSchema = z.object({
   pointB: PointInputSchema,
   clearanceThreshold: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Clearance must be a positive number"),
 });
-
-
-/**
- * Fetches elevation data from Google Elevation API with a timeout.
- */
-async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
-  if (!GOOGLE_ELEVATION_API_KEY || String(GOOGLE_ELEVATION_API_KEY).trim() === "") {
-    throw new Error("Google Elevation API key is not configured or is empty.");
-  }
-
-  const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
-  const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${String(GOOGLE_ELEVATION_API_KEY).trim()}`;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
-
-  let response;
-  try {
-    response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId); // Clear timeout if fetch completes or errors normally
-  } catch (networkError) {
-    clearTimeout(timeoutId); // Ensure timeout is cleared on error
-    if (networkError instanceof Error && networkError.name === 'AbortError') {
-      console.error("Google Elevation API request timed out after 30 seconds.");
-      throw new Error("Google Elevation API request timed out. The service might be temporarily unavailable or there could be network issues.");
-    }
-    console.error("Network error fetching elevation data:", String(networkError));
-    const networkErrorMessageSource = networkError instanceof Error ? networkError.message : networkError;
-    throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${String(networkErrorMessageSource)}`);
-  }
-
-  if (!response.ok) {
-    let errorBody = "Could not retrieve error body.";
-    try {
-      errorBody = await response.text();
-    } catch (textError) {
-      console.error("Failed to read error body from Google API response:", String(textError));
-    }
-    console.error("Google Elevation API request failed:", response.status, String(errorBody));
-    throw new Error(`Google Elevation API request failed with status ${response.status}. Details: ${String(errorBody)}`);
-  }
-
-  let data;
-  try {
-    data = await response.json();
-  } catch (jsonError) {
-    const jsonErrorMsgSource = jsonError instanceof Error ? jsonError.message : jsonError;
-    console.error("Failed to parse JSON response from Google Elevation API:", String(jsonErrorMsgSource));
-    throw new Error(`Failed to parse response from Google Elevation API. Details: ${String(jsonErrorMsgSource)}`);
-  }
-
-
-  if (data.status !== 'OK') {
-    console.error("Google Elevation API error:", data.status, String(data.error_message));
-    throw new Error(`Google Elevation API error: ${String(data.status)} - ${String(data.error_message) || 'Unknown API error'}`);
-  }
-
-  if (!data.results || data.results.length === 0) {
-    throw new Error("Google Elevation API returned no results for the given path.");
-  }
-
-  return data.results.map((sample: any) => ({
-      elevation: sample.elevation,
-      location: {
-          lat: sample.location.lat,
-          lng: sample.location.lng,
-      },
-      resolution: sample.resolution,
-  }));
-}
-
 
 export async function performLosAnalysis(
   prevState: AnalysisResult | ActionErrorState | null,
@@ -177,8 +98,7 @@ export async function performLosAnalysis(
     // Return a generic, simple, and serializable error object
     return {
       error: "An unexpected server error occurred. Please try again.",
-      fieldErrors: undefined // Ensure this is undefined for ActionErrorState if no specific field errors
+      fieldErrors: undefined // Ensure fieldErrors is undefined for this generic case
     };
   }
 }
-

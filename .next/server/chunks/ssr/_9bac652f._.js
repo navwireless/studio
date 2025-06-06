@@ -8,7 +8,8 @@ var { g: global, __dirname } = __turbopack_context__;
 __turbopack_context__.s({
     "analyzeLOS": (()=>analyzeLOS),
     "calculateDistanceKm": (()=>calculateDistanceKm),
-    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius)
+    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius),
+    "getGoogleElevationData": (()=>getGoogleElevationData)
 });
 const EARTH_RADIUS_KM = 6371;
 const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
@@ -56,7 +57,10 @@ function analyzeLOS(params, elevationData) {
             message: "Insufficient elevation data for analysis.",
             pointA: params.pointA,
             pointB: params.pointB,
-            clearanceThresholdUsed: params.clearanceThreshold
+            clearanceThresholdUsed: params.clearanceThreshold,
+            // id and timestamp will be added by the caller/context
+            id: `temp-analysis-${Date.now()}`,
+            timestamp: Date.now()
         };
     }
     const totalDistanceKm = calculateDistanceKm(params.pointA, params.pointB);
@@ -101,47 +105,15 @@ function analyzeLOS(params, elevationData) {
         message: "Analysis complete.",
         pointA: params.pointA,
         pointB: params.pointB,
-        clearanceThresholdUsed: params.clearanceThreshold
+        clearanceThresholdUsed: params.clearanceThreshold,
+        // id and timestamp will be added by the caller/context
+        id: `temp-analysis-${Date.now()}`,
+        timestamp: Date.now()
     };
 }
-}}),
-"[project]/src/app/actions.ts [app-rsc] (ecmascript)": ((__turbopack_context__) => {
-"use strict";
-
-var { g: global, __dirname } = __turbopack_context__;
-{
-/* __next_internal_action_entry_do_not_use__ [{"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"},"",""] */ __turbopack_context__.s({
-    "performLosAnalysis": (()=>performLosAnalysis)
-});
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/server-reference.js [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$app$2d$render$2f$encryption$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/app-render/encryption.js [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zod/lib/index.mjs [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/los-calculator.ts [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-validate.js [app-rsc] (ecmascript)");
-;
-;
-;
-;
-// --- Google Elevation API Configuration ---
-// WARNING: Storing API keys directly in code is insecure for production.
-// Consider using environment variables and restricting API key usage.
-const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
-const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
-// --- End Google Elevation API Configuration ---
-// Define Zod schema for form validation
-const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
-    lat: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Invalid Latitude (-90 to 90)"),
-    lng: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Invalid Longitude (-180 to 180)"),
-    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Height must be a positive number")
-});
-const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
-    pointA: PointInputSchema,
-    pointB: PointInputSchema,
-    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Clearance must be a positive number")
-});
-/**
- * Fetches elevation data from Google Elevation API with a timeout.
- */ async function getGoogleElevationData(pointA, pointB, samples = 100) {
+async function getGoogleElevationData(pointA, pointB, samples = 100) {
+    const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Replace with your actual API key or use environment variables
+    const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
     if (!GOOGLE_ELEVATION_API_KEY || String(GOOGLE_ELEVATION_API_KEY).trim() === "") {
         throw new Error("Google Elevation API key is not configured or is empty.");
     }
@@ -161,8 +133,8 @@ const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_
             console.error("Google Elevation API request timed out after 30 seconds.");
             throw new Error("Google Elevation API request timed out. The service might be temporarily unavailable or there could be network issues.");
         }
-        console.error("Network error fetching elevation data:", String(networkError));
         const networkErrorMessageSource = networkError instanceof Error ? networkError.message : networkError;
+        console.error("Network error fetching elevation data:", String(networkErrorMessageSource));
         throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${String(networkErrorMessageSource)}`);
     }
     if (!response.ok) {
@@ -199,6 +171,35 @@ const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_
             resolution: sample.resolution
         }));
 }
+}}),
+"[project]/src/app/actions.ts [app-rsc] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+/* __next_internal_action_entry_do_not_use__ [{"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"},"",""] */ __turbopack_context__.s({
+    "performLosAnalysis": (()=>performLosAnalysis)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/server-reference.js [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$app$2d$render$2f$encryption$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/app-render/encryption.js [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/zod/lib/index.mjs [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/los-calculator.ts [app-rsc] (ecmascript)"); // Import getGoogleElevationData
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-validate.js [app-rsc] (ecmascript)");
+;
+;
+;
+;
+// Define Zod schema for form validation
+const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
+    lat: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Invalid Latitude (-90 to 90)"),
+    lng: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Invalid Longitude (-180 to 180)"),
+    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Height must be a positive number")
+});
+const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
+    pointA: PointInputSchema,
+    pointB: PointInputSchema,
+    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Clearance must be a positive number")
+});
 async function performLosAnalysis(prevState, formData) {
     try {
         const rawFormData = {
@@ -245,7 +246,7 @@ async function performLosAnalysis(prevState, formData) {
             clearanceThreshold: parseFloat(validatedData.clearanceThreshold)
         };
         try {
-            const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
+            const elevationData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getGoogleElevationData"])(params.pointA, params.pointB, 100);
             const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["analyzeLOS"])(params, elevationData);
             const successMessage = String(result.message);
             const apiSourceMessage = "Using Google Elevation API data.";
@@ -277,7 +278,7 @@ async function performLosAnalysis(prevState, formData) {
         // Return a generic, simple, and serializable error object
         return {
             error: "An unexpected server error occurred. Please try again.",
-            fieldErrors: undefined // Ensure this is undefined for ActionErrorState if no specific field errors
+            fieldErrors: undefined // Ensure fieldErrors is undefined for this generic case
         };
     }
 }
