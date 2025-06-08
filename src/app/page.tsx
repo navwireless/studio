@@ -9,7 +9,7 @@ import { Loader2, AlertTriangle, PlusCircle, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisResult, AnalysisFormValues, PointCoordinates } from '@/types';
+import type { AnalysisResult, AnalysisFormValues, PointCoordinates, ActionErrorState } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
@@ -60,9 +60,15 @@ function HomePageContent() {
     getCachedAnalysis
   } = useLinks();
 
-  const [serverState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
+  const [rawServerState, formAction, isActionPending] =
+    React.useActionState<AnalysisResult | ActionErrorState | null, FormData>(
+      performLosAnalysis,
+      null
+    );
+  const [processedServerState, setProcessedServerState] = useState<AnalysisResult | ActionErrorState | null>(null);
+
   const [displayedError, setDisplayedError] = useState<string | null>(null);
-  const [displayedFieldErrors, setDisplayedFieldErrors] = useState<any | null>(null);
+  const [displayedFieldErrors, setDisplayedFieldErrors] = useState<Record<string, string[]> | null>(null);
 
 
   const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
@@ -85,22 +91,85 @@ function HomePageContent() {
 
   const { handleSubmit, control, getValues, setValue, reset, watch } = form;
 
+
+  useEffect(() => {
+    if (rawServerState === null) {
+      setProcessedServerState(null);
+      return;
+    }
+
+    // Explicitly handle RegExp if rawServerState is one
+    if (rawServerState instanceof RegExp) {
+      console.error("Raw server state is a RegExp:", rawServerState);
+      setProcessedServerState({
+        error: `A server error occurred. Details: ${rawServerState.toString()}`,
+        fieldErrors: undefined
+      });
+      return;
+    }
+
+    // Handle Error instances (common if action throws)
+    if (rawServerState instanceof Error) {
+      setProcessedServerState({
+        error: String(rawServerState.message || "An unexpected server error occurred (action threw Error)."),
+        fieldErrors: undefined
+      });
+      return;
+    }
+
+    // Handle structured objects (ActionErrorState or AnalysisResult)
+    if (typeof rawServerState === 'object' && rawServerState !== null) {
+      // Check for structured error response (ActionErrorState)
+      if ('error' in rawServerState && typeof rawServerState.error === 'string') {
+        const fieldErrors = (rawServerState as ActionErrorState).fieldErrors;
+        const sanitizedFieldErrors: { [key: string]: string[] } | undefined = fieldErrors ? {} : undefined;
+        if (fieldErrors && sanitizedFieldErrors) {
+            for (const field in fieldErrors) {
+                const messages = fieldErrors[field];
+                if (messages) {
+                    sanitizedFieldErrors[field] = messages.map(msg => String(msg));
+                }
+            }
+        }
+        setProcessedServerState({ ...rawServerState, fieldErrors: sanitizedFieldErrors });
+        return;
+      }
+
+      // Check for structured success response (AnalysisResult)
+      if ('losPossible' in rawServerState) {
+        const analysisResult = rawServerState as AnalysisResult;
+        // Ensure message is a string
+        setProcessedServerState({ ...analysisResult, message: String(analysisResult.message || "") });
+        return;
+      }
+    }
+
+    // Fallback: If rawServerState is anything else (e.g., a primitive or an unexpected object structure)
+    console.error("Unexpected rawServerState received on client:", rawServerState);
+    setProcessedServerState({
+      error: `An unexpected or malformed state was received from the server action. Type: ${typeof rawServerState}, Value: ${String(rawServerState?.toString() || 'N/A')}`,
+      fieldErrors: undefined
+    });
+
+  }, [rawServerState]);
+
+
   useEffect(() => {
     if (selectedLink) {
       const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
-      
+
       let pointA_coords_str = '';
       if (selectedLink.pointA.lat !== null && selectedLink.pointA.lng !== null) {
         pointA_coords_str = `${selectedLink.pointA.lat}, ${selectedLink.pointA.lng}`;
       } else {
-        pointA_coords_str = ''; 
+        pointA_coords_str = '';
       }
 
       let pointB_coords_str = '';
       if (selectedLink.pointB.lat !== null && selectedLink.pointB.lng !== null) {
         pointB_coords_str = `${selectedLink.pointB.lat}, ${selectedLink.pointB.lng}`;
       } else {
-        pointB_coords_str = ''; 
+        pointB_coords_str = '';
       }
 
       const formVals: AnalysisFormValues = {
@@ -114,7 +183,7 @@ function HomePageContent() {
           coordinates: pointB_coords_str,
           height: selectedLink.pointB.towerHeight ?? defaultFormStateValues.pointB.height,
         },
-        clearanceThreshold: selectedLink.clearanceThreshold?.toString() ?? defaultFormStateValues.clearanceThreshold,
+        clearanceThreshold: selectedLink.clearanceThreshold ?? defaultFormStateValues.clearanceThreshold,
       };
       reset(formVals);
       setIsAnalysisPanelGloballyOpen(true);
@@ -124,7 +193,7 @@ function HomePageContent() {
       setIsAnalysisPanelGloballyOpen(false);
     }
   }, [
-    selectedLinkId, 
+    selectedLinkId,
     selectedLink?.pointA?.name,
     selectedLink?.pointA?.lat,
     selectedLink?.pointA?.lng,
@@ -135,8 +204,8 @@ function HomePageContent() {
     selectedLink?.pointB?.towerHeight,
     selectedLink?.clearanceThreshold,
     selectedLink?.isDirty,
-    !!selectedLink?.analysisResult, 
-    reset 
+    !!selectedLink?.analysisResult,
+    reset
   ]);
 
   useEffect(() => {
@@ -152,7 +221,8 @@ function HomePageContent() {
 
         const towerAHeight = typeof formValues.pointA?.height === 'number' ? formValues.pointA.height : (parseFloat(String(formValues.pointA?.height)) || 0);
         const towerBHeight = typeof formValues.pointB?.height === 'number' ? formValues.pointB.height : (parseFloat(String(formValues.pointB?.height)) || 0);
-        const clearance = parseFloat(formValues.clearanceThreshold || "0") || 0;
+        const clearance = typeof formValues.clearanceThreshold === 'number' ? formValues.clearanceThreshold : (parseFloat(String(formValues.clearanceThreshold)) || 0);
+
 
         const newDetails = {
           pointA: {
@@ -169,7 +239,7 @@ function HomePageContent() {
           },
           clearanceThreshold: clearance,
         };
-        
+
         const detailsChanged =
             newDetails.pointA.name !== currentLinkInContext.pointA.name ||
             newDetails.pointA.lat !== currentLinkInContext.pointA.lat ||
@@ -203,14 +273,14 @@ function HomePageContent() {
 
     const cachedResult = getCachedAnalysis(selectedLinkId);
     if (cachedResult && !currentLink.isDirty) { // Only use cache if link is not dirty
-      updateLinkAnalysis(selectedLinkId, cachedResult); 
-      toast({ title: "Analysis Loaded from Cache", description: cachedResult.message });
+      updateLinkAnalysis(selectedLinkId, cachedResult);
+      toast({ title: "Analysis Loaded from Cache", description: String(cachedResult.message) });
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
 
       let cached_pointA_coords_str = '';
       if (cachedResult.pointA.lat !== null && cachedResult.pointA.lng !== null) {
-         cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointA.lng}`;
+         cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointB.lng}`;
       }
       let cached_pointB_coords_str = '';
       if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
@@ -227,7 +297,7 @@ function HomePageContent() {
           coordinates: cached_pointB_coords_str,
           height: cachedResult.pointB.towerHeight
         },
-        clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
+        clearanceThreshold: cachedResult.clearanceThresholdUsed
       });
       return;
     }
@@ -244,36 +314,34 @@ function HomePageContent() {
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', parsedPointA.lat.toString());
     formData.append('pointA.lng', parsedPointA.lng.toString());
-    formData.append('pointA.height', String(data.pointA.height)); 
+    formData.append('pointA.height', String(data.pointA.height));
     formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', parsedPointB.lat.toString());
     formData.append('pointB.lng', parsedPointB.lng.toString());
-    formData.append('pointB.height', String(data.pointB.height)); 
-    formData.append('clearanceThreshold', data.clearanceThreshold);
+    formData.append('pointB.height', String(data.pointB.height));
+    formData.append('clearanceThreshold', data.clearanceThreshold.toString()); // Ensure string for FormData
 
     React.startTransition(() => {
       formAction(formData);
     });
   }, [selectedLinkId, getLinkById, formAction, toast, updateLinkAnalysis, getCachedAnalysis, reset]);
 
+
   useEffect(() => {
-    if (serverState) {
-      if (serverState instanceof Error) {
-        // Handle direct Error objects thrown by the action
-        setDisplayedError(String(serverState.message || "An unexpected server error occurred."));
-        setDisplayedFieldErrors(null); // No field errors if it's a generic Error
-      } else if (serverState.error) {
-        // Handle custom error structure { error: string, fieldErrors?: any }
-        setDisplayedError(String(serverState.error));
-        setDisplayedFieldErrors(serverState.fieldErrors && typeof serverState.fieldErrors === 'object' ? serverState.fieldErrors : null);
-      } else if ('losPossible' in serverState) { 
-        // serverState is AnalysisResult (success)
+    if (processedServerState) {
+      if ('error' in processedServerState && typeof processedServerState.error === 'string') {
+        setDisplayedError(processedServerState.error);
+        setDisplayedFieldErrors(processedServerState.fieldErrors || null);
+      } else if ('losPossible' in processedServerState) {
         setDisplayedError(null);
         setDisplayedFieldErrors(null);
-        // Success state is handled in the next useEffect that depends on selectedLinkId and serverState
       }
+    } else {
+      setDisplayedError(null);
+      setDisplayedFieldErrors(null);
     }
-  }, [serverState]);
+  }, [processedServerState]);
+
 
   useEffect(() => {
     if (!selectedLinkId) return;
@@ -281,15 +349,12 @@ function HomePageContent() {
     const currentLink = getLinkById(selectedLinkId);
     if (!currentLink) return;
 
-    // Check if serverState indicates an error (either direct Error or our custom structure)
-    const isErrorState = serverState instanceof Error || (serverState && serverState.error);
+    const isErrorState = processedServerState && 'error' in processedServerState && processedServerState.error;
 
     if (isErrorState) {
-        // Error state handled by previous useEffect, just mark link as dirty if needed
         updateLinkDetails(selectedLinkId, { ...currentLink, analysisResult: undefined, isDirty: true });
-    } else if (serverState && 'losPossible' in serverState && currentLink.isDirty) { 
-        // serverState is a successful AnalysisResult and the link was dirty
-        const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
+    } else if (processedServerState && 'losPossible' in processedServerState && currentLink.isDirty) {
+        const successfulResult = processedServerState as Omit<AnalysisResult, 'id' | 'timestamp'>;
         const currentFormData = getValues();
         const newAnalysisResult: AnalysisResult = {
           ...successfulResult,
@@ -305,31 +370,32 @@ function HomePageContent() {
             lng: successfulResult.pointB.lng,
             towerHeight: successfulResult.pointB.towerHeight
           },
-          clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
+          clearanceThresholdUsed: typeof currentFormData.clearanceThreshold === 'number' ? currentFormData.clearanceThreshold : parseFloat(String(currentFormData.clearanceThreshold)),
           id: selectedLinkId + '_analysis_' + Date.now(),
           timestamp: Date.now(),
+          message: String(successfulResult.message || "LOS analysis performed successfully.") // Ensure message is string
         };
 
-        updateLinkAnalysis(selectedLinkId, newAnalysisResult); 
+        updateLinkAnalysis(selectedLinkId, newAnalysisResult);
         setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]);
-        setIsAnalysisPanelGloballyOpen(true); 
+        setIsAnalysisPanelGloballyOpen(true);
         setIsBottomPanelContentExpanded(true);
         toast({
           title: "Analysis Complete",
-          description: newAnalysisResult.message || "LOS analysis performed successfully.",
+          description: newAnalysisResult.message,
         });
     }
-  }, [serverState, selectedLinkId, getLinkById, updateLinkDetails, updateLinkAnalysis, getValues, toast]);
+  }, [processedServerState, selectedLinkId, getLinkById, updateLinkDetails, updateLinkAnalysis, getValues, toast]);
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     const currentSelectedLink = getLinkById(selectedLinkId || '');
-    if (!currentSelectedLink) return; 
+    if (!currentSelectedLink) return;
 
     if (event.latLng) {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
       const fieldToUpdate = pointId === 'pointA' ? 'pointA' : 'pointB';
-      
+
       const newPointDetails = {
         ...(currentSelectedLink[fieldToUpdate]),
         lat: lat,
@@ -384,12 +450,12 @@ function HomePageContent() {
 
 
   const handleAddNewLink = () => {
-    const newId = addLink(); 
+    const newId = addLink();
   };
 
   const handleRemoveSelectedLink = () => {
     if (selectedLinkId) {
-      removeLink(selectedLinkId); 
+      removeLink(selectedLinkId);
     }
   };
 
@@ -407,26 +473,26 @@ function HomePageContent() {
 
 
   const handleClearMap = () => {
-    links.forEach(link => removeLink(link.id)); 
-    selectLink(null); 
-    reset(defaultFormStateValues); 
-    setHistoryList([]); 
+    links.forEach(link => removeLink(link.id));
+    selectLink(null);
+    reset(defaultFormStateValues);
+    setHistoryList([]);
     toast({ title: "Map Cleared", description: "All links removed and form reset." });
-    setIsAnalysisPanelGloballyOpen(false); 
+    setIsAnalysisPanelGloballyOpen(false);
   };
 
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      const newLinkId = addLink(itemToLoad.pointA, itemToLoad.pointB); 
-      updateLinkDetails(newLinkId, { 
+      const newLinkId = addLink(itemToLoad.pointA, itemToLoad.pointB);
+      updateLinkDetails(newLinkId, {
         pointA: { ...itemToLoad.pointA, towerHeight: itemToLoad.pointA.towerHeight, name: itemToLoad.pointA.name || defaultFormStateValues.pointA.name },
         pointB: { ...itemToLoad.pointB, towerHeight: itemToLoad.pointB.towerHeight, name: itemToLoad.pointB.name || defaultFormStateValues.pointB.name },
         clearanceThreshold: itemToLoad.clearanceThresholdUsed,
-        isDirty: false, 
+        isDirty: false,
       });
-      updateLinkAnalysis(newLinkId, itemToLoad); 
-      
+      updateLinkAnalysis(newLinkId, itemToLoad);
+
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name || 'Site A'} - ${itemToLoad.pointB.name || 'Site B'} as a new link.` });
     }
   };
@@ -485,9 +551,9 @@ function HomePageContent() {
       <div className="flex-1 flex flex-col overflow-hidden relative h-full">
         {links.length > 0 && (
            <div className="absolute top-3 left-3 z-40 print:hidden flex items-center gap-2">
-            <Button 
-                onClick={handleAddNewLink} 
-                variant="outline" 
+            <Button
+                onClick={handleAddNewLink}
+                variant="outline"
                 size="sm"
                 className="bg-background/70 backdrop-blur-sm hover:bg-background/90"
             >
@@ -495,9 +561,9 @@ function HomePageContent() {
                 Add Another Link
             </Button>
             {selectedLinkId && (
-                <Button 
-                    onClick={handleRemoveSelectedLink} 
-                    variant="destructive" 
+                <Button
+                    onClick={handleRemoveSelectedLink}
+                    variant="destructive"
                     size="sm"
                     className="bg-destructive/70 backdrop-blur-sm hover:bg-destructive/90"
                 >
@@ -553,7 +619,7 @@ function HomePageContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-destructive-foreground mb-4">{displayedError}</p>
+                  <p className="text-destructive-foreground mb-4">{String(displayedError ?? '')}</p>
                   {displayedFieldErrors && (
                     <div className="text-xs text-destructive-foreground/80 mb-3 bg-black/20 p-2 rounded custom-scrollbar overflow-auto max-h-32">
                       <pre className="whitespace-pre-wrap">{JSON.stringify(displayedFieldErrors, null, 2)}</pre>
@@ -583,7 +649,7 @@ function HomePageContent() {
               isActionPending={isActionPending}
               onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
               onOpenReportDialog={handleOpenReportDialog}
-              onAddNewLink={handleAddNewLink} 
+              onAddNewLink={handleAddNewLink}
               currentDistanceKm={liveDistanceKm}
               selectedLinkClearanceThreshold={selectedLink?.clearanceThreshold}
               selectedLinkPointA={selectedLink?.pointA}
@@ -621,3 +687,4 @@ export default function Home() {
   );
 }
 
+    

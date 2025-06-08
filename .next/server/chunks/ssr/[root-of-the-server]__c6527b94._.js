@@ -185,7 +185,7 @@ const coordinatePairSchema = __TURBOPACK__imported__module__$5b$project$5d2f$nod
 const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["z"].object({
     name: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["z"].string().min(1, "Name is required").max(50, "Name too long"),
     coordinates: coordinatePairSchema,
-    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["z"].number({
+    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["z"].coerce.number({
         required_error: "Tower height is required",
         invalid_type_error: "Tower height must be a number"
     }).min(0, "Minimum tower height is 0m").max(100, "Maximum tower height is 100m")
@@ -193,10 +193,7 @@ const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
 const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["z"].object({
     pointA: PointInputSchema,
     pointB: PointInputSchema,
-    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>{
-        const num = parseFloat(val);
-        return !isNaN(num) && num >= 0;
-    }, "Clearance threshold must be a non-negative number")
+    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["z"].coerce.number().min(0, "Clearance threshold must be a non-negative number")
 });
 const defaultFormStateValues = {
     pointA: {
@@ -209,7 +206,7 @@ const defaultFormStateValues = {
         coordinates: '',
         height: 20
     },
-    clearanceThreshold: '10'
+    clearanceThreshold: 10
 };
 }}),
 "[project]/src/components/layout/app-header.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
@@ -1882,7 +1879,8 @@ const parseCoordinatesString = (coordsString)=>{
 function HomePageContent() {
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useToast"])();
     const { links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLinks"])();
-    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$14f25e__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
+    const [rawServerState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$14f25e__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
+    const [processedServerState, setProcessedServerState] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [displayedError, setDisplayedError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [displayedFieldErrors, setDisplayedFieldErrors] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -1904,6 +1902,68 @@ function HomePageContent() {
         mode: 'onBlur'
     });
     const { handleSubmit, control, getValues, setValue, reset, watch } = form;
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (rawServerState === null) {
+            setProcessedServerState(null);
+            return;
+        }
+        // Explicitly handle RegExp if rawServerState is one
+        if (rawServerState instanceof RegExp) {
+            console.error("Raw server state is a RegExp:", rawServerState);
+            setProcessedServerState({
+                error: `A server error occurred. Details: ${rawServerState.toString()}`,
+                fieldErrors: undefined
+            });
+            return;
+        }
+        // Handle Error instances (common if action throws)
+        if (rawServerState instanceof Error) {
+            setProcessedServerState({
+                error: String(rawServerState.message || "An unexpected server error occurred (action threw Error)."),
+                fieldErrors: undefined
+            });
+            return;
+        }
+        // Handle structured objects (ActionErrorState or AnalysisResult)
+        if (typeof rawServerState === 'object' && rawServerState !== null) {
+            // Check for structured error response (ActionErrorState)
+            if ('error' in rawServerState && typeof rawServerState.error === 'string') {
+                const fieldErrors = rawServerState.fieldErrors;
+                const sanitizedFieldErrors = fieldErrors ? {} : undefined;
+                if (fieldErrors && sanitizedFieldErrors) {
+                    for(const field in fieldErrors){
+                        const messages = fieldErrors[field];
+                        if (messages) {
+                            sanitizedFieldErrors[field] = messages.map((msg)=>String(msg));
+                        }
+                    }
+                }
+                setProcessedServerState({
+                    ...rawServerState,
+                    fieldErrors: sanitizedFieldErrors
+                });
+                return;
+            }
+            // Check for structured success response (AnalysisResult)
+            if ('losPossible' in rawServerState) {
+                const analysisResult = rawServerState;
+                // Ensure message is a string
+                setProcessedServerState({
+                    ...analysisResult,
+                    message: String(analysisResult.message || "")
+                });
+                return;
+            }
+        }
+        // Fallback: If rawServerState is anything else (e.g., a primitive or an unexpected object structure)
+        console.error("Unexpected rawServerState received on client:", rawServerState);
+        setProcessedServerState({
+            error: `An unexpected or malformed state was received from the server action. Type: ${typeof rawServerState}, Value: ${String(rawServerState?.toString() || 'N/A')}`,
+            fieldErrors: undefined
+        });
+    }, [
+        rawServerState
+    ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (selectedLink) {
             const isNewLink = !selectedLink.analysisResult && selectedLink.isDirty;
@@ -1930,7 +1990,7 @@ function HomePageContent() {
                     coordinates: pointB_coords_str,
                     height: selectedLink.pointB.towerHeight ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.height
                 },
-                clearanceThreshold: selectedLink.clearanceThreshold?.toString() ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
+                clearanceThreshold: selectedLink.clearanceThreshold ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
             };
             reset(formVals);
             setIsAnalysisPanelGloballyOpen(true);
@@ -1964,7 +2024,7 @@ function HomePageContent() {
                 const parsedPointB = parseCoordinatesString(formValues.pointB?.coordinates || '');
                 const towerAHeight = typeof formValues.pointA?.height === 'number' ? formValues.pointA.height : parseFloat(String(formValues.pointA?.height)) || 0;
                 const towerBHeight = typeof formValues.pointB?.height === 'number' ? formValues.pointB.height : parseFloat(String(formValues.pointB?.height)) || 0;
-                const clearance = parseFloat(formValues.clearanceThreshold || "0") || 0;
+                const clearance = typeof formValues.clearanceThreshold === 'number' ? formValues.clearanceThreshold : parseFloat(String(formValues.clearanceThreshold)) || 0;
                 const newDetails = {
                     pointA: {
                         name: formValues.pointA?.name || currentLinkInContext.pointA.name,
@@ -2019,13 +2079,13 @@ function HomePageContent() {
             updateLinkAnalysis(selectedLinkId, cachedResult);
             toast({
                 title: "Analysis Loaded from Cache",
-                description: cachedResult.message
+                description: String(cachedResult.message)
             });
             setIsAnalysisPanelGloballyOpen(true);
             setIsBottomPanelContentExpanded(true);
             let cached_pointA_coords_str = '';
             if (cachedResult.pointA.lat !== null && cachedResult.pointA.lng !== null) {
-                cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointA.lng}`;
+                cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointB.lng}`;
             }
             let cached_pointB_coords_str = '';
             if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
@@ -2042,7 +2102,7 @@ function HomePageContent() {
                     coordinates: cached_pointB_coords_str,
                     height: cachedResult.pointB.towerHeight
                 },
-                clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
+                clearanceThreshold: cachedResult.clearanceThresholdUsed
             });
             return;
         }
@@ -2065,7 +2125,7 @@ function HomePageContent() {
         formData.append('pointB.lat', parsedPointB.lat.toString());
         formData.append('pointB.lng', parsedPointB.lng.toString());
         formData.append('pointB.height', String(data.pointB.height));
-        formData.append('clearanceThreshold', data.clearanceThreshold);
+        formData.append('clearanceThreshold', data.clearanceThreshold.toString()); // Ensure string for FormData
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].startTransition(()=>{
             formAction(formData);
         });
@@ -2079,41 +2139,34 @@ function HomePageContent() {
         reset
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
-        if (serverState) {
-            if (serverState instanceof Error) {
-                // Handle direct Error objects thrown by the action
-                setDisplayedError(String(serverState.message || "An unexpected server error occurred."));
-                setDisplayedFieldErrors(null); // No field errors if it's a generic Error
-            } else if (serverState.error) {
-                // Handle custom error structure { error: string, fieldErrors?: any }
-                setDisplayedError(String(serverState.error));
-                setDisplayedFieldErrors(serverState.fieldErrors && typeof serverState.fieldErrors === 'object' ? serverState.fieldErrors : null);
-            } else if ('losPossible' in serverState) {
-                // serverState is AnalysisResult (success)
+        if (processedServerState) {
+            if ('error' in processedServerState && typeof processedServerState.error === 'string') {
+                setDisplayedError(processedServerState.error);
+                setDisplayedFieldErrors(processedServerState.fieldErrors || null);
+            } else if ('losPossible' in processedServerState) {
                 setDisplayedError(null);
                 setDisplayedFieldErrors(null);
-            // Success state is handled in the next useEffect that depends on selectedLinkId and serverState
             }
+        } else {
+            setDisplayedError(null);
+            setDisplayedFieldErrors(null);
         }
     }, [
-        serverState
+        processedServerState
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (!selectedLinkId) return;
         const currentLink = getLinkById(selectedLinkId);
         if (!currentLink) return;
-        // Check if serverState indicates an error (either direct Error or our custom structure)
-        const isErrorState = serverState instanceof Error || serverState && serverState.error;
+        const isErrorState = processedServerState && 'error' in processedServerState && processedServerState.error;
         if (isErrorState) {
-            // Error state handled by previous useEffect, just mark link as dirty if needed
             updateLinkDetails(selectedLinkId, {
                 ...currentLink,
                 analysisResult: undefined,
                 isDirty: true
             });
-        } else if (serverState && 'losPossible' in serverState && currentLink.isDirty) {
-            // serverState is a successful AnalysisResult and the link was dirty
-            const successfulResult = serverState;
+        } else if (processedServerState && 'losPossible' in processedServerState && currentLink.isDirty) {
+            const successfulResult = processedServerState;
             const currentFormData = getValues();
             const newAnalysisResult = {
                 ...successfulResult,
@@ -2129,9 +2182,10 @@ function HomePageContent() {
                     lng: successfulResult.pointB.lng,
                     towerHeight: successfulResult.pointB.towerHeight
                 },
-                clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
+                clearanceThresholdUsed: typeof currentFormData.clearanceThreshold === 'number' ? currentFormData.clearanceThreshold : parseFloat(String(currentFormData.clearanceThreshold)),
                 id: selectedLinkId + '_analysis_' + Date.now(),
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                message: String(successfulResult.message || "LOS analysis performed successfully.") // Ensure message is string
             };
             updateLinkAnalysis(selectedLinkId, newAnalysisResult);
             setHistoryList((prev)=>[
@@ -2142,11 +2196,11 @@ function HomePageContent() {
             setIsBottomPanelContentExpanded(true);
             toast({
                 title: "Analysis Complete",
-                description: newAnalysisResult.message || "LOS analysis performed successfully."
+                description: newAnalysisResult.message
             });
         }
     }, [
-        serverState,
+        processedServerState,
         selectedLinkId,
         getLinkById,
         updateLinkDetails,
@@ -2357,7 +2411,7 @@ function HomePageContent() {
                 isHistoryPanelSupported: true
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 480,
+                lineNumber: 546,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2376,14 +2430,14 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 494,
+                                        lineNumber: 560,
                                         columnNumber: 17
                                     }, this),
                                     "Add Another Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 488,
+                                lineNumber: 554,
                                 columnNumber: 13
                             }, this),
                             selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2396,20 +2450,20 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 504,
+                                        lineNumber: 570,
                                         columnNumber: 21
                                     }, this),
                                     " Remove Selected Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 498,
+                                lineNumber: 564,
                                 columnNumber: 17
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 487,
+                        lineNumber: 553,
                         columnNumber: 12
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2423,12 +2477,12 @@ function HomePageContent() {
                             mapContainerClassName: "w-full h-full"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 511,
+                            lineNumber: 577,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 510,
+                        lineNumber: 576,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && !selectedLinkId && links.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2443,19 +2497,19 @@ function HomePageContent() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 529,
+                                    lineNumber: 595,
                                     columnNumber: 15
                                 }, this),
                                 "Add New Link"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 523,
+                            lineNumber: 589,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 522,
+                        lineNumber: 588,
                         columnNumber: 11
                     }, this),
                     isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2469,7 +2523,7 @@ function HomePageContent() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 539,
+                                        lineNumber: 605,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2477,7 +2531,7 @@ function HomePageContent() {
                                         children: "Analyzing Link..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 540,
+                                        lineNumber: 606,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2485,23 +2539,23 @@ function HomePageContent() {
                                         children: "Please wait while we process the elevation data."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 541,
+                                        lineNumber: 607,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 538,
+                                lineNumber: 604,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 537,
+                            lineNumber: 603,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 536,
+                        lineNumber: 602,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2522,29 +2576,29 @@ function HomePageContent() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 552,
+                                                lineNumber: 618,
                                                 columnNumber: 21
                                             }, this),
                                             " Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 551,
+                                        lineNumber: 617,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 550,
+                                    lineNumber: 616,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                             className: "text-destructive-foreground mb-4",
-                                            children: displayedError
+                                            children: String(displayedError ?? '')
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 556,
+                                            lineNumber: 622,
                                             columnNumber: 19
                                         }, this),
                                         displayedFieldErrors && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2554,12 +2608,12 @@ function HomePageContent() {
                                                 children: JSON.stringify(displayedFieldErrors, null, 2)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 559,
+                                                lineNumber: 625,
                                                 columnNumber: 23
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 558,
+                                            lineNumber: 624,
                                             columnNumber: 21
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -2572,24 +2626,24 @@ function HomePageContent() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 562,
+                                            lineNumber: 628,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 555,
+                                    lineNumber: 621,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 549,
+                            lineNumber: 615,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 548,
+                        lineNumber: 614,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["FormProvider"], {
@@ -2612,12 +2666,12 @@ function HomePageContent() {
                             selectedLinkPointB: selectedLink?.pointB
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 575,
+                            lineNumber: 641,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 574,
+                        lineNumber: 640,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -2628,7 +2682,7 @@ function HomePageContent() {
                         onToggle: ()=>setIsHistoryPanelOpen((prev)=>!prev)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 594,
+                        lineNumber: 660,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$report$2d$selection$2d$dialog$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -2642,13 +2696,13 @@ function HomePageContent() {
                         onGenerateReport: handleGenerateSelectedReports
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 601,
+                        lineNumber: 667,
                         columnNumber: 10
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 485,
+                lineNumber: 551,
                 columnNumber: 7
             }, this)
         ]
@@ -2658,12 +2712,12 @@ function Home() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LinksProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(HomePageContent, {}, void 0, false, {
             fileName: "[project]/src/app/page.tsx",
-            lineNumber: 619,
+            lineNumber: 685,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 618,
+        lineNumber: 684,
         columnNumber: 5
     }, this);
 }

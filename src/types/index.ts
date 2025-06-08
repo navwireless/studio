@@ -13,7 +13,7 @@ export type PointInput = {
 export type AnalysisFormValues = {
   pointA: PointInput;
   pointB: PointInput;
-  clearanceThreshold: string;
+  clearanceThreshold: number; // Changed from string to number
 };
 
 export type AnalysisParams = {
@@ -84,4 +84,3 @@ declare module 'file-saver' {
 export interface FileSaverOptions {
     autoBom?: boolean;
 }
-

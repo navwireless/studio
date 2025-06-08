@@ -1,4 +1,4 @@
-(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push(["static/chunks/src_lib_report-generator_ts_a7db50b0._.js", {
+(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push([typeof document === "object" ? document.currentScript : undefined, {
 
 "[project]/src/lib/report-generator.ts [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
