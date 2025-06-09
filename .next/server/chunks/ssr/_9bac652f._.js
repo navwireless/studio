@@ -17,9 +17,9 @@ async function getGoogleElevationData(pointA, pointB, samples) {
     const GOOGLE_ELEVATION_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
     if (!GOOGLE_ELEVATION_API_KEY) {
-        console.error("Google Elevation API key is not configured.");
-        // This specific error message is checked in actions.ts, so keep it consistent
-        throw new Error("Google Elevation API key is not configured");
+        const errorMessage = "Google Elevation API key is not configured";
+        console.error(errorMessage);
+        throw new Error(errorMessage); // Throw a new Error with a string message
     }
     const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
     const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
@@ -31,34 +31,52 @@ async function getGoogleElevationData(pointA, pointB, samples) {
         }); // Cache for 1 hour
         if (!response.ok) {
             let errorData;
+            let errorResponseMessage = `Google Elevation API request failed: ${response.status} ${response.statusText}.`;
             try {
                 errorData = await response.json();
+                if (errorData && typeof errorData.message === 'string') {
+                    errorResponseMessage += ` Details: ${errorData.message}`;
+                } else if (errorData && errorData.message instanceof RegExp) {
+                    errorResponseMessage += ` Details (RegExp): ${errorData.message.toString()}`;
+                } else if (errorData) {
+                    errorResponseMessage += ` Details: ${JSON.stringify(errorData)}`;
+                }
             } catch (parseError) {
-                errorData = {
-                    message: 'Failed to parse error response from API.'
-                };
+                // If parsing the error response fails, stick to the status text
+                errorResponseMessage += ' Failed to parse error response body.';
             }
-            console.error('Google Elevation API request failed:', response.status, response.statusText, errorData);
-            // This specific error message is checked in actions.ts
-            throw new Error(`Google Elevation API request failed: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorData)}`);
+            console.error(errorResponseMessage, errorData);
+            throw new Error(errorResponseMessage); // Throw a new Error with a string message
         }
         const data = await response.json();
         if (data.status !== 'OK') {
-            console.error('Google Elevation API error:', data.status, data.error_message);
-            // This specific error message is checked in actions.ts
-            throw new Error(`Google Elevation API error: ${data.status}. ${data.error_message || 'No additional error message provided.'}`);
+            let apiErrorMessageContent = 'No additional error message provided.';
+            if (typeof data.error_message === 'string') {
+                apiErrorMessageContent = data.error_message;
+            } else if (data.error_message instanceof RegExp) {
+                apiErrorMessageContent = `RegExp error: ${data.error_message.toString()}`;
+            }
+            const apiErrorMessage = `Google Elevation API error: ${data.status}. ${apiErrorMessageContent}`;
+            console.error(apiErrorMessage);
+            throw new Error(apiErrorMessage); // Throw a new Error with a string message
         }
         return data.results;
     } catch (error) {
-        // Log the original error for server-side debugging
-        console.error('Network error or other issue while trying to reach Google Elevation API:', error);
-        // Re-throw with a consistent prefix for client-side handling, ensuring the original message is preserved if it's an Error instance
+        // This catch block handles network errors from fetch() itself, or errors re-thrown from above
+        let finalErrorMessage;
         if (error instanceof Error) {
-            // This specific error message is checked in actions.ts
-            throw new Error(`Network error while trying to reach Google Elevation API: ${error.message}`);
+            // If it's already an Error, its message should be a string.
+            // We prefix it to indicate the context.
+            finalErrorMessage = `Network error or issue during Google Elevation API call: ${error.message}`;
+        } else if (error instanceof RegExp) {
+            // Explicitly handle if the caught error is a RegExp
+            finalErrorMessage = `Network error or issue during Google Elevation API call. Received RegExp error: ${error.toString()} (Source: ${error.source})`;
+        } else {
+            // Fallback for other types of thrown values
+            finalErrorMessage = `Network error or issue during Google Elevation API call. Received: ${String(error)}`;
         }
-        // This specific error message is checked in actions.ts
-        throw new Error('Network error while trying to reach Google Elevation API. Unknown error type.');
+        console.error("Error in getGoogleElevationData (final catch):", finalErrorMessage, "Original error:", error);
+        throw new Error(finalErrorMessage); // Always throw a new Error with a guaranteed string message
     }
 }
 function calculateDistanceKm(p1, p2) {
@@ -207,10 +225,11 @@ async function performLosAnalysis(prevState, formData) {
             for(const field in fieldErrors){
                 const messages = fieldErrors[field];
                 if (messages) {
-                    sanitizedFieldErrors[field] = messages.map((msg)=>String(msg)); // Ensure messages are strings
+                    sanitizedFieldErrors[field] = messages.map((msg)=>String(msg ?? 'Validation message undefined'));
                 }
             }
-            console.error("Validation errors:", sanitizedFieldErrors);
+            // Simplified logging for validation errors
+            console.error("Validation errors occurred. Field details suppressed for this log message.");
             return {
                 error: "Invalid input. Please check the fields highlighted below.",
                 fieldErrors: sanitizedFieldErrors
@@ -257,51 +276,16 @@ async function performLosAnalysis(prevState, formData) {
             };
             return fullResult;
         } catch (err) {
-            let clientErrorMessageString;
-            let errorForLogging = "Unknown error in LOS analysis (inner catch)";
-            if (err instanceof RegExp) {
-                errorForLogging = `RegExp Error in LOS analysis (inner catch): ${err.toString()}`;
-                clientErrorMessageString = `Analysis failed due to an unexpected issue (RegExp source: ${err.source})`;
-            } else if (err instanceof Error) {
-                const messageSource = err.message;
-                if (messageSource instanceof RegExp) {
-                    errorForLogging = `Error with RegExp message in LOS analysis (inner catch): ${messageSource.toString()}`;
-                    clientErrorMessageString = `Analysis failed (Error with RegExp message source: ${messageSource.source})`;
-                } else {
-                    errorForLogging = String(messageSource);
-                    clientErrorMessageString = String(messageSource);
-                    if (clientErrorMessageString.includes("Google Elevation API key is not configured")) {
-                        clientErrorMessageString = "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console.";
-                    } else if (clientErrorMessageString.includes("Google Elevation API request failed") || clientErrorMessageString.includes("Google Elevation API error") || clientErrorMessageString.includes("Google Elevation API request timed out")) {
-                        clientErrorMessageString = `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${clientErrorMessageString}`;
-                    } else if (clientErrorMessageString.includes("Network error while trying to reach Google Elevation API")) {
-                    // Keep specific network error message
-                    } else {
-                        clientErrorMessageString = `Analysis failed due to an unexpected issue: ${clientErrorMessageString}`;
-                    }
-                }
-            } else {
-                errorForLogging = String(err);
-                clientErrorMessageString = `Analysis failed due to an unexpected issue: ${String(err)}`;
-            }
-            console.error("Error during LOS analysis (inner catch):", errorForLogging);
+            // Simplified logging: Avoid logging the raw error object if it might be complex
+            console.error("Error during LOS analysis (inner catch). A generic message will be returned to the client. Original error suppressed from this log line.");
             return {
-                error: clientErrorMessageString,
+                error: "An error occurred during the Line-of-Sight analysis process. Please check the server logs for more details or try again later.",
                 fieldErrors: undefined
             };
         }
     } catch (e) {
-        // Log the original error for server-side debugging, ensuring it's a string.
-        let errorToLogMessage;
-        if (e instanceof Error) {
-            errorToLogMessage = e.stack || e.message;
-        } else if (e instanceof RegExp) {
-            errorToLogMessage = e.toString();
-        } else {
-            errorToLogMessage = String(e);
-        }
-        console.error("Unhandled error in performLosAnalysis (outer catch):", errorToLogMessage);
-        // Return a generic, completely safe error message to the client.
+        // Simplified logging
+        console.error("Unhandled error in performLosAnalysis (outer catch). A generic message will be returned to the client. Original error suppressed from this log line.");
         return {
             error: "An unexpected server error occurred. Please contact support or check server logs for more details.",
             fieldErrors: undefined
