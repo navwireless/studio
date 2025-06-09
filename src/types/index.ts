@@ -6,14 +6,14 @@ export type PointCoordinates = {
 
 export type PointInput = {
   name: string;
-  coordinates: string;
+  coordinates: string; 
   height: number; // This remains for RHF, though not directly edited in UI
 };
 
 export type AnalysisFormValues = {
   pointA: PointInput;
   pointB: PointInput;
-  clearanceThreshold: number; // Changed from string to number
+  clearanceThreshold: string;
 };
 
 export type AnalysisParams = {
@@ -38,7 +38,7 @@ export type LOSPoint = {
 
 // This is the result from the server-side analysis
 export type AnalysisResult = {
-  id: string;
+  id: string; 
   losPossible: boolean;
   distanceKm: number;
   minClearance: number | null;
@@ -48,15 +48,8 @@ export type AnalysisResult = {
   pointA: PointCoordinates & { towerHeight: number; name?: string };
   pointB: PointCoordinates & { towerHeight: number; name?: string };
   clearanceThresholdUsed: number;
-  timestamp: number;
+  timestamp: number; 
 };
-
-// Specific type for error state returned by server actions
-export type ActionErrorState = {
-  error: string;
-  fieldErrors?: { [key: string]: string[] | undefined };
-};
-
 
 // --- New types for Multi-Link Context ---
 export interface LOSLinkPoint extends Partial<PointCoordinates> { // Lat/Lng can be null initially
@@ -71,10 +64,10 @@ export interface LOSLink {
   pointA: LOSLinkPoint;
   pointB: LOSLinkPoint;
   clearanceThreshold: number;
-  analysisResult?: AnalysisResult;
-  analysisTimestamp?: number;
-  color: string;
-  isDirty: boolean;
+  analysisResult?: AnalysisResult; 
+  analysisTimestamp?: number; 
+  color: string; 
+  isDirty: boolean; 
 }
 
 declare module 'file-saver' {
@@ -84,3 +77,4 @@ declare module 'file-saver' {
 export interface FileSaverOptions {
     autoBom?: boolean;
 }
+

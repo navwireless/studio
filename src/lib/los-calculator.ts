@@ -5,6 +5,69 @@ const EARTH_RADIUS_KM = 6371;
 const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
 
 /**
+ * Fetches elevation data from Google Elevation API for a path between two points.
+ * @param pointA Starting point coordinates.
+ * @param pointB Ending point coordinates.
+ * @param samples Number of samples along the path.
+ * @returns A promise that resolves to an array of elevation samples.
+ * @throws Error if API key is not configured, or if API request fails or returns an error status.
+ */
+export async function getGoogleElevationData(
+  pointA: PointCoordinates,
+  pointB: PointCoordinates,
+  samples: number
+): Promise<ElevationSampleAPI[]> {
+  const GOOGLE_ELEVATION_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
+
+  if (!GOOGLE_ELEVATION_API_KEY) {
+    console.error("Google Elevation API key is not configured.");
+    // This specific error message is checked in actions.ts, so keep it consistent
+    throw new Error("Google Elevation API key is not configured");
+  }
+
+  const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+  const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
+
+  try {
+    const response = await fetch(url, { next: { revalidate: 3600 } }); // Cache for 1 hour
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (parseError) {
+        errorData = { message: 'Failed to parse error response from API.' };
+      }
+      console.error('Google Elevation API request failed:', response.status, response.statusText, errorData);
+      // This specific error message is checked in actions.ts
+      throw new Error(`Google Elevation API request failed: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status !== 'OK') {
+      console.error('Google Elevation API error:', data.status, data.error_message);
+      // This specific error message is checked in actions.ts
+      throw new Error(`Google Elevation API error: ${data.status}. ${data.error_message || 'No additional error message provided.'}`);
+    }
+    return data.results as ElevationSampleAPI[];
+  } catch (error: unknown) {
+    // Log the original error for server-side debugging
+    console.error('Network error or other issue while trying to reach Google Elevation API:', error);
+
+    // Re-throw with a consistent prefix for client-side handling, ensuring the original message is preserved if it's an Error instance
+    if (error instanceof Error) {
+        // This specific error message is checked in actions.ts
+        throw new Error(`Network error while trying to reach Google Elevation API: ${error.message}`);
+    }
+    // This specific error message is checked in actions.ts
+    throw new Error('Network error while trying to reach Google Elevation API. Unknown error type.');
+  }
+}
+
+
+/**
  * Calculates the distance between two geographic coordinates using the Haversine formula.
  * @returns Distance in kilometers.
  */
@@ -60,7 +123,7 @@ export function calculateFresnelZoneRadius(d1: number, d2: number, totalDistance
 }
 
 
-export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampleAPI[]): AnalysisResult {
+export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampleAPI[]): Omit<AnalysisResult, 'id' | 'timestamp'> {
   if (elevationData.length < 2) {
     return {
       losPossible: false,
@@ -72,9 +135,6 @@ export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampl
       pointA: params.pointA,
       pointB: params.pointB,
       clearanceThresholdUsed: params.clearanceThreshold,
-      // id and timestamp will be added by the caller/context
-      id: `temp-analysis-${Date.now()}`,
-      timestamp: Date.now(),
     };
   }
 
@@ -99,7 +159,7 @@ export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampl
     const terrainElevation = sample.elevation;
     const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
     const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
-    const curvatureDrop = calculateEarthCurvatureDropMeters(totalDistanceKm, distanceFromA_Km);
+    const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
     const correctedLosHeight = idealLosHeight - curvatureDrop;
     const clearance = correctedLosHeight - terrainElevation;
 
@@ -132,81 +192,7 @@ export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampl
     pointA: params.pointA,
     pointB: params.pointB,
     clearanceThresholdUsed: params.clearanceThreshold,
-    // id and timestamp will be added by the caller/context
-    id: `temp-analysis-${Date.now()}`,
-    timestamp: Date.now(),
   };
 }
 
-
-/**
- * Fetches elevation data from Google Elevation API with a timeout.
- */
-export async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
-  const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Replace with your actual API key or use environment variables
-  const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
-
-  if (!GOOGLE_ELEVATION_API_KEY || String(GOOGLE_ELEVATION_API_KEY).trim() === "") {
-    throw new Error("Google Elevation API key is not configured or is empty.");
-  }
-
-  const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
-  const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${String(GOOGLE_ELEVATION_API_KEY).trim()}`;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
-
-  let response;
-  try {
-    response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId); // Clear timeout if fetch completes or errors normally
-  } catch (networkError) {
-    clearTimeout(timeoutId); // Ensure timeout is cleared on error
-    if (networkError instanceof Error && networkError.name === 'AbortError') {
-      console.error("Google Elevation API request timed out after 30 seconds.");
-      throw new Error("Google Elevation API request timed out. The service might be temporarily unavailable or there could be network issues.");
-    }
-    const networkErrorMessageSource = networkError instanceof Error ? networkError.message : networkError;
-    console.error("Network error fetching elevation data:", String(networkErrorMessageSource));
-    throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${String(networkErrorMessageSource)}`);
-  }
-
-  if (!response.ok) {
-    let errorBody = "Could not retrieve error body.";
-    try {
-      errorBody = await response.text();
-    } catch (textError) {
-      console.error("Failed to read error body from Google API response:", String(textError));
-    }
-    console.error("Google Elevation API request failed:", response.status, String(errorBody));
-    throw new Error(`Google Elevation API request failed with status ${response.status}. Details: ${String(errorBody)}`);
-  }
-
-  let data;
-  try {
-    data = await response.json();
-  } catch (jsonError) {
-    const jsonErrorMsgSource = jsonError instanceof Error ? jsonError.message : jsonError;
-    console.error("Failed to parse JSON response from Google Elevation API:", String(jsonErrorMsgSource));
-    throw new Error(`Failed to parse response from Google Elevation API. Details: ${String(jsonErrorMsgSource)}`);
-  }
-
-
-  if (data.status !== 'OK') {
-    console.error("Google Elevation API error:", data.status, String(data.error_message));
-    throw new Error(`Google Elevation API error: ${String(data.status)} - ${String(data.error_message) || 'Unknown API error'}`);
-  }
-
-  if (!data.results || data.results.length === 0) {
-    throw new Error("Google Elevation API returned no results for the given path.");
-  }
-
-  return data.results.map((sample: any) => ({
-      elevation: sample.elevation,
-      location: {
-          lat: sample.location.lat,
-          lng: sample.location.lng,
-      },
-      resolution: sample.resolution,
-  }));
-}
+    

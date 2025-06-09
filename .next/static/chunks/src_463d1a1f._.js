@@ -170,7 +170,7 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/app/data:14f25e [app-client] (ecmascript) <text/javascript>": ((__turbopack_context__) => {
+"[project]/src/app/data:ca22d2 [app-client] (ecmascript) <text/javascript>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
@@ -181,7 +181,7 @@ var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-client-wrapper.js [app-client] (ecmascript)");
 "use turbopack no side effects";
 ;
-var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis"); //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcblwidXNlIHNlcnZlclwiO1xuXG5pbXBvcnQgeyB6IH0gZnJvbSAnem9kJztcbmltcG9ydCB0eXBlIHsgQW5hbHlzaXNQYXJhbXMsIEFuYWx5c2lzUmVzdWx0LCBQb2ludENvb3JkaW5hdGVzLCBFbGV2YXRpb25TYW1wbGVBUEksIEFjdGlvbkVycm9yU3RhdGUgfSBmcm9tICdAL3R5cGVzJztcbmltcG9ydCB7IGFuYWx5emVMT1MsIGdldEdvb2dsZUVsZXZhdGlvbkRhdGEgfSBmcm9tICdAL2xpYi9sb3MtY2FsY3VsYXRvcic7IC8vIEltcG9ydCBnZXRHb29nbGVFbGV2YXRpb25EYXRhXG5cbi8vIERlZmluZSBab2Qgc2NoZW1hIGZvciBmb3JtIHZhbGlkYXRpb25cbmNvbnN0IFBvaW50SW5wdXRTY2hlbWEgPSB6Lm9iamVjdCh7XG4gIGxhdDogei5zdHJpbmcoKS5yZWZpbmUodmFsID0+ICFpc05hTihwYXJzZUZsb2F0KHZhbCkpICYmIE1hdGguYWJzKHBhcnNlRmxvYXQodmFsKSkgPD0gOTAsIFwiSW52YWxpZCBMYXRpdHVkZSAoLTkwIHRvIDkwKVwiKSxcbiAgbG5nOiB6LnN0cmluZygpLnJlZmluZSh2YWwgPT4gIWlzTmFOKHBhcnNlRmxvYXQodmFsKSkgJiYgTWF0aC5hYnMocGFyc2VGbG9hdCh2YWwpKSA8PSAxODAsIFwiSW52YWxpZCBMb25naXR1ZGUgKC0xODAgdG8gMTgwKVwiKSxcbiAgaGVpZ2h0OiB6LnN0cmluZygpLnJlZmluZSh2YWwgPT4gIWlzTmFOKHBhcnNlRmxvYXQodmFsKSkgJiYgcGFyc2VGbG9hdCh2YWwpID49IDAsIFwiSGVpZ2h0IG11c3QgYmUgYSBwb3NpdGl2ZSBudW1iZXJcIiksXG59KTtcblxuY29uc3QgQW5hbHlzaXNGb3JtU2NoZW1hID0gei5vYmplY3Qoe1xuICBwb2ludEE6IFBvaW50SW5wdXRTY2hlbWEsXG4gIHBvaW50QjogUG9pbnRJbnB1dFNjaGVtYSxcbiAgY2xlYXJhbmNlVGhyZXNob2xkOiB6LnN0cmluZygpLnJlZmluZSh2YWwgPT4gIWlzTmFOKHBhcnNlRmxvYXQodmFsKSkgJiYgcGFyc2VGbG9hdCh2YWwpID49IDAsIFwiQ2xlYXJhbmNlIG11c3QgYmUgYSBwb3NpdGl2ZSBudW1iZXJcIiksXG59KTtcblxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHBlcmZvcm1Mb3NBbmFseXNpcyhcbiAgcHJldlN0YXRlOiBBbmFseXNpc1Jlc3VsdCB8IEFjdGlvbkVycm9yU3RhdGUgfCBudWxsLFxuICBmb3JtRGF0YTogRm9ybURhdGFcbik6IFByb21pc2U8QW5hbHlzaXNSZXN1bHQgfCBBY3Rpb25FcnJvclN0YXRlPiB7XG4gIHRyeSB7IC8vIE91dGVyIHRyeS1jYXRjaCBmb3IgdGhlIGVudGlyZSBhY3Rpb25cbiAgICBjb25zdCByYXdGb3JtRGF0YSA9IHtcbiAgICAgIHBvaW50QToge1xuICAgICAgICBsYXQ6IGZvcm1EYXRhLmdldCgncG9pbnRBLmxhdCcpIGFzIHN0cmluZyxcbiAgICAgICAgbG5nOiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5sbmcnKSBhcyBzdHJpbmcsXG4gICAgICAgIGhlaWdodDogZm9ybURhdGEuZ2V0KCdwb2ludEEuaGVpZ2h0JykgYXMgc3RyaW5nLFxuICAgICAgfSxcbiAgICAgIHBvaW50Qjoge1xuICAgICAgICBsYXQ6IGZvcm1EYXRhLmdldCgncG9pbnRCLmxhdCcpIGFzIHN0cmluZyxcbiAgICAgICAgbG5nOiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5sbmcnKSBhcyBzdHJpbmcsXG4gICAgICAgIGhlaWdodDogZm9ybURhdGEuZ2V0KCdwb2ludEIuaGVpZ2h0JykgYXMgc3RyaW5nLFxuICAgICAgfSxcbiAgICAgIGNsZWFyYW5jZVRocmVzaG9sZDogZm9ybURhdGEuZ2V0KCdjbGVhcmFuY2VUaHJlc2hvbGQnKSBhcyBzdHJpbmcsXG4gICAgfTtcblxuICAgIGNvbnN0IHZhbGlkYXRpb25SZXN1bHQgPSBBbmFseXNpc0Zvcm1TY2hlbWEuc2FmZVBhcnNlKHJhd0Zvcm1EYXRhKTtcblxuICAgIGlmICghdmFsaWRhdGlvblJlc3VsdC5zdWNjZXNzKSB7XG4gICAgICBjb25zb2xlLmVycm9yKFwiVmFsaWRhdGlvbiBlcnJvcnM6XCIsIEpTT04uc3RyaW5naWZ5KHZhbGlkYXRpb25SZXN1bHQuZXJyb3IuZmxhdHRlbigpLmZpZWxkRXJyb3JzKSk7XG4gICAgICBjb25zdCBmaWVsZEVycm9ycyA9IHZhbGlkYXRpb25SZXN1bHQuZXJyb3IuZmxhdHRlbigpLmZpZWxkRXJyb3JzO1xuICAgICAgY29uc3Qgc2FuaXRpemVkRmllbGRFcnJvcnM6IHsgW2tleTogc3RyaW5nXTogc3RyaW5nW10gfSA9IHt9O1xuICAgICAgZm9yIChjb25zdCBmaWVsZCBpbiBmaWVsZEVycm9ycykge1xuICAgICAgICBjb25zdCBtZXNzYWdlczogdW5rbm93bltdIHwgdW5kZWZpbmVkID0gZmllbGRFcnJvcnNbZmllbGQgYXMga2V5b2YgdHlwZW9mIGZpZWxkRXJyb3JzXTtcbiAgICAgICAgaWYgKG1lc3NhZ2VzICYmIEFycmF5LmlzQXJyYXkobWVzc2FnZXMpKSB7XG4gICAgICAgICAgc2FuaXRpemVkRmllbGRFcnJvcnNbZmllbGRdID0gbWVzc2FnZXMubWFwKG1zZyA9PiBTdHJpbmcobXNnKSk7XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICAgIHJldHVybiB7IGVycm9yOiBTdHJpbmcoXCJJbnZhbGlkIGlucHV0LlwiKSwgZmllbGRFcnJvcnM6IHNhbml0aXplZEZpZWxkRXJyb3JzIH07XG4gICAgfVxuXG4gICAgY29uc3QgdmFsaWRhdGVkRGF0YSA9IHZhbGlkYXRpb25SZXN1bHQuZGF0YTtcblxuICAgIGNvbnN0IHBhcmFtczogQW5hbHlzaXNQYXJhbXMgPSB7XG4gICAgICBwb2ludEE6IHtcbiAgICAgICAgbGF0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRBLmxhdCksXG4gICAgICAgIGxuZzogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5sbmcpLFxuICAgICAgICB0b3dlckhlaWdodDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5oZWlnaHQpLFxuICAgICAgfSxcbiAgICAgIHBvaW50Qjoge1xuICAgICAgICBsYXQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEIubGF0KSxcbiAgICAgICAgbG5nOiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmxuZyksXG4gICAgICAgIHRvd2VySGVpZ2h0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmhlaWdodCksXG4gICAgICB9LFxuICAgICAgY2xlYXJhbmNlVGhyZXNob2xkOiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEuY2xlYXJhbmNlVGhyZXNob2xkKSxcbiAgICB9O1xuXG4gICAgdHJ5IHsgLy8gSW5uZXIgdHJ5LWNhdGNoIHNwZWNpZmljYWxseSBmb3IgZWxldmF0aW9uIGZldGNoaW5nIGFuZCBMT1MgYW5hbHlzaXNcbiAgICAgIGNvbnN0IGVsZXZhdGlvbkRhdGEgPSBhd2FpdCBnZXRHb29nbGVFbGV2YXRpb25EYXRhKHBhcmFtcy5wb2ludEEsIHBhcmFtcy5wb2ludEIsIDEwMCk7XG4gICAgICBjb25zdCByZXN1bHQgPSBhbmFseXplTE9TKHBhcmFtcywgZWxldmF0aW9uRGF0YSk7XG4gICAgICBjb25zdCBzdWNjZXNzTWVzc2FnZSA9IFN0cmluZyhyZXN1bHQubWVzc2FnZSk7XG4gICAgICBjb25zdCBhcGlTb3VyY2VNZXNzYWdlID0gXCJVc2luZyBHb29nbGUgRWxldmF0aW9uIEFQSSBkYXRhLlwiO1xuICAgICAgcmV0dXJuIHsgLi4ucmVzdWx0LCBtZXNzYWdlOiBTdHJpbmcoYCR7c3VjY2Vzc01lc3NhZ2V9ICR7YXBpU291cmNlTWVzc2FnZX1gKSB9O1xuXG4gICAgfSBjYXRjaCAoZXJyKSB7IC8vIElubmVyIGNhdGNoXG4gICAgICBjb25zdCBlcnJvclNvdXJjZSA9IGVyciBpbnN0YW5jZW9mIEVycm9yID8gZXJyLm1lc3NhZ2UgOiBlcnI7XG4gICAgICBjb25zdCBlcnJvck1lc3NhZ2VTdHJpbmcgPSBTdHJpbmcoZXJyb3JTb3VyY2UpO1xuICAgICAgY29uc29sZS5lcnJvcihcIkVycm9yIGR1cmluZyBMT1MgYW5hbHlzaXMgKGlubmVyIGNhdGNoKTpcIiwgZXJyb3JNZXNzYWdlU3RyaW5nKTtcblxuICAgICAgbGV0IGZpbmFsTWVzc2FnZTogc3RyaW5nO1xuXG4gICAgICBpZiAoZXJyb3JNZXNzYWdlU3RyaW5nLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkga2V5IGlzIG5vdCBjb25maWd1cmVkXCIpKSB7XG4gICAgICAgICAgZmluYWxNZXNzYWdlID0gXCJFbGV2YXRpb24gc2VydmljZSBpcyBub3QgY29uZmlndXJlZC4gUGxlYXNlIGNoZWNrIHRoZSBBUEkga2V5IGFuZCBlbnN1cmUgaXQncyBlbmFibGVkIGZvciB0aGUgR29vZ2xlIEVsZXZhdGlvbiBBUEkgaW4geW91ciBHb29nbGUgQ2xvdWQgQ29uc29sZS5cIjtcbiAgICAgIH0gZWxzZSBpZiAoZXJyb3JNZXNzYWdlU3RyaW5nLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmVxdWVzdCBmYWlsZWRcIikgfHwgZXJyb3JNZXNzYWdlU3RyaW5nLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgZXJyb3JcIikgfHwgZXJyb3JNZXNzYWdlU3RyaW5nLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmVxdWVzdCB0aW1lZCBvdXRcIikpIHtcbiAgICAgICAgICBmaW5hbE1lc3NhZ2UgPSBgRmFpbGVkIHRvIHJldHJpZXZlIGVsZXZhdGlvbiBkYXRhLiBUaGlzIGNvdWxkIGJlIGR1ZSB0byBhbiBpbnZhbGlkIEFQSSBrZXksIHJlc3RyaWN0aW9ucywgYmlsbGluZyBpc3N1ZXMgd2l0aCBHb29nbGUgQ2xvdWQgUGxhdGZvcm0sIG9yIHRoZSBzZXJ2aWNlIGJlaW5nIHRlbXBvcmFyaWx5IHVuYXZhaWxhYmxlLiBEZXRhaWxzOiAke2Vycm9yTWVzc2FnZVN0cmluZ31gO1xuICAgICAgfSBlbHNlIGlmIChlcnJvck1lc3NhZ2VTdHJpbmcuaW5jbHVkZXMoXCJOZXR3b3JrIGVycm9yIHdoaWxlIHRyeWluZyB0byByZWFjaCBHb29nbGUgRWxldmF0aW9uIEFQSVwiKSkge1xuICAgICAgICAgIGZpbmFsTWVzc2FnZSA9IGVycm9yTWVzc2FnZVN0cmluZztcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgZmluYWxNZXNzYWdlID0gYEFuYWx5c2lzIGZhaWxlZCBkdWUgdG8gYW4gdW5leHBlY3RlZCBpc3N1ZTogJHtlcnJvck1lc3NhZ2VTdHJpbmd9YDtcbiAgICAgIH1cbiAgICAgIHJldHVybiB7IGVycm9yOiBTdHJpbmcoZmluYWxNZXNzYWdlKSwgZmllbGRFcnJvcnM6IHVuZGVmaW5lZCB9O1xuICAgIH1cbiAgfSBjYXRjaCAoZSkgeyAvLyBPdXRlciBjYXRjaCBmb3IgYW55IG90aGVyIGVycm9ycyBpbiB0aGUgYWN0aW9uXG4gICAgY29uc29sZS5lcnJvcihcIlVuaGFuZGxlZCBlcnJvciBpbiBwZXJmb3JtTG9zQW5hbHlzaXMgKG91dGVyIGNhdGNoKTpcIiwgU3RyaW5nKGUpKTtcbiAgICAvLyBSZXR1cm4gYSBnZW5lcmljLCBzaW1wbGUsIGFuZCBzZXJpYWxpemFibGUgZXJyb3Igb2JqZWN0XG4gICAgcmV0dXJuIHtcbiAgICAgIGVycm9yOiBcIkFuIHVuZXhwZWN0ZWQgc2VydmVyIGVycm9yIG9jY3VycmVkLiBQbGVhc2UgdHJ5IGFnYWluLlwiLFxuICAgICAgZmllbGRFcnJvcnM6IHVuZGVmaW5lZCAvLyBFbnN1cmUgZmllbGRFcnJvcnMgaXMgdW5kZWZpbmVkIGZvciB0aGlzIGdlbmVyaWMgY2FzZVxuICAgIH07XG4gIH1cbn1cbiJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOFJBb0JzQiJ9
+var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis"); //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcblwidXNlIHNlcnZlclwiO1xuXG5pbXBvcnQgeyB6IH0gZnJvbSAnem9kJztcbmltcG9ydCB0eXBlIHsgQW5hbHlzaXNSZXN1bHQsIEFjdGlvbkVycm9yU3RhdGUsIFBvaW50Q29vcmRpbmF0ZXMsIEVsZXZhdGlvblNhbXBsZUFQSSB9IGZyb20gJ0AvdHlwZXMnO1xuaW1wb3J0IHsgZ2V0R29vZ2xlRWxldmF0aW9uRGF0YSwgYW5hbHl6ZUxPUyB9IGZyb20gJ0AvbGliL2xvcy1jYWxjdWxhdG9yJztcblxuLy8gRGVmaW5lIFpvZCBzY2hlbWEgZm9yIGZvcm0gdmFsaWRhdGlvblxuY29uc3QgUG9pbnRJbnB1dFNjaGVtYSA9IHoub2JqZWN0KHtcbiAgbmFtZTogei5zdHJpbmcoKS5taW4oMSwgXCJOYW1lIGlzIHJlcXVpcmVkXCIpLm1heCg1MCwgXCJOYW1lIHRvbyBsb25nXCIpLFxuICBsYXQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBNYXRoLmFicyhwYXJzZUZsb2F0KHZhbCkpIDw9IDkwLCBcIkludmFsaWQgTGF0aXR1ZGUgKC05MCB0byA5MClcIiksXG4gIGxuZzogei5zdHJpbmcoKS5yZWZpbmUodmFsID0+ICFpc05hTihwYXJzZUZsb2F0KHZhbCkpICYmIE1hdGguYWJzKHBhcnNlRmxvYXQodmFsKSkgPD0gMTgwLCBcIkludmFsaWQgTG9uZ2l0dWRlICgtMTgwIHRvIDE4MClcIiksXG4gIGhlaWdodDogei5zdHJpbmcoKS5yZWZpbmUodmFsID0+ICFpc05hTihwYXJzZUZsb2F0KHZhbCkpICYmIHBhcnNlRmxvYXQodmFsKSA+PSAwLCBcIkhlaWdodCBtdXN0IGJlIGEgcG9zaXRpdmUgbnVtYmVyXCIpLFxufSk7XG5cbmNvbnN0IEFuYWx5c2lzRm9ybVNjaGVtYSA9IHoub2JqZWN0KHtcbiAgcG9pbnRBOiBQb2ludElucHV0U2NoZW1hLFxuICBwb2ludEI6IFBvaW50SW5wdXRTY2hlbWEsXG4gIGNsZWFyYW5jZVRocmVzaG9sZDogei5zdHJpbmcoKS5yZWZpbmUodmFsID0+ICFpc05hTihwYXJzZUZsb2F0KHZhbCkpICYmIHBhcnNlRmxvYXQodmFsKSA+PSAwLCBcIkNsZWFyYW5jZSBtdXN0IGJlIGEgcG9zaXRpdmUgbnVtYmVyXCIpLFxufSk7XG5cblxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHBlcmZvcm1Mb3NBbmFseXNpcyhcbiAgcHJldlN0YXRlOiBBbmFseXNpc1Jlc3VsdCB8IEFjdGlvbkVycm9yU3RhdGUgfCBudWxsLFxuICBmb3JtRGF0YTogRm9ybURhdGFcbik6IFByb21pc2U8QW5hbHlzaXNSZXN1bHQgfCBBY3Rpb25FcnJvclN0YXRlPiB7XG4gIHRyeSB7IC8vIE91dGVyIHRyeS1jYXRjaCBmb3IgdGhlIGVudGlyZSBhY3Rpb25cbiAgICBjb25zdCByYXdGb3JtRGF0YSA9IHtcbiAgICAgIHBvaW50QToge1xuICAgICAgICBuYW1lOiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5uYW1lJykgYXMgc3RyaW5nLFxuICAgICAgICBsYXQ6IGZvcm1EYXRhLmdldCgncG9pbnRBLmxhdCcpIGFzIHN0cmluZyxcbiAgICAgICAgbG5nOiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5sbmcnKSBhcyBzdHJpbmcsXG4gICAgICAgIGhlaWdodDogZm9ybURhdGEuZ2V0KCdwb2ludEEuaGVpZ2h0JykgYXMgc3RyaW5nLFxuICAgICAgfSxcbiAgICAgIHBvaW50Qjoge1xuICAgICAgICBuYW1lOiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5uYW1lJykgYXMgc3RyaW5nLFxuICAgICAgICBsYXQ6IGZvcm1EYXRhLmdldCgncG9pbnRCLmxhdCcpIGFzIHN0cmluZyxcbiAgICAgICAgbG5nOiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5sbmcnKSBhcyBzdHJpbmcsXG4gICAgICAgIGhlaWdodDogZm9ybURhdGEuZ2V0KCdwb2ludEIuaGVpZ2h0JykgYXMgc3RyaW5nLFxuICAgICAgfSxcbiAgICAgIGNsZWFyYW5jZVRocmVzaG9sZDogZm9ybURhdGEuZ2V0KCdjbGVhcmFuY2VUaHJlc2hvbGQnKSBhcyBzdHJpbmcsXG4gICAgfTtcblxuICAgIGNvbnN0IHZhbGlkYXRpb25SZXN1bHQgPSBBbmFseXNpc0Zvcm1TY2hlbWEuc2FmZVBhcnNlKHJhd0Zvcm1EYXRhKTtcblxuICAgIGlmICghdmFsaWRhdGlvblJlc3VsdC5zdWNjZXNzKSB7XG4gICAgICBjb25zdCBmaWVsZEVycm9ycyA9IHZhbGlkYXRpb25SZXN1bHQuZXJyb3IuZmxhdHRlbigpLmZpZWxkRXJyb3JzO1xuICAgICAgY29uc3Qgc2FuaXRpemVkRmllbGRFcnJvcnM6IHsgW2tleTogc3RyaW5nXTogc3RyaW5nW10gfCB1bmRlZmluZWQgfSA9IHt9O1xuICAgICAgZm9yIChjb25zdCBmaWVsZCBpbiBmaWVsZEVycm9ycykge1xuICAgICAgICBjb25zdCBtZXNzYWdlcyA9IGZpZWxkRXJyb3JzW2ZpZWxkIGFzIGtleW9mIHR5cGVvZiBmaWVsZEVycm9yc107XG4gICAgICAgIGlmIChtZXNzYWdlcykge1xuICAgICAgICAgIHNhbml0aXplZEZpZWxkRXJyb3JzW2ZpZWxkXSA9IG1lc3NhZ2VzLm1hcChtc2cgPT4gU3RyaW5nKG1zZykpOyAvLyBFbnN1cmUgbWVzc2FnZXMgYXJlIHN0cmluZ3NcbiAgICAgICAgfVxuICAgICAgfVxuICAgICAgY29uc29sZS5lcnJvcihcIlZhbGlkYXRpb24gZXJyb3JzOlwiLCBzYW5pdGl6ZWRGaWVsZEVycm9ycyk7XG4gICAgICByZXR1cm4geyBlcnJvcjogXCJJbnZhbGlkIGlucHV0LiBQbGVhc2UgY2hlY2sgdGhlIGZpZWxkcyBoaWdobGlnaHRlZCBiZWxvdy5cIiwgZmllbGRFcnJvcnM6IHNhbml0aXplZEZpZWxkRXJyb3JzIH07XG4gICAgfVxuXG4gICAgY29uc3QgdmFsaWRhdGVkRGF0YSA9IHZhbGlkYXRpb25SZXN1bHQuZGF0YTtcblxuICAgIGNvbnN0IHBhcmFtc0ZvckFuYWx5c2lzID0ge1xuICAgICAgcG9pbnRBOiB7XG4gICAgICAgIG5hbWU6IHZhbGlkYXRlZERhdGEucG9pbnRBLm5hbWUsXG4gICAgICAgIGxhdDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5sYXQpLFxuICAgICAgICBsbmc6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEubG5nKSxcbiAgICAgICAgdG93ZXJIZWlnaHQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEuaGVpZ2h0KSxcbiAgICAgIH0sXG4gICAgICBwb2ludEI6IHtcbiAgICAgICAgbmFtZTogdmFsaWRhdGVkRGF0YS5wb2ludEIubmFtZSxcbiAgICAgICAgbGF0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmxhdCksXG4gICAgICAgIGxuZzogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5sbmcpLFxuICAgICAgICB0b3dlckhlaWdodDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5oZWlnaHQpLFxuICAgICAgfSxcbiAgICAgIGNsZWFyYW5jZVRocmVzaG9sZDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLmNsZWFyYW5jZVRocmVzaG9sZCksXG4gICAgfTtcbiAgICBcbiAgICB0cnkgeyAvLyBJbm5lciB0cnktY2F0Y2ggc3BlY2lmaWNhbGx5IGZvciBlbGV2YXRpb24gZmV0Y2hpbmcgYW5kIExPUyBhbmFseXNpc1xuICAgICAgLy8gVXNlIHBhcmFtc0ZvckFuYWx5c2lzIGRpcmVjdGx5IGZvciBnZXRHb29nbGVFbGV2YXRpb25EYXRhIHBvaW50c1xuICAgICAgY29uc3QgZWxldmF0aW9uRGF0YSA9IGF3YWl0IGdldEdvb2dsZUVsZXZhdGlvbkRhdGEoXG4gICAgICAgIHsgbGF0OiBwYXJhbXNGb3JBbmFseXNpcy5wb2ludEEubGF0LCBsbmc6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50QS5sbmcgfSxcbiAgICAgICAgeyBsYXQ6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50Qi5sYXQsIGxuZzogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRCLmxuZyB9LFxuICAgICAgICAxMDAgLy8gTnVtYmVyIG9mIHNhbXBsZXNcbiAgICAgICk7XG4gICAgICBcbiAgICAgIC8vIGFuYWx5emVMT1MgZXhwZWN0cyBuYW1lcyBpbiBpdHMgcG9pbnQgc3RydWN0dXJlXG4gICAgICBjb25zdCBhbmFseXNpc1Jlc3VsdERhdGEgPSBhbmFseXplTE9TKFxuICAgICAgICBwYXJhbXNGb3JBbmFseXNpcywgLy8gVGhpcyBub3cgaW5jbHVkZXMgbmFtZXNcbiAgICAgICAgZWxldmF0aW9uRGF0YVxuICAgICAgKTtcbiAgICAgIFxuICAgICAgY29uc3QgZnVsbFJlc3VsdDogQW5hbHlzaXNSZXN1bHQgPSB7XG4gICAgICAgIGlkOiBgYW5hbHlzaXNfJHtEYXRlLm5vdygpfWAsIC8vIEdlbmVyYXRlIGFuIElEIGZvciB0aGUgcmVzdWx0XG4gICAgICAgIHRpbWVzdGFtcDogRGF0ZS5ub3coKSxcbiAgICAgICAgbG9zUG9zc2libGU6IGFuYWx5c2lzUmVzdWx0RGF0YS5sb3NQb3NzaWJsZSxcbiAgICAgICAgZGlzdGFuY2VLbTogYW5hbHlzaXNSZXN1bHREYXRhLmRpc3RhbmNlS20sXG4gICAgICAgIG1pbkNsZWFyYW5jZTogYW5hbHlzaXNSZXN1bHREYXRhLm1pbkNsZWFyYW5jZSxcbiAgICAgICAgYWRkaXRpb25hbEhlaWdodE5lZWRlZDogYW5hbHlzaXNSZXN1bHREYXRhLmFkZGl0aW9uYWxIZWlnaHROZWVkZWQsXG4gICAgICAgIHByb2ZpbGU6IGFuYWx5c2lzUmVzdWx0RGF0YS5wcm9maWxlLFxuICAgICAgICBtZXNzYWdlOiBgJHthbmFseXNpc1Jlc3VsdERhdGEubWVzc2FnZX0gVXNpbmcgR29vZ2xlIEVsZXZhdGlvbiBBUEkgZGF0YS5gLFxuICAgICAgICBwb2ludEE6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50QSwgLy8gVXNlIHRoZSBmdWxseSBzdHJ1Y3R1cmVkIHBvaW50XG4gICAgICAgIHBvaW50QjogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRCLCAvLyBVc2UgdGhlIGZ1bGx5IHN0cnVjdHVyZWQgcG9pbnRcbiAgICAgICAgY2xlYXJhbmNlVGhyZXNob2xkVXNlZDogcGFyYW1zRm9yQW5hbHlzaXMuY2xlYXJhbmNlVGhyZXNob2xkLFxuICAgICAgfTtcbiAgICAgIHJldHVybiBmdWxsUmVzdWx0O1xuXG4gICAgfSBjYXRjaCAoZXJyOiB1bmtub3duKSB7IC8vIElubmVyIGNhdGNoXG4gICAgICBsZXQgY2xpZW50RXJyb3JNZXNzYWdlOiBzdHJpbmc7XG4gICAgICBsZXQgZXJyb3JGb3JMb2dnaW5nOiBzdHJpbmcgPSBcIlVua25vd24gZXJyb3IgaW4gTE9TIGFuYWx5c2lzIChpbm5lciBjYXRjaClcIjtcblxuICAgICAgaWYgKGVyciBpbnN0YW5jZW9mIFJlZ0V4cCkge1xuICAgICAgICAvLyBUaGlzIGNhc2Ugc2hvdWxkIGlkZWFsbHkgbm90IGhhcHBlbiBpZiBlcnJvcnMgYXJlIGNvbnN0cnVjdGVkIHByb3Blcmx5XG4gICAgICAgIGVycm9yRm9yTG9nZ2luZyA9IGBSZWdFeHAgRXJyb3IgaW4gTE9TIGFuYWx5c2lzOiAke2Vyci50b1N0cmluZygpfWA7XG4gICAgICAgIGNsaWVudEVycm9yTWVzc2FnZSA9IGBBbmFseXNpcyBmYWlsZWQgZHVlIHRvIGFuIHVuZXhwZWN0ZWQgaXNzdWUgKFJlZ0V4cCk6ICR7ZXJyLnNvdXJjZX1gO1xuICAgICAgfSBlbHNlIGlmIChlcnIgaW5zdGFuY2VvZiBFcnJvcikge1xuICAgICAgICBlcnJvckZvckxvZ2dpbmcgPSBTdHJpbmcoZXJyLm1lc3NhZ2UpO1xuICAgICAgICBjb25zdCBzcGVjaWZpY0Vycm9yTWVzc2FnZSA9IFN0cmluZyhlcnIubWVzc2FnZSk7IFxuICAgICAgICBcbiAgICAgICAgaWYgKHNwZWNpZmljRXJyb3JNZXNzYWdlLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkga2V5IGlzIG5vdCBjb25maWd1cmVkXCIpKSB7XG4gICAgICAgICAgICBjbGllbnRFcnJvck1lc3NhZ2UgPSBcIkVsZXZhdGlvbiBzZXJ2aWNlIGlzIG5vdCBjb25maWd1cmVkLiBQbGVhc2UgY2hlY2sgdGhlIEFQSSBrZXkgYW5kIGVuc3VyZSBpdCdzIGVuYWJsZWQgZm9yIHRoZSBHb29nbGUgRWxldmF0aW9uIEFQSSBpbiB5b3VyIEdvb2dsZSBDbG91ZCBDb25zb2xlLlwiO1xuICAgICAgICB9IGVsc2UgaWYgKHNwZWNpZmljRXJyb3JNZXNzYWdlLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmVxdWVzdCBmYWlsZWRcIikgfHwgc3BlY2lmaWNFcnJvck1lc3NhZ2UuaW5jbHVkZXMoXCJHb29nbGUgRWxldmF0aW9uIEFQSSBlcnJvclwiKSB8fCBzcGVjaWZpY0Vycm9yTWVzc2FnZS5pbmNsdWRlcyhcIkdvb2dsZSBFbGV2YXRpb24gQVBJIHJlcXVlc3QgdGltZWQgb3V0XCIpKSB7XG4gICAgICAgICAgICBjbGllbnRFcnJvck1lc3NhZ2UgPSBgRmFpbGVkIHRvIHJldHJpZXZlIGVsZXZhdGlvbiBkYXRhLiBUaGlzIGNvdWxkIGJlIGR1ZSB0byBhbiBpbnZhbGlkIEFQSSBrZXksIHJlc3RyaWN0aW9ucywgYmlsbGluZyBpc3N1ZXMgd2l0aCBHb29nbGUgQ2xvdWQgUGxhdGZvcm0sIG9yIHRoZSBzZXJ2aWNlIGJlaW5nIHRlbXBvcmFyaWx5IHVuYXZhaWxhYmxlLiBEZXRhaWxzOiAke3NwZWNpZmljRXJyb3JNZXNzYWdlfWA7XG4gICAgICAgIH0gZWxzZSBpZiAoc3BlY2lmaWNFcnJvck1lc3NhZ2UuaW5jbHVkZXMoXCJOZXR3b3JrIGVycm9yIHdoaWxlIHRyeWluZyB0byByZWFjaCBHb29nbGUgRWxldmF0aW9uIEFQSVwiKSkge1xuICAgICAgICAgICAgY2xpZW50RXJyb3JNZXNzYWdlID0gc3BlY2lmaWNFcnJvck1lc3NhZ2U7IFxuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICBjbGllbnRFcnJvck1lc3NhZ2UgPSBgQW5hbHlzaXMgZmFpbGVkIGR1ZSB0byBhbiB1bmV4cGVjdGVkIGlzc3VlOiAke3NwZWNpZmljRXJyb3JNZXNzYWdlfWA7XG4gICAgICAgIH1cbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIC8vIEZvciBhbnkgb3RoZXIgdHlwZSBvZiB0aHJvd24gdmFsdWVcbiAgICAgICAgZXJyb3JGb3JMb2dnaW5nID0gU3RyaW5nKGVycik7XG4gICAgICAgIGNsaWVudEVycm9yTWVzc2FnZSA9IGBBbmFseXNpcyBmYWlsZWQgZHVlIHRvIGFuIHVuZXhwZWN0ZWQgaXNzdWU6ICR7U3RyaW5nKGVycil9YDtcbiAgICAgIH1cbiAgICAgIGNvbnNvbGUuZXJyb3IoXCJFcnJvciBkdXJpbmcgTE9TIGFuYWx5c2lzIChpbm5lciBjYXRjaCk6XCIsIGVycm9yRm9yTG9nZ2luZyk7XG4gICAgICByZXR1cm4geyBlcnJvcjogY2xpZW50RXJyb3JNZXNzYWdlLCBmaWVsZEVycm9yczogdW5kZWZpbmVkIH07XG4gICAgfVxuICB9IGNhdGNoIChlOiB1bmtub3duKSB7IC8vIE91dGVyIGNhdGNoIGZvciBhbnkgb3RoZXIgZXJyb3JzIGluIHRoZSBhY3Rpb25cbiAgICBsZXQgZXJyb3JGb3JMb2dnaW5nOiBzdHJpbmc7XG4gICAgbGV0IGNsaWVudEVycm9yTWVzc2FnZTogc3RyaW5nID0gXCJBbiB1bmV4cGVjdGVkIHNlcnZlciBlcnJvciBvY2N1cnJlZC4gUGxlYXNlIHRyeSBhZ2Fpbi5cIjtcblxuICAgIGlmIChlIGluc3RhbmNlb2YgUmVnRXhwKSB7XG4gICAgICBlcnJvckZvckxvZ2dpbmcgPSBgUmVnRXhwIEVycm9yOiAke2UudG9TdHJpbmcoKX1gO1xuICAgICAgY2xpZW50RXJyb3JNZXNzYWdlID0gYEEgc2VydmVyIGVycm9yIG9jY3VycmVkIChEZXRhaWxzOiBSZWdFeHAgJHtlLnNvdXJjZX0pYDsgLy8gRW5zdXJlIHN0cmluZ1xuICAgIH0gZWxzZSBpZiAoZSBpbnN0YW5jZW9mIEVycm9yKSB7XG4gICAgICBlcnJvckZvckxvZ2dpbmcgPSBTdHJpbmcoZS5tZXNzYWdlKTsgLy8gRW5zdXJlIG1lc3NhZ2UgaXMgc3RyaW5nIGZvciBsb2dnaW5nXG4gICAgICAvLyBDaGVjayBpZiB0aGUgZXJyb3IgbWVzc2FnZSBpdHNlbGYgbWlnaHQgYmUgYSBSZWdFeHAgb2JqZWN0IChoaWdobHkgdW5saWtlbHkgYnV0IGRlZmVuc2l2ZSlcbiAgICAgIGlmICh0eXBlb2YgZS5tZXNzYWdlID09PSAnb2JqZWN0JyAmJiBlLm1lc3NhZ2UgIT09IG51bGwgJiYgZS5tZXNzYWdlLmNvbnN0cnVjdG9yID09PSBSZWdFeHApIHtcbiAgICAgICAgIGNsaWVudEVycm9yTWVzc2FnZSA9IGBBIHNlcnZlciBlcnJvciBvY2N1cnJlZCAoRXJyb3Igd2l0aCBSZWdFeHAgbWVzc2FnZSk6ICR7U3RyaW5nKGUubWVzc2FnZS50b1N0cmluZygpKX1gO1xuICAgICAgfSBlbHNlIHtcbiAgICAgICAgIGNsaWVudEVycm9yTWVzc2FnZSA9IGBBIHNlcnZlciBlcnJvciBvY2N1cnJlZDogJHtTdHJpbmcoZS5tZXNzYWdlKX1gO1xuICAgICAgfVxuICAgIH0gZWxzZSB7XG4gICAgICBlcnJvckZvckxvZ2dpbmcgPSBTdHJpbmcoZSk7IFxuICAgICAgY2xpZW50RXJyb3JNZXNzYWdlID0gYEFuIHVuZXhwZWN0ZWQgZXJyb3Igb2NjdXJyZWQ6ICR7U3RyaW5nKGUpfWA7IFxuICAgIH1cbiAgICBjb25zb2xlLmVycm9yKFwiVW5oYW5kbGVkIGVycm9yIGluIHBlcmZvcm1Mb3NBbmFseXNpcyAob3V0ZXIgY2F0Y2gpOlwiLCBlcnJvckZvckxvZ2dpbmcpO1xuXG4gICAgcmV0dXJuIHtcbiAgICAgIGVycm9yOiBjbGllbnRFcnJvck1lc3NhZ2UsXG4gICAgICBmaWVsZEVycm9yczogdW5kZWZpbmVkIFxuICAgIH07XG4gIH1cbn1cblxuXG4gICAgIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI4UkFzQnNCIn0=
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
@@ -209,7 +209,7 @@ const coordinatePairSchema = __TURBOPACK__imported__module__$5b$project$5d2f$nod
 const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].object({
     name: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].string().min(1, "Name is required").max(50, "Name too long"),
     coordinates: coordinatePairSchema,
-    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].coerce.number({
+    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].number({
         required_error: "Tower height is required",
         invalid_type_error: "Tower height must be a number"
     }).min(0, "Minimum tower height is 0m").max(100, "Maximum tower height is 100m")
@@ -217,7 +217,10 @@ const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
 const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].object({
     pointA: PointInputSchema,
     pointB: PointInputSchema,
-    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].coerce.number().min(0, "Clearance threshold must be a non-negative number")
+    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>{
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0;
+    }, "Clearance threshold must be a non-negative number")
 });
 const defaultFormStateValues = {
     pointA: {
@@ -230,7 +233,7 @@ const defaultFormStateValues = {
         coordinates: '',
         height: 20
     },
-    clearanceThreshold: 10
+    clearanceThreshold: '10'
 };
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
@@ -947,8 +950,57 @@ __turbopack_context__.s({
     "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius),
     "getGoogleElevationData": (()=>getGoogleElevationData)
 });
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 const EARTH_RADIUS_KM = 6371;
 const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
+async function getGoogleElevationData(pointA, pointB, samples) {
+    const GOOGLE_ELEVATION_API_KEY = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
+    if (!GOOGLE_ELEVATION_API_KEY) {
+        console.error("Google Elevation API key is not configured.");
+        // This specific error message is checked in actions.ts, so keep it consistent
+        throw new Error("Google Elevation API key is not configured");
+    }
+    const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+    const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
+    try {
+        const response = await fetch(url, {
+            next: {
+                revalidate: 3600
+            }
+        }); // Cache for 1 hour
+        if (!response.ok) {
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (parseError) {
+                errorData = {
+                    message: 'Failed to parse error response from API.'
+                };
+            }
+            console.error('Google Elevation API request failed:', response.status, response.statusText, errorData);
+            // This specific error message is checked in actions.ts
+            throw new Error(`Google Elevation API request failed: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorData)}`);
+        }
+        const data = await response.json();
+        if (data.status !== 'OK') {
+            console.error('Google Elevation API error:', data.status, data.error_message);
+            // This specific error message is checked in actions.ts
+            throw new Error(`Google Elevation API error: ${data.status}. ${data.error_message || 'No additional error message provided.'}`);
+        }
+        return data.results;
+    } catch (error) {
+        // Log the original error for server-side debugging
+        console.error('Network error or other issue while trying to reach Google Elevation API:', error);
+        // Re-throw with a consistent prefix for client-side handling, ensuring the original message is preserved if it's an Error instance
+        if (error instanceof Error) {
+            // This specific error message is checked in actions.ts
+            throw new Error(`Network error while trying to reach Google Elevation API: ${error.message}`);
+        }
+        // This specific error message is checked in actions.ts
+        throw new Error('Network error while trying to reach Google Elevation API. Unknown error type.');
+    }
+}
 function calculateDistanceKm(p1, p2) {
     const R = EARTH_RADIUS_KM;
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
@@ -964,8 +1016,8 @@ function calculateDistanceKm(p1, p2) {
  * @param totalPathDistanceKm Total distance of the LOS path in kilometers.
  * @param distanceFromStartKm Distance of the current point from the start of the path in kilometers.
  * @returns Earth curvature drop in meters.
- */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromStartKm) {
-    const totalPathDistanceM = totalPathDistanceKm * 1000;
+ */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm1, distanceFromStartKm) {
+    const totalPathDistanceM = totalPathDistanceKm1 * 1000;
     const distanceFromStartM = distanceFromStartKm * 1000;
     const distanceToEndM = totalPathDistanceM - distanceFromStartM;
     if (distanceFromStartM < 0 || distanceToEndM < 0) return 0;
@@ -993,10 +1045,7 @@ function analyzeLOS(params, elevationData) {
             message: "Insufficient elevation data for analysis.",
             pointA: params.pointA,
             pointB: params.pointB,
-            clearanceThresholdUsed: params.clearanceThreshold,
-            // id and timestamp will be added by the caller/context
-            id: `temp-analysis-${Date.now()}`,
-            timestamp: Date.now()
+            clearanceThresholdUsed: params.clearanceThreshold
         };
     }
     const totalDistanceKm = calculateDistanceKm(params.pointA, params.pointB);
@@ -1014,7 +1063,7 @@ function analyzeLOS(params, elevationData) {
         const terrainElevation = sample.elevation;
         const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
         const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
-        const curvatureDrop = calculateEarthCurvatureDropMeters(totalDistanceKm, distanceFromA_Km);
+        const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
         const correctedLosHeight = idealLosHeight - curvatureDrop;
         const clearance = correctedLosHeight - terrainElevation;
         profile.push({
@@ -1041,71 +1090,8 @@ function analyzeLOS(params, elevationData) {
         message: "Analysis complete.",
         pointA: params.pointA,
         pointB: params.pointB,
-        clearanceThresholdUsed: params.clearanceThreshold,
-        // id and timestamp will be added by the caller/context
-        id: `temp-analysis-${Date.now()}`,
-        timestamp: Date.now()
+        clearanceThresholdUsed: params.clearanceThreshold
     };
-}
-async function getGoogleElevationData(pointA, pointB, samples = 100) {
-    const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Replace with your actual API key or use environment variables
-    const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
-    if (!GOOGLE_ELEVATION_API_KEY || String(GOOGLE_ELEVATION_API_KEY).trim() === "") {
-        throw new Error("Google Elevation API key is not configured or is empty.");
-    }
-    const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
-    const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${String(GOOGLE_ELEVATION_API_KEY).trim()}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(()=>controller.abort(), 30000); // 30 seconds timeout
-    let response;
-    try {
-        response = await fetch(url, {
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId); // Clear timeout if fetch completes or errors normally
-    } catch (networkError) {
-        clearTimeout(timeoutId); // Ensure timeout is cleared on error
-        if (networkError instanceof Error && networkError.name === 'AbortError') {
-            console.error("Google Elevation API request timed out after 30 seconds.");
-            throw new Error("Google Elevation API request timed out. The service might be temporarily unavailable or there could be network issues.");
-        }
-        const networkErrorMessageSource = networkError instanceof Error ? networkError.message : networkError;
-        console.error("Network error fetching elevation data:", String(networkErrorMessageSource));
-        throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${String(networkErrorMessageSource)}`);
-    }
-    if (!response.ok) {
-        let errorBody = "Could not retrieve error body.";
-        try {
-            errorBody = await response.text();
-        } catch (textError) {
-            console.error("Failed to read error body from Google API response:", String(textError));
-        }
-        console.error("Google Elevation API request failed:", response.status, String(errorBody));
-        throw new Error(`Google Elevation API request failed with status ${response.status}. Details: ${String(errorBody)}`);
-    }
-    let data;
-    try {
-        data = await response.json();
-    } catch (jsonError) {
-        const jsonErrorMsgSource = jsonError instanceof Error ? jsonError.message : jsonError;
-        console.error("Failed to parse JSON response from Google Elevation API:", String(jsonErrorMsgSource));
-        throw new Error(`Failed to parse response from Google Elevation API. Details: ${String(jsonErrorMsgSource)}`);
-    }
-    if (data.status !== 'OK') {
-        console.error("Google Elevation API error:", data.status, String(data.error_message));
-        throw new Error(`Google Elevation API error: ${String(data.status)} - ${String(data.error_message) || 'Unknown API error'}`);
-    }
-    if (!data.results || data.results.length === 0) {
-        throw new Error("Google Elevation API returned no results for the given path.");
-    }
-    return data.results.map((sample)=>({
-            elevation: sample.elevation,
-            location: {
-                lat: sample.location.lat,
-                lng: sample.location.lng
-            },
-            resolution: sample.resolution
-        }));
 }
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
@@ -1961,7 +1947,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2Icon$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-client] (ecmascript) <export default as Trash2Icon>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/card.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$14f25e__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__ = __turbopack_context__.i("[project]/src/app/data:14f25e [app-client] (ecmascript) <text/javascript>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$ca22d2__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__ = __turbopack_context__.i("[project]/src/app/data:ca22d2 [app-client] (ecmascript) <text/javascript>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/form-schema.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$app$2d$header$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/layout/app-header.tsx [app-client] (ecmascript)");
@@ -2050,8 +2036,7 @@ function HomePageContent() {
     _s();
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
     const { links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLinks"])();
-    const [rawServerState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$14f25e__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
-    const [processedServerState, setProcessedServerState] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$ca22d2__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
     const [displayedError, setDisplayedError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [displayedFieldErrors, setDisplayedFieldErrors] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -2075,72 +2060,6 @@ function HomePageContent() {
         mode: 'onBlur'
     });
     const { handleSubmit, control, getValues, setValue, reset, watch } = form;
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
-        "HomePageContent.useEffect": ()=>{
-            if (rawServerState === null) {
-                setProcessedServerState(null);
-                return;
-            }
-            // Explicitly handle RegExp if rawServerState is one
-            if (rawServerState instanceof RegExp) {
-                console.error("Raw server state is a RegExp:", rawServerState);
-                setProcessedServerState({
-                    error: `A server error occurred. Details: ${rawServerState.toString()}`,
-                    fieldErrors: undefined
-                });
-                return;
-            }
-            // Handle Error instances (common if action throws)
-            if (rawServerState instanceof Error) {
-                setProcessedServerState({
-                    error: String(rawServerState.message || "An unexpected server error occurred (action threw Error)."),
-                    fieldErrors: undefined
-                });
-                return;
-            }
-            // Handle structured objects (ActionErrorState or AnalysisResult)
-            if (typeof rawServerState === 'object' && rawServerState !== null) {
-                // Check for structured error response (ActionErrorState)
-                if ('error' in rawServerState && typeof rawServerState.error === 'string') {
-                    const fieldErrors = rawServerState.fieldErrors;
-                    const sanitizedFieldErrors = fieldErrors ? {} : undefined;
-                    if (fieldErrors && sanitizedFieldErrors) {
-                        for(const field in fieldErrors){
-                            const messages = fieldErrors[field];
-                            if (messages) {
-                                sanitizedFieldErrors[field] = messages.map({
-                                    "HomePageContent.useEffect": (msg)=>String(msg)
-                                }["HomePageContent.useEffect"]);
-                            }
-                        }
-                    }
-                    setProcessedServerState({
-                        ...rawServerState,
-                        fieldErrors: sanitizedFieldErrors
-                    });
-                    return;
-                }
-                // Check for structured success response (AnalysisResult)
-                if ('losPossible' in rawServerState) {
-                    const analysisResult = rawServerState;
-                    // Ensure message is a string
-                    setProcessedServerState({
-                        ...analysisResult,
-                        message: String(analysisResult.message || "")
-                    });
-                    return;
-                }
-            }
-            // Fallback: If rawServerState is anything else (e.g., a primitive or an unexpected object structure)
-            console.error("Unexpected rawServerState received on client:", rawServerState);
-            setProcessedServerState({
-                error: `An unexpected or malformed state was received from the server action. Type: ${typeof rawServerState}, Value: ${String(rawServerState?.toString() || 'N/A')}`,
-                fieldErrors: undefined
-            });
-        }
-    }["HomePageContent.useEffect"], [
-        rawServerState
-    ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "HomePageContent.useEffect": ()=>{
             if (selectedLink) {
@@ -2168,7 +2087,7 @@ function HomePageContent() {
                         coordinates: pointB_coords_str,
                         height: selectedLink.pointB.towerHeight ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.height
                     },
-                    clearanceThreshold: selectedLink.clearanceThreshold ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
+                    clearanceThreshold: selectedLink.clearanceThreshold?.toString() ?? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
                 };
                 reset(formVals);
                 setIsAnalysisPanelGloballyOpen(true);
@@ -2205,7 +2124,7 @@ function HomePageContent() {
                         const parsedPointB = parseCoordinatesString(formValues.pointB?.coordinates || '');
                         const towerAHeight = typeof formValues.pointA?.height === 'number' ? formValues.pointA.height : parseFloat(String(formValues.pointA?.height)) || 0;
                         const towerBHeight = typeof formValues.pointB?.height === 'number' ? formValues.pointB.height : parseFloat(String(formValues.pointB?.height)) || 0;
-                        const clearance = typeof formValues.clearanceThreshold === 'number' ? formValues.clearanceThreshold : parseFloat(String(formValues.clearanceThreshold)) || 0;
+                        const clearance = parseFloat(formValues.clearanceThreshold || "0") || 0;
                         const newDetails = {
                             pointA: {
                                 name: formValues.pointA?.name || currentLinkInContext.pointA.name,
@@ -2223,10 +2142,7 @@ function HomePageContent() {
                         };
                         const detailsChanged = newDetails.pointA.name !== currentLinkInContext.pointA.name || newDetails.pointA.lat !== currentLinkInContext.pointA.lat || newDetails.pointA.lng !== currentLinkInContext.pointA.lng || newDetails.pointA.towerHeight !== currentLinkInContext.pointA.towerHeight || newDetails.pointB.name !== currentLinkInContext.pointB.name || newDetails.pointB.lat !== currentLinkInContext.pointB.lat || newDetails.pointB.lng !== currentLinkInContext.pointB.lng || newDetails.pointB.towerHeight !== currentLinkInContext.pointB.towerHeight || newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold;
                         if (detailsChanged) {
-                            updateLinkDetails(selectedLinkId, {
-                                ...newDetails,
-                                isDirty: true
-                            });
+                            updateLinkDetails(selectedLinkId, newDetails);
                         }
                     }
                 }
@@ -2261,17 +2177,17 @@ function HomePageContent() {
                 return;
             }
             const cachedResult = getCachedAnalysis(selectedLinkId);
-            if (cachedResult && !currentLink.isDirty) {
+            if (cachedResult) {
                 updateLinkAnalysis(selectedLinkId, cachedResult);
                 toast({
                     title: "Analysis Loaded from Cache",
-                    description: String(cachedResult.message)
+                    description: cachedResult.message
                 });
                 setIsAnalysisPanelGloballyOpen(true);
                 setIsBottomPanelContentExpanded(true);
                 let cached_pointA_coords_str = '';
                 if (cachedResult.pointA.lat !== null && cachedResult.pointA.lng !== null) {
-                    cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointB.lng}`;
+                    cached_pointA_coords_str = `${cachedResult.pointA.lat}, ${cachedResult.pointA.lng}`;
                 }
                 let cached_pointB_coords_str = '';
                 if (cachedResult.pointB.lat !== null && cachedResult.pointB.lng !== null) {
@@ -2288,7 +2204,7 @@ function HomePageContent() {
                         coordinates: cached_pointB_coords_str,
                         height: cachedResult.pointB.towerHeight
                     },
-                    clearanceThreshold: cachedResult.clearanceThresholdUsed
+                    clearanceThreshold: cachedResult.clearanceThresholdUsed.toString()
                 });
                 return;
             }
@@ -2311,7 +2227,7 @@ function HomePageContent() {
             formData.append('pointB.lat', parsedPointB.lat.toString());
             formData.append('pointB.lng', parsedPointB.lng.toString());
             formData.append('pointB.height', String(data.pointB.height));
-            formData.append('clearanceThreshold', data.clearanceThreshold.toString()); // Ensure string for FormData
+            formData.append('clearanceThreshold', data.clearanceThreshold);
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].startTransition({
                 "HomePageContent.useCallback[processSubmit]": ()=>{
                     formAction(formData);
@@ -2329,36 +2245,32 @@ function HomePageContent() {
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "HomePageContent.useEffect": ()=>{
-            if (processedServerState) {
-                if ('error' in processedServerState && typeof processedServerState.error === 'string') {
-                    setDisplayedError(processedServerState.error);
-                    setDisplayedFieldErrors(processedServerState.fieldErrors || null);
-                } else if ('losPossible' in processedServerState) {
+            if (serverState) {
+                if (serverState.error) {
+                    setDisplayedError(serverState.error);
+                    setDisplayedFieldErrors(serverState.fieldErrors || null);
+                } else if ('losPossible' in serverState) {
                     setDisplayedError(null);
                     setDisplayedFieldErrors(null);
                 }
-            } else {
-                setDisplayedError(null);
-                setDisplayedFieldErrors(null);
             }
         }
     }["HomePageContent.useEffect"], [
-        processedServerState
+        serverState
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "HomePageContent.useEffect": ()=>{
             if (!selectedLinkId) return;
             const currentLink = getLinkById(selectedLinkId);
             if (!currentLink) return;
-            const isErrorState = processedServerState && 'error' in processedServerState && processedServerState.error;
-            if (isErrorState) {
+            if (serverState?.error) {
                 updateLinkDetails(selectedLinkId, {
                     ...currentLink,
                     analysisResult: undefined,
                     isDirty: true
                 });
-            } else if (processedServerState && 'losPossible' in processedServerState && currentLink.isDirty) {
-                const successfulResult = processedServerState;
+            } else if (serverState && 'losPossible' in serverState && currentLink.isDirty) {
+                const successfulResult = serverState;
                 const currentFormData = getValues();
                 const newAnalysisResult = {
                     ...successfulResult,
@@ -2374,10 +2286,9 @@ function HomePageContent() {
                         lng: successfulResult.pointB.lng,
                         towerHeight: successfulResult.pointB.towerHeight
                     },
-                    clearanceThresholdUsed: typeof currentFormData.clearanceThreshold === 'number' ? currentFormData.clearanceThreshold : parseFloat(String(currentFormData.clearanceThreshold)),
+                    clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
                     id: selectedLinkId + '_analysis_' + Date.now(),
-                    timestamp: Date.now(),
-                    message: String(successfulResult.message || "LOS analysis performed successfully.") // Ensure message is string
+                    timestamp: Date.now()
                 };
                 updateLinkAnalysis(selectedLinkId, newAnalysisResult);
                 setHistoryList({
@@ -2390,12 +2301,12 @@ function HomePageContent() {
                 setIsBottomPanelContentExpanded(true);
                 toast({
                     title: "Analysis Complete",
-                    description: newAnalysisResult.message
+                    description: newAnalysisResult.message || "LOS analysis performed successfully."
                 });
             }
         }
     }["HomePageContent.useEffect"], [
-        processedServerState,
+        serverState,
         selectedLinkId,
         getLinkById,
         updateLinkDetails,
@@ -2406,8 +2317,7 @@ function HomePageContent() {
     const handleMapClick = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "HomePageContent.useCallback[handleMapClick]": (event, pointId)=>{
             const currentSelectedLink = getLinkById(selectedLinkId || '');
-            if (!currentSelectedLink) return;
-            if (event.latLng) {
+            if (event.latLng && currentSelectedLink) {
                 const lat = event.latLng.lat();
                 const lng = event.latLng.lng();
                 const fieldToUpdate = pointId === 'pointA' ? 'pointA' : 'pointB';
@@ -2421,10 +2331,15 @@ function HomePageContent() {
                     isDirty: true
                 });
             }
+        // Removed: No automatic link creation on map click if no link is selected
+        // else if (event.latLng && !currentSelectedLink) {
+        //    const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
+        // }
         }
     }["HomePageContent.useCallback[handleMapClick]"], [
         selectedLinkId,
         updateLinkDetails,
+        addLink,
         getLinkById
     ]);
     const handleMarkerDrag = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
@@ -2468,7 +2383,10 @@ function HomePageContent() {
     }["HomePageContent.useCallback[handleTowerHeightChangeFromGraph]"], [
         selectedLinkId,
         getLinkById,
-        updateLinkDetails
+        updateLinkDetails,
+        handleSubmit,
+        processSubmit,
+        getValues
     ]);
     const toggleGlobalPanelVisibility = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "HomePageContent.useCallback[toggleGlobalPanelVisibility]": ()=>{
@@ -2624,7 +2542,7 @@ function HomePageContent() {
                 isHistoryPanelSupported: true
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 546,
+                lineNumber: 471,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2643,14 +2561,14 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 560,
+                                        lineNumber: 485,
                                         columnNumber: 17
                                     }, this),
                                     "Add Another Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 554,
+                                lineNumber: 479,
                                 columnNumber: 13
                             }, this),
                             selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -2663,20 +2581,20 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 570,
+                                        lineNumber: 495,
                                         columnNumber: 21
                                     }, this),
                                     " Remove Selected Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 564,
+                                lineNumber: 489,
                                 columnNumber: 17
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 553,
+                        lineNumber: 478,
                         columnNumber: 12
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2690,15 +2608,15 @@ function HomePageContent() {
                             mapContainerClassName: "w-full h-full"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 577,
+                            lineNumber: 502,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 576,
+                        lineNumber: 501,
                         columnNumber: 9
                     }, this),
-                    !isAnalysisPanelGloballyOpen && !selectedLinkId && links.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    !isAnalysisPanelGloballyOpen && !selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                             onClick: handleAddNewLink,
@@ -2710,19 +2628,19 @@ function HomePageContent() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 595,
+                                    lineNumber: 520,
                                     columnNumber: 15
                                 }, this),
                                 "Add New Link"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 589,
+                            lineNumber: 514,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 588,
+                        lineNumber: 513,
                         columnNumber: 11
                     }, this),
                     isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2736,7 +2654,7 @@ function HomePageContent() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 605,
+                                        lineNumber: 530,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2744,7 +2662,7 @@ function HomePageContent() {
                                         children: "Analyzing Link..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 606,
+                                        lineNumber: 531,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2752,23 +2670,23 @@ function HomePageContent() {
                                         children: "Please wait while we process the elevation data."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 607,
+                                        lineNumber: 532,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 604,
+                                lineNumber: 529,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 603,
+                            lineNumber: 528,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 602,
+                        lineNumber: 527,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2789,29 +2707,29 @@ function HomePageContent() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 618,
+                                                lineNumber: 543,
                                                 columnNumber: 21
                                             }, this),
                                             " Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 617,
+                                        lineNumber: 542,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 616,
+                                    lineNumber: 541,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                             className: "text-destructive-foreground mb-4",
-                                            children: String(displayedError ?? '')
+                                            children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 622,
+                                            lineNumber: 547,
                                             columnNumber: 19
                                         }, this),
                                         displayedFieldErrors && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2821,12 +2739,12 @@ function HomePageContent() {
                                                 children: JSON.stringify(displayedFieldErrors, null, 2)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 625,
+                                                lineNumber: 550,
                                                 columnNumber: 23
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 624,
+                                            lineNumber: 549,
                                             columnNumber: 21
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -2839,24 +2757,24 @@ function HomePageContent() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 628,
+                                            lineNumber: 553,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 621,
+                                    lineNumber: 546,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 615,
+                            lineNumber: 540,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 614,
+                        lineNumber: 539,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["FormProvider"], {
@@ -2867,7 +2785,7 @@ function HomePageContent() {
                             onToggleGlobalVisibility: toggleGlobalPanelVisibility,
                             isContentExpanded: isBottomPanelContentExpanded,
                             onToggleContentExpansion: toggleBottomPanelContentExpansion,
-                            isStale: (selectedLink?.isDirty ?? false) || !selectedLink?.analysisResult && !!selectedLink,
+                            isStale: selectedLink?.isDirty ?? !selectedLink?.analysisResult,
                             onAnalyzeSubmit: handleSubmit(processSubmit),
                             isActionPending: isActionPending,
                             onTowerHeightChangeFromGraph: handleTowerHeightChangeFromGraph,
@@ -2879,12 +2797,12 @@ function HomePageContent() {
                             selectedLinkPointB: selectedLink?.pointB
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 641,
+                            lineNumber: 566,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 640,
+                        lineNumber: 565,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2895,7 +2813,7 @@ function HomePageContent() {
                         onToggle: ()=>setIsHistoryPanelOpen((prev)=>!prev)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 660,
+                        lineNumber: 585,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$report$2d$selection$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2909,19 +2827,19 @@ function HomePageContent() {
                         onGenerateReport: handleGenerateSelectedReports
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 667,
+                        lineNumber: 592,
                         columnNumber: 10
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 551,
+                lineNumber: 476,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true);
 }
-_s(HomePageContent, "2cpLSRGFag123Ki4cN8WsFNDnkM=", false, function() {
+_s(HomePageContent, "5jnL6cM+6+X29Q6pJcQMx+jrwsE=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"],
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLinks"],
@@ -2933,12 +2851,12 @@ function Home() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["LinksProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(HomePageContent, {}, void 0, false, {
             fileName: "[project]/src/app/page.tsx",
-            lineNumber: 685,
+            lineNumber: 610,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 684,
+        lineNumber: 609,
         columnNumber: 5
     }, this);
 }
@@ -2954,4 +2872,4 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 }}),
 }]);
 
-//# sourceMappingURL=src_6458e9d2._.js.map
+//# sourceMappingURL=src_463d1a1f._.js.map

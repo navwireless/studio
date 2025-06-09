@@ -14,7 +14,7 @@ const coordinatePairSchema = z.string().refine(val => {
 export const PointInputSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name too long"),
   coordinates: coordinatePairSchema,
-  height: z.coerce.number({
+  height: z.number({
     required_error: "Tower height is required",
     invalid_type_error: "Tower height must be a number",
   }).min(0, "Minimum tower height is 0m").max(100, "Maximum tower height is 100m"),
@@ -23,11 +23,14 @@ export const PointInputSchema = z.object({
 export const AnalysisFormSchema = z.object({
   pointA: PointInputSchema,
   pointB: PointInputSchema,
-  clearanceThreshold: z.coerce.number().min(0, "Clearance threshold must be a non-negative number"),
+  clearanceThreshold: z.string().refine(val => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, "Clearance threshold must be a non-negative number"),
 });
 
 export const defaultFormStateValues: AnalysisFormValues = {
   pointA: { name: 'Site A', coordinates: '', height: 20 },
   pointB: { name: 'Site B', coordinates: '', height: 20 },
-  clearanceThreshold: 10, // Changed from '10' to 10
+  clearanceThreshold: '10',
 };

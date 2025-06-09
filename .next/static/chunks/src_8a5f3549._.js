@@ -170,7 +170,7 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/app/data:94c90f [app-client] (ecmascript) <text/javascript>": ((__turbopack_context__) => {
+"[project]/src/app/data:6ae469 [app-client] (ecmascript) <text/javascript>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
@@ -181,7 +181,7 @@ var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-client-wrapper.js [app-client] (ecmascript)");
 "use turbopack no side effects";
 ;
-var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis"); //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcblwidXNlIHNlcnZlclwiO1xuXG5pbXBvcnQgeyB6IH0gZnJvbSAnem9kJztcbmltcG9ydCB0eXBlIHsgQW5hbHlzaXNQYXJhbXMsIEFuYWx5c2lzUmVzdWx0LCBQb2ludENvb3JkaW5hdGVzLCBFbGV2YXRpb25TYW1wbGVBUEkgfSBmcm9tICdAL3R5cGVzJztcbmltcG9ydCB7IGFuYWx5emVMT1MgfSBmcm9tICdAL2xpYi9sb3MtY2FsY3VsYXRvcic7XG5cbi8vIC0tLSBHb29nbGUgRWxldmF0aW9uIEFQSSBDb25maWd1cmF0aW9uIC0tLVxuLy8gV0FSTklORzogU3RvcmluZyBBUEkga2V5cyBkaXJlY3RseSBpbiBjb2RlIGlzIGluc2VjdXJlIGZvciBwcm9kdWN0aW9uLlxuLy8gQ29uc2lkZXIgdXNpbmcgZW52aXJvbm1lbnQgdmFyaWFibGVzIGFuZCByZXN0cmljdGluZyBBUEkga2V5IHVzYWdlLlxuY29uc3QgR09PR0xFX0VMRVZBVElPTl9BUElfS0VZID0gXCJBSXphU3lEclhOb2tldzFmZ1hwWm1IcWdqWUI3ZkdWQWt4VWZrUlFcIjtcbmNvbnN0IEdPT0dMRV9FTEVWQVRJT05fQVBJX1VSTCA9IFwiaHR0cHM6Ly9tYXBzLmdvb2dsZWFwaXMuY29tL21hcHMvYXBpL2VsZXZhdGlvbi9qc29uXCI7XG4vLyAtLS0gRW5kIEdvb2dsZSBFbGV2YXRpb24gQVBJIENvbmZpZ3VyYXRpb24gLS0tXG5cblxuLy8gRGVmaW5lIFpvZCBzY2hlbWEgZm9yIGZvcm0gdmFsaWRhdGlvblxuY29uc3QgUG9pbnRJbnB1dFNjaGVtYSA9IHoub2JqZWN0KHtcbiAgbGF0OiB6LnN0cmluZygpLnJlZmluZSh2YWwgPT4gIWlzTmFOKHBhcnNlRmxvYXQodmFsKSkgJiYgTWF0aC5hYnMocGFyc2VGbG9hdCh2YWwpKSA8PSA5MCwgXCJJbnZhbGlkIExhdGl0dWRlICgtOTAgdG8gOTApXCIpLFxuICBsbmc6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBNYXRoLmFicyhwYXJzZUZsb2F0KHZhbCkpIDw9IDE4MCwgXCJJbnZhbGlkIExvbmdpdHVkZSAoLTE4MCB0byAxODApXCIpLFxuICBoZWlnaHQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCwgXCJIZWlnaHQgbXVzdCBiZSBhIHBvc2l0aXZlIG51bWJlclwiKSxcbn0pO1xuXG5jb25zdCBBbmFseXNpc0Zvcm1TY2hlbWEgPSB6Lm9iamVjdCh7XG4gIHBvaW50QTogUG9pbnRJbnB1dFNjaGVtYSxcbiAgcG9pbnRCOiBQb2ludElucHV0U2NoZW1hLFxuICBjbGVhcmFuY2VUaHJlc2hvbGQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCwgXCJDbGVhcmFuY2UgbXVzdCBiZSBhIHBvc2l0aXZlIG51bWJlclwiKSxcbn0pO1xuXG5cbi8qKlxuICogRmV0Y2hlcyBlbGV2YXRpb24gZGF0YSBmcm9tIEdvb2dsZSBFbGV2YXRpb24gQVBJIHdpdGggYSB0aW1lb3V0LlxuICovXG5hc3luYyBmdW5jdGlvbiBnZXRHb29nbGVFbGV2YXRpb25EYXRhKHBvaW50QTogUG9pbnRDb29yZGluYXRlcywgcG9pbnRCOiBQb2ludENvb3JkaW5hdGVzLCBzYW1wbGVzOiBudW1iZXIgPSAxMDApOiBQcm9taXNlPEVsZXZhdGlvblNhbXBsZUFQSVtdPiB7XG4gIGlmICghR09PR0xFX0VMRVZBVElPTl9BUElfS0VZIHx8IFN0cmluZyhHT09HTEVfRUxFVkFUSU9OX0FQSV9LRVkpLnRyaW0oKSA9PT0gXCJcIikge1xuICAgIHRocm93IG5ldyBFcnJvcihcIkdvb2dsZSBFbGV2YXRpb24gQVBJIGtleSBpcyBub3QgY29uZmlndXJlZCBvciBpcyBlbXB0eS5cIik7XG4gIH1cblxuICBjb25zdCBwYXRoU3RyID0gYCR7cG9pbnRBLmxhdH0sJHtwb2ludEEubG5nfXwke3BvaW50Qi5sYXR9LCR7cG9pbnRCLmxuZ31gO1xuICBjb25zdCB1cmwgPSBgJHtHT09HTEVfRUxFVkFUSU9OX0FQSV9VUkx9P3BhdGg9JHtwYXRoU3RyfSZzYW1wbGVzPSR7c2FtcGxlc30ma2V5PSR7U3RyaW5nKEdPT0dMRV9FTEVWQVRJT05fQVBJX0tFWSkudHJpbSgpfWA7XG5cbiAgY29uc3QgY29udHJvbGxlciA9IG5ldyBBYm9ydENvbnRyb2xsZXIoKTtcbiAgY29uc3QgdGltZW91dElkID0gc2V0VGltZW91dCgoKSA9PiBjb250cm9sbGVyLmFib3J0KCksIDMwMDAwKTsgLy8gMzAgc2Vjb25kcyB0aW1lb3V0XG5cbiAgbGV0IHJlc3BvbnNlO1xuICB0cnkge1xuICAgIHJlc3BvbnNlID0gYXdhaXQgZmV0Y2godXJsLCB7IHNpZ25hbDogY29udHJvbGxlci5zaWduYWwgfSk7XG4gICAgY2xlYXJUaW1lb3V0KHRpbWVvdXRJZCk7IC8vIENsZWFyIHRpbWVvdXQgaWYgZmV0Y2ggY29tcGxldGVzIG9yIGVycm9ycyBub3JtYWxseVxuICB9IGNhdGNoIChuZXR3b3JrRXJyb3IpIHtcbiAgICBjbGVhclRpbWVvdXQodGltZW91dElkKTsgLy8gRW5zdXJlIHRpbWVvdXQgaXMgY2xlYXJlZCBvbiBlcnJvclxuICAgIGlmIChuZXR3b3JrRXJyb3IgaW5zdGFuY2VvZiBFcnJvciAmJiBuZXR3b3JrRXJyb3IubmFtZSA9PT0gJ0Fib3J0RXJyb3InKSB7XG4gICAgICBjb25zb2xlLmVycm9yKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmVxdWVzdCB0aW1lZCBvdXQgYWZ0ZXIgMzAgc2Vjb25kcy5cIik7XG4gICAgICB0aHJvdyBuZXcgRXJyb3IoXCJHb29nbGUgRWxldmF0aW9uIEFQSSByZXF1ZXN0IHRpbWVkIG91dC4gVGhlIHNlcnZpY2UgbWlnaHQgYmUgdGVtcG9yYXJpbHkgdW5hdmFpbGFibGUgb3IgdGhlcmUgY291bGQgYmUgbmV0d29yayBpc3N1ZXMuXCIpO1xuICAgIH1cbiAgICBjb25zb2xlLmVycm9yKFwiTmV0d29yayBlcnJvciBmZXRjaGluZyBlbGV2YXRpb24gZGF0YTpcIiwgU3RyaW5nKG5ldHdvcmtFcnJvcikpO1xuICAgIGNvbnN0IG5ldHdvcmtFcnJvck1lc3NhZ2VTb3VyY2UgPSBuZXR3b3JrRXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IG5ldHdvcmtFcnJvci5tZXNzYWdlIDogbmV0d29ya0Vycm9yO1xuICAgIHRocm93IG5ldyBFcnJvcihgTmV0d29yayBlcnJvciB3aGlsZSB0cnlpbmcgdG8gcmVhY2ggR29vZ2xlIEVsZXZhdGlvbiBBUEkuIFBsZWFzZSBjaGVjayB5b3VyIGludGVybmV0IGNvbm5lY3Rpb24gYW5kIHNlcnZlcidzIGFiaWxpdHkgdG8gcmVhY2ggR29vZ2xlIHNlcnZpY2VzLiBEZXRhaWxzOiAke1N0cmluZyhuZXR3b3JrRXJyb3JNZXNzYWdlU291cmNlKX1gKTtcbiAgfVxuXG4gIGlmICghcmVzcG9uc2Uub2spIHtcbiAgICBsZXQgZXJyb3JCb2R5ID0gXCJDb3VsZCBub3QgcmV0cmlldmUgZXJyb3IgYm9keS5cIjtcbiAgICB0cnkge1xuICAgICAgZXJyb3JCb2R5ID0gYXdhaXQgcmVzcG9uc2UudGV4dCgpO1xuICAgIH0gY2F0Y2ggKHRleHRFcnJvcikge1xuICAgICAgY29uc29sZS5lcnJvcihcIkZhaWxlZCB0byByZWFkIGVycm9yIGJvZHkgZnJvbSBHb29nbGUgQVBJIHJlc3BvbnNlOlwiLCBTdHJpbmcodGV4dEVycm9yKSk7XG4gICAgfVxuICAgIGNvbnNvbGUuZXJyb3IoXCJHb29nbGUgRWxldmF0aW9uIEFQSSByZXF1ZXN0IGZhaWxlZDpcIiwgcmVzcG9uc2Uuc3RhdHVzLCBTdHJpbmcoZXJyb3JCb2R5KSk7XG4gICAgdGhyb3cgbmV3IEVycm9yKGBHb29nbGUgRWxldmF0aW9uIEFQSSByZXF1ZXN0IGZhaWxlZCB3aXRoIHN0YXR1cyAke3Jlc3BvbnNlLnN0YXR1c30uIERldGFpbHM6ICR7U3RyaW5nKGVycm9yQm9keSl9YCk7XG4gIH1cblxuICBsZXQgZGF0YTtcbiAgdHJ5IHtcbiAgICBkYXRhID0gYXdhaXQgcmVzcG9uc2UuanNvbigpO1xuICB9IGNhdGNoIChqc29uRXJyb3IpIHtcbiAgICBjb25zdCBqc29uRXJyb3JNc2dTb3VyY2UgPSBqc29uRXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IGpzb25FcnJvci5tZXNzYWdlIDoganNvbkVycm9yO1xuICAgIGNvbnNvbGUuZXJyb3IoXCJGYWlsZWQgdG8gcGFyc2UgSlNPTiByZXNwb25zZSBmcm9tIEdvb2dsZSBFbGV2YXRpb24gQVBJOlwiLCBTdHJpbmcoanNvbkVycm9yTXNnU291cmNlKSk7XG4gICAgdGhyb3cgbmV3IEVycm9yKGBGYWlsZWQgdG8gcGFyc2UgcmVzcG9uc2UgZnJvbSBHb29nbGUgRWxldmF0aW9uIEFQSS4gRGV0YWlsczogJHtTdHJpbmcoanNvbkVycm9yTXNnU291cmNlKX1gKTtcbiAgfVxuXG5cbiAgaWYgKGRhdGEuc3RhdHVzICE9PSAnT0snKSB7XG4gICAgY29uc29sZS5lcnJvcihcIkdvb2dsZSBFbGV2YXRpb24gQVBJIGVycm9yOlwiLCBkYXRhLnN0YXR1cywgU3RyaW5nKGRhdGEuZXJyb3JfbWVzc2FnZSkpO1xuICAgIHRocm93IG5ldyBFcnJvcihgR29vZ2xlIEVsZXZhdGlvbiBBUEkgZXJyb3I6ICR7U3RyaW5nKGRhdGEuc3RhdHVzKX0gLSAke1N0cmluZyhkYXRhLmVycm9yX21lc3NhZ2UpIHx8ICdVbmtub3duIEFQSSBlcnJvcid9YCk7XG4gIH1cblxuICBpZiAoIWRhdGEucmVzdWx0cyB8fCBkYXRhLnJlc3VsdHMubGVuZ3RoID09PSAwKSB7XG4gICAgdGhyb3cgbmV3IEVycm9yKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmV0dXJuZWQgbm8gcmVzdWx0cyBmb3IgdGhlIGdpdmVuIHBhdGguXCIpO1xuICB9XG5cbiAgcmV0dXJuIGRhdGEucmVzdWx0cy5tYXAoKHNhbXBsZTogYW55KSA9PiAoe1xuICAgICAgZWxldmF0aW9uOiBzYW1wbGUuZWxldmF0aW9uLFxuICAgICAgbG9jYXRpb246IHtcbiAgICAgICAgICBsYXQ6IHNhbXBsZS5sb2NhdGlvbi5sYXQsXG4gICAgICAgICAgbG5nOiBzYW1wbGUubG9jYXRpb24ubG5nLFxuICAgICAgfSxcbiAgICAgIHJlc29sdXRpb246IHNhbXBsZS5yZXNvbHV0aW9uLFxuICB9KSk7XG59XG5cblxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHBlcmZvcm1Mb3NBbmFseXNpcyhcbiAgcHJldlN0YXRlOiBBbmFseXNpc1Jlc3VsdCB8IHsgZXJyb3I6IHN0cmluZzsgZmllbGRFcnJvcnM/OiBhbnkgfSB8IG51bGwsXG4gIGZvcm1EYXRhOiBGb3JtRGF0YVxuKTogUHJvbWlzZTxBbmFseXNpc1Jlc3VsdCB8IHsgZXJyb3I6IHN0cmluZzsgZmllbGRFcnJvcnM/OiBhbnkgfT4ge1xuICB0cnkgeyAvLyBPdXRlciB0cnktY2F0Y2ggZm9yIHRoZSBlbnRpcmUgYWN0aW9uXG4gICAgY29uc3QgcmF3Rm9ybURhdGEgPSB7XG4gICAgICBwb2ludEE6IHtcbiAgICAgICAgbGF0OiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5sYXQnKSBhcyBzdHJpbmcsXG4gICAgICAgIGxuZzogZm9ybURhdGEuZ2V0KCdwb2ludEEubG5nJykgYXMgc3RyaW5nLFxuICAgICAgICBoZWlnaHQ6IGZvcm1EYXRhLmdldCgncG9pbnRBLmhlaWdodCcpIGFzIHN0cmluZyxcbiAgICAgIH0sXG4gICAgICBwb2ludEI6IHtcbiAgICAgICAgbGF0OiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5sYXQnKSBhcyBzdHJpbmcsXG4gICAgICAgIGxuZzogZm9ybURhdGEuZ2V0KCdwb2ludEIubG5nJykgYXMgc3RyaW5nLFxuICAgICAgICBoZWlnaHQ6IGZvcm1EYXRhLmdldCgncG9pbnRCLmhlaWdodCcpIGFzIHN0cmluZyxcbiAgICAgIH0sXG4gICAgICBjbGVhcmFuY2VUaHJlc2hvbGQ6IGZvcm1EYXRhLmdldCgnY2xlYXJhbmNlVGhyZXNob2xkJykgYXMgc3RyaW5nLFxuICAgIH07XG5cbiAgICBjb25zdCB2YWxpZGF0aW9uUmVzdWx0ID0gQW5hbHlzaXNGb3JtU2NoZW1hLnNhZmVQYXJzZShyYXdGb3JtRGF0YSk7XG5cbiAgICBpZiAoIXZhbGlkYXRpb25SZXN1bHQuc3VjY2Vzcykge1xuICAgICAgY29uc29sZS5lcnJvcihcIlZhbGlkYXRpb24gZXJyb3JzOlwiLCBKU09OLnN0cmluZ2lmeSh2YWxpZGF0aW9uUmVzdWx0LmVycm9yLmZsYXR0ZW4oKS5maWVsZEVycm9ycykpO1xuICAgICAgY29uc3QgZmllbGRFcnJvcnMgPSB2YWxpZGF0aW9uUmVzdWx0LmVycm9yLmZsYXR0ZW4oKS5maWVsZEVycm9ycztcbiAgICAgIGNvbnN0IHNhbml0aXplZEZpZWxkRXJyb3JzOiB7IFtrZXk6IHN0cmluZ106IHN0cmluZ1tdIH0gPSB7fTtcbiAgICAgIGZvciAoY29uc3QgZmllbGQgaW4gZmllbGRFcnJvcnMpIHtcbiAgICAgICAgY29uc3QgbWVzc2FnZXM6IHVua25vd25bXSB8IHVuZGVmaW5lZCA9IGZpZWxkRXJyb3JzW2ZpZWxkIGFzIGtleW9mIHR5cGVvZiBmaWVsZEVycm9yc107IFxuICAgICAgICBpZiAobWVzc2FnZXMgJiYgQXJyYXkuaXNBcnJheShtZXNzYWdlcykpIHtcbiAgICAgICAgICBzYW5pdGl6ZWRGaWVsZEVycm9yc1tmaWVsZF0gPSBtZXNzYWdlcy5tYXAobXNnID0+IFN0cmluZyhtc2cpKTsgXG4gICAgICAgIH1cbiAgICAgIH1cbiAgICAgIHJldHVybiB7IGVycm9yOiBTdHJpbmcoXCJJbnZhbGlkIGlucHV0LlwiKSwgZmllbGRFcnJvcnM6IHNhbml0aXplZEZpZWxkRXJyb3JzIH07IFxuICAgIH1cblxuICAgIGNvbnN0IHZhbGlkYXRlZERhdGEgPSB2YWxpZGF0aW9uUmVzdWx0LmRhdGE7XG5cbiAgICBjb25zdCBwYXJhbXM6IEFuYWx5c2lzUGFyYW1zID0ge1xuICAgICAgcG9pbnRBOiB7XG4gICAgICAgIGxhdDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5sYXQpLFxuICAgICAgICBsbmc6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEubG5nKSxcbiAgICAgICAgdG93ZXJIZWlnaHQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEuaGVpZ2h0KSxcbiAgICAgIH0sXG4gICAgICBwb2ludEI6IHtcbiAgICAgICAgbGF0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmxhdCksXG4gICAgICAgIGxuZzogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5sbmcpLFxuICAgICAgICB0b3dlckhlaWdodDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5oZWlnaHQpLFxuICAgICAgfSxcbiAgICAgIGNsZWFyYW5jZVRocmVzaG9sZDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLmNsZWFyYW5jZVRocmVzaG9sZCksXG4gICAgfTtcblxuICAgIHRyeSB7IC8vIElubmVyIHRyeS1jYXRjaCBzcGVjaWZpY2FsbHkgZm9yIGVsZXZhdGlvbiBmZXRjaGluZyBhbmQgTE9TIGFuYWx5c2lzXG4gICAgICBjb25zdCBlbGV2YXRpb25EYXRhID0gYXdhaXQgZ2V0R29vZ2xlRWxldmF0aW9uRGF0YShwYXJhbXMucG9pbnRBLCBwYXJhbXMucG9pbnRCLCAxMDApO1xuICAgICAgY29uc3QgcmVzdWx0ID0gYW5hbHl6ZUxPUyhwYXJhbXMsIGVsZXZhdGlvbkRhdGEpO1xuICAgICAgY29uc3Qgc3VjY2Vzc01lc3NhZ2UgPSBTdHJpbmcocmVzdWx0Lm1lc3NhZ2UpO1xuICAgICAgY29uc3QgYXBpU291cmNlTWVzc2FnZSA9IFwiVXNpbmcgR29vZ2xlIEVsZXZhdGlvbiBBUEkgZGF0YS5cIjtcbiAgICAgIHJldHVybiB7IC4uLnJlc3VsdCwgbWVzc2FnZTogU3RyaW5nKGAke3N1Y2Nlc3NNZXNzYWdlfSAke2FwaVNvdXJjZU1lc3NhZ2V9YCkgfTtcblxuICAgIH0gY2F0Y2ggKGVycikgeyAvLyBJbm5lciBjYXRjaFxuICAgICAgY29uc29sZS5lcnJvcihcIkVycm9yIGR1cmluZyBMT1MgYW5hbHlzaXMgKGlubmVyIGNhdGNoKTpcIiwgU3RyaW5nKGVycikpOyBcbiAgICAgIGNvbnN0IGVycm9yU291cmNlID0gZXJyIGluc3RhbmNlb2YgRXJyb3IgPyBlcnIubWVzc2FnZSA6IGVycjtcbiAgICAgIGNvbnN0IGVycm9yQXNTdHJpbmcgPSBTdHJpbmcoZXJyb3JTb3VyY2UpOyBcblxuICAgICAgbGV0IGZpbmFsTWVzc2FnZTogc3RyaW5nO1xuXG4gICAgICBpZiAoZXJyb3JBc1N0cmluZy5pbmNsdWRlcyhcIkdvb2dsZSBFbGV2YXRpb24gQVBJIGtleSBpcyBub3QgY29uZmlndXJlZFwiKSkge1xuICAgICAgICAgIGZpbmFsTWVzc2FnZSA9IFwiRWxldmF0aW9uIHNlcnZpY2UgaXMgbm90IGNvbmZpZ3VyZWQuIFBsZWFzZSBjaGVjayB0aGUgQVBJIGtleSBhbmQgZW5zdXJlIGl0J3MgZW5hYmxlZCBmb3IgdGhlIEdvb2dsZSBFbGV2YXRpb24gQVBJIGluIHlvdXIgR29vZ2xlIENsb3VkIENvbnNvbGUuXCI7XG4gICAgICB9IGVsc2UgaWYgKGVycm9yQXNTdHJpbmcuaW5jbHVkZXMoXCJHb29nbGUgRWxldmF0aW9uIEFQSSByZXF1ZXN0IGZhaWxlZFwiKSB8fCBlcnJvckFzU3RyaW5nLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgZXJyb3JcIikgfHwgZXJyb3JBc1N0cmluZy5pbmNsdWRlcyhcIkdvb2dsZSBFbGV2YXRpb24gQVBJIHJlcXVlc3QgdGltZWQgb3V0XCIpKSB7XG4gICAgICAgICAgZmluYWxNZXNzYWdlID0gYEZhaWxlZCB0byByZXRyaWV2ZSBlbGV2YXRpb24gZGF0YS4gVGhpcyBjb3VsZCBiZSBkdWUgdG8gYW4gaW52YWxpZCBBUEkga2V5LCByZXN0cmljdGlvbnMsIGJpbGxpbmcgaXNzdWVzIHdpdGggR29vZ2xlIENsb3VkIFBsYXRmb3JtLCBvciB0aGUgc2VydmljZSBiZWluZyB0ZW1wb3JhcmlseSB1bmF2YWlsYWJsZS4gRGV0YWlsczogJHtlcnJvckFzU3RyaW5nfWA7XG4gICAgICB9IGVsc2UgaWYgKGVycm9yQXNTdHJpbmcuaW5jbHVkZXMoXCJOZXR3b3JrIGVycm9yIHdoaWxlIHRyeWluZyB0byByZWFjaCBHb29nbGUgRWxldmF0aW9uIEFQSVwiKSkge1xuICAgICAgICAgIGZpbmFsTWVzc2FnZSA9IGVycm9yQXNTdHJpbmc7IFxuICAgICAgfSBlbHNlIHtcbiAgICAgICAgICBmaW5hbE1lc3NhZ2UgPSBgQW5hbHlzaXMgZmFpbGVkIGR1ZSB0byBhbiB1bmV4cGVjdGVkIGlzc3VlOiAke2Vycm9yQXNTdHJpbmd9YDtcbiAgICAgIH1cbiAgICAgIHJldHVybiB7IGVycm9yOiBTdHJpbmcoZmluYWxNZXNzYWdlKSwgZmllbGRFcnJvcnM6IG51bGwgfTsgXG4gICAgfVxuICB9IGNhdGNoIChlKSB7IC8vIE91dGVyIGNhdGNoIGZvciBhbnkgb3RoZXIgZXJyb3JzIGluIHRoZSBhY3Rpb25cbiAgICBjb25zb2xlLmVycm9yKFwiVW5oYW5kbGVkIGVycm9yIGluIHBlcmZvcm1Mb3NBbmFseXNpcyAob3V0ZXIgY2F0Y2gpOlwiLCBTdHJpbmcoZSkpOyBcbiAgICAvLyBSZXR1cm4gYSBnZW5lcmljLCBzaW1wbGUsIGFuZCBzZXJpYWxpemFibGUgZXJyb3Igb2JqZWN0XG4gICAgcmV0dXJuIHtcbiAgICAgIGVycm9yOiBcIkFuIHVuZXhwZWN0ZWQgc2VydmVyIGVycm9yIG9jY3VycmVkLiBQbGVhc2UgdHJ5IGFnYWluLlwiLFxuICAgICAgZmllbGRFcnJvcnM6IG51bGxcbiAgICB9O1xuICB9XG59XG5cbiJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOFJBbUdzQiJ9
+var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis"); //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcblwidXNlIHNlcnZlclwiO1xuXG5pbXBvcnQgeyB6IH0gZnJvbSAnem9kJztcbmltcG9ydCB0eXBlIHsgQW5hbHlzaXNQYXJhbXMsIEFuYWx5c2lzUmVzdWx0LCBQb2ludENvb3JkaW5hdGVzLCBFbGV2YXRpb25TYW1wbGVBUEkgfSBmcm9tICdAL3R5cGVzJztcbmltcG9ydCB7IGFuYWx5emVMT1MgfSBmcm9tICdAL2xpYi9sb3MtY2FsY3VsYXRvcic7XG5cbi8vIC0tLSBHb29nbGUgRWxldmF0aW9uIEFQSSBDb25maWd1cmF0aW9uIC0tLVxuLy8gV0FSTklORzogU3RvcmluZyBBUEkga2V5cyBkaXJlY3RseSBpbiBjb2RlIGlzIGluc2VjdXJlIGZvciBwcm9kdWN0aW9uLlxuLy8gQ29uc2lkZXIgdXNpbmcgZW52aXJvbm1lbnQgdmFyaWFibGVzIGFuZCByZXN0cmljdGluZyBBUEkga2V5IHVzYWdlLlxuY29uc3QgR09PR0xFX0VMRVZBVElPTl9BUElfS0VZID0gXCJBSXphU3lEclhOb2tldzFmZ1hwWm1IcWdqWUI3ZkdWQWt4VWZrUlFcIjtcbmNvbnN0IEdPT0dMRV9FTEVWQVRJT05fQVBJX1VSTCA9IFwiaHR0cHM6Ly9tYXBzLmdvb2dsZWFwaXMuY29tL21hcHMvYXBpL2VsZXZhdGlvbi9qc29uXCI7XG4vLyAtLS0gRW5kIEdvb2dsZSBFbGV2YXRpb24gQVBJIENvbmZpZ3VyYXRpb24gLS0tXG5cblxuLy8gRGVmaW5lIFpvZCBzY2hlbWEgZm9yIGZvcm0gdmFsaWRhdGlvblxuY29uc3QgUG9pbnRJbnB1dFNjaGVtYSA9IHoub2JqZWN0KHtcbiAgbGF0OiB6LnN0cmluZygpLnJlZmluZSh2YWwgPT4gIWlzTmFOKHBhcnNlRmxvYXQodmFsKSkgJiYgTWF0aC5hYnMocGFyc2VGbG9hdCh2YWwpKSA8PSA5MCwgXCJJbnZhbGlkIExhdGl0dWRlICgtOTAgdG8gOTApXCIpLFxuICBsbmc6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBNYXRoLmFicyhwYXJzZUZsb2F0KHZhbCkpIDw9IDE4MCwgXCJJbnZhbGlkIExvbmdpdHVkZSAoLTE4MCB0byAxODApXCIpLFxuICBoZWlnaHQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCwgXCJIZWlnaHQgbXVzdCBiZSBhIHBvc2l0aXZlIG51bWJlclwiKSxcbn0pO1xuXG5jb25zdCBBbmFseXNpc0Zvcm1TY2hlbWEgPSB6Lm9iamVjdCh7XG4gIHBvaW50QTogUG9pbnRJbnB1dFNjaGVtYSxcbiAgcG9pbnRCOiBQb2ludElucHV0U2NoZW1hLFxuICBjbGVhcmFuY2VUaHJlc2hvbGQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCwgXCJDbGVhcmFuY2UgbXVzdCBiZSBhIHBvc2l0aXZlIG51bWJlclwiKSxcbn0pO1xuXG5cbi8qKlxuICogRmV0Y2hlcyBlbGV2YXRpb24gZGF0YSBmcm9tIEdvb2dsZSBFbGV2YXRpb24gQVBJIHdpdGggYSB0aW1lb3V0LlxuICovXG5hc3luYyBmdW5jdGlvbiBnZXRHb29nbGVFbGV2YXRpb25EYXRhKHBvaW50QTogUG9pbnRDb29yZGluYXRlcywgcG9pbnRCOiBQb2ludENvb3JkaW5hdGVzLCBzYW1wbGVzOiBudW1iZXIgPSAxMDApOiBQcm9taXNlPEVsZXZhdGlvblNhbXBsZUFQSVtdPiB7XG4gIGlmICghR09PR0xFX0VMRVZBVElPTl9BUElfS0VZIHx8IEdPT0dMRV9FTEVWQVRJT05fQVBJX0tFWS50cmltKCkgPT09IFwiXCIpIHtcbiAgICB0aHJvdyBuZXcgRXJyb3IoXCJHb29nbGUgRWxldmF0aW9uIEFQSSBrZXkgaXMgbm90IGNvbmZpZ3VyZWQgb3IgaXMgZW1wdHkuXCIpO1xuICB9XG5cbiAgY29uc3QgcGF0aFN0ciA9IGAke3BvaW50QS5sYXR9LCR7cG9pbnRBLmxuZ318JHtwb2ludEIubGF0fSwke3BvaW50Qi5sbmd9YDtcbiAgY29uc3QgdXJsID0gYCR7R09PR0xFX0VMRVZBVElPTl9BUElfVVJMfT9wYXRoPSR7cGF0aFN0cn0mc2FtcGxlcz0ke3NhbXBsZXN9JmtleT0ke0dPT0dMRV9FTEVWQVRJT05fQVBJX0tFWS50cmltKCl9YDtcblxuICBjb25zdCBjb250cm9sbGVyID0gbmV3IEFib3J0Q29udHJvbGxlcigpO1xuICBjb25zdCB0aW1lb3V0SWQgPSBzZXRUaW1lb3V0KCgpID0+IGNvbnRyb2xsZXIuYWJvcnQoKSwgMzAwMDApOyAvLyAzMCBzZWNvbmRzIHRpbWVvdXRcblxuICBsZXQgcmVzcG9uc2U7XG4gIHRyeSB7XG4gICAgcmVzcG9uc2UgPSBhd2FpdCBmZXRjaCh1cmwsIHsgc2lnbmFsOiBjb250cm9sbGVyLnNpZ25hbCB9KTtcbiAgICBjbGVhclRpbWVvdXQodGltZW91dElkKTsgLy8gQ2xlYXIgdGltZW91dCBpZiBmZXRjaCBjb21wbGV0ZXMgb3IgZXJyb3JzIG5vcm1hbGx5XG4gIH0gY2F0Y2ggKG5ldHdvcmtFcnJvcikge1xuICAgIGNsZWFyVGltZW91dCh0aW1lb3V0SWQpOyAvLyBFbnN1cmUgdGltZW91dCBpcyBjbGVhcmVkIG9uIGVycm9yXG4gICAgaWYgKG5ldHdvcmtFcnJvciBpbnN0YW5jZW9mIEVycm9yICYmIG5ldHdvcmtFcnJvci5uYW1lID09PSAnQWJvcnRFcnJvcicpIHtcbiAgICAgIGNvbnNvbGUuZXJyb3IoXCJHb29nbGUgRWxldmF0aW9uIEFQSSByZXF1ZXN0IHRpbWVkIG91dCBhZnRlciAzMCBzZWNvbmRzLlwiKTtcbiAgICAgIHRocm93IG5ldyBFcnJvcihcIkdvb2dsZSBFbGV2YXRpb24gQVBJIHJlcXVlc3QgdGltZWQgb3V0LiBUaGUgc2VydmljZSBtaWdodCBiZSB0ZW1wb3JhcmlseSB1bmF2YWlsYWJsZSBvciB0aGVyZSBjb3VsZCBiZSBuZXR3b3JrIGlzc3Vlcy5cIik7XG4gICAgfVxuICAgIGNvbnNvbGUuZXJyb3IoXCJOZXR3b3JrIGVycm9yIGZldGNoaW5nIGVsZXZhdGlvbiBkYXRhOlwiLCBuZXR3b3JrRXJyb3IpO1xuICAgIGNvbnN0IG5ldHdvcmtFcnJvck1lc3NhZ2VTb3VyY2UgPSBuZXR3b3JrRXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IG5ldHdvcmtFcnJvci5tZXNzYWdlIDogbmV0d29ya0Vycm9yO1xuICAgIHRocm93IG5ldyBFcnJvcihgTmV0d29yayBlcnJvciB3aGlsZSB0cnlpbmcgdG8gcmVhY2ggR29vZ2xlIEVsZXZhdGlvbiBBUEkuIFBsZWFzZSBjaGVjayB5b3VyIGludGVybmV0IGNvbm5lY3Rpb24gYW5kIHNlcnZlcidzIGFiaWxpdHkgdG8gcmVhY2ggR29vZ2xlIHNlcnZpY2VzLiBEZXRhaWxzOiAke1N0cmluZyhuZXR3b3JrRXJyb3JNZXNzYWdlU291cmNlKX1gKTtcbiAgfVxuXG4gIGlmICghcmVzcG9uc2Uub2spIHtcbiAgICBsZXQgZXJyb3JCb2R5ID0gXCJDb3VsZCBub3QgcmV0cmlldmUgZXJyb3IgYm9keS5cIjtcbiAgICB0cnkge1xuICAgICAgZXJyb3JCb2R5ID0gYXdhaXQgcmVzcG9uc2UudGV4dCgpO1xuICAgIH0gY2F0Y2ggKHRleHRFcnJvcikge1xuICAgICAgY29uc29sZS5lcnJvcihcIkZhaWxlZCB0byByZWFkIGVycm9yIGJvZHkgZnJvbSBHb29nbGUgQVBJIHJlc3BvbnNlOlwiLCB0ZXh0RXJyb3IpO1xuICAgIH1cbiAgICBjb25zb2xlLmVycm9yKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmVxdWVzdCBmYWlsZWQ6XCIsIHJlc3BvbnNlLnN0YXR1cywgZXJyb3JCb2R5KTtcbiAgICB0aHJvdyBuZXcgRXJyb3IoYEdvb2dsZSBFbGV2YXRpb24gQVBJIHJlcXVlc3QgZmFpbGVkIHdpdGggc3RhdHVzICR7cmVzcG9uc2Uuc3RhdHVzfS4gRGV0YWlsczogJHtlcnJvckJvZHl9YCk7XG4gIH1cblxuICBsZXQgZGF0YTtcbiAgdHJ5IHtcbiAgICBkYXRhID0gYXdhaXQgcmVzcG9uc2UuanNvbigpO1xuICB9IGNhdGNoIChqc29uRXJyb3IpIHtcbiAgICBjb25zdCBqc29uRXJyb3JNc2dTb3VyY2UgPSBqc29uRXJyb3IgaW5zdGFuY2VvZiBFcnJvciA/IGpzb25FcnJvci5tZXNzYWdlIDoganNvbkVycm9yO1xuICAgIGNvbnNvbGUuZXJyb3IoXCJGYWlsZWQgdG8gcGFyc2UgSlNPTiByZXNwb25zZSBmcm9tIEdvb2dsZSBFbGV2YXRpb24gQVBJOlwiLCBqc29uRXJyb3JNc2dTb3VyY2UpO1xuICAgIHRocm93IG5ldyBFcnJvcihgRmFpbGVkIHRvIHBhcnNlIHJlc3BvbnNlIGZyb20gR29vZ2xlIEVsZXZhdGlvbiBBUEkuIERldGFpbHM6ICR7U3RyaW5nKGpzb25FcnJvck1zZ1NvdXJjZSl9YCk7XG4gIH1cblxuXG4gIGlmIChkYXRhLnN0YXR1cyAhPT0gJ09LJykge1xuICAgIGNvbnNvbGUuZXJyb3IoXCJHb29nbGUgRWxldmF0aW9uIEFQSSBlcnJvcjpcIiwgZGF0YS5zdGF0dXMsIGRhdGEuZXJyb3JfbWVzc2FnZSk7XG4gICAgdGhyb3cgbmV3IEVycm9yKGBHb29nbGUgRWxldmF0aW9uIEFQSSBlcnJvcjogJHtkYXRhLnN0YXR1c30gLSAke2RhdGEuZXJyb3JfbWVzc2FnZSB8fCAnVW5rbm93biBBUEkgZXJyb3InfWApO1xuICB9XG5cbiAgaWYgKCFkYXRhLnJlc3VsdHMgfHwgZGF0YS5yZXN1bHRzLmxlbmd0aCA9PT0gMCkge1xuICAgIHRocm93IG5ldyBFcnJvcihcIkdvb2dsZSBFbGV2YXRpb24gQVBJIHJldHVybmVkIG5vIHJlc3VsdHMgZm9yIHRoZSBnaXZlbiBwYXRoLlwiKTtcbiAgfVxuXG4gIHJldHVybiBkYXRhLnJlc3VsdHMubWFwKChzYW1wbGU6IGFueSkgPT4gKHtcbiAgICAgIGVsZXZhdGlvbjogc2FtcGxlLmVsZXZhdGlvbixcbiAgICAgIGxvY2F0aW9uOiB7XG4gICAgICAgICAgbGF0OiBzYW1wbGUubG9jYXRpb24ubGF0LFxuICAgICAgICAgIGxuZzogc2FtcGxlLmxvY2F0aW9uLmxuZyxcbiAgICAgIH0sXG4gICAgICByZXNvbHV0aW9uOiBzYW1wbGUucmVzb2x1dGlvbixcbiAgfSkpO1xufVxuXG5cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBwZXJmb3JtTG9zQW5hbHlzaXMocHJldlN0YXRlOiBhbnksIGZvcm1EYXRhOiBGb3JtRGF0YSk6IFByb21pc2U8QW5hbHlzaXNSZXN1bHQgfCB7IGVycm9yOiBzdHJpbmc7IGZpZWxkRXJyb3JzPzogYW55IH0+IHtcbiAgdHJ5IHsgLy8gT3V0ZXIgdHJ5LWNhdGNoIGZvciB0aGUgZW50aXJlIGFjdGlvblxuICAgIGNvbnN0IHJhd0Zvcm1EYXRhID0ge1xuICAgICAgcG9pbnRBOiB7XG4gICAgICAgIGxhdDogZm9ybURhdGEuZ2V0KCdwb2ludEEubGF0JykgYXMgc3RyaW5nLFxuICAgICAgICBsbmc6IGZvcm1EYXRhLmdldCgncG9pbnRBLmxuZycpIGFzIHN0cmluZyxcbiAgICAgICAgaGVpZ2h0OiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5oZWlnaHQnKSBhcyBzdHJpbmcsXG4gICAgICB9LFxuICAgICAgcG9pbnRCOiB7XG4gICAgICAgIGxhdDogZm9ybURhdGEuZ2V0KCdwb2ludEIubGF0JykgYXMgc3RyaW5nLFxuICAgICAgICBsbmc6IGZvcm1EYXRhLmdldCgncG9pbnRCLmxuZycpIGFzIHN0cmluZyxcbiAgICAgICAgaGVpZ2h0OiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5oZWlnaHQnKSBhcyBzdHJpbmcsXG4gICAgICB9LFxuICAgICAgY2xlYXJhbmNlVGhyZXNob2xkOiBmb3JtRGF0YS5nZXQoJ2NsZWFyYW5jZVRocmVzaG9sZCcpIGFzIHN0cmluZyxcbiAgICB9O1xuXG4gICAgY29uc3QgdmFsaWRhdGlvblJlc3VsdCA9IEFuYWx5c2lzRm9ybVNjaGVtYS5zYWZlUGFyc2UocmF3Rm9ybURhdGEpO1xuXG4gICAgaWYgKCF2YWxpZGF0aW9uUmVzdWx0LnN1Y2Nlc3MpIHtcbiAgICAgIGNvbnNvbGUuZXJyb3IoXCJWYWxpZGF0aW9uIGVycm9yczpcIiwgdmFsaWRhdGlvblJlc3VsdC5lcnJvci5mbGF0dGVuKCkuZmllbGRFcnJvcnMpO1xuICAgICAgY29uc3QgZmllbGRFcnJvcnMgPSB2YWxpZGF0aW9uUmVzdWx0LmVycm9yLmZsYXR0ZW4oKS5maWVsZEVycm9ycztcbiAgICAgIGNvbnN0IHNhbml0aXplZEZpZWxkRXJyb3JzOiB7IFtrZXk6IHN0cmluZ106IHN0cmluZ1tdIH0gPSB7fTtcbiAgICAgIGZvciAoY29uc3QgZmllbGQgaW4gZmllbGRFcnJvcnMpIHtcbiAgICAgICAgY29uc3QgbWVzc2FnZXMgPSBmaWVsZEVycm9yc1tmaWVsZCBhcyBrZXlvZiB0eXBlb2YgZmllbGRFcnJvcnNdOyBcbiAgICAgICAgaWYgKG1lc3NhZ2VzKSB7XG4gICAgICAgICAgc2FuaXRpemVkRmllbGRFcnJvcnNbZmllbGRdID0gbWVzc2FnZXMubWFwKG1zZyA9PiBTdHJpbmcobXNnKSk7XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICAgIHJldHVybiB7IGVycm9yOiBcIkludmFsaWQgaW5wdXQuXCIsIGZpZWxkRXJyb3JzOiBzYW5pdGl6ZWRGaWVsZEVycm9ycyB9O1xuICAgIH1cblxuICAgIGNvbnN0IHZhbGlkYXRlZERhdGEgPSB2YWxpZGF0aW9uUmVzdWx0LmRhdGE7XG5cbiAgICBjb25zdCBwYXJhbXM6IEFuYWx5c2lzUGFyYW1zID0ge1xuICAgICAgcG9pbnRBOiB7XG4gICAgICAgIGxhdDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5sYXQpLFxuICAgICAgICBsbmc6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEubG5nKSxcbiAgICAgICAgdG93ZXJIZWlnaHQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEuaGVpZ2h0KSxcbiAgICAgIH0sXG4gICAgICBwb2ludEI6IHtcbiAgICAgICAgbGF0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmxhdCksXG4gICAgICAgIGxuZzogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5sbmcpLFxuICAgICAgICB0b3dlckhlaWdodDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5oZWlnaHQpLFxuICAgICAgfSxcbiAgICAgIGNsZWFyYW5jZVRocmVzaG9sZDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLmNsZWFyYW5jZVRocmVzaG9sZCksXG4gICAgfTtcblxuICAgIHRyeSB7IC8vIElubmVyIHRyeS1jYXRjaCBzcGVjaWZpY2FsbHkgZm9yIGVsZXZhdGlvbiBmZXRjaGluZyBhbmQgTE9TIGFuYWx5c2lzXG4gICAgICBjb25zdCBlbGV2YXRpb25EYXRhID0gYXdhaXQgZ2V0R29vZ2xlRWxldmF0aW9uRGF0YShwYXJhbXMucG9pbnRBLCBwYXJhbXMucG9pbnRCLCAxMDApO1xuICAgICAgY29uc3QgcmVzdWx0ID0gYW5hbHl6ZUxPUyhwYXJhbXMsIGVsZXZhdGlvbkRhdGEpO1xuICAgICAgcmV0dXJuIHsgLi4ucmVzdWx0LCBtZXNzYWdlOiBgJHtyZXN1bHQubWVzc2FnZX0gVXNpbmcgR29vZ2xlIEVsZXZhdGlvbiBBUEkgZGF0YS5gIH07XG5cbiAgICB9IGNhdGNoIChlcnIpIHsgLy8gSW5uZXIgY2F0Y2hcbiAgICAgIGNvbnNvbGUuZXJyb3IoXCJFcnJvciBkdXJpbmcgTE9TIGFuYWx5c2lzIChpbm5lciBjYXRjaCk6XCIsIGVycik7XG4gICAgICBjb25zdCBlcnJvck1lc3NhZ2VTb3VyY2UgPSBlcnIgaW5zdGFuY2VvZiBFcnJvciA/IGVyci5tZXNzYWdlIDogZXJyO1xuICAgICAgY29uc3QgZXJyb3JNZXNzYWdlU3RyaW5nID0gU3RyaW5nKGVycm9yTWVzc2FnZVNvdXJjZSk7XG5cblxuICAgICAgaWYgKGVycm9yTWVzc2FnZVN0cmluZy5pbmNsdWRlcyhcIkdvb2dsZSBFbGV2YXRpb24gQVBJIGtleSBpcyBub3QgY29uZmlndXJlZFwiKSkge1xuICAgICAgICAgIHJldHVybiB7IGVycm9yOiBcIkVsZXZhdGlvbiBzZXJ2aWNlIGlzIG5vdCBjb25maWd1cmVkLiBQbGVhc2UgY2hlY2sgdGhlIEFQSSBrZXkgYW5kIGVuc3VyZSBpdCdzIGVuYWJsZWQgZm9yIHRoZSBHb29nbGUgRWxldmF0aW9uIEFQSSBpbiB5b3VyIEdvb2dsZSBDbG91ZCBDb25zb2xlLlwifTtcbiAgICAgIH1cbiAgICAgIGlmIChlcnJvck1lc3NhZ2VTdHJpbmcuaW5jbHVkZXMoXCJHb29nbGUgRWxldmF0aW9uIEFQSSByZXF1ZXN0IGZhaWxlZFwiKSB8fCBlcnJvck1lc3NhZ2VTdHJpbmcuaW5jbHVkZXMoXCJHb29nbGUgRWxldmF0aW9uIEFQSSBlcnJvclwiKSB8fCBlcnJvck1lc3NhZ2VTdHJpbmcuaW5jbHVkZXMoXCJHb29nbGUgRWxldmF0aW9uIEFQSSByZXF1ZXN0IHRpbWVkIG91dFwiKSkge1xuICAgICAgICAgIHJldHVybiB7IGVycm9yOiBgRmFpbGVkIHRvIHJldHJpZXZlIGVsZXZhdGlvbiBkYXRhLiBUaGlzIGNvdWxkIGJlIGR1ZSB0byBhbiBpbnZhbGlkIEFQSSBrZXksIHJlc3RyaWN0aW9ucywgYmlsbGluZyBpc3N1ZXMgd2l0aCBHb29nbGUgQ2xvdWQgUGxhdGZvcm0sIG9yIHRoZSBzZXJ2aWNlIGJlaW5nIHRlbXBvcmFyaWx5IHVuYXZhaWxhYmxlLiBEZXRhaWxzOiAke2Vycm9yTWVzc2FnZVN0cmluZ31gIH07XG4gICAgICB9XG4gICAgICAgaWYgKGVycm9yTWVzc2FnZVN0cmluZy5pbmNsdWRlcyhcIk5ldHdvcmsgZXJyb3Igd2hpbGUgdHJ5aW5nIHRvIHJlYWNoIEdvb2dsZSBFbGV2YXRpb24gQVBJXCIpKSB7XG4gICAgICAgICAgcmV0dXJuIHsgZXJyb3I6IGVycm9yTWVzc2FnZVN0cmluZyB9OyBcbiAgICAgIH1cbiAgICAgIHJldHVybiB7IGVycm9yOiBgQW5hbHlzaXMgZmFpbGVkIGR1ZSB0byBhbiB1bmV4cGVjdGVkIGlzc3VlOiAke2Vycm9yTWVzc2FnZVN0cmluZ31gIH07XG4gICAgfVxuICB9IGNhdGNoIChlKSB7IC8vIE91dGVyIGNhdGNoIGZvciBhbnkgb3RoZXIgZXJyb3JzIGluIHRoZSBhY3Rpb25cbiAgICBjb25zb2xlLmVycm9yKFwiVW5oYW5kbGVkIGVycm9yIGluIHBlcmZvcm1Mb3NBbmFseXNpcyAob3V0ZXIgY2F0Y2gpOlwiLCBlKTtcbiAgICBjb25zdCBlcnJvck1lc3NhZ2VTb3VyY2UgPSBlIGluc3RhbmNlb2YgRXJyb3IgPyBlLm1lc3NhZ2UgOiBlO1xuICAgIGNvbnN0IGVycm9yTWVzc2FnZVN0cmluZyA9IFN0cmluZyhlcnJvck1lc3NhZ2VTb3VyY2UpO1xuICAgIHJldHVybiB7IGVycm9yOiBgQW4gdW5leHBlY3RlZCBzeXN0ZW0gZXJyb3Igb2NjdXJyZWQ6ICR7ZXJyb3JNZXNzYWdlU3RyaW5nfWAgfTtcbiAgfVxufVxuXG4iXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IjhSQW1Hc0IifQ==
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
@@ -1897,7 +1897,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2Icon$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-client] (ecmascript) <export default as Trash2Icon>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/card.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$94c90f__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__ = __turbopack_context__.i("[project]/src/app/data:94c90f [app-client] (ecmascript) <text/javascript>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$6ae469__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__ = __turbopack_context__.i("[project]/src/app/data:6ae469 [app-client] (ecmascript) <text/javascript>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/form-schema.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$app$2d$header$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/layout/app-header.tsx [app-client] (ecmascript)");
@@ -1986,7 +1986,7 @@ function HomePageContent() {
     _s();
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
     const { links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLinks"])();
-    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$94c90f__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
+    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$6ae469__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
     const [displayedError, setDisplayedError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [displayedFieldErrors, setDisplayedFieldErrors] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -2092,10 +2092,7 @@ function HomePageContent() {
                         };
                         const detailsChanged = newDetails.pointA.name !== currentLinkInContext.pointA.name || newDetails.pointA.lat !== currentLinkInContext.pointA.lat || newDetails.pointA.lng !== currentLinkInContext.pointA.lng || newDetails.pointA.towerHeight !== currentLinkInContext.pointA.towerHeight || newDetails.pointB.name !== currentLinkInContext.pointB.name || newDetails.pointB.lat !== currentLinkInContext.pointB.lat || newDetails.pointB.lng !== currentLinkInContext.pointB.lng || newDetails.pointB.towerHeight !== currentLinkInContext.pointB.towerHeight || newDetails.clearanceThreshold !== currentLinkInContext.clearanceThreshold;
                         if (detailsChanged) {
-                            updateLinkDetails(selectedLinkId, {
-                                ...newDetails,
-                                isDirty: true
-                            });
+                            updateLinkDetails(selectedLinkId, newDetails);
                         }
                     }
                 }
@@ -2130,7 +2127,7 @@ function HomePageContent() {
                 return;
             }
             const cachedResult = getCachedAnalysis(selectedLinkId);
-            if (cachedResult && !currentLink.isDirty) {
+            if (cachedResult) {
                 updateLinkAnalysis(selectedLinkId, cachedResult);
                 toast({
                     title: "Analysis Loaded from Cache",
@@ -2199,19 +2196,12 @@ function HomePageContent() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "HomePageContent.useEffect": ()=>{
             if (serverState) {
-                if (serverState instanceof Error) {
-                    // Handle direct Error objects thrown by the action
-                    setDisplayedError(String(serverState.message || "An unexpected server error occurred."));
-                    setDisplayedFieldErrors(null); // No field errors if it's a generic Error
-                } else if (serverState.error) {
-                    // Handle custom error structure { error: string, fieldErrors?: any }
-                    setDisplayedError(String(serverState.error));
-                    setDisplayedFieldErrors(serverState.fieldErrors && typeof serverState.fieldErrors === 'object' ? serverState.fieldErrors : null);
+                if (serverState.error) {
+                    setDisplayedError(serverState.error);
+                    setDisplayedFieldErrors(serverState.fieldErrors || null);
                 } else if ('losPossible' in serverState) {
-                    // serverState is AnalysisResult (success)
                     setDisplayedError(null);
                     setDisplayedFieldErrors(null);
-                // Success state is handled in the next useEffect that depends on selectedLinkId and serverState
                 }
             }
         }
@@ -2223,17 +2213,13 @@ function HomePageContent() {
             if (!selectedLinkId) return;
             const currentLink = getLinkById(selectedLinkId);
             if (!currentLink) return;
-            // Check if serverState indicates an error (either direct Error or our custom structure)
-            const isErrorState = serverState instanceof Error || serverState && serverState.error;
-            if (isErrorState) {
-                // Error state handled by previous useEffect, just mark link as dirty if needed
+            if (serverState?.error) {
                 updateLinkDetails(selectedLinkId, {
                     ...currentLink,
                     analysisResult: undefined,
                     isDirty: true
                 });
             } else if (serverState && 'losPossible' in serverState && currentLink.isDirty) {
-                // serverState is a successful AnalysisResult and the link was dirty
                 const successfulResult = serverState;
                 const currentFormData = getValues();
                 const newAnalysisResult = {
@@ -2281,8 +2267,7 @@ function HomePageContent() {
     const handleMapClick = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "HomePageContent.useCallback[handleMapClick]": (event, pointId)=>{
             const currentSelectedLink = getLinkById(selectedLinkId || '');
-            if (!currentSelectedLink) return;
-            if (event.latLng) {
+            if (event.latLng && currentSelectedLink) {
                 const lat = event.latLng.lat();
                 const lng = event.latLng.lng();
                 const fieldToUpdate = pointId === 'pointA' ? 'pointA' : 'pointB';
@@ -2296,10 +2281,15 @@ function HomePageContent() {
                     isDirty: true
                 });
             }
+        // Removed: No automatic link creation on map click if no link is selected
+        // else if (event.latLng && !currentSelectedLink) {
+        //    const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
+        // }
         }
     }["HomePageContent.useCallback[handleMapClick]"], [
         selectedLinkId,
         updateLinkDetails,
+        addLink,
         getLinkById
     ]);
     const handleMarkerDrag = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
@@ -2343,7 +2333,10 @@ function HomePageContent() {
     }["HomePageContent.useCallback[handleTowerHeightChangeFromGraph]"], [
         selectedLinkId,
         getLinkById,
-        updateLinkDetails
+        updateLinkDetails,
+        handleSubmit,
+        processSubmit,
+        getValues
     ]);
     const toggleGlobalPanelVisibility = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "HomePageContent.useCallback[toggleGlobalPanelVisibility]": ()=>{
@@ -2499,7 +2492,7 @@ function HomePageContent() {
                 isHistoryPanelSupported: true
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 480,
+                lineNumber: 471,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2518,14 +2511,14 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 494,
+                                        lineNumber: 485,
                                         columnNumber: 17
                                     }, this),
                                     "Add Another Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 488,
+                                lineNumber: 479,
                                 columnNumber: 13
                             }, this),
                             selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -2538,20 +2531,20 @@ function HomePageContent() {
                                         className: "mr-2 h-4 w-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 504,
+                                        lineNumber: 495,
                                         columnNumber: 21
                                     }, this),
                                     " Remove Selected Link"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 498,
+                                lineNumber: 489,
                                 columnNumber: 17
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 487,
+                        lineNumber: 478,
                         columnNumber: 12
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2565,15 +2558,15 @@ function HomePageContent() {
                             mapContainerClassName: "w-full h-full"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 511,
+                            lineNumber: 502,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 510,
+                        lineNumber: 501,
                         columnNumber: 9
                     }, this),
-                    !isAnalysisPanelGloballyOpen && !selectedLinkId && links.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    !isAnalysisPanelGloballyOpen && !selectedLinkId && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                             onClick: handleAddNewLink,
@@ -2585,19 +2578,19 @@ function HomePageContent() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 529,
+                                    lineNumber: 520,
                                     columnNumber: 15
                                 }, this),
                                 "Add New Link"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 523,
+                            lineNumber: 514,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 522,
+                        lineNumber: 513,
                         columnNumber: 11
                     }, this),
                     isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2611,7 +2604,7 @@ function HomePageContent() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 539,
+                                        lineNumber: 530,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2619,7 +2612,7 @@ function HomePageContent() {
                                         children: "Analyzing Link..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 540,
+                                        lineNumber: 531,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2627,23 +2620,23 @@ function HomePageContent() {
                                         children: "Please wait while we process the elevation data."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 541,
+                                        lineNumber: 532,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 538,
+                                lineNumber: 529,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 537,
+                            lineNumber: 528,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 536,
+                        lineNumber: 527,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2664,19 +2657,19 @@ function HomePageContent() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 552,
+                                                lineNumber: 543,
                                                 columnNumber: 21
                                             }, this),
                                             " Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 551,
+                                        lineNumber: 542,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 550,
+                                    lineNumber: 541,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -2686,7 +2679,7 @@ function HomePageContent() {
                                             children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 556,
+                                            lineNumber: 547,
                                             columnNumber: 19
                                         }, this),
                                         displayedFieldErrors && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2696,12 +2689,12 @@ function HomePageContent() {
                                                 children: JSON.stringify(displayedFieldErrors, null, 2)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 559,
+                                                lineNumber: 550,
                                                 columnNumber: 23
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 558,
+                                            lineNumber: 549,
                                             columnNumber: 21
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -2714,24 +2707,24 @@ function HomePageContent() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 562,
+                                            lineNumber: 553,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 555,
+                                    lineNumber: 546,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 549,
+                            lineNumber: 540,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 548,
+                        lineNumber: 539,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["FormProvider"], {
@@ -2742,7 +2735,7 @@ function HomePageContent() {
                             onToggleGlobalVisibility: toggleGlobalPanelVisibility,
                             isContentExpanded: isBottomPanelContentExpanded,
                             onToggleContentExpansion: toggleBottomPanelContentExpansion,
-                            isStale: (selectedLink?.isDirty ?? false) || !selectedLink?.analysisResult && !!selectedLink,
+                            isStale: selectedLink?.isDirty ?? !selectedLink?.analysisResult,
                             onAnalyzeSubmit: handleSubmit(processSubmit),
                             isActionPending: isActionPending,
                             onTowerHeightChangeFromGraph: handleTowerHeightChangeFromGraph,
@@ -2754,12 +2747,12 @@ function HomePageContent() {
                             selectedLinkPointB: selectedLink?.pointB
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 575,
+                            lineNumber: 566,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 574,
+                        lineNumber: 565,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2770,7 +2763,7 @@ function HomePageContent() {
                         onToggle: ()=>setIsHistoryPanelOpen((prev)=>!prev)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 594,
+                        lineNumber: 585,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$report$2d$selection$2d$dialog$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2784,13 +2777,13 @@ function HomePageContent() {
                         onGenerateReport: handleGenerateSelectedReports
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 601,
+                        lineNumber: 592,
                         columnNumber: 10
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 485,
+                lineNumber: 476,
                 columnNumber: 7
             }, this)
         ]
@@ -2808,12 +2801,12 @@ function Home() {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["LinksProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(HomePageContent, {}, void 0, false, {
             fileName: "[project]/src/app/page.tsx",
-            lineNumber: 619,
+            lineNumber: 610,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/page.tsx",
-        lineNumber: 618,
+        lineNumber: 609,
         columnNumber: 5
     }, this);
 }
@@ -2829,4 +2822,4 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 }}),
 }]);
 
-//# sourceMappingURL=src_4db9cabb._.js.map
+//# sourceMappingURL=src_8a5f3549._.js.map

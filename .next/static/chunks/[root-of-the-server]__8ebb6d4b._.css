@@ -717,10 +717,6 @@ body {
   margin-top: .25rem;
 }
 
-.mt-1\.5 {
-  margin-top: .375rem;
-}
-
 .mt-2 {
   margin-top: .5rem;
 }
@@ -1912,10 +1908,6 @@ body {
 
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
-}
-
-.text-muted-foreground\/70 {
-  color: hsl(var(--muted-foreground) / .7);
 }
 
 .text-popover-foreground {
