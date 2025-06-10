@@ -17,9 +17,9 @@ async function getGoogleElevationData(pointA, pointB, samples) {
     const GOOGLE_ELEVATION_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
     if (!GOOGLE_ELEVATION_API_KEY) {
-        const errorMessage = "Google Elevation API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+        const errorMessage = "Google Elevation API key is not configured";
         console.error(errorMessage);
-        throw new Error(errorMessage);
+        throw new Error(errorMessage); // Throw a new Error with a string message
     }
     const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
     const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
@@ -28,47 +28,55 @@ async function getGoogleElevationData(pointA, pointB, samples) {
             next: {
                 revalidate: 3600
             }
-        });
+        }); // Cache for 1 hour
         if (!response.ok) {
-            let errorDataContent = `Status: ${response.status} ${response.statusText}.`;
+            let errorData;
+            let errorResponseMessage = `Google Elevation API request failed: ${response.status} ${response.statusText}.`;
             try {
-                const errorData = await response.json();
-                if (errorData && errorData.message) {
-                    errorDataContent += ` Details: ${String(errorData.message)}`;
-                } else if (errorData && errorData.error_message) {
-                    errorDataContent += ` Details: ${String(errorData.error_message)}`;
+                errorData = await response.json();
+                if (errorData && typeof errorData.message === 'string') {
+                    errorResponseMessage += ` Details: ${errorData.message}`;
+                } else if (errorData && errorData.message instanceof RegExp) {
+                    errorResponseMessage += ` Details (RegExp): ${errorData.message.toString()}`;
                 } else if (errorData) {
-                    errorDataContent += ` Body: ${String(errorData)}`;
+                    errorResponseMessage += ` Details: ${JSON.stringify(errorData)}`;
                 }
             } catch (parseError) {
-            // Failed to parse response body
+                // If parsing the error response fails, stick to the status text
+                errorResponseMessage += ' Failed to parse error response body.';
             }
-            const apiErrorMessage = `Google Elevation API request failed. ${errorDataContent}`;
-            console.error(apiErrorMessage);
-            throw new Error(apiErrorMessage);
+            console.error(errorResponseMessage, errorData);
+            throw new Error(errorResponseMessage); // Throw a new Error with a string message
         }
         const data = await response.json();
         if (data.status !== 'OK') {
-            let apiStatusErrorMessage = `API Status: ${data.status}.`;
-            if (data.error_message) {
-                apiStatusErrorMessage += ` Message: ${String(data.error_message)}`;
+            let apiErrorMessageContent = 'No additional error message provided.';
+            if (typeof data.error_message === 'string') {
+                apiErrorMessageContent = data.error_message;
+            } else if (data.error_message instanceof RegExp) {
+                apiErrorMessageContent = `RegExp error: ${data.error_message.toString()}`;
             }
-            const detailedApiErrorMessage = `Google Elevation API returned an error. ${apiStatusErrorMessage}`;
-            console.error(detailedApiErrorMessage);
-            throw new Error(detailedApiErrorMessage);
+            const apiErrorMessage = `Google Elevation API error: ${data.status}. ${apiErrorMessageContent}`;
+            console.error(apiErrorMessage);
+            throw new Error(apiErrorMessage); // Throw a new Error with a string message
         }
         return data.results;
     } catch (error) {
+        // This catch block handles network errors from fetch() itself, or errors re-thrown from above
         let finalErrorMessage;
-        if (error instanceof RegExp) {
-            finalErrorMessage = `Error fetching elevation data: RegExp /${error.source}/${error.flags}`;
-        } else if (error instanceof Error) {
-            finalErrorMessage = `Error fetching elevation data: ${String(error.message)}`;
+        if (error instanceof Error) {
+            // If it's already an Error, its message should be a string.
+            // We prefix it to indicate the context.
+            finalErrorMessage = `Network error or issue during Google Elevation API call: ${error.message}`;
+        } else if (error instanceof RegExp) {
+            // Explicitly handle if the caught error is a RegExp
+            finalErrorMessage = `Network error or issue during Google Elevation API call. Received RegExp error: ${error.toString()} (Source: ${error.source})`;
         } else {
-            finalErrorMessage = `An unknown error occurred while fetching elevation data: ${String(error)}`;
+            // Fallback for other types of thrown values
+            finalErrorMessage = `Network error or issue during Google Elevation API call. Received: ${String(error)}`;
         }
-        console.error("getGoogleElevationData - final catch block:", finalErrorMessage, "Original error (stringified):", String(error));
-        throw new Error(finalErrorMessage);
+        console.error("Error in getGoogleElevationData (final catch):", finalErrorMessage, "Original error:", error);
+        throw new Error(finalErrorMessage); // Always throw a new Error with a guaranteed string message
     }
 }
 function calculateDistanceKm(p1, p2) {
@@ -105,77 +113,63 @@ function calculateFresnelZoneRadius(d1, d2, totalDistance, frequencyGHz) {
     return fresnelRadius; // Meters
 }
 function analyzeLOS(params, elevationData) {
-    try {
-        if (elevationData.length < 2) {
-            return {
-                losPossible: false,
-                distanceKm: 0,
-                minClearance: null,
-                additionalHeightNeeded: null,
-                profile: [],
-                message: "Insufficient elevation data for analysis.",
-                pointA: params.pointA,
-                pointB: params.pointB,
-                clearanceThresholdUsed: params.clearanceThreshold
-            };
-        }
-        const totalDistanceKm = calculateDistanceKm(params.pointA, params.pointB);
-        const elevationAtA = elevationData[0].elevation;
-        const elevationAtB = elevationData[elevationData.length - 1].elevation;
-        const heightA_actual = elevationAtA + params.pointA.towerHeight;
-        const heightB_actual = elevationAtB + params.pointB.towerHeight;
-        const profile = [];
-        let minClearance = null;
-        const numSamples = elevationData.length;
-        const segmentDistanceKm = totalDistanceKm / (numSamples > 1 ? numSamples - 1 : 1);
-        for(let i = 0; i < numSamples; i++){
-            const sample = elevationData[i];
-            const distanceFromA_Km = i * segmentDistanceKm;
-            const terrainElevation = sample.elevation;
-            const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
-            const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
-            const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
-            const correctedLosHeight = idealLosHeight - curvatureDrop;
-            const clearance = correctedLosHeight - terrainElevation;
-            profile.push({
-                distance: parseFloat(distanceFromA_Km.toFixed(3)),
-                terrainElevation: parseFloat(terrainElevation.toFixed(2)),
-                losHeight: parseFloat(correctedLosHeight.toFixed(2)),
-                clearance: parseFloat(clearance.toFixed(2))
-            });
-            if (minClearance === null || clearance < minClearance) {
-                minClearance = clearance;
-            }
-        }
-        const losPossible = minClearance !== null && minClearance >= params.clearanceThreshold;
-        let additionalHeightNeeded = null;
-        if (!losPossible && minClearance !== null) {
-            additionalHeightNeeded = params.clearanceThreshold - minClearance;
-        }
+    if (elevationData.length < 2) {
         return {
-            losPossible,
-            distanceKm: parseFloat(totalDistanceKm.toFixed(2)),
-            minClearance: minClearance !== null ? parseFloat(minClearance.toFixed(2)) : null,
-            additionalHeightNeeded: additionalHeightNeeded !== null ? parseFloat(additionalHeightNeeded.toFixed(2)) : null,
-            profile,
-            message: "Analysis complete.",
+            losPossible: false,
+            distanceKm: 0,
+            minClearance: null,
+            additionalHeightNeeded: null,
+            profile: [],
+            message: "Insufficient elevation data for analysis.",
             pointA: params.pointA,
             pointB: params.pointB,
             clearanceThresholdUsed: params.clearanceThreshold
         };
-    } catch (error) {
-        let errorMessage;
-        if (error instanceof Error) {
-            errorMessage = `Error in analyzeLOS: ${String(error.message)}`;
-        } else if (error instanceof RegExp) {
-            errorMessage = `Error in analyzeLOS: RegExp /${error.source}/${error.flags}`;
-        } else {
-            errorMessage = `An unknown error occurred in analyzeLOS: ${String(error)}`;
-        }
-        console.error(errorMessage, "Original error (stringified):", String(error));
-        // Re-throw as a standard Error with a plain string message
-        throw new Error(errorMessage);
     }
+    const totalDistanceKm = calculateDistanceKm(params.pointA, params.pointB);
+    const elevationAtA = elevationData[0].elevation;
+    const elevationAtB = elevationData[elevationData.length - 1].elevation;
+    const heightA_actual = elevationAtA + params.pointA.towerHeight;
+    const heightB_actual = elevationAtB + params.pointB.towerHeight;
+    const profile = [];
+    let minClearance = null;
+    const numSamples = elevationData.length;
+    const segmentDistanceKm = totalDistanceKm / (numSamples > 1 ? numSamples - 1 : 1);
+    for(let i = 0; i < numSamples; i++){
+        const sample = elevationData[i];
+        const distanceFromA_Km = i * segmentDistanceKm;
+        const terrainElevation = sample.elevation;
+        const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
+        const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
+        const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
+        const correctedLosHeight = idealLosHeight - curvatureDrop;
+        const clearance = correctedLosHeight - terrainElevation;
+        profile.push({
+            distance: parseFloat(distanceFromA_Km.toFixed(3)),
+            terrainElevation: parseFloat(terrainElevation.toFixed(2)),
+            losHeight: parseFloat(correctedLosHeight.toFixed(2)),
+            clearance: parseFloat(clearance.toFixed(2))
+        });
+        if (minClearance === null || clearance < minClearance) {
+            minClearance = clearance;
+        }
+    }
+    const losPossible = minClearance !== null && minClearance >= params.clearanceThreshold;
+    let additionalHeightNeeded = null;
+    if (!losPossible && minClearance !== null) {
+        additionalHeightNeeded = params.clearanceThreshold - minClearance;
+    }
+    return {
+        losPossible,
+        distanceKm: parseFloat(totalDistanceKm.toFixed(2)),
+        minClearance: minClearance !== null ? parseFloat(minClearance.toFixed(2)) : null,
+        additionalHeightNeeded: additionalHeightNeeded !== null ? parseFloat(additionalHeightNeeded.toFixed(2)) : null,
+        profile,
+        message: "Analysis complete.",
+        pointA: params.pointA,
+        pointB: params.pointB,
+        clearanceThresholdUsed: params.clearanceThreshold
+    };
 }
 }}),
 "[project]/src/app/actions.ts [app-rsc] (ecmascript)": ((__turbopack_context__) => {
@@ -200,7 +194,7 @@ const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_mo
     name: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().min(1, "Name is required").max(50, "Name too long"),
     lat: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Invalid Latitude (-90 to 90)"),
     lng: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Invalid Longitude (-180 to 180)"),
-    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100, "Height must be between 0 and 100m")
+    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Height must be a positive number")
 });
 const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
     pointA: PointInputSchema,
@@ -226,13 +220,19 @@ async function performLosAnalysis(prevState, formData) {
         };
         const validationResult = AnalysisFormSchema.safeParse(rawFormData);
         if (!validationResult.success) {
-            // Log detailed field errors for server-side debugging
-            const fieldErrorsForLogging = validationResult.error.flatten().fieldErrors;
-            console.error("Validation errors in performLosAnalysis (server log):", JSON.stringify(fieldErrorsForLogging, null, 2));
-            // Return a generic error message to the client, without fieldErrors
+            const fieldErrors = validationResult.error.flatten().fieldErrors;
+            const sanitizedFieldErrors = {};
+            for(const field in fieldErrors){
+                const messages = fieldErrors[field];
+                if (messages) {
+                    sanitizedFieldErrors[field] = messages.map((msg)=>String(msg ?? 'Validation message undefined'));
+                }
+            }
+            // Simplified logging for validation errors
+            console.error("Validation errors occurred. Field details suppressed for this log message.");
             return {
-                error: "Invalid input. Please check your entries and try again.",
-                fieldErrors: undefined // Explicitly undefined for the client
+                error: "Invalid input. Please check the fields highlighted below.",
+                fieldErrors: sanitizedFieldErrors
             };
         }
         const validatedData = validationResult.data;
@@ -269,25 +269,23 @@ async function performLosAnalysis(prevState, formData) {
                 minClearance: analysisResultData.minClearance,
                 additionalHeightNeeded: analysisResultData.additionalHeightNeeded,
                 profile: analysisResultData.profile,
-                message: `${analysisResultData.message} Elevation data from Google Elevation API.`,
+                message: `${analysisResultData.message} Using Google Elevation API data.`,
                 pointA: paramsForAnalysis.pointA,
                 pointB: paramsForAnalysis.pointB,
                 clearanceThresholdUsed: paramsForAnalysis.clearanceThreshold
             };
             return fullResult;
         } catch (err) {
-            // Log the original error for server-side debugging
-            console.error("Error Log (Inner Catch - performLosAnalysis):", String(err));
-            // Return a generic, safe error message to the client
+            // Simplified logging: Avoid logging the raw error object if it might be complex
+            console.error("Error during LOS analysis (inner catch). A generic message will be returned to the client. Original error suppressed from this log line.");
             return {
-                error: "An error occurred during the Line-of-Sight analysis. Please check server logs for details.",
+                error: "An error occurred during the Line-of-Sight analysis process. Please check the server logs for more details or try again later.",
                 fieldErrors: undefined
             };
         }
     } catch (e) {
-        // Log the original error for server-side debugging
-        console.error("Error Log (Outer Catch - performLosAnalysis):", String(e));
-        // Return a generic, safe error message to the client
+        // Simplified logging
+        console.error("Unhandled error in performLosAnalysis (outer catch). A generic message will be returned to the client. Original error suppressed from this log line.");
         return {
             error: "An unexpected server error occurred. Please contact support or check server logs for more details.",
             fieldErrors: undefined

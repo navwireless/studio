@@ -44,14 +44,14 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const newLink: LOSLink = {
       id: newLinkId,
       pointA: {
-        name: `Site A (${links.length + 1})`,
-        lat: startPoint?.lat ?? null, 
-        lng: startPoint?.lng ?? null, 
+        name: `Site A (${links.length + 1})`, // Context manages its own names
+        lat: startPoint?.lat ?? null,
+        lng: startPoint?.lng ?? null,
         towerHeight: defaultFormStateValues.pointA.height,
       },
       pointB: {
-        name: `Site B (${links.length + 1})`,
-        lat: endPoint?.lat ?? null, 
+        name: `Site B (${links.length + 1})`, // Context manages its own names
+        lat: endPoint?.lat ?? null,
         lng: endPoint?.lng ?? null,
         towerHeight: defaultFormStateValues.pointB.height,
       },
@@ -70,7 +70,6 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (selectedLinkId === linkId) {
       setSelectedLinkId(null);
     }
-    // Remove from localStorage cache
     try {
       localStorage.removeItem(getLocalStorageKey(linkId));
     } catch (error) {
@@ -82,13 +81,53 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setSelectedLinkId(linkId);
   }, []);
 
-  const updateLinkDetails = useCallback((linkId: string, details: Partial<Omit<LOSLink, 'id' | 'analysisResult' | 'analysisTimestamp' | 'color'>>) => {
-    setLinks(prevLinks =>
-      prevLinks.map(link =>
-        link.id === linkId ? { ...link, ...details, isDirty: true } : link
-      )
-    );
+  const updateLinkDetails = useCallback((linkId: string, newPartialDetails: Partial<Omit<LOSLink, 'id' | 'analysisResult' | 'analysisTimestamp' | 'color'>>) => {
+    setLinks(prevLinks => {
+      const linkIndex = prevLinks.findIndex(l => l.id === linkId);
+      if (linkIndex === -1) return prevLinks;
+
+      const currentLink = prevLinks[linkIndex];
+      
+      // Construct the prospective new link state by merging
+      const prospectivePointA = newPartialDetails.pointA ? { ...currentLink.pointA, ...newPartialDetails.pointA } : currentLink.pointA;
+      const prospectivePointB = newPartialDetails.pointB ? { ...currentLink.pointB, ...newPartialDetails.pointB } : currentLink.pointB;
+      const prospectiveClearance = newPartialDetails.clearanceThreshold !== undefined ? newPartialDetails.clearanceThreshold : currentLink.clearanceThreshold;
+      
+      // Determine if there's a meaningful change in data or if it needs to be marked dirty
+      let hasMeaningfulChange = false;
+      if (
+        prospectivePointA.name !== currentLink.pointA.name ||
+        prospectivePointA.lat !== currentLink.pointA.lat ||
+        prospectivePointA.lng !== currentLink.pointA.lng ||
+        prospectivePointA.towerHeight !== currentLink.pointA.towerHeight ||
+        prospectivePointB.name !== currentLink.pointB.name ||
+        prospectivePointB.lat !== currentLink.pointB.lat ||
+        prospectivePointB.lng !== currentLink.pointB.lng ||
+        prospectivePointB.towerHeight !== currentLink.pointB.towerHeight ||
+        prospectiveClearance !== currentLink.clearanceThreshold ||
+        (newPartialDetails.isDirty === true && !currentLink.isDirty) // Explicitly becoming dirty
+      ) {
+        hasMeaningfulChange = true;
+      }
+      
+      if (hasMeaningfulChange) {
+        const updatedLinks = [...prevLinks];
+        updatedLinks[linkIndex] = {
+          ...currentLink,
+          pointA: prospectivePointA,
+          pointB: prospectivePointB,
+          clearanceThreshold: prospectiveClearance,
+          // isDirty is explicitly managed by the caller of updateLinkDetails if it's part of newPartialDetails
+          // or defaults to true if it was the reason for hasMeaningfulChange
+          isDirty: newPartialDetails.isDirty !== undefined ? newPartialDetails.isDirty : true,
+        };
+        return updatedLinks;
+      }
+
+      return prevLinks; // No meaningful change, return original array to prevent unnecessary re-renders
+    });
   }, []);
+
 
   const updateLinkAnalysis = useCallback((linkId: string, result: AnalysisResult) => {
     const analysisTimestamp = Date.now();
@@ -97,7 +136,6 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         link.id === linkId ? { ...link, analysisResult: result, analysisTimestamp, isDirty: false } : link
       )
     );
-    // Cache in localStorage
     try {
       localStorage.setItem(getLocalStorageKey(linkId), JSON.stringify({ ...result, analysisTimestamp }));
     } catch (error) {
@@ -113,16 +151,23 @@ export const LinksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       const parsedItem = JSON.parse(cachedItem);
       if (parsedItem && parsedItem.analysisTimestamp) {
         if (Date.now() - parsedItem.analysisTimestamp < CACHE_EXPIRY_MS) {
-          return parsedItem as AnalysisResult & { analysisTimestamp: number };
+          // Ensure the structure matches AnalysisResult, especially pointA and pointB names
+          const result = parsedItem as AnalysisResult & { analysisTimestamp: number };
+          const linkInContext = links.find(l => l.id === linkId);
+          if (linkInContext) {
+            result.pointA.name = linkInContext.pointA.name;
+            result.pointB.name = linkInContext.pointB.name;
+          }
+          return result;
         } else {
           localStorage.removeItem(getLocalStorageKey(linkId)); // Expired
         }
       }
-    } catch (error) {
+    } catch (error)      {
       console.error("Failed to retrieve or parse cached analysis:", error);
     }
     return null;
-  }, []);
+  }, [links]);
   
 
   return (
@@ -139,4 +184,3 @@ export const useLinks = (): LinksContextType => {
   }
   return context;
 };
-

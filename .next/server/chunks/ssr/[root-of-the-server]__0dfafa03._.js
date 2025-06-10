@@ -885,7 +885,7 @@ async function getGoogleElevationData(pointA, pointB, samples) {
     if (!GOOGLE_ELEVATION_API_KEY) {
         const errorMessage = "Google Elevation API key is not configured";
         console.error(errorMessage);
-        throw new Error(errorMessage);
+        throw new Error(errorMessage); // Throw a new Error with a string message
     }
     const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
     const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
@@ -896,55 +896,53 @@ async function getGoogleElevationData(pointA, pointB, samples) {
             }
         }); // Cache for 1 hour
         if (!response.ok) {
-            let errorData; // Use any for flexible error data structure
+            let errorData;
             let errorResponseMessage = `Google Elevation API request failed: ${response.status} ${response.statusText}.`;
             try {
                 errorData = await response.json();
                 if (errorData && typeof errorData.message === 'string') {
                     errorResponseMessage += ` Details: ${errorData.message}`;
                 } else if (errorData && errorData.message instanceof RegExp) {
-                    errorResponseMessage += ` Details (RegExp): ${String(errorData.message)}`;
+                    errorResponseMessage += ` Details (RegExp): ${errorData.message.toString()}`;
                 } else if (errorData) {
-                    // Attempt to stringify errorData if it's not a simple string or already handled
-                    errorResponseMessage += ` Details: ${typeof errorData === 'object' ? JSON.stringify(errorData) : String(errorData)}`;
+                    errorResponseMessage += ` Details: ${JSON.stringify(errorData)}`;
                 }
             } catch (parseError) {
+                // If parsing the error response fails, stick to the status text
                 errorResponseMessage += ' Failed to parse error response body.';
             }
-            // Ensure errorDataForLogging is a string for console.error
-            const errorDataForLogging = typeof errorData === 'string' ? errorData : errorData ? JSON.stringify(errorData) : 'No error data body';
-            console.error("Error in getGoogleElevationData (API response not OK):", errorResponseMessage, "Raw error data (stringified):", errorDataForLogging);
-            throw new Error(errorResponseMessage);
+            console.error(errorResponseMessage, errorData);
+            throw new Error(errorResponseMessage); // Throw a new Error with a string message
         }
         const data = await response.json();
         if (data.status !== 'OK') {
-            let apiErrorMessageContent = 'No additional error message provided by API.';
+            let apiErrorMessageContent = 'No additional error message provided.';
             if (typeof data.error_message === 'string') {
                 apiErrorMessageContent = data.error_message;
             } else if (data.error_message instanceof RegExp) {
-                apiErrorMessageContent = `API reported RegExp error: ${String(data.error_message)}`;
-            } else if (data.error_message) {
-                apiErrorMessageContent = `API reported error: ${typeof data.error_message === 'object' ? JSON.stringify(data.error_message) : String(data.error_message)}`;
+                apiErrorMessageContent = `RegExp error: ${data.error_message.toString()}`;
             }
             const apiErrorMessage = `Google Elevation API error: ${data.status}. ${apiErrorMessageContent}`;
-            console.error("Error in getGoogleElevationData (API status not OK):", apiErrorMessage);
-            throw new Error(apiErrorMessage);
+            console.error(apiErrorMessage);
+            throw new Error(apiErrorMessage); // Throw a new Error with a string message
         }
         return data.results;
     } catch (error) {
+        // This catch block handles network errors from fetch() itself, or errors re-thrown from above
         let finalErrorMessage;
-        if (error instanceof RegExp) {
-            finalErrorMessage = `Network error or issue during Google Elevation API call. Received RegExp error: ${error.toString()} (Source: ${error.source})`;
-        } else if (error instanceof Error) {
+        if (error instanceof Error) {
+            // If it's already an Error, its message should be a string.
+            // We prefix it to indicate the context.
             finalErrorMessage = `Network error or issue during Google Elevation API call: ${error.message}`;
+        } else if (error instanceof RegExp) {
+            // Explicitly handle if the caught error is a RegExp
+            finalErrorMessage = `Network error or issue during Google Elevation API call. Received RegExp error: ${error.toString()} (Source: ${error.source})`;
         } else {
+            // Fallback for other types of thrown values
             finalErrorMessage = `Network error or issue during Google Elevation API call. Received: ${String(error)}`;
         }
-        // Ensure originalErrorForLogging is a string
-        const originalErrorForLogging = error instanceof Error || typeof error === 'string' || error instanceof RegExp ? String(error) // Handles Error, string, RegExp by converting to string
-         : typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error); // Fallback for other types
-        console.error("Error in getGoogleElevationData (final catch block):", finalErrorMessage, "Original error object for context (stringified):", originalErrorForLogging);
-        throw new Error(finalErrorMessage);
+        console.error("Error in getGoogleElevationData (final catch):", finalErrorMessage, "Original error:", error);
+        throw new Error(finalErrorMessage); // Always throw a new Error with a guaranteed string message
     }
 }
 function calculateDistanceKm(p1, p2) {
@@ -1660,7 +1658,6 @@ const LinksProvider = ({ children })=>{
         if (selectedLinkId === linkId) {
             setSelectedLinkId(null);
         }
-        // Remove from localStorage cache
         try {
             localStorage.removeItem(getLocalStorageKey(linkId));
         } catch (error) {
@@ -1672,12 +1669,44 @@ const LinksProvider = ({ children })=>{
     const selectLink = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId)=>{
         setSelectedLinkId(linkId);
     }, []);
-    const updateLinkDetails = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId, details)=>{
-        setLinks((prevLinks)=>prevLinks.map((link)=>link.id === linkId ? {
-                    ...link,
-                    ...details,
-                    isDirty: true
-                } : link));
+    const updateLinkDetails = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId, newPartialDetails)=>{
+        setLinks((prevLinks)=>{
+            const linkIndex = prevLinks.findIndex((l)=>l.id === linkId);
+            if (linkIndex === -1) return prevLinks;
+            const currentLink = prevLinks[linkIndex];
+            // Construct the prospective new link state by merging
+            const prospectivePointA = newPartialDetails.pointA ? {
+                ...currentLink.pointA,
+                ...newPartialDetails.pointA
+            } : currentLink.pointA;
+            const prospectivePointB = newPartialDetails.pointB ? {
+                ...currentLink.pointB,
+                ...newPartialDetails.pointB
+            } : currentLink.pointB;
+            const prospectiveClearance = newPartialDetails.clearanceThreshold !== undefined ? newPartialDetails.clearanceThreshold : currentLink.clearanceThreshold;
+            // Determine if there's a meaningful change in data or if it needs to be marked dirty
+            let hasMeaningfulChange = false;
+            if (prospectivePointA.name !== currentLink.pointA.name || prospectivePointA.lat !== currentLink.pointA.lat || prospectivePointA.lng !== currentLink.pointA.lng || prospectivePointA.towerHeight !== currentLink.pointA.towerHeight || prospectivePointB.name !== currentLink.pointB.name || prospectivePointB.lat !== currentLink.pointB.lat || prospectivePointB.lng !== currentLink.pointB.lng || prospectivePointB.towerHeight !== currentLink.pointB.towerHeight || prospectiveClearance !== currentLink.clearanceThreshold || newPartialDetails.isDirty === true && !currentLink.isDirty // Explicitly becoming dirty
+            ) {
+                hasMeaningfulChange = true;
+            }
+            if (hasMeaningfulChange) {
+                const updatedLinks = [
+                    ...prevLinks
+                ];
+                updatedLinks[linkIndex] = {
+                    ...currentLink,
+                    pointA: prospectivePointA,
+                    pointB: prospectivePointB,
+                    clearanceThreshold: prospectiveClearance,
+                    // isDirty is explicitly managed by the caller of updateLinkDetails if it's part of newPartialDetails
+                    // or defaults to true if it was the reason for hasMeaningfulChange
+                    isDirty: newPartialDetails.isDirty !== undefined ? newPartialDetails.isDirty : true
+                };
+                return updatedLinks;
+            }
+            return prevLinks; // No meaningful change, return original array to prevent unnecessary re-renders
+        });
     }, []);
     const updateLinkAnalysis = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((linkId, result)=>{
         const analysisTimestamp = Date.now();
@@ -1687,7 +1716,6 @@ const LinksProvider = ({ children })=>{
                     analysisTimestamp,
                     isDirty: false
                 } : link));
-        // Cache in localStorage
         try {
             localStorage.setItem(getLocalStorageKey(linkId), JSON.stringify({
                 ...result,
@@ -1704,7 +1732,14 @@ const LinksProvider = ({ children })=>{
             const parsedItem = JSON.parse(cachedItem);
             if (parsedItem && parsedItem.analysisTimestamp) {
                 if (Date.now() - parsedItem.analysisTimestamp < CACHE_EXPIRY_MS) {
-                    return parsedItem;
+                    // Ensure the structure matches AnalysisResult, especially pointA and pointB names
+                    const result = parsedItem;
+                    const linkInContext = links.find((l)=>l.id === linkId);
+                    if (linkInContext) {
+                        result.pointA.name = linkInContext.pointA.name;
+                        result.pointB.name = linkInContext.pointB.name;
+                    }
+                    return result;
                 } else {
                     localStorage.removeItem(getLocalStorageKey(linkId)); // Expired
                 }
@@ -1713,7 +1748,9 @@ const LinksProvider = ({ children })=>{
             console.error("Failed to retrieve or parse cached analysis:", error);
         }
         return null;
-    }, []);
+    }, [
+        links
+    ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(LinksContext.Provider, {
         value: {
             links,
@@ -1729,7 +1766,7 @@ const LinksProvider = ({ children })=>{
         children: children
     }, void 0, false, {
         fileName: "[project]/src/context/links-context.tsx",
-        lineNumber: 129,
+        lineNumber: 174,
         columnNumber: 5
     }, this);
 };
