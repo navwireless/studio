@@ -149,17 +149,18 @@ const CardFooter = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$
 CardFooter.displayName = "CardFooter";
 ;
 }}),
-"[project]/src/app/actions.ts [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/app/data:3e6d60 [app-ssr] (ecmascript) <text/javascript>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-/* __next_internal_action_entry_do_not_use__ {"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"} */ __turbopack_context__.s({
+/* __next_internal_action_entry_do_not_use__ [{"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"},"src/app/actions.ts",""] */ __turbopack_context__.s({
     "performLosAnalysis": (()=>performLosAnalysis)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-client-wrapper.js [app-ssr] (ecmascript)");
+"use turbopack no side effects";
 ;
-var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis");
+var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis"); //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcblwidXNlIHNlcnZlclwiO1xuXG5pbXBvcnQgeyB6IH0gZnJvbSAnem9kJztcbmltcG9ydCB0eXBlIHsgQW5hbHlzaXNSZXN1bHQsIEFjdGlvbkVycm9yU3RhdGUsIFBvaW50Q29vcmRpbmF0ZXMgfSBmcm9tICdAL3R5cGVzJztcbmltcG9ydCB7IGdldEdvb2dsZUVsZXZhdGlvbkRhdGEsIGFuYWx5emVMT1MgfSBmcm9tICdAL2xpYi9sb3MtY2FsY3VsYXRvcic7XG5cbi8vIERlZmluZSBab2Qgc2NoZW1hIGZvciBmb3JtIHZhbGlkYXRpb25cbmNvbnN0IFBvaW50SW5wdXRTY2hlbWEgPSB6Lm9iamVjdCh7XG4gIG5hbWU6IHouc3RyaW5nKCkubWluKDEsIFwiTmFtZSBpcyByZXF1aXJlZFwiKS5tYXgoNTAsIFwiTmFtZSB0b28gbG9uZ1wiKSxcbiAgbGF0OiB6LnN0cmluZygpLnJlZmluZSh2YWwgPT4gIWlzTmFOKHBhcnNlRmxvYXQodmFsKSkgJiYgTWF0aC5hYnMocGFyc2VGbG9hdCh2YWwpKSA8PSA5MCwgXCJJbnZhbGlkIExhdGl0dWRlICgtOTAgdG8gOTApXCIpLFxuICBsbmc6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBNYXRoLmFicyhwYXJzZUZsb2F0KHZhbCkpIDw9IDE4MCwgXCJJbnZhbGlkIExvbmdpdHVkZSAoLTE4MCB0byAxODApXCIpLFxuICBoZWlnaHQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCAmJiBwYXJzZUZsb2F0KHZhbCkgPD0gMTAwLCBcIkhlaWdodCBtdXN0IGJlIGJldHdlZW4gMCBhbmQgMTAwbVwiKSxcbn0pO1xuXG5jb25zdCBBbmFseXNpc0Zvcm1TY2hlbWEgPSB6Lm9iamVjdCh7XG4gIHBvaW50QTogUG9pbnRJbnB1dFNjaGVtYSxcbiAgcG9pbnRCOiBQb2ludElucHV0U2NoZW1hLFxuICBjbGVhcmFuY2VUaHJlc2hvbGQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCwgXCJDbGVhcmFuY2UgbXVzdCBiZSBhIHBvc2l0aXZlIG51bWJlclwiKSxcbn0pO1xuXG5cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBwZXJmb3JtTG9zQW5hbHlzaXMoXG4gIHByZXZTdGF0ZTogQW5hbHlzaXNSZXN1bHQgfCBBY3Rpb25FcnJvclN0YXRlIHwgbnVsbCxcbiAgZm9ybURhdGE6IEZvcm1EYXRhXG4pOiBQcm9taXNlPEFuYWx5c2lzUmVzdWx0IHwgQWN0aW9uRXJyb3JTdGF0ZT4ge1xuICB0cnkgeyAvLyBPdXRlciB0cnktY2F0Y2ggZm9yIHRoZSBlbnRpcmUgYWN0aW9uXG4gICAgY29uc3QgcmF3Rm9ybURhdGEgPSB7XG4gICAgICBwb2ludEE6IHtcbiAgICAgICAgbmFtZTogZm9ybURhdGEuZ2V0KCdwb2ludEEubmFtZScpIGFzIHN0cmluZyxcbiAgICAgICAgbGF0OiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5sYXQnKSBhcyBzdHJpbmcsXG4gICAgICAgIGxuZzogZm9ybURhdGEuZ2V0KCdwb2ludEEubG5nJykgYXMgc3RyaW5nLFxuICAgICAgICBoZWlnaHQ6IGZvcm1EYXRhLmdldCgncG9pbnRBLmhlaWdodCcpIGFzIHN0cmluZyxcbiAgICAgIH0sXG4gICAgICBwb2ludEI6IHtcbiAgICAgICAgbmFtZTogZm9ybURhdGEuZ2V0KCdwb2ludEIubmFtZScpIGFzIHN0cmluZyxcbiAgICAgICAgbGF0OiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5sYXQnKSBhcyBzdHJpbmcsXG4gICAgICAgIGxuZzogZm9ybURhdGEuZ2V0KCdwb2ludEIubG5nJykgYXMgc3RyaW5nLFxuICAgICAgICBoZWlnaHQ6IGZvcm1EYXRhLmdldCgncG9pbnRCLmhlaWdodCcpIGFzIHN0cmluZyxcbiAgICAgIH0sXG4gICAgICBjbGVhcmFuY2VUaHJlc2hvbGQ6IGZvcm1EYXRhLmdldCgnY2xlYXJhbmNlVGhyZXNob2xkJykgYXMgc3RyaW5nLFxuICAgIH07XG5cbiAgICBjb25zdCB2YWxpZGF0aW9uUmVzdWx0ID0gQW5hbHlzaXNGb3JtU2NoZW1hLnNhZmVQYXJzZShyYXdGb3JtRGF0YSk7XG5cbiAgICBpZiAoIXZhbGlkYXRpb25SZXN1bHQuc3VjY2Vzcykge1xuICAgICAgY29uc3QgZmllbGRFcnJvcnMgPSB2YWxpZGF0aW9uUmVzdWx0LmVycm9yLmZsYXR0ZW4oKS5maWVsZEVycm9ycztcbiAgICAgIGNvbnN0IHNhbml0aXplZEZpZWxkRXJyb3JzOiB7IFtrZXk6IHN0cmluZ106IHN0cmluZ1tdIHwgdW5kZWZpbmVkIH0gPSB7fTtcbiAgICAgIGZvciAoY29uc3QgZmllbGQgaW4gZmllbGRFcnJvcnMpIHtcbiAgICAgICAgY29uc3QgbWVzc2FnZXMgPSBmaWVsZEVycm9yc1tmaWVsZCBhcyBrZXlvZiB0eXBlb2YgZmllbGRFcnJvcnNdO1xuICAgICAgICBpZiAobWVzc2FnZXMpIHtcbiAgICAgICAgICBzYW5pdGl6ZWRGaWVsZEVycm9yc1tmaWVsZF0gPSBtZXNzYWdlcy5tYXAobXNnID0+IFN0cmluZyhtc2cgPz8gJ1ZhbGlkYXRpb24gbWVzc2FnZSB1bmRlZmluZWQnKSk7XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICAgIGNvbnNvbGUuZXJyb3IoXCJWYWxpZGF0aW9uIGVycm9ycyBpbiBwZXJmb3JtTG9zQW5hbHlzaXM6XCIsIEpTT04uc3RyaW5naWZ5KHNhbml0aXplZEZpZWxkRXJyb3JzLCBudWxsLCAyKSk7XG4gICAgICByZXR1cm4geyBlcnJvcjogXCJJbnZhbGlkIGlucHV0LiBQbGVhc2UgY2hlY2sgdGhlIGZpZWxkcyBoaWdobGlnaHRlZCBiZWxvdy5cIiwgZmllbGRFcnJvcnM6IHNhbml0aXplZEZpZWxkRXJyb3JzIH07XG4gICAgfVxuXG4gICAgY29uc3QgdmFsaWRhdGVkRGF0YSA9IHZhbGlkYXRpb25SZXN1bHQuZGF0YTtcblxuICAgIGNvbnN0IHBhcmFtc0ZvckFuYWx5c2lzID0ge1xuICAgICAgcG9pbnRBOiB7XG4gICAgICAgIG5hbWU6IHZhbGlkYXRlZERhdGEucG9pbnRBLm5hbWUsXG4gICAgICAgIGxhdDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5sYXQpLFxuICAgICAgICBsbmc6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEubG5nKSxcbiAgICAgICAgdG93ZXJIZWlnaHQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEuaGVpZ2h0KSxcbiAgICAgIH0sXG4gICAgICBwb2ludEI6IHtcbiAgICAgICAgbmFtZTogdmFsaWRhdGVkRGF0YS5wb2ludEIubmFtZSxcbiAgICAgICAgbGF0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmxhdCksXG4gICAgICAgIGxuZzogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5sbmcpLFxuICAgICAgICB0b3dlckhlaWdodDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5oZWlnaHQpLFxuICAgICAgfSxcbiAgICAgIGNsZWFyYW5jZVRocmVzaG9sZDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLmNsZWFyYW5jZVRocmVzaG9sZCksXG4gICAgfTtcbiAgICBcbiAgICB0cnkgeyAvLyBJbm5lciB0cnktY2F0Y2ggc3BlY2lmaWNhbGx5IGZvciBlbGV2YXRpb24gZmV0Y2hpbmcgYW5kIExPUyBhbmFseXNpc1xuICAgICAgY29uc3QgZWxldmF0aW9uRGF0YSA9IGF3YWl0IGdldEdvb2dsZUVsZXZhdGlvbkRhdGEoXG4gICAgICAgIHsgbGF0OiBwYXJhbXNGb3JBbmFseXNpcy5wb2ludEEubGF0LCBsbmc6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50QS5sbmcgfSxcbiAgICAgICAgeyBsYXQ6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50Qi5sYXQsIGxuZzogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRCLmxuZyB9LFxuICAgICAgICAxMDAgLy8gTnVtYmVyIG9mIHNhbXBsZXNcbiAgICAgICk7XG4gICAgICBcbiAgICAgIGNvbnN0IGFuYWx5c2lzUmVzdWx0RGF0YSA9IGFuYWx5emVMT1MoXG4gICAgICAgIHBhcmFtc0ZvckFuYWx5c2lzLFxuICAgICAgICBlbGV2YXRpb25EYXRhXG4gICAgICApO1xuICAgICAgXG4gICAgICBjb25zdCBmdWxsUmVzdWx0OiBBbmFseXNpc1Jlc3VsdCA9IHtcbiAgICAgICAgaWQ6IGBhbmFseXNpc18ke0RhdGUubm93KCl9YCxcbiAgICAgICAgdGltZXN0YW1wOiBEYXRlLm5vdygpLFxuICAgICAgICBsb3NQb3NzaWJsZTogYW5hbHlzaXNSZXN1bHREYXRhLmxvc1Bvc3NpYmxlLFxuICAgICAgICBkaXN0YW5jZUttOiBhbmFseXNpc1Jlc3VsdERhdGEuZGlzdGFuY2VLbSxcbiAgICAgICAgbWluQ2xlYXJhbmNlOiBhbmFseXNpc1Jlc3VsdERhdGEubWluQ2xlYXJhbmNlLFxuICAgICAgICBhZGRpdGlvbmFsSGVpZ2h0TmVlZGVkOiBhbmFseXNpc1Jlc3VsdERhdGEuYWRkaXRpb25hbEhlaWdodE5lZWRlZCxcbiAgICAgICAgcHJvZmlsZTogYW5hbHlzaXNSZXN1bHREYXRhLnByb2ZpbGUsXG4gICAgICAgIG1lc3NhZ2U6IGAke2FuYWx5c2lzUmVzdWx0RGF0YS5tZXNzYWdlfSBFbGV2YXRpb24gZGF0YSBmcm9tIEdvb2dsZSBFbGV2YXRpb24gQVBJLmAsXG4gICAgICAgIHBvaW50QTogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRBLFxuICAgICAgICBwb2ludEI6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50QixcbiAgICAgICAgY2xlYXJhbmNlVGhyZXNob2xkVXNlZDogcGFyYW1zRm9yQW5hbHlzaXMuY2xlYXJhbmNlVGhyZXNob2xkLFxuICAgICAgfTtcbiAgICAgIHJldHVybiBmdWxsUmVzdWx0O1xuXG4gICAgfSBjYXRjaCAoZXJyOiB1bmtub3duKSB7IC8vIElubmVyIGNhdGNoIGZvciBMT1MgYW5hbHlzaXMgc3BlY2lmaWMgZXJyb3JzXG4gICAgICBsZXQgZXJyb3JGb3JMb2dnaW5nOiBzdHJpbmc7XG4gICAgICBsZXQgY2xpZW50RXJyb3JNZXNzYWdlU3RyaW5nOiBzdHJpbmc7XG5cbiAgICAgIGlmIChlcnIgaW5zdGFuY2VvZiBSZWdFeHApIHtcbiAgICAgICAgZXJyb3JGb3JMb2dnaW5nID0gYENhdWdodCBhIHJhdyBSZWdFeHAgaW4gaW5uZXIgY2F0Y2g6ICR7ZXJyLnRvU3RyaW5nKCl9IChTb3VyY2U6ICR7ZXJyLnNvdXJjZX0pYDtcbiAgICAgICAgY2xpZW50RXJyb3JNZXNzYWdlU3RyaW5nID0gXCJBbiB1bmV4cGVjdGVkIGVycm9yIGZvcm1hdCAoUmVnRXhwKSB3YXMgZW5jb3VudGVyZWQgZHVyaW5nIExPUyBhbmFseXNpcy4gUGxlYXNlIHJlcG9ydCB0aGlzLlwiO1xuICAgICAgfSBlbHNlIGlmIChlcnIgaW5zdGFuY2VvZiBFcnJvcikge1xuICAgICAgICAvLyBDcnVjaWFsbHksIGVuc3VyZSBlcnIubWVzc2FnZSBpcyBzdHJpbmdpZmllZCwgaW4gY2FzZSBpdCdzIGEgUmVnRXhwIG9iamVjdC5cbiAgICAgICAgY29uc3Qgb3JpZ2luYWxNZXNzYWdlU3RyaW5nID0gU3RyaW5nKGVyci5tZXNzYWdlKTsgXG4gICAgICAgIGVycm9yRm9yTG9nZ2luZyA9IGBFcnJvciBkdXJpbmcgTE9TIGFuYWx5c2lzIChpbm5lciBjYXRjaCk6IE5hbWU6ICR7ZXJyLm5hbWV9LCBNZXNzYWdlOiAke29yaWdpbmFsTWVzc2FnZVN0cmluZ30ke2Vyci5zdGFjayA/IGBcXG5TdGFjazogJHtlcnIuc3RhY2t9YCA6ICcnfWA7XG4gICAgICAgIFxuICAgICAgICBsZXQgc3BlY2lmaWNDbGllbnRNZXNzYWdlOiBzdHJpbmcgfCBudWxsID0gbnVsbDtcbiAgICAgICAgaWYgKG9yaWdpbmFsTWVzc2FnZVN0cmluZy5pbmNsdWRlcyhcIkdvb2dsZSBFbGV2YXRpb24gQVBJIGtleSBpcyBub3QgY29uZmlndXJlZFwiKSkge1xuICAgICAgICAgIHNwZWNpZmljQ2xpZW50TWVzc2FnZSA9IFwiQVBJIEtleSBFcnJvcjogR29vZ2xlIEVsZXZhdGlvbiBBUEkga2V5IGlzIG5vdCBjb25maWd1cmVkIG9uIHRoZSBzZXJ2ZXIuXCI7XG4gICAgICAgIH0gZWxzZSBpZiAob3JpZ2luYWxNZXNzYWdlU3RyaW5nLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmVxdWVzdCBmYWlsZWRcIikgfHwgb3JpZ2luYWxNZXNzYWdlU3RyaW5nLmluY2x1ZGVzKFwiR29vZ2xlIEVsZXZhdGlvbiBBUEkgcmV0dXJuZWQgYW4gZXJyb3JcIikpIHtcbiAgICAgICAgICBzcGVjaWZpY0NsaWVudE1lc3NhZ2UgPSBcIkVsZXZhdGlvbiBTZXJ2aWNlIEVycm9yOiBDb3VsZCBub3QgZmV0Y2ggZWxldmF0aW9uIGRhdGEuIFRoZSBzZXJ2aWNlIG1heSBiZSBkb3duIG9yIHRoZSByZXF1ZXN0IGludmFsaWQuXCI7XG4gICAgICAgIH1cbiAgICAgICAgXG4gICAgICAgIGNsaWVudEVycm9yTWVzc2FnZVN0cmluZyA9IHNwZWNpZmljQ2xpZW50TWVzc2FnZSB8fCBcIkFuIGVycm9yIG9jY3VycmVkIGR1cmluZyB0aGUgTGluZS1vZi1TaWdodCBhbmFseXNpcy4gUGxlYXNlIHRyeSBhZ2FpbiBsYXRlciBvciBjaGVjayBzZXJ2ZXIgbG9ncy5cIjtcbiAgICAgIH0gZWxzZSBpZiAodHlwZW9mIGVyciA9PT0gJ3N0cmluZycpIHtcbiAgICAgICAgZXJyb3JGb3JMb2dnaW5nID0gYENhdWdodCBhIHN0cmluZyBlcnJvciBpbiBpbm5lciBjYXRjaDogJHtlcnJ9YDtcbiAgICAgICAgY2xpZW50RXJyb3JNZXNzYWdlU3RyaW5nID0gZXJyLnN1YnN0cmluZygwLCA1MDApOyAvLyBDYXAgbGVuZ3RoIGZvciBzYWZldHlcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIGVycm9yRm9yTG9nZ2luZyA9IGBDYXVnaHQgYW4gdW5rbm93biBlcnJvciB0eXBlIGluIGlubmVyIGNhdGNoOiAke1N0cmluZyhlcnIpfWA7XG4gICAgICAgIGNsaWVudEVycm9yTWVzc2FnZVN0cmluZyA9IFwiQW4gdW51c3VhbCBlcnJvciBvY2N1cnJlZCBkdXJpbmcgTE9TIGFuYWx5c2lzLiBQbGVhc2UgY2hlY2sgc2VydmVyIGxvZ3MuXCI7XG4gICAgICB9XG5cbiAgICAgIGNvbnNvbGUuZXJyb3IoXCJFcnJvciBMb2cgKElubmVyIENhdGNoIC0gcGVyZm9ybUxvc0FuYWx5c2lzKTpcIiwgZXJyb3JGb3JMb2dnaW5nKTtcbiAgICAgIFxuICAgICAgcmV0dXJuIHsgXG4gICAgICAgIGVycm9yOiBjbGllbnRFcnJvck1lc3NhZ2VTdHJpbmcsIC8vIFRoaXMgTVVTVCBiZSBhIHBsYWluIHN0cmluZ1xuICAgICAgICBmaWVsZEVycm9yczogdW5kZWZpbmVkIFxuICAgICAgfTtcbiAgICB9XG4gIH0gY2F0Y2ggKGU6IHVua25vd24pIHsgLy8gT3V0ZXJtb3N0IGNhdGNoIGZvciBhbnkgb3RoZXIgZXJyb3JzIGluIHRoZSBhY3Rpb25cbiAgICBsZXQgZXJyb3JGb3JMb2dnaW5nOiBzdHJpbmc7XG4gICAgbGV0IGNsaWVudEVycm9yTWVzc2FnZTogc3RyaW5nO1xuXG4gICAgaWYgKGUgaW5zdGFuY2VvZiBSZWdFeHApIHtcbiAgICAgICAgZXJyb3JGb3JMb2dnaW5nID0gYFVuaGFuZGxlZCByYXcgUmVnRXhwIHRocm93biBieSBhY3Rpb246ICR7ZS50b1N0cmluZygpfSAoU291cmNlOiAke2Uuc291cmNlfSlgO1xuICAgICAgICBjbGllbnRFcnJvck1lc3NhZ2UgPSBcIkFuIHVuZXhwZWN0ZWQgc2VydmVyIGVycm9yIChSZWdFeHAgdHlwZSkgb2NjdXJyZWQuIFBsZWFzZSBjb250YWN0IHN1cHBvcnQuXCI7XG4gICAgfSBlbHNlIGlmIChlIGluc3RhbmNlb2YgRXJyb3IpIHtcbiAgICAgICAgLy8gQ3J1Y2lhbGx5LCBlbnN1cmUgZS5tZXNzYWdlIGlzIHN0cmluZ2lmaWVkLCBpbiBjYXNlIGl0J3MgYSBSZWdFeHAgb2JqZWN0LlxuICAgICAgICBjb25zdCBvcmlnaW5hbE1lc3NhZ2VTdHJpbmcgPSBTdHJpbmcoZS5tZXNzYWdlKTtcbiAgICAgICAgZXJyb3JGb3JMb2dnaW5nID0gYFVuaGFuZGxlZCBlcnJvciBpbiBwZXJmb3JtTG9zQW5hbHlzaXMgKG91dGVyIGNhdGNoKTogTmFtZTogJHtlLm5hbWV9LCBNZXNzYWdlOiAke29yaWdpbmFsTWVzc2FnZVN0cmluZ30ke2Uuc3RhY2sgPyBgXFxuU3RhY2s6ICR7ZS5zdGFja31gIDogJyd9YDtcbiAgICAgICAgXG4gICAgICAgIGNsaWVudEVycm9yTWVzc2FnZSA9IGBBbiB1bmV4cGVjdGVkIHNlcnZlciBlcnJvciBvY2N1cnJlZC4gRGV0YWlsczogJHtvcmlnaW5hbE1lc3NhZ2VTdHJpbmcuc3Vic3RyaW5nKDAsIDEwMCl9JHtvcmlnaW5hbE1lc3NhZ2VTdHJpbmcubGVuZ3RoID4gMTAwID8gJy4uLicgOiAnJ31gO1xuICAgICAgICAvLyBDYXAgdGhlIGxlbmd0aCBvZiB0aGUgY2xpZW50LWZhY2luZyBtZXNzYWdlIGZvciBzYWZldHkuXG4gICAgICAgIGlmIChjbGllbnRFcnJvck1lc3NhZ2UubGVuZ3RoID4gMjAwKSB7XG4gICAgICAgICAgICAgY2xpZW50RXJyb3JNZXNzYWdlID0gXCJBbiBleHRlbnNpdmUgdW5leHBlY3RlZCBzZXJ2ZXIgZXJyb3Igb2NjdXJyZWQuIFBsZWFzZSBjaGVjayBsb2dzIGZvciBmdWxsIGRldGFpbHMuXCI7XG4gICAgICAgIH1cbiAgICB9IGVsc2UgaWYgKHR5cGVvZiBlID09PSAnc3RyaW5nJykge1xuICAgICAgICBlcnJvckZvckxvZ2dpbmcgPSBgVW5oYW5kbGVkIHN0cmluZyBlcnJvciB0aHJvd24gYnkgYWN0aW9uOiAke2V9YDtcbiAgICAgICAgY2xpZW50RXJyb3JNZXNzYWdlID0gZS5zdWJzdHJpbmcoMCwgMjAwKTsgLy8gQ2FwIGxlbmd0aCBmb3Igc2FmZXR5XG4gICAgfSBlbHNlIHtcbiAgICAgICAgZXJyb3JGb3JMb2dnaW5nID0gYFVuaGFuZGxlZCB1bmtub3duIGVycm9yIHR5cGUgdGhyb3duIGJ5IGFjdGlvbjogJHtTdHJpbmcoZSl9YDtcbiAgICAgICAgY2xpZW50RXJyb3JNZXNzYWdlID0gXCJBIHZlcnkgdW51c3VhbCBhbmQgdW5leHBlY3RlZCBzZXJ2ZXIgZXJyb3Igb2NjdXJyZWQuIFBsZWFzZSBjb250YWN0IHN1cHBvcnQuXCI7XG4gICAgfVxuICAgIGNvbnNvbGUuZXJyb3IoXCJFcnJvciBMb2cgKE91dGVyIENhdGNoIC0gcGVyZm9ybUxvc0FuYWx5c2lzKTpcIiwgZXJyb3JGb3JMb2dnaW5nKTtcblxuICAgIHJldHVybiB7XG4gICAgICBlcnJvcjogY2xpZW50RXJyb3JNZXNzYWdlLCAvLyBUaGlzIE1VU1QgYmUgYSBwbGFpbiBzdHJpbmdcbiAgICAgIGZpZWxkRXJyb3JzOiB1bmRlZmluZWQsXG4gICAgfTtcbiAgfVxufVxuICAgIFxuXG4gICAgIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI4UkFzQnNCIn0=
 }}),
 "[project]/src/lib/form-schema.ts [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
@@ -873,10 +874,68 @@ var { g: global, __dirname } = __turbopack_context__;
 __turbopack_context__.s({
     "analyzeLOS": (()=>analyzeLOS),
     "calculateDistanceKm": (()=>calculateDistanceKm),
-    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius)
+    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius),
+    "getGoogleElevationData": (()=>getGoogleElevationData)
 });
 const EARTH_RADIUS_KM = 6371;
 const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
+async function getGoogleElevationData(pointA, pointB, samples) {
+    const GOOGLE_ELEVATION_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
+    if (!GOOGLE_ELEVATION_API_KEY) {
+        const errorMessage = "Google Elevation API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+        console.error(errorMessage);
+        throw new Error(errorMessage); // Throw a new Error with a string message
+    }
+    const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+    const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
+    try {
+        const response = await fetch(url, {
+            next: {
+                revalidate: 3600
+            }
+        }); // Cache for 1 hour
+        if (!response.ok) {
+            let errorDataContent = `Status: ${response.status} ${response.statusText}.`;
+            try {
+                const errorData = await response.json();
+                if (errorData && errorData.message) {
+                    errorDataContent += ` Details: ${String(errorData.message)}`;
+                } else if (errorData && errorData.error_message) {
+                    errorDataContent += ` Details: ${String(errorData.error_message)}`;
+                } else if (errorData) {
+                    errorDataContent += ` Body: ${String(errorData)}`;
+                }
+            } catch (parseError) {
+            // Failed to parse response body, use original status text
+            }
+            const apiErrorMessage = `Google Elevation API request failed. ${errorDataContent}`;
+            console.error(apiErrorMessage);
+            throw new Error(apiErrorMessage); // Throw a new Error with a string message
+        }
+        const data = await response.json();
+        if (data.status !== 'OK') {
+            let apiStatusErrorMessage = `API Status: ${data.status}.`;
+            if (data.error_message) {
+                apiStatusErrorMessage += ` Message: ${String(data.error_message)}`;
+            }
+            const detailedApiErrorMessage = `Google Elevation API returned an error. ${apiStatusErrorMessage}`;
+            console.error(detailedApiErrorMessage);
+            throw new Error(detailedApiErrorMessage); // Throw a new Error with a string message
+        }
+        return data.results;
+    } catch (error) {
+        // Ensure any error caught here (network, prior new Error, etc.) is re-thrown as a new Error with a string message.
+        let finalErrorMessage;
+        if (error instanceof Error) {
+            finalErrorMessage = `Error fetching elevation data: ${error.message}`;
+        } else {
+            finalErrorMessage = `An unknown error occurred while fetching elevation data: ${String(error)}`;
+        }
+        console.error("getGoogleElevationData - final catch block:", finalErrorMessage, "Original error (stringified):", String(error));
+        throw new Error(finalErrorMessage); // Crucial: re-throw as a new Error with a string message
+    }
+}
 function calculateDistanceKm(p1, p2) {
     const R = EARTH_RADIUS_KM;
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
@@ -892,8 +951,8 @@ function calculateDistanceKm(p1, p2) {
  * @param totalPathDistanceKm Total distance of the LOS path in kilometers.
  * @param distanceFromStartKm Distance of the current point from the start of the path in kilometers.
  * @returns Earth curvature drop in meters.
- */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromStartKm) {
-    const totalPathDistanceM = totalPathDistanceKm * 1000;
+ */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm1, distanceFromStartKm) {
+    const totalPathDistanceM = totalPathDistanceKm1 * 1000;
     const distanceFromStartM = distanceFromStartKm * 1000;
     const distanceToEndM = totalPathDistanceM - distanceFromStartM;
     if (distanceFromStartM < 0 || distanceToEndM < 0) return 0;
@@ -939,7 +998,7 @@ function analyzeLOS(params, elevationData) {
         const terrainElevation = sample.elevation;
         const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
         const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
-        const curvatureDrop = calculateEarthCurvatureDropMeters(totalDistanceKm, distanceFromA_Km);
+        const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
         const correctedLosHeight = idealLosHeight - curvatureDrop;
         const clearance = correctedLosHeight - terrainElevation;
         profile.push({
@@ -1690,7 +1749,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2Icon$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-ssr] (ecmascript) <export default as Trash2Icon>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/card.tsx [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$3e6d60__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__ = __turbopack_context__.i("[project]/src/app/data:3e6d60 [app-ssr] (ecmascript) <text/javascript>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/form-schema.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$app$2d$header$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/layout/app-header.tsx [app-ssr] (ecmascript)");
@@ -1717,7 +1776,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$c
 ;
 ;
 ;
-const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(()=>__turbopack_context__.r("[project]/src/components/fso/interactive-map.tsx [app-ssr] (ecmascript, next/dynamic entry, async loader)")(__turbopack_context__.i), {
+const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(async ()=>{}, {
     loadableGenerated: {
         modules: [
             "[project]/src/components/fso/interactive-map.tsx [app-client] (ecmascript, next/dynamic entry)"
@@ -1749,7 +1808,7 @@ const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_
             columnNumber: 5
         }, this)
 });
-const BottomPanel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(()=>__turbopack_context__.r("[project]/src/components/fso/bottom-panel.tsx [app-ssr] (ecmascript, next/dynamic entry, async loader)")(__turbopack_context__.i), {
+const BottomPanel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(async ()=>{}, {
     loadableGenerated: {
         modules: [
             "[project]/src/components/fso/bottom-panel.tsx [app-client] (ecmascript, next/dynamic entry)"
@@ -1775,7 +1834,7 @@ const parseCoordinatesString = (coordsString)=>{
 function HomePageContent() {
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useToast"])();
     const { links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLinks"])();
-    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performLosAnalysis"], null);
+    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$3e6d60__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
     const [displayedError, setDisplayedError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [displayedFieldErrors, setDisplayedFieldErrors] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -2557,4 +2616,4 @@ function Home() {
 
 };
 
-//# sourceMappingURL=%5Broot%20of%20the%20server%5D__e8076387._.js.map
+//# sourceMappingURL=%5Broot-of-the-server%5D__0363e0de._.js.map

@@ -959,7 +959,7 @@ async function getGoogleElevationData(pointA, pointB, samples) {
     if (!GOOGLE_ELEVATION_API_KEY) {
         const errorMessage = "Google Elevation API key is not configured";
         console.error(errorMessage);
-        throw new Error(errorMessage); // Throw a new Error with a string message
+        throw new Error(errorMessage);
     }
     const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
     const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
@@ -970,53 +970,55 @@ async function getGoogleElevationData(pointA, pointB, samples) {
             }
         }); // Cache for 1 hour
         if (!response.ok) {
-            let errorData;
+            let errorData; // Use any for flexible error data structure
             let errorResponseMessage = `Google Elevation API request failed: ${response.status} ${response.statusText}.`;
             try {
                 errorData = await response.json();
                 if (errorData && typeof errorData.message === 'string') {
                     errorResponseMessage += ` Details: ${errorData.message}`;
                 } else if (errorData && errorData.message instanceof RegExp) {
-                    errorResponseMessage += ` Details (RegExp): ${errorData.message.toString()}`;
+                    errorResponseMessage += ` Details (RegExp): ${String(errorData.message)}`;
                 } else if (errorData) {
-                    errorResponseMessage += ` Details: ${JSON.stringify(errorData)}`;
+                    // Attempt to stringify errorData if it's not a simple string or already handled
+                    errorResponseMessage += ` Details: ${typeof errorData === 'object' ? JSON.stringify(errorData) : String(errorData)}`;
                 }
             } catch (parseError) {
-                // If parsing the error response fails, stick to the status text
                 errorResponseMessage += ' Failed to parse error response body.';
             }
-            console.error(errorResponseMessage, errorData);
-            throw new Error(errorResponseMessage); // Throw a new Error with a string message
+            // Ensure errorDataForLogging is a string for console.error
+            const errorDataForLogging = typeof errorData === 'string' ? errorData : errorData ? JSON.stringify(errorData) : 'No error data body';
+            console.error("Error in getGoogleElevationData (API response not OK):", errorResponseMessage, "Raw error data (stringified):", errorDataForLogging);
+            throw new Error(errorResponseMessage);
         }
         const data = await response.json();
         if (data.status !== 'OK') {
-            let apiErrorMessageContent = 'No additional error message provided.';
+            let apiErrorMessageContent = 'No additional error message provided by API.';
             if (typeof data.error_message === 'string') {
                 apiErrorMessageContent = data.error_message;
             } else if (data.error_message instanceof RegExp) {
-                apiErrorMessageContent = `RegExp error: ${data.error_message.toString()}`;
+                apiErrorMessageContent = `API reported RegExp error: ${String(data.error_message)}`;
+            } else if (data.error_message) {
+                apiErrorMessageContent = `API reported error: ${typeof data.error_message === 'object' ? JSON.stringify(data.error_message) : String(data.error_message)}`;
             }
             const apiErrorMessage = `Google Elevation API error: ${data.status}. ${apiErrorMessageContent}`;
-            console.error(apiErrorMessage);
-            throw new Error(apiErrorMessage); // Throw a new Error with a string message
+            console.error("Error in getGoogleElevationData (API status not OK):", apiErrorMessage);
+            throw new Error(apiErrorMessage);
         }
         return data.results;
     } catch (error) {
-        // This catch block handles network errors from fetch() itself, or errors re-thrown from above
         let finalErrorMessage;
-        if (error instanceof Error) {
-            // If it's already an Error, its message should be a string.
-            // We prefix it to indicate the context.
-            finalErrorMessage = `Network error or issue during Google Elevation API call: ${error.message}`;
-        } else if (error instanceof RegExp) {
-            // Explicitly handle if the caught error is a RegExp
+        if (error instanceof RegExp) {
             finalErrorMessage = `Network error or issue during Google Elevation API call. Received RegExp error: ${error.toString()} (Source: ${error.source})`;
+        } else if (error instanceof Error) {
+            finalErrorMessage = `Network error or issue during Google Elevation API call: ${error.message}`;
         } else {
-            // Fallback for other types of thrown values
             finalErrorMessage = `Network error or issue during Google Elevation API call. Received: ${String(error)}`;
         }
-        console.error("Error in getGoogleElevationData (final catch):", finalErrorMessage, "Original error:", error);
-        throw new Error(finalErrorMessage); // Always throw a new Error with a guaranteed string message
+        // Ensure originalErrorForLogging is a string
+        const originalErrorForLogging = error instanceof Error || typeof error === 'string' || error instanceof RegExp ? String(error) // Handles Error, string, RegExp by converting to string
+         : typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error); // Fallback for other types
+        console.error("Error in getGoogleElevationData (final catch block):", finalErrorMessage, "Original error object for context (stringified):", originalErrorForLogging);
+        throw new Error(finalErrorMessage);
     }
 }
 function calculateDistanceKm(p1, p2) {
@@ -1798,6 +1800,7 @@ const LinksProvider = ({ children })=>{
             if (selectedLinkId === linkId) {
                 setSelectedLinkId(null);
             }
+            // Remove from localStorage cache
             try {
                 localStorage.removeItem(getLocalStorageKey(linkId));
             } catch (error) {
@@ -1813,47 +1816,15 @@ const LinksProvider = ({ children })=>{
         }
     }["LinksProvider.useCallback[selectLink]"], []);
     const updateLinkDetails = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
-        "LinksProvider.useCallback[updateLinkDetails]": (linkId, newPartialDetails)=>{
+        "LinksProvider.useCallback[updateLinkDetails]": (linkId, details)=>{
             setLinks({
-                "LinksProvider.useCallback[updateLinkDetails]": (prevLinks)=>{
-                    const linkIndex = prevLinks.findIndex({
-                        "LinksProvider.useCallback[updateLinkDetails].linkIndex": (l)=>l.id === linkId
-                    }["LinksProvider.useCallback[updateLinkDetails].linkIndex"]);
-                    if (linkIndex === -1) return prevLinks;
-                    const currentLink = prevLinks[linkIndex];
-                    // Construct the prospective new link state by merging
-                    const prospectivePointA = newPartialDetails.pointA ? {
-                        ...currentLink.pointA,
-                        ...newPartialDetails.pointA
-                    } : currentLink.pointA;
-                    const prospectivePointB = newPartialDetails.pointB ? {
-                        ...currentLink.pointB,
-                        ...newPartialDetails.pointB
-                    } : currentLink.pointB;
-                    const prospectiveClearance = newPartialDetails.clearanceThreshold !== undefined ? newPartialDetails.clearanceThreshold : currentLink.clearanceThreshold;
-                    // Determine if there's a meaningful change in data or if it needs to be marked dirty
-                    let hasMeaningfulChange = false;
-                    if (prospectivePointA.name !== currentLink.pointA.name || prospectivePointA.lat !== currentLink.pointA.lat || prospectivePointA.lng !== currentLink.pointA.lng || prospectivePointA.towerHeight !== currentLink.pointA.towerHeight || prospectivePointB.name !== currentLink.pointB.name || prospectivePointB.lat !== currentLink.pointB.lat || prospectivePointB.lng !== currentLink.pointB.lng || prospectivePointB.towerHeight !== currentLink.pointB.towerHeight || prospectiveClearance !== currentLink.clearanceThreshold || newPartialDetails.isDirty === true && !currentLink.isDirty // Explicitly becoming dirty
-                    ) {
-                        hasMeaningfulChange = true;
-                    }
-                    if (hasMeaningfulChange) {
-                        const updatedLinks = [
-                            ...prevLinks
-                        ];
-                        updatedLinks[linkIndex] = {
-                            ...currentLink,
-                            pointA: prospectivePointA,
-                            pointB: prospectivePointB,
-                            clearanceThreshold: prospectiveClearance,
-                            // isDirty is explicitly managed by the caller of updateLinkDetails if it's part of newPartialDetails
-                            // or defaults to true if it was the reason for hasMeaningfulChange
-                            isDirty: newPartialDetails.isDirty !== undefined ? newPartialDetails.isDirty : true
-                        };
-                        return updatedLinks;
-                    }
-                    return prevLinks; // No meaningful change, return original array to prevent unnecessary re-renders
-                }
+                "LinksProvider.useCallback[updateLinkDetails]": (prevLinks)=>prevLinks.map({
+                        "LinksProvider.useCallback[updateLinkDetails]": (link)=>link.id === linkId ? {
+                                ...link,
+                                ...details,
+                                isDirty: true
+                            } : link
+                    }["LinksProvider.useCallback[updateLinkDetails]"])
             }["LinksProvider.useCallback[updateLinkDetails]"]);
         }
     }["LinksProvider.useCallback[updateLinkDetails]"], []);
@@ -1870,6 +1841,7 @@ const LinksProvider = ({ children })=>{
                             } : link
                     }["LinksProvider.useCallback[updateLinkAnalysis]"])
             }["LinksProvider.useCallback[updateLinkAnalysis]"]);
+            // Cache in localStorage
             try {
                 localStorage.setItem(getLocalStorageKey(linkId), JSON.stringify({
                     ...result,
@@ -1888,16 +1860,7 @@ const LinksProvider = ({ children })=>{
                 const parsedItem = JSON.parse(cachedItem);
                 if (parsedItem && parsedItem.analysisTimestamp) {
                     if (Date.now() - parsedItem.analysisTimestamp < CACHE_EXPIRY_MS) {
-                        // Ensure the structure matches AnalysisResult, especially pointA and pointB names
-                        const result = parsedItem;
-                        const linkInContext = links.find({
-                            "LinksProvider.useCallback[getCachedAnalysis].linkInContext": (l)=>l.id === linkId
-                        }["LinksProvider.useCallback[getCachedAnalysis].linkInContext"]);
-                        if (linkInContext) {
-                            result.pointA.name = linkInContext.pointA.name;
-                            result.pointB.name = linkInContext.pointB.name;
-                        }
-                        return result;
+                        return parsedItem;
                     } else {
                         localStorage.removeItem(getLocalStorageKey(linkId)); // Expired
                     }
@@ -1907,9 +1870,7 @@ const LinksProvider = ({ children })=>{
             }
             return null;
         }
-    }["LinksProvider.useCallback[getCachedAnalysis]"], [
-        links
-    ]);
+    }["LinksProvider.useCallback[getCachedAnalysis]"], []);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LinksContext.Provider, {
         value: {
             links,
@@ -1925,7 +1886,7 @@ const LinksProvider = ({ children })=>{
         children: children
     }, void 0, false, {
         fileName: "[project]/src/context/links-context.tsx",
-        lineNumber: 174,
+        lineNumber: 129,
         columnNumber: 5
     }, this);
 };

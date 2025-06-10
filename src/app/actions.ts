@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from 'zod';
-import type { AnalysisResult, ActionErrorState, PointCoordinates, ElevationSampleAPI } from '@/types';
+import type { AnalysisResult, ActionErrorState, PointCoordinates } from '@/types';
 import { getGoogleElevationData, analyzeLOS } from '@/lib/los-calculator';
 
 // Define Zod schema for form validation
@@ -10,7 +10,7 @@ const PointInputSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name too long"),
   lat: z.string().refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Invalid Latitude (-90 to 90)"),
   lng: z.string().refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Invalid Longitude (-180 to 180)"),
-  height: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Height must be a positive number"),
+  height: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100, "Height must be between 0 and 100m"),
 });
 
 const AnalysisFormSchema = z.object({
@@ -44,17 +44,15 @@ export async function performLosAnalysis(
     const validationResult = AnalysisFormSchema.safeParse(rawFormData);
 
     if (!validationResult.success) {
-      const fieldErrors = validationResult.error.flatten().fieldErrors;
-      const sanitizedFieldErrors: { [key: string]: string[] | undefined } = {};
-      for (const field in fieldErrors) {
-        const messages = fieldErrors[field as keyof typeof fieldErrors];
-        if (messages) {
-          sanitizedFieldErrors[field] = messages.map(msg => String(msg ?? 'Validation message undefined'));
-        }
-      }
-      // Simplified logging for validation errors
-      console.error("Validation errors occurred. Field details suppressed for this log message.");
-      return { error: "Invalid input. Please check the fields highlighted below.", fieldErrors: sanitizedFieldErrors };
+      // Log detailed field errors for server-side debugging
+      const fieldErrorsForLogging = validationResult.error.flatten().fieldErrors;
+      console.error("Validation errors in performLosAnalysis (server log):", JSON.stringify(fieldErrorsForLogging, null, 2));
+      
+      // Return a generic error message to the client, without fieldErrors
+      return {
+        error: "Invalid input. Please check your entries and try again.", // Generic client-facing message
+        fieldErrors: undefined // Explicitly undefined for the client
+      };
     }
 
     const validatedData = validationResult.data;
@@ -95,7 +93,7 @@ export async function performLosAnalysis(
         minClearance: analysisResultData.minClearance,
         additionalHeightNeeded: analysisResultData.additionalHeightNeeded,
         profile: analysisResultData.profile,
-        message: `${analysisResultData.message} Using Google Elevation API data.`,
+        message: `${analysisResultData.message} Elevation data from Google Elevation API.`,
         pointA: paramsForAnalysis.pointA,
         pointB: paramsForAnalysis.pointB,
         clearanceThresholdUsed: paramsForAnalysis.clearanceThreshold,
@@ -103,21 +101,26 @@ export async function performLosAnalysis(
       return fullResult;
 
     } catch (err: unknown) { // Inner catch for LOS analysis specific errors
-      // Simplified logging: Avoid logging the raw error object if it might be complex
-      console.error("Error during LOS analysis (inner catch). A generic message will be returned to the client. Original error suppressed from this log line.");
+      // Log the original error for server-side debugging
+      console.error("Error Log (Inner Catch - performLosAnalysis):", String(err));
       
+      // Return a generic, safe error message to the client
       return { 
-        error: "An error occurred during the Line-of-Sight analysis process. Please check the server logs for more details or try again later.", 
+        error: "An error occurred during the Line-of-Sight analysis. Please check server logs for details.",
         fieldErrors: undefined 
       };
     }
   } catch (e: unknown) { // Outermost catch for any other errors in the action
-    // Simplified logging
-    console.error("Unhandled error in performLosAnalysis (outer catch). A generic message will be returned to the client. Original error suppressed from this log line.");
+    // Log the original error for server-side debugging
+    console.error("Error Log (Outer Catch - performLosAnalysis):", String(e));
 
+    // Return a generic, safe error message to the client
     return {
       error: "An unexpected server error occurred. Please contact support or check server logs for more details.",
       fieldErrors: undefined,
     };
   }
 }
+    
+
+    

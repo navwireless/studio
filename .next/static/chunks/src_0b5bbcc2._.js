@@ -1,4 +1,4 @@
-(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push(["static/chunks/src_91683d5b._.js", {
+(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push([typeof document === "object" ? document.currentScript : undefined, {
 
 "[project]/src/components/ui/button.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
@@ -170,17 +170,21 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
 }}),
-"[project]/src/app/actions.ts [app-client] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/app/data:84df7d [app-client] (ecmascript) <text/javascript>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
 {
-/* __next_internal_action_entry_do_not_use__ {"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"} */ __turbopack_context__.s({
+/* __next_internal_action_entry_do_not_use__ [{"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"},"src/app/actions.ts",""] */ __turbopack_context__.s({
     "performLosAnalysis": (()=>performLosAnalysis)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-client-wrapper.js [app-client] (ecmascript)");
+"use turbopack no side effects";
 ;
-var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis");
+var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis"); //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcblwidXNlIHNlcnZlclwiO1xuXG5pbXBvcnQgeyB6IH0gZnJvbSAnem9kJztcbmltcG9ydCB0eXBlIHsgQW5hbHlzaXNSZXN1bHQsIEFjdGlvbkVycm9yU3RhdGUsIFBvaW50Q29vcmRpbmF0ZXMsIEVsZXZhdGlvblNhbXBsZUFQSSB9IGZyb20gJ0AvdHlwZXMnO1xuaW1wb3J0IHsgZ2V0R29vZ2xlRWxldmF0aW9uRGF0YSwgYW5hbHl6ZUxPUyB9IGZyb20gJ0AvbGliL2xvcy1jYWxjdWxhdG9yJztcblxuY29uc3QgUG9pbnRJbnB1dFNjaGVtYSA9IHoub2JqZWN0KHtcbiAgbmFtZTogei5zdHJpbmcoKS5taW4oMSwgXCJOYW1lIGlzIHJlcXVpcmVkXCIpLm1heCg1MCwgXCJOYW1lIHRvbyBsb25nXCIpLFxuICBsYXQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBNYXRoLmFicyhwYXJzZUZsb2F0KHZhbCkpIDw9IDkwLCBcIkludmFsaWQgTGF0aXR1ZGUgKC05MCB0byA5MClcIiksXG4gIGxuZzogei5zdHJpbmcoKS5yZWZpbmUodmFsID0+ICFpc05hTihwYXJzZUZsb2F0KHZhbCkpICYmIE1hdGguYWJzKHBhcnNlRmxvYXQodmFsKSkgPD0gMTgwLCBcIkludmFsaWQgTG9uZ2l0dWRlICgtMTgwIHRvIDE4MClcIiksXG4gIGhlaWdodDogei5zdHJpbmcoKS5yZWZpbmUodmFsID0+ICFpc05hTihwYXJzZUZsb2F0KHZhbCkpICYmIHBhcnNlRmxvYXQodmFsKSA+PSAwLCBcIkhlaWdodCBtdXN0IGJlIGEgcG9zaXRpdmUgbnVtYmVyXCIpLFxufSk7XG5cbmNvbnN0IEFuYWx5c2lzRm9ybVNjaGVtYSA9IHoub2JqZWN0KHtcbiAgcG9pbnRBOiBQb2ludElucHV0U2NoZW1hLFxuICBwb2ludEI6IFBvaW50SW5wdXRTY2hlbWEsXG4gIGNsZWFyYW5jZVRocmVzaG9sZDogei5zdHJpbmcoKS5yZWZpbmUodmFsID0+ICFpc05hTihwYXJzZUZsb2F0KHZhbCkpICYmIHBhcnNlRmxvYXQodmFsKSA+PSAwLCBcIkNsZWFyYW5jZSBtdXN0IGJlIGEgcG9zaXRpdmUgbnVtYmVyXCIpLFxufSk7XG5cblxuZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHBlcmZvcm1Mb3NBbmFseXNpcyhcbiAgcHJldlN0YXRlOiBBbmFseXNpc1Jlc3VsdCB8IEFjdGlvbkVycm9yU3RhdGUgfCBudWxsLFxuICBmb3JtRGF0YTogRm9ybURhdGFcbik6IFByb21pc2U8QW5hbHlzaXNSZXN1bHQgfCBBY3Rpb25FcnJvclN0YXRlPiB7XG4gIHRyeSB7IC8vIE91dGVyIHRyeS1jYXRjaCBmb3IgdGhlIGVudGlyZSBhY3Rpb25cbiAgICBjb25zdCByYXdGb3JtRGF0YSA9IHtcbiAgICAgIHBvaW50QToge1xuICAgICAgICBuYW1lOiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5uYW1lJykgYXMgc3RyaW5nLFxuICAgICAgICBsYXQ6IGZvcm1EYXRhLmdldCgncG9pbnRBLmxhdCcpIGFzIHN0cmluZyxcbiAgICAgICAgbG5nOiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5sbmcnKSBhcyBzdHJpbmcsXG4gICAgICAgIGhlaWdodDogZm9ybURhdGEuZ2V0KCdwb2ludEEuaGVpZ2h0JykgYXMgc3RyaW5nLFxuICAgICAgfSxcbiAgICAgIHBvaW50Qjoge1xuICAgICAgICBuYW1lOiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5uYW1lJykgYXMgc3RyaW5nLFxuICAgICAgICBsYXQ6IGZvcm1EYXRhLmdldCgncG9pbnRCLmxhdCcpIGFzIHN0cmluZyxcbiAgICAgICAgbG5nOiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5sbmcnKSBhcyBzdHJpbmcsXG4gICAgICAgIGhlaWdodDogZm9ybURhdGEuZ2V0KCdwb2ludEIuaGVpZ2h0JykgYXMgc3RyaW5nLFxuICAgICAgfSxcbiAgICAgIGNsZWFyYW5jZVRocmVzaG9sZDogZm9ybURhdGEuZ2V0KCdjbGVhcmFuY2VUaHJlc2hvbGQnKSBhcyBzdHJpbmcsXG4gICAgfTtcblxuICAgIGNvbnN0IHZhbGlkYXRpb25SZXN1bHQgPSBBbmFseXNpc0Zvcm1TY2hlbWEuc2FmZVBhcnNlKHJhd0Zvcm1EYXRhKTtcblxuICAgIGlmICghdmFsaWRhdGlvblJlc3VsdC5zdWNjZXNzKSB7XG4gICAgICBjb25zdCBmaWVsZEVycm9ycyA9IHZhbGlkYXRpb25SZXN1bHQuZXJyb3IuZmxhdHRlbigpLmZpZWxkRXJyb3JzO1xuICAgICAgLy8gRW5zdXJlIGZpZWxkIGVycm9yIG1lc3NhZ2VzIGFyZSBzdHJpbmdzXG4gICAgICBjb25zdCBzYW5pdGl6ZWRGaWVsZEVycm9yczogeyBba2V5OiBzdHJpbmddOiBzdHJpbmdbXSB8IHVuZGVmaW5lZCB9ID0ge307XG4gICAgICBmb3IgKGNvbnN0IGZpZWxkIGluIGZpZWxkRXJyb3JzKSB7XG4gICAgICAgIGNvbnN0IG1lc3NhZ2VzID0gZmllbGRFcnJvcnNbZmllbGQgYXMga2V5b2YgdHlwZW9mIGZpZWxkRXJyb3JzXTtcbiAgICAgICAgaWYgKG1lc3NhZ2VzKSB7XG4gICAgICAgICAgc2FuaXRpemVkRmllbGRFcnJvcnNbZmllbGRdID0gbWVzc2FnZXMubWFwKG1zZyA9PiBTdHJpbmcobXNnID8/ICdWYWxpZGF0aW9uIG1lc3NhZ2UgdW5kZWZpbmVkJykpO1xuICAgICAgICB9XG4gICAgICB9XG4gICAgICBjb25zb2xlLmVycm9yKFwiVmFsaWRhdGlvbiBlcnJvcnMgaW4gcGVyZm9ybUxvc0FuYWx5c2lzOlwiLCBKU09OLnN0cmluZ2lmeShzYW5pdGl6ZWRGaWVsZEVycm9ycywgbnVsbCwgMikpO1xuICAgICAgcmV0dXJuIHsgZXJyb3I6IFwiSW52YWxpZCBpbnB1dC4gUGxlYXNlIGNoZWNrIHRoZSBmaWVsZHMgaGlnaGxpZ2h0ZWQgYmVsb3cuXCIsIGZpZWxkRXJyb3JzOiBzYW5pdGl6ZWRGaWVsZEVycm9ycyB9O1xuICAgIH1cblxuICAgIGNvbnN0IHZhbGlkYXRlZERhdGEgPSB2YWxpZGF0aW9uUmVzdWx0LmRhdGE7XG5cbiAgICBjb25zdCBwYXJhbXNGb3JBbmFseXNpcyA9IHtcbiAgICAgIHBvaW50QToge1xuICAgICAgICBuYW1lOiB2YWxpZGF0ZWREYXRhLnBvaW50QS5uYW1lLFxuICAgICAgICBsYXQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEEubGF0KSxcbiAgICAgICAgbG5nOiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRBLmxuZyksXG4gICAgICAgIHRvd2VySGVpZ2h0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRBLmhlaWdodCksXG4gICAgICB9LFxuICAgICAgcG9pbnRCOiB7XG4gICAgICAgIG5hbWU6IHZhbGlkYXRlZERhdGEucG9pbnRCLm5hbWUsXG4gICAgICAgIGxhdDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50Qi5sYXQpLFxuICAgICAgICBsbmc6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEIubG5nKSxcbiAgICAgICAgdG93ZXJIZWlnaHQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEIuaGVpZ2h0KSxcbiAgICAgIH0sXG4gICAgICBjbGVhcmFuY2VUaHJlc2hvbGQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5jbGVhcmFuY2VUaHJlc2hvbGQpLFxuICAgIH07XG4gICAgXG4gICAgdHJ5IHsgLy8gSW5uZXIgdHJ5LWNhdGNoIHNwZWNpZmljYWxseSBmb3IgZWxldmF0aW9uIGZldGNoaW5nIGFuZCBMT1MgYW5hbHlzaXNcbiAgICAgIGNvbnN0IGVsZXZhdGlvbkRhdGEgPSBhd2FpdCBnZXRHb29nbGVFbGV2YXRpb25EYXRhKFxuICAgICAgICB7IGxhdDogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRBLmxhdCwgbG5nOiBwYXJhbXNGb3JBbmFseXNpcy5wb2ludEEubG5nIH0sXG4gICAgICAgIHsgbGF0OiBwYXJhbXNGb3JBbmFseXNpcy5wb2ludEIubGF0LCBsbmc6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50Qi5sbmcgfSxcbiAgICAgICAgMTAwIC8vIE51bWJlciBvZiBzYW1wbGVzXG4gICAgICApO1xuICAgICAgXG4gICAgICBjb25zdCBhbmFseXNpc1Jlc3VsdERhdGEgPSBhbmFseXplTE9TKFxuICAgICAgICBwYXJhbXNGb3JBbmFseXNpcyxcbiAgICAgICAgZWxldmF0aW9uRGF0YVxuICAgICAgKTtcbiAgICAgIFxuICAgICAgY29uc3QgZnVsbFJlc3VsdDogQW5hbHlzaXNSZXN1bHQgPSB7XG4gICAgICAgIGlkOiBgYW5hbHlzaXNfJHtEYXRlLm5vdygpfWAsIC8vIElEIGdlbmVyYXRlZCBoZXJlXG4gICAgICAgIHRpbWVzdGFtcDogRGF0ZS5ub3coKSwgLy8gVGltZXN0YW1wIGdlbmVyYXRlZCBoZXJlXG4gICAgICAgIGxvc1Bvc3NpYmxlOiBhbmFseXNpc1Jlc3VsdERhdGEubG9zUG9zc2libGUsXG4gICAgICAgIGRpc3RhbmNlS206IGFuYWx5c2lzUmVzdWx0RGF0YS5kaXN0YW5jZUttLFxuICAgICAgICBtaW5DbGVhcmFuY2U6IGFuYWx5c2lzUmVzdWx0RGF0YS5taW5DbGVhcmFuY2UsXG4gICAgICAgIGFkZGl0aW9uYWxIZWlnaHROZWVkZWQ6IGFuYWx5c2lzUmVzdWx0RGF0YS5hZGRpdGlvbmFsSGVpZ2h0TmVlZGVkLFxuICAgICAgICBwcm9maWxlOiBhbmFseXNpc1Jlc3VsdERhdGEucHJvZmlsZSxcbiAgICAgICAgbWVzc2FnZTogYCR7YW5hbHlzaXNSZXN1bHREYXRhLm1lc3NhZ2V9IEVsZXZhdGlvbiBkYXRhIGZyb20gR29vZ2xlIEVsZXZhdGlvbiBBUEkuYCxcbiAgICAgICAgcG9pbnRBOiBwYXJhbXNGb3JBbmFseXNpcy5wb2ludEEsXG4gICAgICAgIHBvaW50QjogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRCLFxuICAgICAgICBjbGVhcmFuY2VUaHJlc2hvbGRVc2VkOiBwYXJhbXNGb3JBbmFseXNpcy5jbGVhcmFuY2VUaHJlc2hvbGQsXG4gICAgICB9O1xuICAgICAgcmV0dXJuIGZ1bGxSZXN1bHQ7XG5cbiAgICB9IGNhdGNoIChlcnI6IHVua25vd24pIHsgLy8gSW5uZXIgY2F0Y2ggZm9yIExPUyBhbmFseXNpcyBzcGVjaWZpYyBlcnJvcnNcbiAgICAgIC8vIExvZyB0aGUgb3JpZ2luYWwgZXJyb3IgZm9yIHNlcnZlci1zaWRlIGRlYnVnZ2luZywgZW5zdXJpbmcgaXQncyBhIHN0cmluZ1xuICAgICAgY29uc3Qgb3JpZ2luYWxFcnJvclN0cmluZyA9IChlcnIgaW5zdGFuY2VvZiBFcnJvcikgPyBlcnIubWVzc2FnZSA6IFN0cmluZyhlcnIpO1xuICAgICAgY29uc29sZS5lcnJvcihcIkVycm9yIGR1cmluZyBMT1MgYW5hbHlzaXMgKGlubmVyIGNhdGNoKTpcIiwgb3JpZ2luYWxFcnJvclN0cmluZyk7XG4gICAgICBcbiAgICAgIC8vIFJldHVybiBhIGdlbmVyaWMsIHBsYWluIHN0cmluZyBlcnJvciBtZXNzYWdlIHRvIHRoZSBjbGllbnRcbiAgICAgIHJldHVybiB7IFxuICAgICAgICBlcnJvcjogXCJBbiBlcnJvciBvY2N1cnJlZCBkdXJpbmcgdGhlIExpbmUtb2YtU2lnaHQgYW5hbHlzaXMuIFBsZWFzZSBjaGVjayB0aGUgc2VydmVyIGxvZ3Mgb3IgdHJ5IGFnYWluIGxhdGVyLlwiLCBcbiAgICAgICAgZmllbGRFcnJvcnM6IHVuZGVmaW5lZCBcbiAgICAgIH07XG4gICAgfVxuICB9IGNhdGNoIChlOiB1bmtub3duKSB7IC8vIE91dGVybW9zdCBjYXRjaCBmb3IgYW55IG90aGVyIGVycm9ycyBpbiB0aGUgYWN0aW9uXG4gICAgLy8gTG9nIHRoZSBvcmlnaW5hbCBlcnJvciBmb3Igc2VydmVyLXNpZGUgZGVidWdnaW5nLCBlbnN1cmluZyBpdCdzIGEgc3RyaW5nXG4gICAgY29uc3Qgb3JpZ2luYWxFcnJvclN0cmluZyA9IChlIGluc3RhbmNlb2YgRXJyb3IpID8gZS5tZXNzYWdlIDogU3RyaW5nKGUpO1xuICAgIGNvbnNvbGUuZXJyb3IoXCJVbmhhbmRsZWQgZXJyb3IgaW4gcGVyZm9ybUxvc0FuYWx5c2lzIChvdXRlciBjYXRjaCk6XCIsIG9yaWdpbmFsRXJyb3JTdHJpbmcpO1xuXG4gICAgLy8gUmV0dXJuIGEgZ2VuZXJpYywgcGxhaW4gc3RyaW5nIGVycm9yIG1lc3NhZ2VcbiAgICByZXR1cm4ge1xuICAgICAgZXJyb3I6IFwiQW4gdW5leHBlY3RlZCBzZXJ2ZXIgZXJyb3Igb2NjdXJyZWQuIFBsZWFzZSBjb250YWN0IHN1cHBvcnQgb3IgdHJ5IGFnYWluLlwiLFxuICAgICAgZmllbGRFcnJvcnM6IHVuZGVmaW5lZCxcbiAgICB9O1xuICB9XG59XG5cbiAgICAiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IjhSQXFCc0IifQ==
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
+}
 }}),
 "[project]/src/lib/form-schema.ts [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
@@ -943,10 +947,69 @@ var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_
 __turbopack_context__.s({
     "analyzeLOS": (()=>analyzeLOS),
     "calculateDistanceKm": (()=>calculateDistanceKm),
-    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius)
+    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius),
+    "getGoogleElevationData": (()=>getGoogleElevationData)
 });
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
 const EARTH_RADIUS_KM = 6371;
 const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
+async function getGoogleElevationData(pointA, pointB, samples) {
+    const GOOGLE_ELEVATION_API_KEY = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
+    if (!GOOGLE_ELEVATION_API_KEY) {
+        const errorMessage = "Google Elevation API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+        console.error(errorMessage);
+        throw new Error(errorMessage); // Throw a new Error with a string message
+    }
+    const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+    const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
+    try {
+        const response = await fetch(url, {
+            next: {
+                revalidate: 3600
+            }
+        }); // Cache for 1 hour
+        if (!response.ok) {
+            let errorDataContent = `Status: ${response.status} ${response.statusText}.`;
+            try {
+                const errorData = await response.json();
+                if (errorData && errorData.message) {
+                    errorDataContent += ` Details: ${String(errorData.message)}`;
+                } else if (errorData && errorData.error_message) {
+                    errorDataContent += ` Details: ${String(errorData.error_message)}`;
+                } else if (errorData) {
+                    errorDataContent += ` Body: ${String(errorData)}`;
+                }
+            } catch (parseError) {
+            // Failed to parse response body, use original status text
+            }
+            const apiErrorMessage = `Google Elevation API request failed. ${errorDataContent}`;
+            console.error(apiErrorMessage);
+            throw new Error(apiErrorMessage); // Throw a new Error with a string message
+        }
+        const data = await response.json();
+        if (data.status !== 'OK') {
+            let apiStatusErrorMessage = `API Status: ${data.status}.`;
+            if (data.error_message) {
+                apiStatusErrorMessage += ` Message: ${String(data.error_message)}`;
+            }
+            const detailedApiErrorMessage = `Google Elevation API returned an error. ${apiStatusErrorMessage}`;
+            console.error(detailedApiErrorMessage);
+            throw new Error(detailedApiErrorMessage); // Throw a new Error with a string message
+        }
+        return data.results;
+    } catch (error) {
+        // Ensure any error caught here (network, prior new Error, etc.) is re-thrown as a new Error with a string message.
+        let finalErrorMessage;
+        if (error instanceof Error) {
+            finalErrorMessage = `Error fetching elevation data: ${error.message}`;
+        } else {
+            finalErrorMessage = `An unknown error occurred while fetching elevation data: ${String(error)}`;
+        }
+        console.error("getGoogleElevationData - final catch block:", finalErrorMessage, "Original error (stringified):", String(error));
+        throw new Error(finalErrorMessage); // Crucial: re-throw as a new Error with a string message
+    }
+}
 function calculateDistanceKm(p1, p2) {
     const R = EARTH_RADIUS_KM;
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
@@ -962,8 +1025,8 @@ function calculateDistanceKm(p1, p2) {
  * @param totalPathDistanceKm Total distance of the LOS path in kilometers.
  * @param distanceFromStartKm Distance of the current point from the start of the path in kilometers.
  * @returns Earth curvature drop in meters.
- */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromStartKm) {
-    const totalPathDistanceM = totalPathDistanceKm * 1000;
+ */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm1, distanceFromStartKm) {
+    const totalPathDistanceM = totalPathDistanceKm1 * 1000;
     const distanceFromStartM = distanceFromStartKm * 1000;
     const distanceToEndM = totalPathDistanceM - distanceFromStartM;
     if (distanceFromStartM < 0 || distanceToEndM < 0) return 0;
@@ -1009,7 +1072,7 @@ function analyzeLOS(params, elevationData) {
         const terrainElevation = sample.elevation;
         const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
         const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
-        const curvatureDrop = calculateEarthCurvatureDropMeters(totalDistanceKm, distanceFromA_Km);
+        const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
         const correctedLosHeight = idealLosHeight - curvatureDrop;
         const clearance = correctedLosHeight - terrainElevation;
         profile.push({
@@ -1852,7 +1915,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2Icon$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-client] (ecmascript) <export default as Trash2Icon>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/card.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$84df7d__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__ = __turbopack_context__.i("[project]/src/app/data:84df7d [app-client] (ecmascript) <text/javascript>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/form-schema.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$app$2d$header$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/layout/app-header.tsx [app-client] (ecmascript)");
@@ -1941,7 +2004,7 @@ function HomePageContent() {
     _s();
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
     const { links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useLinks"])();
-    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performLosAnalysis"], null);
+    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$84df7d__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
     const [displayedError, setDisplayedError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [displayedFieldErrors, setDisplayedFieldErrors] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -2777,4 +2840,4 @@ if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelper
 }}),
 }]);
 
-//# sourceMappingURL=src_91683d5b._.js.map
+//# sourceMappingURL=src_0b5bbcc2._.js.map

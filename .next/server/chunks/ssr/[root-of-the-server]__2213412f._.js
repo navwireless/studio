@@ -149,17 +149,18 @@ const CardFooter = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$
 CardFooter.displayName = "CardFooter";
 ;
 }}),
-"[project]/src/app/actions.ts [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/app/data:964ed3 [app-ssr] (ecmascript) <text/javascript>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-/* __next_internal_action_entry_do_not_use__ {"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"} */ __turbopack_context__.s({
+/* __next_internal_action_entry_do_not_use__ [{"600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397":"performLosAnalysis"},"src/app/actions.ts",""] */ __turbopack_context__.s({
     "performLosAnalysis": (()=>performLosAnalysis)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-client-wrapper.js [app-ssr] (ecmascript)");
+"use turbopack no side effects";
 ;
-var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis");
+var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["createServerReference"])("600a7e0dd5b29d1c5bca51f9a0c7c14b2ce7a3a397", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis"); //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4vYWN0aW9ucy50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJcblwidXNlIHNlcnZlclwiO1xuXG5pbXBvcnQgeyB6IH0gZnJvbSAnem9kJztcbmltcG9ydCB0eXBlIHsgQW5hbHlzaXNSZXN1bHQsIEFjdGlvbkVycm9yU3RhdGUsIFBvaW50Q29vcmRpbmF0ZXMgfSBmcm9tICdAL3R5cGVzJztcbmltcG9ydCB7IGdldEdvb2dsZUVsZXZhdGlvbkRhdGEsIGFuYWx5emVMT1MgfSBmcm9tICdAL2xpYi9sb3MtY2FsY3VsYXRvcic7XG5cbi8vIERlZmluZSBab2Qgc2NoZW1hIGZvciBmb3JtIHZhbGlkYXRpb25cbmNvbnN0IFBvaW50SW5wdXRTY2hlbWEgPSB6Lm9iamVjdCh7XG4gIG5hbWU6IHouc3RyaW5nKCkubWluKDEsIFwiTmFtZSBpcyByZXF1aXJlZFwiKS5tYXgoNTAsIFwiTmFtZSB0b28gbG9uZ1wiKSxcbiAgbGF0OiB6LnN0cmluZygpLnJlZmluZSh2YWwgPT4gIWlzTmFOKHBhcnNlRmxvYXQodmFsKSkgJiYgTWF0aC5hYnMocGFyc2VGbG9hdCh2YWwpKSA8PSA5MCwgXCJJbnZhbGlkIExhdGl0dWRlICgtOTAgdG8gOTApXCIpLFxuICBsbmc6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBNYXRoLmFicyhwYXJzZUZsb2F0KHZhbCkpIDw9IDE4MCwgXCJJbnZhbGlkIExvbmdpdHVkZSAoLTE4MCB0byAxODApXCIpLFxuICBoZWlnaHQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCAmJiBwYXJzZUZsb2F0KHZhbCkgPD0gMTAwLCBcIkhlaWdodCBtdXN0IGJlIGJldHdlZW4gMCBhbmQgMTAwbVwiKSxcbn0pO1xuXG5jb25zdCBBbmFseXNpc0Zvcm1TY2hlbWEgPSB6Lm9iamVjdCh7XG4gIHBvaW50QTogUG9pbnRJbnB1dFNjaGVtYSxcbiAgcG9pbnRCOiBQb2ludElucHV0U2NoZW1hLFxuICBjbGVhcmFuY2VUaHJlc2hvbGQ6IHouc3RyaW5nKCkucmVmaW5lKHZhbCA9PiAhaXNOYU4ocGFyc2VGbG9hdCh2YWwpKSAmJiBwYXJzZUZsb2F0KHZhbCkgPj0gMCwgXCJDbGVhcmFuY2UgbXVzdCBiZSBhIHBvc2l0aXZlIG51bWJlclwiKSxcbn0pO1xuXG5cbmV4cG9ydCBhc3luYyBmdW5jdGlvbiBwZXJmb3JtTG9zQW5hbHlzaXMoXG4gIHByZXZTdGF0ZTogQW5hbHlzaXNSZXN1bHQgfCBBY3Rpb25FcnJvclN0YXRlIHwgbnVsbCxcbiAgZm9ybURhdGE6IEZvcm1EYXRhXG4pOiBQcm9taXNlPEFuYWx5c2lzUmVzdWx0IHwgQWN0aW9uRXJyb3JTdGF0ZT4ge1xuICB0cnkgeyAvLyBPdXRlciB0cnktY2F0Y2ggZm9yIHRoZSBlbnRpcmUgYWN0aW9uXG4gICAgY29uc3QgcmF3Rm9ybURhdGEgPSB7XG4gICAgICBwb2ludEE6IHtcbiAgICAgICAgbmFtZTogZm9ybURhdGEuZ2V0KCdwb2ludEEubmFtZScpIGFzIHN0cmluZyxcbiAgICAgICAgbGF0OiBmb3JtRGF0YS5nZXQoJ3BvaW50QS5sYXQnKSBhcyBzdHJpbmcsXG4gICAgICAgIGxuZzogZm9ybURhdGEuZ2V0KCdwb2ludEEubG5nJykgYXMgc3RyaW5nLFxuICAgICAgICBoZWlnaHQ6IGZvcm1EYXRhLmdldCgncG9pbnRBLmhlaWdodCcpIGFzIHN0cmluZyxcbiAgICAgIH0sXG4gICAgICBwb2ludEI6IHtcbiAgICAgICAgbmFtZTogZm9ybURhdGEuZ2V0KCdwb2ludEIubmFtZScpIGFzIHN0cmluZyxcbiAgICAgICAgbGF0OiBmb3JtRGF0YS5nZXQoJ3BvaW50Qi5sYXQnKSBhcyBzdHJpbmcsXG4gICAgICAgIGxuZzogZm9ybURhdGEuZ2V0KCdwb2ludEIubG5nJykgYXMgc3RyaW5nLFxuICAgICAgICBoZWlnaHQ6IGZvcm1EYXRhLmdldCgncG9pbnRCLmhlaWdodCcpIGFzIHN0cmluZyxcbiAgICAgIH0sXG4gICAgICBjbGVhcmFuY2VUaHJlc2hvbGQ6IGZvcm1EYXRhLmdldCgnY2xlYXJhbmNlVGhyZXNob2xkJykgYXMgc3RyaW5nLFxuICAgIH07XG5cbiAgICBjb25zdCB2YWxpZGF0aW9uUmVzdWx0ID0gQW5hbHlzaXNGb3JtU2NoZW1hLnNhZmVQYXJzZShyYXdGb3JtRGF0YSk7XG5cbiAgICBpZiAoIXZhbGlkYXRpb25SZXN1bHQuc3VjY2Vzcykge1xuICAgICAgLy8gTG9nIGRldGFpbGVkIGZpZWxkIGVycm9ycyBmb3Igc2VydmVyLXNpZGUgZGVidWdnaW5nXG4gICAgICBjb25zdCBmaWVsZEVycm9yc0ZvckxvZ2dpbmcgPSB2YWxpZGF0aW9uUmVzdWx0LmVycm9yLmZsYXR0ZW4oKS5maWVsZEVycm9ycztcbiAgICAgIGNvbnNvbGUuZXJyb3IoXCJWYWxpZGF0aW9uIGVycm9ycyBpbiBwZXJmb3JtTG9zQW5hbHlzaXMgKHNlcnZlciBsb2cpOlwiLCBKU09OLnN0cmluZ2lmeShmaWVsZEVycm9yc0ZvckxvZ2dpbmcsIG51bGwsIDIpKTtcbiAgICAgIFxuICAgICAgLy8gUmV0dXJuIGEgZ2VuZXJpYyBlcnJvciBtZXNzYWdlIHRvIHRoZSBjbGllbnQsIHdpdGhvdXQgZmllbGRFcnJvcnNcbiAgICAgIHJldHVybiB7XG4gICAgICAgIGVycm9yOiBcIkludmFsaWQgaW5wdXQuIFBsZWFzZSBjaGVjayB5b3VyIGVudHJpZXMgYW5kIHRyeSBhZ2Fpbi5cIiwgLy8gR2VuZXJpYyBjbGllbnQtZmFjaW5nIG1lc3NhZ2VcbiAgICAgICAgZmllbGRFcnJvcnM6IHVuZGVmaW5lZCAvLyBFeHBsaWNpdGx5IHVuZGVmaW5lZCBmb3IgdGhlIGNsaWVudFxuICAgICAgfTtcbiAgICB9XG5cbiAgICBjb25zdCB2YWxpZGF0ZWREYXRhID0gdmFsaWRhdGlvblJlc3VsdC5kYXRhO1xuXG4gICAgY29uc3QgcGFyYW1zRm9yQW5hbHlzaXMgPSB7XG4gICAgICBwb2ludEE6IHtcbiAgICAgICAgbmFtZTogdmFsaWRhdGVkRGF0YS5wb2ludEEubmFtZSxcbiAgICAgICAgbGF0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRBLmxhdCksXG4gICAgICAgIGxuZzogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5sbmcpLFxuICAgICAgICB0b3dlckhlaWdodDogcGFyc2VGbG9hdCh2YWxpZGF0ZWREYXRhLnBvaW50QS5oZWlnaHQpLFxuICAgICAgfSxcbiAgICAgIHBvaW50Qjoge1xuICAgICAgICBuYW1lOiB2YWxpZGF0ZWREYXRhLnBvaW50Qi5uYW1lLFxuICAgICAgICBsYXQ6IHBhcnNlRmxvYXQodmFsaWRhdGVkRGF0YS5wb2ludEIubGF0KSxcbiAgICAgICAgbG5nOiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmxuZyksXG4gICAgICAgIHRvd2VySGVpZ2h0OiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEucG9pbnRCLmhlaWdodCksXG4gICAgICB9LFxuICAgICAgY2xlYXJhbmNlVGhyZXNob2xkOiBwYXJzZUZsb2F0KHZhbGlkYXRlZERhdGEuY2xlYXJhbmNlVGhyZXNob2xkKSxcbiAgICB9O1xuICAgIFxuICAgIHRyeSB7IC8vIElubmVyIHRyeS1jYXRjaCBzcGVjaWZpY2FsbHkgZm9yIGVsZXZhdGlvbiBmZXRjaGluZyBhbmQgTE9TIGFuYWx5c2lzXG4gICAgICBjb25zdCBlbGV2YXRpb25EYXRhID0gYXdhaXQgZ2V0R29vZ2xlRWxldmF0aW9uRGF0YShcbiAgICAgICAgeyBsYXQ6IHBhcmFtc0ZvckFuYWx5c2lzLnBvaW50QS5sYXQsIGxuZzogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRBLmxuZyB9LFxuICAgICAgICB7IGxhdDogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRCLmxhdCwgbG5nOiBwYXJhbXNGb3JBbmFseXNpcy5wb2ludEIubG5nIH0sXG4gICAgICAgIDEwMCAvLyBOdW1iZXIgb2Ygc2FtcGxlc1xuICAgICAgKTtcbiAgICAgIFxuICAgICAgY29uc3QgYW5hbHlzaXNSZXN1bHREYXRhID0gYW5hbHl6ZUxPUyhcbiAgICAgICAgcGFyYW1zRm9yQW5hbHlzaXMsXG4gICAgICAgIGVsZXZhdGlvbkRhdGFcbiAgICAgICk7XG4gICAgICBcbiAgICAgIGNvbnN0IGZ1bGxSZXN1bHQ6IEFuYWx5c2lzUmVzdWx0ID0ge1xuICAgICAgICBpZDogYGFuYWx5c2lzXyR7RGF0ZS5ub3coKX1gLFxuICAgICAgICB0aW1lc3RhbXA6IERhdGUubm93KCksXG4gICAgICAgIGxvc1Bvc3NpYmxlOiBhbmFseXNpc1Jlc3VsdERhdGEubG9zUG9zc2libGUsXG4gICAgICAgIGRpc3RhbmNlS206IGFuYWx5c2lzUmVzdWx0RGF0YS5kaXN0YW5jZUttLFxuICAgICAgICBtaW5DbGVhcmFuY2U6IGFuYWx5c2lzUmVzdWx0RGF0YS5taW5DbGVhcmFuY2UsXG4gICAgICAgIGFkZGl0aW9uYWxIZWlnaHROZWVkZWQ6IGFuYWx5c2lzUmVzdWx0RGF0YS5hZGRpdGlvbmFsSGVpZ2h0TmVlZGVkLFxuICAgICAgICBwcm9maWxlOiBhbmFseXNpc1Jlc3VsdERhdGEucHJvZmlsZSxcbiAgICAgICAgbWVzc2FnZTogYCR7YW5hbHlzaXNSZXN1bHREYXRhLm1lc3NhZ2V9IEVsZXZhdGlvbiBkYXRhIGZyb20gR29vZ2xlIEVsZXZhdGlvbiBBUEkuYCxcbiAgICAgICAgcG9pbnRBOiBwYXJhbXNGb3JBbmFseXNpcy5wb2ludEEsXG4gICAgICAgIHBvaW50QjogcGFyYW1zRm9yQW5hbHlzaXMucG9pbnRCLFxuICAgICAgICBjbGVhcmFuY2VUaHJlc2hvbGRVc2VkOiBwYXJhbXNGb3JBbmFseXNpcy5jbGVhcmFuY2VUaHJlc2hvbGQsXG4gICAgICB9O1xuICAgICAgcmV0dXJuIGZ1bGxSZXN1bHQ7XG5cbiAgICB9IGNhdGNoIChlcnI6IHVua25vd24pIHsgLy8gSW5uZXIgY2F0Y2ggZm9yIExPUyBhbmFseXNpcyBzcGVjaWZpYyBlcnJvcnNcbiAgICAgIC8vIExvZyB0aGUgb3JpZ2luYWwgZXJyb3IgZm9yIHNlcnZlci1zaWRlIGRlYnVnZ2luZ1xuICAgICAgY29uc29sZS5lcnJvcihcIkVycm9yIExvZyAoSW5uZXIgQ2F0Y2ggLSBwZXJmb3JtTG9zQW5hbHlzaXMpOlwiLCBTdHJpbmcoZXJyKSk7XG4gICAgICBcbiAgICAgIC8vIFJldHVybiBhIGdlbmVyaWMsIHNhZmUgZXJyb3IgbWVzc2FnZSB0byB0aGUgY2xpZW50XG4gICAgICByZXR1cm4geyBcbiAgICAgICAgZXJyb3I6IFwiQW4gZXJyb3Igb2NjdXJyZWQgZHVyaW5nIHRoZSBMaW5lLW9mLVNpZ2h0IGFuYWx5c2lzLiBQbGVhc2UgY2hlY2sgc2VydmVyIGxvZ3MgZm9yIGRldGFpbHMuXCIsXG4gICAgICAgIGZpZWxkRXJyb3JzOiB1bmRlZmluZWQgXG4gICAgICB9O1xuICAgIH1cbiAgfSBjYXRjaCAoZTogdW5rbm93bikgeyAvLyBPdXRlcm1vc3QgY2F0Y2ggZm9yIGFueSBvdGhlciBlcnJvcnMgaW4gdGhlIGFjdGlvblxuICAgIC8vIExvZyB0aGUgb3JpZ2luYWwgZXJyb3IgZm9yIHNlcnZlci1zaWRlIGRlYnVnZ2luZ1xuICAgIGNvbnNvbGUuZXJyb3IoXCJFcnJvciBMb2cgKE91dGVyIENhdGNoIC0gcGVyZm9ybUxvc0FuYWx5c2lzKTpcIiwgU3RyaW5nKGUpKTtcblxuICAgIC8vIFJldHVybiBhIGdlbmVyaWMsIHNhZmUgZXJyb3IgbWVzc2FnZSB0byB0aGUgY2xpZW50XG4gICAgcmV0dXJuIHtcbiAgICAgIGVycm9yOiBcIkFuIHVuZXhwZWN0ZWQgc2VydmVyIGVycm9yIG9jY3VycmVkLiBQbGVhc2UgY29udGFjdCBzdXBwb3J0IG9yIGNoZWNrIHNlcnZlciBsb2dzIGZvciBtb3JlIGRldGFpbHMuXCIsXG4gICAgICBmaWVsZEVycm9yczogdW5kZWZpbmVkLFxuICAgIH07XG4gIH1cbn1cbiAgICBcblxuICAgICJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOFJBc0JzQiJ9
 }}),
 "[project]/src/lib/form-schema.ts [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
@@ -873,10 +874,69 @@ var { g: global, __dirname } = __turbopack_context__;
 __turbopack_context__.s({
     "analyzeLOS": (()=>analyzeLOS),
     "calculateDistanceKm": (()=>calculateDistanceKm),
-    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius)
+    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius),
+    "getGoogleElevationData": (()=>getGoogleElevationData)
 });
 const EARTH_RADIUS_KM = 6371;
 const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
+async function getGoogleElevationData(pointA, pointB, samples) {
+    const GOOGLE_ELEVATION_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
+    if (!GOOGLE_ELEVATION_API_KEY) {
+        const errorMessage = "Google Elevation API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+        console.error(errorMessage);
+        throw new Error(errorMessage);
+    }
+    const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+    const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
+    try {
+        const response = await fetch(url, {
+            next: {
+                revalidate: 3600
+            }
+        });
+        if (!response.ok) {
+            let errorDataContent = `Status: ${response.status} ${response.statusText}.`;
+            try {
+                const errorData = await response.json();
+                if (errorData && errorData.message) {
+                    errorDataContent += ` Details: ${String(errorData.message)}`;
+                } else if (errorData && errorData.error_message) {
+                    errorDataContent += ` Details: ${String(errorData.error_message)}`;
+                } else if (errorData) {
+                    errorDataContent += ` Body: ${String(errorData)}`;
+                }
+            } catch (parseError) {
+            // Failed to parse response body
+            }
+            const apiErrorMessage = `Google Elevation API request failed. ${errorDataContent}`;
+            console.error(apiErrorMessage);
+            throw new Error(apiErrorMessage);
+        }
+        const data = await response.json();
+        if (data.status !== 'OK') {
+            let apiStatusErrorMessage = `API Status: ${data.status}.`;
+            if (data.error_message) {
+                apiStatusErrorMessage += ` Message: ${String(data.error_message)}`;
+            }
+            const detailedApiErrorMessage = `Google Elevation API returned an error. ${apiStatusErrorMessage}`;
+            console.error(detailedApiErrorMessage);
+            throw new Error(detailedApiErrorMessage);
+        }
+        return data.results;
+    } catch (error) {
+        let finalErrorMessage;
+        if (error instanceof RegExp) {
+            finalErrorMessage = `Error fetching elevation data: RegExp /${error.source}/${error.flags}`;
+        } else if (error instanceof Error) {
+            finalErrorMessage = `Error fetching elevation data: ${String(error.message)}`;
+        } else {
+            finalErrorMessage = `An unknown error occurred while fetching elevation data: ${String(error)}`;
+        }
+        console.error("getGoogleElevationData - final catch block:", finalErrorMessage, "Original error (stringified):", String(error));
+        throw new Error(finalErrorMessage);
+    }
+}
 function calculateDistanceKm(p1, p2) {
     const R = EARTH_RADIUS_KM;
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
@@ -892,8 +952,8 @@ function calculateDistanceKm(p1, p2) {
  * @param totalPathDistanceKm Total distance of the LOS path in kilometers.
  * @param distanceFromStartKm Distance of the current point from the start of the path in kilometers.
  * @returns Earth curvature drop in meters.
- */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromStartKm) {
-    const totalPathDistanceM = totalPathDistanceKm * 1000;
+ */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm1, distanceFromStartKm) {
+    const totalPathDistanceM = totalPathDistanceKm1 * 1000;
     const distanceFromStartM = distanceFromStartKm * 1000;
     const distanceToEndM = totalPathDistanceM - distanceFromStartM;
     if (distanceFromStartM < 0 || distanceToEndM < 0) return 0;
@@ -911,63 +971,77 @@ function calculateFresnelZoneRadius(d1, d2, totalDistance, frequencyGHz) {
     return fresnelRadius; // Meters
 }
 function analyzeLOS(params, elevationData) {
-    if (elevationData.length < 2) {
+    try {
+        if (elevationData.length < 2) {
+            return {
+                losPossible: false,
+                distanceKm: 0,
+                minClearance: null,
+                additionalHeightNeeded: null,
+                profile: [],
+                message: "Insufficient elevation data for analysis.",
+                pointA: params.pointA,
+                pointB: params.pointB,
+                clearanceThresholdUsed: params.clearanceThreshold
+            };
+        }
+        const totalDistanceKm = calculateDistanceKm(params.pointA, params.pointB);
+        const elevationAtA = elevationData[0].elevation;
+        const elevationAtB = elevationData[elevationData.length - 1].elevation;
+        const heightA_actual = elevationAtA + params.pointA.towerHeight;
+        const heightB_actual = elevationAtB + params.pointB.towerHeight;
+        const profile = [];
+        let minClearance = null;
+        const numSamples = elevationData.length;
+        const segmentDistanceKm = totalDistanceKm / (numSamples > 1 ? numSamples - 1 : 1);
+        for(let i = 0; i < numSamples; i++){
+            const sample = elevationData[i];
+            const distanceFromA_Km = i * segmentDistanceKm;
+            const terrainElevation = sample.elevation;
+            const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
+            const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
+            const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
+            const correctedLosHeight = idealLosHeight - curvatureDrop;
+            const clearance = correctedLosHeight - terrainElevation;
+            profile.push({
+                distance: parseFloat(distanceFromA_Km.toFixed(3)),
+                terrainElevation: parseFloat(terrainElevation.toFixed(2)),
+                losHeight: parseFloat(correctedLosHeight.toFixed(2)),
+                clearance: parseFloat(clearance.toFixed(2))
+            });
+            if (minClearance === null || clearance < minClearance) {
+                minClearance = clearance;
+            }
+        }
+        const losPossible = minClearance !== null && minClearance >= params.clearanceThreshold;
+        let additionalHeightNeeded = null;
+        if (!losPossible && minClearance !== null) {
+            additionalHeightNeeded = params.clearanceThreshold - minClearance;
+        }
         return {
-            losPossible: false,
-            distanceKm: 0,
-            minClearance: null,
-            additionalHeightNeeded: null,
-            profile: [],
-            message: "Insufficient elevation data for analysis.",
+            losPossible,
+            distanceKm: parseFloat(totalDistanceKm.toFixed(2)),
+            minClearance: minClearance !== null ? parseFloat(minClearance.toFixed(2)) : null,
+            additionalHeightNeeded: additionalHeightNeeded !== null ? parseFloat(additionalHeightNeeded.toFixed(2)) : null,
+            profile,
+            message: "Analysis complete.",
             pointA: params.pointA,
             pointB: params.pointB,
             clearanceThresholdUsed: params.clearanceThreshold
         };
-    }
-    const totalDistanceKm = calculateDistanceKm(params.pointA, params.pointB);
-    const elevationAtA = elevationData[0].elevation;
-    const elevationAtB = elevationData[elevationData.length - 1].elevation;
-    const heightA_actual = elevationAtA + params.pointA.towerHeight;
-    const heightB_actual = elevationAtB + params.pointB.towerHeight;
-    const profile = [];
-    let minClearance = null;
-    const numSamples = elevationData.length;
-    const segmentDistanceKm = totalDistanceKm / (numSamples > 1 ? numSamples - 1 : 1);
-    for(let i = 0; i < numSamples; i++){
-        const sample = elevationData[i];
-        const distanceFromA_Km = i * segmentDistanceKm;
-        const terrainElevation = sample.elevation;
-        const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
-        const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
-        const curvatureDrop = calculateEarthCurvatureDropMeters(totalDistanceKm, distanceFromA_Km);
-        const correctedLosHeight = idealLosHeight - curvatureDrop;
-        const clearance = correctedLosHeight - terrainElevation;
-        profile.push({
-            distance: parseFloat(distanceFromA_Km.toFixed(3)),
-            terrainElevation: parseFloat(terrainElevation.toFixed(2)),
-            losHeight: parseFloat(correctedLosHeight.toFixed(2)),
-            clearance: parseFloat(clearance.toFixed(2))
-        });
-        if (minClearance === null || clearance < minClearance) {
-            minClearance = clearance;
+    } catch (error) {
+        let errorMessage;
+        if (error instanceof Error) {
+            errorMessage = `Error in analyzeLOS: ${String(error.message)}`;
+        } else if (error instanceof RegExp) {
+            errorMessage = `Error in analyzeLOS: RegExp /${error.source}/${error.flags}`;
+        } else {
+            errorMessage = `An unknown error occurred in analyzeLOS: ${String(error)}`;
         }
+        console.error(errorMessage, "Original error (stringified):", String(error));
+        // Re-throw as a standard Error with a plain string message
+        throw new Error(errorMessage);
     }
-    const losPossible = minClearance !== null && minClearance >= params.clearanceThreshold;
-    let additionalHeightNeeded = null;
-    if (!losPossible && minClearance !== null) {
-        additionalHeightNeeded = params.clearanceThreshold - minClearance;
-    }
-    return {
-        losPossible,
-        distanceKm: parseFloat(totalDistanceKm.toFixed(2)),
-        minClearance: minClearance !== null ? parseFloat(minClearance.toFixed(2)) : null,
-        additionalHeightNeeded: additionalHeightNeeded !== null ? parseFloat(additionalHeightNeeded.toFixed(2)) : null,
-        profile,
-        message: "Analysis complete.",
-        pointA: params.pointA,
-        pointB: params.pointB,
-        clearanceThresholdUsed: params.clearanceThreshold
-    };
 }
 }}),
 "[project]/src/components/ui/dialog.tsx [app-ssr] (ecmascript)": ((__turbopack_context__) => {
@@ -1690,7 +1764,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2Icon$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-ssr] (ecmascript) <export default as Trash2Icon>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/card.tsx [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$964ed3__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__ = __turbopack_context__.i("[project]/src/app/data:964ed3 [app-ssr] (ecmascript) <text/javascript>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/form-schema.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$app$2d$header$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/layout/app-header.tsx [app-ssr] (ecmascript)");
@@ -1717,7 +1791,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$c
 ;
 ;
 ;
-const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(()=>__turbopack_context__.r("[project]/src/components/fso/interactive-map.tsx [app-ssr] (ecmascript, next/dynamic entry, async loader)")(__turbopack_context__.i), {
+const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(async ()=>{}, {
     loadableGenerated: {
         modules: [
             "[project]/src/components/fso/interactive-map.tsx [app-client] (ecmascript, next/dynamic entry)"
@@ -1749,7 +1823,7 @@ const InteractiveMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_
             columnNumber: 5
         }, this)
 });
-const BottomPanel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(()=>__turbopack_context__.r("[project]/src/components/fso/bottom-panel.tsx [app-ssr] (ecmascript, next/dynamic entry, async loader)")(__turbopack_context__.i), {
+const BottomPanel = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$shared$2f$lib$2f$app$2d$dynamic$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"])(async ()=>{}, {
     loadableGenerated: {
         modules: [
             "[project]/src/components/fso/bottom-panel.tsx [app-client] (ecmascript, next/dynamic entry)"
@@ -1775,7 +1849,7 @@ const parseCoordinatesString = (coordsString)=>{
 function HomePageContent() {
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useToast"])();
     const { links, selectedLinkId, addLink, removeLink, selectLink, updateLinkDetails, updateLinkAnalysis, getLinkById, getCachedAnalysis } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$links$2d$context$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useLinks"])();
-    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performLosAnalysis"], null);
+    const [serverState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$3a$964ed3__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$text$2f$javascript$3e$__["performLosAnalysis"], null);
     const [displayedError, setDisplayedError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [displayedFieldErrors, setDisplayedFieldErrors] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -2557,4 +2631,4 @@ function Home() {
 
 };
 
-//# sourceMappingURL=%5Broot%20of%20the%20server%5D__e8076387._.js.map
+//# sourceMappingURL=%5Broot-of-the-server%5D__2213412f._.js.map
