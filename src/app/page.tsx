@@ -60,8 +60,13 @@ function HomePageContent() {
     getCachedAnalysis
   } = useLinks();
 
-  const [serverState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
+  // rawServerState can be: null (initial), AnalysisResult (success), or Error (failure)
+  const [rawServerState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
+  
   const [displayedError, setDisplayedError] = useState<string | null>(null);
+  // fieldErrors are no longer directly returned by the action when it throws.
+  // They might be part of the error message string if desired.
+  // For now, we simplify and don't parse them back from the error message.
   const [displayedFieldErrors, setDisplayedFieldErrors] = useState<any | null>(null);
 
 
@@ -241,11 +246,12 @@ function HomePageContent() {
     }
 
     const formData = new FormData();
-    formData.append('pointA.name', data.pointA.name);
+    // Pass names from the form to the server action
+    formData.append('pointA.name', data.pointA.name || defaultFormStateValues.pointA.name);
     formData.append('pointA.lat', parsedPointA.lat.toString());
     formData.append('pointA.lng', parsedPointA.lng.toString());
     formData.append('pointA.height', String(data.pointA.height)); 
-    formData.append('pointB.name', data.pointB.name);
+    formData.append('pointB.name', data.pointB.name || defaultFormStateValues.pointB.name);
     formData.append('pointB.lat', parsedPointB.lat.toString());
     formData.append('pointB.lng', parsedPointB.lng.toString());
     formData.append('pointB.height', String(data.pointB.height)); 
@@ -256,58 +262,49 @@ function HomePageContent() {
     });
   }, [selectedLinkId, getLinkById, formAction, toast, updateLinkAnalysis, getCachedAnalysis, reset]);
 
+
+  // Process the server state (rawServerState) from useActionState
   useEffect(() => {
-    if (serverState) {
-      if (serverState.error) {
-        setDisplayedError(serverState.error);
-        setDisplayedFieldErrors(serverState.fieldErrors || null);
-      } else if ('losPossible' in serverState) {
-        setDisplayedError(null);
-        setDisplayedFieldErrors(null);
+    if (rawServerState === null) { // Initial state or after reset
+      setDisplayedError(null);
+      setDisplayedFieldErrors(null);
+      return;
+    }
+
+    if (rawServerState instanceof Error) { // Action threw an error
+      setDisplayedError(rawServerState.message);
+      setDisplayedFieldErrors(null); // Field-specific errors are not parsed from the thrown Error message for now
+
+      // If a link was selected, mark it as dirty due to error
+      if (selectedLinkId) {
+        const currentLink = getLinkById(selectedLinkId);
+        if (currentLink) {
+          updateLinkDetails(selectedLinkId, { ...currentLink, analysisResult: undefined, isDirty: true });
+        }
+      }
+    } else { // Action succeeded and returned AnalysisResult
+      setDisplayedError(null);
+      setDisplayedFieldErrors(null);
+      
+      const successfulResult = rawServerState as AnalysisResult; // Cast because it's not an Error
+      
+      if (selectedLinkId) {
+        const currentLink = getLinkById(selectedLinkId);
+        if (currentLink && currentLink.isDirty) { // Only update if link was dirty
+            // Names in successfulResult should already be correct as action passes them through
+            updateLinkAnalysis(selectedLinkId, successfulResult);
+            setHistoryList(prev => [successfulResult, ...prev.slice(0, 19)]);
+            setIsAnalysisPanelGloballyOpen(true);
+            setIsBottomPanelContentExpanded(true);
+            toast({
+              title: "Analysis Complete",
+              description: successfulResult.message || "LOS analysis performed successfully.",
+            });
+        }
       }
     }
-  }, [serverState]);
+  }, [rawServerState, selectedLinkId, getLinkById, updateLinkDetails, updateLinkAnalysis, toast]);
 
-  useEffect(() => {
-    if (!selectedLinkId) return;
-
-    const currentLink = getLinkById(selectedLinkId);
-    if (!currentLink) return;
-
-    if (serverState?.error) {
-        updateLinkDetails(selectedLinkId, { ...currentLink, analysisResult: undefined, isDirty: true });
-    } else if (serverState && 'losPossible' in serverState && currentLink.isDirty) { 
-        const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>;
-        const currentFormData = getValues();
-        const newAnalysisResult: AnalysisResult = {
-          ...successfulResult,
-          pointA: {
-            name: currentFormData.pointA.name || defaultFormStateValues.pointA.name,
-            lat: successfulResult.pointA.lat,
-            lng: successfulResult.pointA.lng,
-            towerHeight: successfulResult.pointA.towerHeight
-          },
-          pointB: {
-            name: currentFormData.pointB.name || defaultFormStateValues.pointB.name,
-            lat: successfulResult.pointB.lat,
-            lng: successfulResult.pointB.lng,
-            towerHeight: successfulResult.pointB.towerHeight
-          },
-          clearanceThresholdUsed: parseFloat(currentFormData.clearanceThreshold),
-          id: selectedLinkId + '_analysis_' + Date.now(),
-          timestamp: Date.now(),
-        };
-
-        updateLinkAnalysis(selectedLinkId, newAnalysisResult); 
-        setHistoryList(prev => [newAnalysisResult, ...prev.slice(0, 19)]);
-        setIsAnalysisPanelGloballyOpen(true); 
-        setIsBottomPanelContentExpanded(true);
-        toast({
-          title: "Analysis Complete",
-          description: newAnalysisResult.message || "LOS analysis performed successfully.",
-        });
-    }
-  }, [serverState, selectedLinkId, getLinkById, updateLinkDetails, updateLinkAnalysis, getValues, toast]);
 
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     const currentSelectedLink = getLinkById(selectedLinkId || '');
@@ -324,10 +321,6 @@ function HomePageContent() {
       };
       updateLinkDetails(currentSelectedLink.id, { [fieldToUpdate]: newPointDetails, isDirty: true });
     }
-     // Removed: No automatic link creation on map click if no link is selected
-     // else if (event.latLng && !currentSelectedLink) {
-     //    const newId = addLink({lat: event.latLng.lat(), lng: event.latLng.lng()});
-     // }
   }, [selectedLinkId, updateLinkDetails, addLink, getLinkById]);
 
   const handleMarkerDrag = useCallback((event: google.maps.MapMouseEvent, linkId: string, pointId: 'pointA' | 'pointB') => {
@@ -545,6 +538,7 @@ function HomePageContent() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-destructive-foreground mb-4">{displayedError}</p>
+                  {/* displayedFieldErrors is likely null now, but kept for structure if needed later */}
                   {displayedFieldErrors && (
                     <div className="text-xs text-destructive-foreground/80 mb-3 bg-black/20 p-2 rounded custom-scrollbar overflow-auto max-h-32">
                       <pre className="whitespace-pre-wrap">{JSON.stringify(displayedFieldErrors, null, 2)}</pre>
@@ -611,5 +605,3 @@ export default function Home() {
     </LinksProvider>
   );
 }
-
-    

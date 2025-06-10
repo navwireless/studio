@@ -2,154 +2,174 @@
 "use server";
 
 import { z } from 'zod';
-import type { AnalysisResult, ActionErrorState, PointCoordinates } from '@/types';
+import type { AnalysisParams, AnalysisResult, PointCoordinates } from '@/types';
 import { getGoogleElevationData, analyzeLOS } from '@/lib/los-calculator';
 
-// Define Zod schema for form validation
-const PointInputSchema = z.object({
-  name: z.string().min(1, "Name is required").max(50, "Name too long"),
-  lat: z.string().refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Invalid Latitude (-90 to 90)"),
-  lng: z.string().refine(val => !isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Invalid Longitude (-180 to 180)"),
-  height: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Height must be a positive number"),
+// Helper function to parse coordinate strings
+// This can be moved to a shared utils file if used elsewhere server-side
+const parseCoordinatesStringInternal = (coordsString: string): PointCoordinates | null => {
+  if (!coordsString || typeof coordsString !== 'string') return null;
+  const parts = coordsString.split(',').map(part => part.trim());
+  if (parts.length !== 2) return null;
+  const lat = parseFloat(parts[0]);
+  const lng = parseFloat(parts[1]);
+  if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lng) || lng < -180 || lng > 180) {
+    return null;
+  }
+  return { lat, lng };
+};
+
+// Define Zod schema for server-side validation of FormData strings
+const ServerActionPointSchema = z.object({
+  name: z.string().min(1, "Name is required.").max(50, "Name too long (max 50 chars)."),
+  coordinates: z.string().refine(val => parseCoordinatesStringInternal(val) !== null, {
+    message: "Invalid coordinates. Use 'lat, lng' format (e.g., 20.5, 78.9). Lat: -90 to 90, Lng: -180 to 180.",
+  }),
+  height: z.string()
+    .refine(val => val.trim() !== "" && !isNaN(parseFloat(val)), { message: "Tower height must be a number." })
+    .transform(val => parseFloat(val))
+    .refine(val => val >= 0, { message: "Minimum tower height is 0m." })
+    .refine(val => val <= 100, { message: "Maximum tower height is 100m." }),
 });
 
-const AnalysisFormSchema = z.object({
-  pointA: PointInputSchema,
-  pointB: PointInputSchema,
-  clearanceThreshold: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Clearance must be a positive number"),
+const ServerActionAnalysisSchema = z.object({
+  pointA: ServerActionPointSchema,
+  pointB: ServerActionPointSchema,
+  clearanceThreshold: z.string()
+    .refine(val => val.trim() !== "" && !isNaN(parseFloat(val)), { message: "Clearance threshold must be a number." })
+    .transform(val => parseFloat(val))
+    .refine(val => val >= 0, { message: "Clearance threshold must be a non-negative number." }),
 });
 
 
 export async function performLosAnalysis(
-  prevState: AnalysisResult | ActionErrorState | null,
+  prevState: any, // Previous state from useActionState, not directly used if throwing errors
   formData: FormData
-): Promise<AnalysisResult | ActionErrorState> {
-  try { // Outer try-catch for the entire action
-    const rawFormData = {
-      pointA: {
-        name: formData.get('pointA.name') as string,
-        lat: formData.get('pointA.lat') as string,
-        lng: formData.get('pointA.lng') as string,
-        height: formData.get('pointA.height') as string,
-      },
-      pointB: {
-        name: formData.get('pointB.name') as string,
-        lat: formData.get('pointB.lat') as string,
-        lng: formData.get('pointB.lng') as string,
-        height: formData.get('pointB.height') as string,
-      },
-      clearanceThreshold: formData.get('clearanceThreshold') as string,
-    };
+): Promise<AnalysisResult> { // Action now throws Error on failure or returns AnalysisResult on success
 
-    const validationResult = AnalysisFormSchema.safeParse(rawFormData);
+  const rawFormData = {
+    pointA: {
+      name: String(formData.get('pointA.name') ?? ""),
+      coordinates: String(formData.get('pointA.coordinates') ?? ""),
+      height: String(formData.get('pointA.height') ?? ""),
+    },
+    pointB: {
+      name: String(formData.get('pointB.name') ?? ""),
+      coordinates: String(formData.get('pointB.coordinates') ?? ""),
+      height: String(formData.get('pointB.height') ?? ""),
+    },
+    clearanceThreshold: String(formData.get('clearanceThreshold') ?? ""),
+  };
 
-    if (!validationResult.success) {
-      const fieldErrors = validationResult.error.flatten().fieldErrors;
-      const sanitizedFieldErrors: { [key: string]: string[] | undefined } = {};
-      for (const field in fieldErrors) {
-        const messages = fieldErrors[field as keyof typeof fieldErrors];
-        if (messages) {
-          sanitizedFieldErrors[field] = messages.map(msg => String(msg)); // Ensure messages are strings
-        }
-      }
-      console.error("Validation errors:", sanitizedFieldErrors);
-      return { error: "Invalid input. Please check the fields highlighted below.", fieldErrors: sanitizedFieldErrors };
+  const validationResult = ServerActionAnalysisSchema.safeParse(rawFormData);
+
+  if (!validationResult.success) {
+    const rawZodErrors = validationResult.error.flatten();
+    let errorMessages = "Validation failed: ";
+    
+    // Form-level errors
+    if (rawZodErrors.formErrors.length > 0) {
+        errorMessages += rawZodErrors.formErrors.map(String).join('; ');
     }
 
-    const validatedData = validationResult.data;
-
-    const paramsForAnalysis = {
-      pointA: {
-        name: validatedData.pointA.name,
-        lat: parseFloat(validatedData.pointA.lat),
-        lng: parseFloat(validatedData.pointA.lng), // Corrected: was pointB.lng
-        towerHeight: parseFloat(validatedData.pointA.height),
-      },
-      pointB: {
-        name: validatedData.pointB.name,
-        lat: parseFloat(validatedData.pointB.lat),
-        lng: parseFloat(validatedData.pointB.lng),
-        towerHeight: parseFloat(validatedData.pointB.height),
-      },
-      clearanceThreshold: parseFloat(validatedData.clearanceThreshold),
-    };
-    
-    try { // Inner try-catch specifically for elevation fetching and LOS analysis
-      const elevationData = await getGoogleElevationData(
-        { lat: paramsForAnalysis.pointA.lat, lng: paramsForAnalysis.pointA.lng },
-        { lat: paramsForAnalysis.pointB.lat, lng: paramsForAnalysis.pointB.lng },
-        100 // Number of samples
-      );
-      
-      const analysisResultData = analyzeLOS(
-        paramsForAnalysis,
-        elevationData
-      );
-      
-      const fullResult: AnalysisResult = {
-        id: `analysis_${Date.now()}`,
-        timestamp: Date.now(),
-        losPossible: analysisResultData.losPossible,
-        distanceKm: analysisResultData.distanceKm,
-        minClearance: analysisResultData.minClearance,
-        additionalHeightNeeded: analysisResultData.additionalHeightNeeded,
-        profile: analysisResultData.profile,
-        message: `${analysisResultData.message} Using Google Elevation API data.`,
-        pointA: paramsForAnalysis.pointA,
-        pointB: paramsForAnalysis.pointB,
-        clearanceThresholdUsed: paramsForAnalysis.clearanceThreshold,
-      };
-      return fullResult;
-
-    } catch (err: unknown) { // Inner catch for LOS analysis specific errors
-      let clientErrorMessageString: string;
-      let errorForLogging: string = "Unknown error in LOS analysis (inner catch)";
-
-      if (err instanceof RegExp) {
-        errorForLogging = `RegExp Error in LOS analysis (inner catch): ${err.toString()}`;
-        clientErrorMessageString = `Analysis failed due to an unexpected issue (RegExp source: ${err.source})`;
-      } else if (err instanceof Error) {
-        const messageSource = err.message;
-        if (messageSource instanceof RegExp) {
-            errorForLogging = `Error with RegExp message in LOS analysis (inner catch): ${messageSource.toString()}`;
-            clientErrorMessageString = `Analysis failed (Error with RegExp message source: ${messageSource.source})`;
-        } else {
-            errorForLogging = String(messageSource);
-            clientErrorMessageString = String(messageSource); 
-            
-            if (clientErrorMessageString.includes("Google Elevation API key is not configured")) {
-                clientErrorMessageString = "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console.";
-            } else if (clientErrorMessageString.includes("Google Elevation API request failed") || clientErrorMessageString.includes("Google Elevation API error") || clientErrorMessageString.includes("Google Elevation API request timed out")) {
-                clientErrorMessageString = `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${clientErrorMessageString}`;
-            } else if (clientErrorMessageString.includes("Network error while trying to reach Google Elevation API")) {
-                // Keep specific network error message
-            } else {
-               clientErrorMessageString = `Analysis failed due to an unexpected issue: ${clientErrorMessageString}`;
+    // Field-level errors
+    const fieldErrorParts: string[] = [];
+    // Iterate over pointA fields
+    const pointAFieldErrors = rawZodErrors.fieldErrors['pointA'] as unknown as Record<string, string[] | undefined> | undefined;
+    if (typeof pointAFieldErrors === 'object' && pointAFieldErrors !== null) {
+        for (const key in pointAFieldErrors) {
+            if (pointAFieldErrors[key]) {
+                fieldErrorParts.push(`Point A ${String(key)}: ${pointAFieldErrors[key]!.map(String).join(', ')}`);
             }
         }
-      } else {
-        errorForLogging = String(err);
-        clientErrorMessageString = `Analysis failed due to an unexpected issue: ${String(err)}`;
-      }
-      console.error("Error during LOS analysis (inner catch):", errorForLogging);
-      return { error: clientErrorMessageString, fieldErrors: undefined };
     }
-  } catch (e: unknown) { // Outermost catch for any other errors in the action
-    // Log the original error for server-side debugging, ensuring it's a string.
-    let errorToLogMessage: string;
-    if (e instanceof Error) {
-        errorToLogMessage = e.stack || e.message;
-    } else if (e instanceof RegExp) {
-        errorToLogMessage = e.toString();
-    } else {
-        errorToLogMessage = String(e);
+    // Iterate over pointB fields
+    const pointBFieldErrors = rawZodErrors.fieldErrors['pointB'] as unknown as Record<string, string[] | undefined> | undefined;
+     if (typeof pointBFieldErrors === 'object' && pointBFieldErrors !== null) {
+        for (const key in pointBFieldErrors) {
+            if (pointBFieldErrors[key]) {
+                fieldErrorParts.push(`Point B ${String(key)}: ${pointBFieldErrors[key]!.map(String).join(', ')}`);
+            }
+        }
     }
-    console.error("Unhandled error in performLosAnalysis (outer catch):", errorToLogMessage);
+    // Clearance threshold error (if any, direct key)
+    if (rawZodErrors.fieldErrors['clearanceThreshold']) {
+        fieldErrorParts.push(`Clearance Threshold: ${rawZodErrors.fieldErrors['clearanceThreshold']!.map(String).join(', ')}`);
+    }
+    
+    if (fieldErrorParts.length > 0) {
+        errorMessages += (errorMessages.endsWith(": ") ? "" : "; ") + fieldErrorParts.join('; ');
+    }
+    
+    const finalErrorMessage = errorMessages.trim() === "Validation failed:" ? "Invalid input. Please check the form fields." : errorMessages;
+    console.error("Server Action: Zod validation failed. Constructed Message:", finalErrorMessage, "Raw Zod Errors:", JSON.stringify(rawZodErrors));
+    throw new Error(finalErrorMessage);
+  }
 
-    // Return a generic, completely safe error message to the client.
-    return {
-      error: "An unexpected server error occurred. Please contact support or check server logs for more details.",
-      fieldErrors: undefined,
+  // validatedData now has heights and clearanceThreshold as numbers due to z.transform()
+  // and coordinates as validated strings.
+  const validatedData = validationResult.data;
+
+  const parsedPointACoords = parseCoordinatesStringInternal(validatedData.pointA.coordinates)!; // Bang operator is safe due to refine
+  const parsedPointBCoords = parseCoordinatesStringInternal(validatedData.pointB.coordinates)!; // Bang operator is safe due to refine
+
+  const paramsForAnalysis: AnalysisParams = {
+    pointA: {
+      name: validatedData.pointA.name,
+      lat: parsedPointACoords.lat,
+      lng: parsedPointACoords.lng,
+      towerHeight: validatedData.pointA.height, // Already a number from transform
+    },
+    pointB: {
+      name: validatedData.pointB.name,
+      lat: parsedPointBCoords.lat,
+      lng: parsedPointBCoords.lng,
+      towerHeight: validatedData.pointB.height, // Already a number from transform
+    },
+    clearanceThreshold: validatedData.clearanceThreshold, // Already a number from transform
+  };
+
+  try {
+    const elevationDataAPI = await getGoogleElevationData(paramsForAnalysis.pointA, paramsForAnalysis.pointB, 100);
+    
+    // analyzeLOS expects AnalysisParams which includes names from paramsForAnalysis
+    const analysisOutcome = analyzeLOS(paramsForAnalysis, elevationDataAPI);
+    
+    const resultWithTimestamp: AnalysisResult = {
+        ...analysisOutcome,
+        id: `analysis_${Date.now()}_${Math.random().toString(16).substring(2, 8)}`,
+        timestamp: Date.now(),
+        // Ensure names from validated data are consistently used in the result
+        // analysisOutcome already contains pointA and pointB with their names from paramsForAnalysis
+        pointA: analysisOutcome.pointA, 
+        pointB: analysisOutcome.pointB,
+        message: `${analysisOutcome.message} Source: Google Elevation API.`,
     };
+    return resultWithTimestamp;
+
+  } catch (err: unknown) {
+    let clientErrorMessageString: string;
+
+    if (err instanceof Error) {
+      clientErrorMessageString = String(err.message); // Ensure message is string
+      // Specific checks for Google API errors are good to keep for user clarity
+      if (clientErrorMessageString.includes("Google Elevation API key is not configured")) {
+        clientErrorMessageString = "Elevation service is not configured. Please check API key settings.";
+      } else if (clientErrorMessageString.includes("Google Elevation API request failed") || 
+                 clientErrorMessageString.includes("Google Elevation API error") || 
+                 clientErrorMessageString.includes("Google Elevation API request timed out")) {
+        // The message from los-calculator.ts is already quite descriptive, so just use it.
+      } else if (clientErrorMessageString.includes("Network error while trying to reach Google Elevation API")) {
+         // The message from los-calculator.ts is descriptive.
+      }
+      // No need for a generic catch-all for other Error instances if los-calculator is also hardened.
+    } else {
+      // Fallback for non-Error exceptions
+      clientErrorMessageString = "An unexpected issue occurred during analysis. Please try again.";
+    }
+    
+    // Log the original error type and message for server-side debugging
+    console.error("performLosAnalysis - Inner error caught. Client-facing message:", clientErrorMessageString, "Original error:", String(err));
+    throw new Error(clientErrorMessageString); // Always throw a standard Error with a string message
   }
 }
