@@ -1,4 +1,3 @@
-
 "use server";
 
 import { z } from 'zod';
@@ -26,6 +25,28 @@ const AnalysisFormSchema = z.object({
   clearanceThreshold: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Clearance must be a positive number"),
 });
 
+// Helper function to sanitize RegExp objects in an object
+function sanitizeRegExpInObject(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (obj instanceof RegExp) {
+    return obj.toString();
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeRegExpInObject(item));
+  }
+
+  const sanitizedObj: { [key: string]: any } = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      sanitizedObj[key] = sanitizeRegExpInObject(obj[key]);
+    }
+  }
+  return sanitizedObj;
+}
 
 /**
  * Fetches elevation data from Google Elevation API with a timeout.
@@ -114,7 +135,9 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
 
   if (!validationResult.success) {
     console.error("Validation errors:", validationResult.error.flatten().fieldErrors);
-    return { error: "Invalid input.", fieldErrors: validationResult.error.flatten().fieldErrors };
+    const fieldErrors = validationResult.error.flatten().fieldErrors;
+    const sanitizedFieldErrors = sanitizeRegExpInObject(fieldErrors);
+    return { error: "Invalid input.", fieldErrors: sanitizedFieldErrors };
   }
 
   const validatedData = validationResult.data;
@@ -154,4 +177,3 @@ export async function performLosAnalysis(prevState: any, formData: FormData): Pr
     return { error: `Analysis failed due to an unexpected issue: ${errorMessage}` };
   }
 }
-
