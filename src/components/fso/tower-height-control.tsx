@@ -8,111 +8,86 @@ import { Input } from '@/components/ui/input';
 
 interface TowerHeightControlProps {
   label: string;
-  height: number; // Value from React Hook Form (can be float from input, or NaN)
-  onChange: (value: number) => void; // RHF's field.onChange
+  height: number;
+  onChange: (value: number) => void;
   min?: number;
   max?: number;
-  step?: number; // Slider step, defaults to 1
+  step?: number;
   idSuffix: string;
 }
 
 const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
   label,
-  height, // This is field.value from RHF Controller
-  onChange, // This is field.onChange from RHF Controller
-  min = 0,
-  max = 100,
-  step = 1, // Default Slider step is 1, meaning integer values
+  height,
+  onChange,
+  min = 0, 
+  max = 100, 
+  step = 1, // Changed step to 1 for integer values
   idSuffix,
 }) => {
-  // Local state for the input field's string value for responsive typing
-  const [inputValue, setInputValue] = React.useState<string>(
-    Number.isFinite(height) ? Math.round(height).toString() : ""
-  );
-
-  // Effect to synchronize local inputValue when the RHF height prop changes externally
-  React.useEffect(() => {
-    const currentRHFHeightRounded = Number.isFinite(height) ? Math.round(height) : min;
-    if (inputValue !== currentRHFHeightRounded.toString() && parseFloat(inputValue) !== currentRHFHeightRounded) {
-         setInputValue(currentRHFHeightRounded.toString());
-    }
-  }, [height, min]);
-
-
-  // Handler for when the user finishes interacting with the slider
-  const handleSliderValueCommit = (newSliderValues: number[]) => {
-    const committedIntValue = Math.round(newSliderValues[0]);
-    const currentRhfIntValue = Number.isFinite(height) ? Math.round(height) : min;
-
-    if (currentRhfIntValue !== committedIntValue) {
-      onChange(committedIntValue); // Update RHF
-      // No need to setInputValue here if useEffect handles it, but can be explicit:
-      // setInputValue(committedIntValue.toString());
-    }
+  const handleSliderChange = (value: number[]) => {
+    onChange(Math.round(value[0])); // Ensure slider output is rounded
   };
 
-  // Handler for direct input field changes - updates local state only
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(event.target.value);
+    const rawValue = event.target.value;
+    if (rawValue === "") {
+        // Allow temporarily empty input, parent form validation will handle empty required field.
+        // Or, set to min if that's preferred on empty.
+        // For now, let parent validation catch it if empty is not allowed by schema.
+        // If schema expects a number, this needs to be handled carefully.
+        // onChange(min); // Or don't call onChange if empty string is typed.
+        // Let's try to pass NaN or a placeholder that indicates "empty" if possible
+        // For now, simplest is to revert to min or let validation handle.
+        // For controlled number input, it's tricky. Let's pass parseFloat which becomes NaN.
+        onChange(parseFloat(rawValue)); // This might become NaN
+        return;
+    }
+    let newValue = parseFloat(rawValue);
+    if (!isNaN(newValue)) {
+        onChange(newValue); // Pass the float, rounding is done on blur or by chart.
+    }
   };
 
-  // Handler for when the input field loses focus - commit to RHF
-  const handleInputBlur = () => {
-    let numValue = parseFloat(inputValue);
-    let finalClampedIntValue: number;
-
+  const validateAndSetHeight = (event: React.FocusEvent<HTMLInputElement>) => {
+    let numValue = parseFloat(event.target.value);
     if (isNaN(numValue)) {
-      finalClampedIntValue = min; // Default to min if input is invalid or empty on blur
-    } else {
-      finalClampedIntValue = Math.max(min, Math.min(max, Math.round(numValue)));
+      numValue = min; // default to min if invalid or empty on blur
     }
-    
-    // Update local input to reflect clamped and rounded value
-    // This will also be caught by useEffect if RHF was already at this value,
-    // but good to keep input consistent.
-    setInputValue(finalClampedIntValue.toString()); 
-
-    const currentRhfIntValue = Number.isFinite(height) ? Math.round(height) : min;
-    if (currentRhfIntValue !== finalClampedIntValue) {
-      onChange(finalClampedIntValue); // Update RHF
-    }
-  };
-  
-  // Value for the Slider's thumb position. Always an integer from RHF.
-  const sliderValueForDisplay = Number.isFinite(height) ? Math.round(height) : min;
-  // Text display always shows the rounded integer version of the RHF height.
-  const textDisplayHeight = sliderValueForDisplay;
+    numValue = Math.round(numValue); // Round on blur
+    if (numValue < min) numValue = min;
+    if (numValue > max) numValue = max;
+    onChange(numValue);
+  }
 
 
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-0.5"> 
       <div className="flex justify-between items-center">
-        <Label htmlFor={`height-input-${idSuffix}`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal">
+        <Label htmlFor={`height-input-${idSuffix}`} className="text-[0.7rem] uppercase tracking-wider text-slate-300/70 font-normal"> 
           {label} (m)
         </Label>
-        <span className="text-[0.7rem] font-medium text-primary/80">
-          {textDisplayHeight}m
-        </span>
+        <span className="text-[0.7rem] font-medium text-primary/80">{Number.isFinite(height) ? Math.round(height) : min}m</span> {/* Display rounded height or min if NaN */}
       </div>
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center space-x-1"> 
         <Input
           id={`height-input-${idSuffix}`}
-          type="number" // Keeps browser native number input behavior (arrows, etc.)
-          value={inputValue} // Controlled by local inputValue state
+          type="number"
+          value={Number.isFinite(height) ? height.toString() : ""} // Show empty for NaN, or current value
           onChange={handleInputChange}
-          onBlur={handleInputBlur}
-          min={min} // For browser validation hints
-          max={max} // For browser validation hints
-          step="any" // Allows decimal typing
+          onBlur={validateAndSetHeight}
+          min={min}
+          max={max}
+          step={step} // Input step can be 1
           className="w-12 bg-transparent border-b border-white/20 focus:border-white/50 text-slate-100/90 text-xs h-6 px-1 py-0.5 rounded-none focus:ring-0"
         />
         <Slider
           id={`height-slider-${idSuffix}`}
-          value={[sliderValueForDisplay]} // Slider always receives a rounded integer value from RHF
-          onValueCommit={handleSliderValueCommit}
+          value={[Number.isFinite(height) ? height : min]} // Slider needs a valid number
+          onValueChange={handleSliderChange}
           min={min}
           max={max}
-          step={step}
+          step={step} // Slider step 1
           className="flex-1"
           aria-labelledby={`label-${idSuffix}-height`}
         />

@@ -177,7 +177,6 @@ function RootLayout({ children }) {
                     className: "flex-1 overflow-hidden relative flex flex-col",
                     children: [
                         " ",
-                        / * Ensure main can flex its children */,
                         children
                     ]
                 }, void 0, true, {

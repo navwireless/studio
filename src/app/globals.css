@@ -98,8 +98,6 @@ body {
     --los-failure-text: 0 75% 75%; /* Brighter red for text */
     --los-success-foreground: 0 0% 100%; 
     --los-failure-foreground: 0 0% 100%;
-
-    --linkedin-blue: 210 91% 41%; /* hsl(210, 91%, 41%) for #0A66C2 */
   }
 
   .dark {
@@ -238,11 +236,4 @@ body {
   .print\:border-none {
     border: none !important;
   }
-}
-
-/* App Header Branding */
-.app-brand-title {
-  color: hsl(var(--linkedin-blue));
-  word-spacing: 0.1em; /* Adjust as needed */
-  letter-spacing: 0.025em; /* Optional: for slight letter spacing */
 }

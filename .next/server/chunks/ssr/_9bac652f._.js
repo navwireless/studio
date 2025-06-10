@@ -8,59 +8,10 @@ var { g: global, __dirname } = __turbopack_context__;
 __turbopack_context__.s({
     "analyzeLOS": (()=>analyzeLOS),
     "calculateDistanceKm": (()=>calculateDistanceKm),
-    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius),
-    "getGoogleElevationData": (()=>getGoogleElevationData)
+    "calculateFresnelZoneRadius": (()=>calculateFresnelZoneRadius)
 });
 const EARTH_RADIUS_KM = 6371;
 const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
-async function getGoogleElevationData(pointA, pointB, samples) {
-    const GOOGLE_ELEVATION_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
-    if (!GOOGLE_ELEVATION_API_KEY) {
-        console.error("Google Elevation API key is not configured.");
-        // This specific error message is checked in actions.ts, so keep it consistent
-        throw new Error("Google Elevation API key is not configured");
-    }
-    const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
-    const url = `${GOOGLE_ELEVATION_API_URL}?path=${path}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY}`;
-    try {
-        const response = await fetch(url, {
-            next: {
-                revalidate: 3600
-            }
-        }); // Cache for 1 hour
-        if (!response.ok) {
-            let errorData;
-            try {
-                errorData = await response.json();
-            } catch (parseError) {
-                errorData = {
-                    message: 'Failed to parse error response from API.'
-                };
-            }
-            console.error('Google Elevation API request failed:', response.status, response.statusText, errorData);
-            // This specific error message is checked in actions.ts
-            throw new Error(`Google Elevation API request failed: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorData)}`);
-        }
-        const data = await response.json();
-        if (data.status !== 'OK') {
-            console.error('Google Elevation API error:', data.status, data.error_message);
-            // This specific error message is checked in actions.ts
-            throw new Error(`Google Elevation API error: ${data.status}. ${data.error_message || 'No additional error message provided.'}`);
-        }
-        return data.results;
-    } catch (error) {
-        // Log the original error for server-side debugging
-        console.error('Network error or other issue while trying to reach Google Elevation API:', error);
-        // Re-throw with a consistent prefix for client-side handling, ensuring the original message is preserved if it's an Error instance
-        if (error instanceof Error) {
-            // This specific error message is checked in actions.ts
-            throw new Error(`Network error while trying to reach Google Elevation API: ${error.message}`);
-        }
-        // This specific error message is checked in actions.ts
-        throw new Error('Network error while trying to reach Google Elevation API. Unknown error type.');
-    }
-}
 function calculateDistanceKm(p1, p2) {
     const R = EARTH_RADIUS_KM;
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
@@ -76,8 +27,8 @@ function calculateDistanceKm(p1, p2) {
  * @param totalPathDistanceKm Total distance of the LOS path in kilometers.
  * @param distanceFromStartKm Distance of the current point from the start of the path in kilometers.
  * @returns Earth curvature drop in meters.
- */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm1, distanceFromStartKm) {
-    const totalPathDistanceM = totalPathDistanceKm1 * 1000;
+ */ function calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromStartKm) {
+    const totalPathDistanceM = totalPathDistanceKm * 1000;
     const distanceFromStartM = distanceFromStartKm * 1000;
     const distanceToEndM = totalPathDistanceM - distanceFromStartM;
     if (distanceFromStartM < 0 || distanceToEndM < 0) return 0;
@@ -123,7 +74,7 @@ function analyzeLOS(params, elevationData) {
         const terrainElevation = sample.elevation;
         const fractionAlongPath = totalDistanceKm > 0 ? distanceFromA_Km / totalDistanceKm : 0;
         const idealLosHeight = heightA_actual + fractionAlongPath * (heightB_actual - heightA_actual);
-        const curvatureDrop = calculateEarthCurvatureDropMeters(totalPathDistanceKm, distanceFromA_Km);
+        const curvatureDrop = calculateEarthCurvatureDropMeters(totalDistanceKm, distanceFromA_Km);
         const correctedLosHeight = idealLosHeight - curvatureDrop;
         const clearance = correctedLosHeight - terrainElevation;
         profile.push({
@@ -171,153 +122,135 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 ;
 ;
 ;
-// Helper function to parse coordinate strings
-// This can be moved to a shared utils file if used elsewhere server-side
-const parseCoordinatesStringInternal = (coordsString)=>{
-    if (!coordsString || typeof coordsString !== 'string') return null;
-    const parts = coordsString.split(',').map((part)=>part.trim());
-    if (parts.length !== 2) return null;
-    const lat = parseFloat(parts[0]);
-    const lng = parseFloat(parts[1]);
-    if (isNaN(lat) || lat < -90 || lat > 90 || isNaN(lng) || lng < -180 || lng > 180) {
-        return null;
+// --- Google Elevation API Configuration ---
+// WARNING: Storing API keys directly in code is insecure for production. 
+// Consider using environment variables and restricting API key usage.
+const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ";
+const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
+// --- End Google Elevation API Configuration ---
+// Define Zod schema for form validation
+const PointInputSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
+    lat: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 90, "Invalid Latitude (-90 to 90)"),
+    lng: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && Math.abs(parseFloat(val)) <= 180, "Invalid Longitude (-180 to 180)"),
+    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Height must be a positive number")
+});
+const AnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
+    pointA: PointInputSchema,
+    pointB: PointInputSchema,
+    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>!isNaN(parseFloat(val)) && parseFloat(val) >= 0, "Clearance must be a positive number")
+});
+/**
+ * Fetches elevation data from Google Elevation API.
+ */ async function getGoogleElevationData(pointA, pointB, samples = 100) {
+    if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "") {
+        throw new Error("Google Elevation API key is not configured or is empty.");
     }
-    return {
-        lat,
-        lng
-    };
-};
-// Define Zod schema for server-side validation of FormData strings
-const ServerActionPointSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
-    name: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().min(1, "Name is required.").max(50, "Name too long (max 50 chars)."),
-    coordinates: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>parseCoordinatesStringInternal(val) !== null, {
-        message: "Invalid coordinates. Use 'lat, lng' format (e.g., 20.5, 78.9). Lat: -90 to 90, Lng: -180 to 180."
-    }),
-    height: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>val.trim() !== "" && !isNaN(parseFloat(val)), {
-        message: "Tower height must be a number."
-    }).transform((val)=>parseFloat(val)).refine((val)=>val >= 0, {
-        message: "Minimum tower height is 0m."
-    }).refine((val)=>val <= 100, {
-        message: "Maximum tower height is 100m."
-    })
-});
-const ServerActionAnalysisSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
-    pointA: ServerActionPointSchema,
-    pointB: ServerActionPointSchema,
-    clearanceThreshold: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().refine((val)=>val.trim() !== "" && !isNaN(parseFloat(val)), {
-        message: "Clearance threshold must be a number."
-    }).transform((val)=>parseFloat(val)).refine((val)=>val >= 0, {
-        message: "Clearance threshold must be a non-negative number."
-    })
-});
+    const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+    const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY.trim()}`;
+    let response;
+    try {
+        response = await fetch(url);
+    } catch (networkError) {
+        console.error("Network error fetching elevation data:", networkError);
+        throw new Error(`Network error while trying to reach Google Elevation API. Please check your internet connection and server's ability to reach Google services. Details: ${networkError instanceof Error ? networkError.message : String(networkError)}`);
+    }
+    if (!response.ok) {
+        let errorBody = "Could not retrieve error body.";
+        try {
+            errorBody = await response.text();
+        } catch (textError) {
+            console.error("Failed to read error body from Google API response:", textError);
+        }
+        console.error("Google Elevation API request failed:", response.status, errorBody);
+        throw new Error(`Google Elevation API request failed with status ${response.status}. Details: ${errorBody}`);
+    }
+    let data;
+    try {
+        data = await response.json();
+    } catch (jsonError) {
+        console.error("Failed to parse JSON response from Google Elevation API:", jsonError);
+        throw new Error(`Failed to parse response from Google Elevation API. Details: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+    }
+    if (data.status !== 'OK') {
+        console.error("Google Elevation API error:", data.status, data.error_message);
+        throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown API error'}`);
+    }
+    if (!data.results || data.results.length === 0) {
+        throw new Error("Google Elevation API returned no results for the given path.");
+    }
+    return data.results.map((sample)=>({
+            elevation: sample.elevation,
+            location: {
+                lat: sample.location.lat,
+                lng: sample.location.lng
+            },
+            resolution: sample.resolution
+        }));
+}
 async function performLosAnalysis(prevState, formData) {
     const rawFormData = {
         pointA: {
-            name: String(formData.get('pointA.name') ?? ""),
-            coordinates: String(formData.get('pointA.coordinates') ?? ""),
-            height: String(formData.get('pointA.height') ?? "")
+            lat: formData.get('pointA.lat'),
+            lng: formData.get('pointA.lng'),
+            height: formData.get('pointA.height')
         },
         pointB: {
-            name: String(formData.get('pointB.name') ?? ""),
-            coordinates: String(formData.get('pointB.coordinates') ?? ""),
-            height: String(formData.get('pointB.height') ?? "")
+            lat: formData.get('pointB.lat'),
+            lng: formData.get('pointB.lng'),
+            height: formData.get('pointB.height')
         },
-        clearanceThreshold: String(formData.get('clearanceThreshold') ?? "")
+        clearanceThreshold: formData.get('clearanceThreshold')
     };
-    const validationResult = ServerActionAnalysisSchema.safeParse(rawFormData);
+    const validationResult = AnalysisFormSchema.safeParse(rawFormData);
     if (!validationResult.success) {
-        const rawZodErrors = validationResult.error.flatten();
-        let errorMessages = "Validation failed: ";
-        // Form-level errors
-        if (rawZodErrors.formErrors.length > 0) {
-            errorMessages += rawZodErrors.formErrors.map(String).join('; ');
-        }
-        // Field-level errors
-        const fieldErrorParts = [];
-        // Iterate over pointA fields
-        const pointAFieldErrors = rawZodErrors.fieldErrors['pointA'];
-        if (typeof pointAFieldErrors === 'object' && pointAFieldErrors !== null) {
-            for(const key in pointAFieldErrors){
-                if (pointAFieldErrors[key]) {
-                    fieldErrorParts.push(`Point A ${String(key)}: ${pointAFieldErrors[key].map(String).join(', ')}`);
-                }
-            }
-        }
-        // Iterate over pointB fields
-        const pointBFieldErrors = rawZodErrors.fieldErrors['pointB'];
-        if (typeof pointBFieldErrors === 'object' && pointBFieldErrors !== null) {
-            for(const key in pointBFieldErrors){
-                if (pointBFieldErrors[key]) {
-                    fieldErrorParts.push(`Point B ${String(key)}: ${pointBFieldErrors[key].map(String).join(', ')}`);
-                }
-            }
-        }
-        // Clearance threshold error (if any, direct key)
-        if (rawZodErrors.fieldErrors['clearanceThreshold']) {
-            fieldErrorParts.push(`Clearance Threshold: ${rawZodErrors.fieldErrors['clearanceThreshold'].map(String).join(', ')}`);
-        }
-        if (fieldErrorParts.length > 0) {
-            errorMessages += (errorMessages.endsWith(": ") ? "" : "; ") + fieldErrorParts.join('; ');
-        }
-        const finalErrorMessage = errorMessages.trim() === "Validation failed:" ? "Invalid input. Please check the form fields." : errorMessages;
-        console.error("Server Action: Zod validation failed. Constructed Message:", finalErrorMessage, "Raw Zod Errors:", JSON.stringify(rawZodErrors));
-        throw new Error(finalErrorMessage);
+        console.error("Validation errors:", validationResult.error.flatten().fieldErrors);
+        return {
+            error: "Invalid input.",
+            fieldErrors: validationResult.error.flatten().fieldErrors
+        };
     }
-    // validatedData now has heights and clearanceThreshold as numbers due to z.transform()
-    // and coordinates as validated strings.
     const validatedData = validationResult.data;
-    const parsedPointACoords = parseCoordinatesStringInternal(validatedData.pointA.coordinates); // Bang operator is safe due to refine
-    const parsedPointBCoords = parseCoordinatesStringInternal(validatedData.pointB.coordinates); // Bang operator is safe due to refine
-    const paramsForAnalysis = {
+    const params = {
         pointA: {
-            name: validatedData.pointA.name,
-            lat: parsedPointACoords.lat,
-            lng: parsedPointACoords.lng,
-            towerHeight: validatedData.pointA.height
+            lat: parseFloat(validatedData.pointA.lat),
+            lng: parseFloat(validatedData.pointA.lng),
+            towerHeight: parseFloat(validatedData.pointA.height)
         },
         pointB: {
-            name: validatedData.pointB.name,
-            lat: parsedPointBCoords.lat,
-            lng: parsedPointBCoords.lng,
-            towerHeight: validatedData.pointB.height
+            lat: parseFloat(validatedData.pointB.lat),
+            lng: parseFloat(validatedData.pointB.lng),
+            towerHeight: parseFloat(validatedData.pointB.height)
         },
-        clearanceThreshold: validatedData.clearanceThreshold
+        clearanceThreshold: parseFloat(validatedData.clearanceThreshold)
     };
     try {
-        const elevationDataAPI = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getGoogleElevationData"])(paramsForAnalysis.pointA, paramsForAnalysis.pointB, 100);
-        // analyzeLOS expects AnalysisParams which includes names from paramsForAnalysis
-        const analysisOutcome = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["analyzeLOS"])(paramsForAnalysis, elevationDataAPI);
-        const resultWithTimestamp = {
-            ...analysisOutcome,
-            id: `analysis_${Date.now()}_${Math.random().toString(16).substring(2, 8)}`,
-            timestamp: Date.now(),
-            // Ensure names from validated data are consistently used in the result
-            // analysisOutcome already contains pointA and pointB with their names from paramsForAnalysis
-            pointA: analysisOutcome.pointA,
-            pointB: analysisOutcome.pointB,
-            message: `${analysisOutcome.message} Source: Google Elevation API.`
+        const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
+        const result = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["analyzeLOS"])(params, elevationData);
+        return {
+            ...result,
+            message: `${result.message} Using Google Elevation API data.`
         };
-        return resultWithTimestamp;
     } catch (err) {
-        let clientErrorMessageString;
-        if (err instanceof Error) {
-            clientErrorMessageString = String(err.message); // Ensure message is string
-            // Specific checks for Google API errors are good to keep for user clarity
-            if (clientErrorMessageString.includes("Google Elevation API key is not configured")) {
-                clientErrorMessageString = "Elevation service is not configured. Please check API key settings.";
-            } else if (clientErrorMessageString.includes("Google Elevation API request failed") || clientErrorMessageString.includes("Google Elevation API error") || clientErrorMessageString.includes("Google Elevation API request timed out")) {
-            // The message from los-calculator.ts is already quite descriptive, so just use it.
-            } else if (clientErrorMessageString.includes("Network error while trying to reach Google Elevation API")) {
-            // The message from los-calculator.ts is descriptive.
-            }
-        // No need for a generic catch-all for other Error instances if los-calculator is also hardened.
-        } else {
-            // Fallback for non-Error exceptions
-            clientErrorMessageString = "An unexpected issue occurred during analysis. Please try again.";
+        console.error("Error during LOS analysis:", err);
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
+        if (errorMessage.includes("Google Elevation API key is not configured")) {
+            return {
+                error: "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console."
+            };
         }
-        // Log the original error type and message for server-side debugging
-        console.error("performLosAnalysis - Inner error caught. Client-facing message:", clientErrorMessageString, "Original error:", String(err));
-        throw new Error(clientErrorMessageString); // Always throw a standard Error with a string message
+        if (errorMessage.includes("Google Elevation API request failed") || errorMessage.includes("Google Elevation API error")) {
+            return {
+                error: `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, or billing issues with Google Cloud Platform. Details: ${errorMessage}`
+            };
+        }
+        if (errorMessage.includes("Network error while trying to reach Google Elevation API")) {
+            return {
+                error: errorMessage
+            }; // Pass through the detailed network error
+        }
+        return {
+            error: `Analysis failed due to an unexpected issue: ${errorMessage}`
+        };
     }
 }
 ;
