@@ -11,7 +11,6 @@ const EARTH_RADIUS_METERS = EARTH_RADIUS_KM * 1000;
  * @param samples Number of samples along the path.
  * @returns A promise that resolves to an array of elevation samples.
  * @throws Error if API key is not configured, or if API request fails or returns an error status.
- *         The thrown error will always be an `Error` instance with a plain string message.
  */
 export async function getGoogleElevationData(
   pointA: PointCoordinates,
@@ -22,9 +21,9 @@ export async function getGoogleElevationData(
   const GOOGLE_ELEVATION_API_URL = 'https://maps.googleapis.com/maps/api/elevation/json';
 
   if (!GOOGLE_ELEVATION_API_KEY) {
-    const errorMessage = "Google Elevation API key is not configured";
-    console.error(errorMessage);
-    throw new Error(errorMessage); // Throw a new Error with a string message
+    console.error("Google Elevation API key is not configured.");
+    // This specific error message is checked in actions.ts, so keep it consistent
+    throw new Error("Google Elevation API key is not configured");
   }
 
   const path = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
@@ -35,56 +34,35 @@ export async function getGoogleElevationData(
 
     if (!response.ok) {
       let errorData;
-      let errorResponseMessage = `Google Elevation API request failed: ${response.status} ${response.statusText}.`;
       try {
         errorData = await response.json();
-        if (errorData && typeof errorData.message === 'string') {
-          errorResponseMessage += ` Details: ${errorData.message}`;
-        } else if (errorData && errorData.message instanceof RegExp) {
-          errorResponseMessage += ` Details (RegExp): ${errorData.message.toString()}`;
-        } else if (errorData) {
-          errorResponseMessage += ` Details: ${JSON.stringify(errorData)}`;
-        }
       } catch (parseError) {
-        // If parsing the error response fails, stick to the status text
-        errorResponseMessage += ' Failed to parse error response body.';
+        errorData = { message: 'Failed to parse error response from API.' };
       }
-      console.error(errorResponseMessage, errorData);
-      throw new Error(errorResponseMessage); // Throw a new Error with a string message
+      console.error('Google Elevation API request failed:', response.status, response.statusText, errorData);
+      // This specific error message is checked in actions.ts
+      throw new Error(`Google Elevation API request failed: ${response.status} ${response.statusText}. Details: ${JSON.stringify(errorData)}`);
     }
 
     const data = await response.json();
 
     if (data.status !== 'OK') {
-      let apiErrorMessageContent = 'No additional error message provided.';
-      if (typeof data.error_message === 'string') {
-        apiErrorMessageContent = data.error_message;
-      } else if (data.error_message instanceof RegExp) {
-        apiErrorMessageContent = `RegExp error: ${data.error_message.toString()}`;
-      }
-      const apiErrorMessage = `Google Elevation API error: ${data.status}. ${apiErrorMessageContent}`;
-      console.error(apiErrorMessage);
-      throw new Error(apiErrorMessage); // Throw a new Error with a string message
+      console.error('Google Elevation API error:', data.status, data.error_message);
+      // This specific error message is checked in actions.ts
+      throw new Error(`Google Elevation API error: ${data.status}. ${data.error_message || 'No additional error message provided.'}`);
     }
     return data.results as ElevationSampleAPI[];
-
   } catch (error: unknown) {
-    // This catch block handles network errors from fetch() itself, or errors re-thrown from above
-    let finalErrorMessage: string;
+    // Log the original error for server-side debugging
+    console.error('Network error or other issue while trying to reach Google Elevation API:', error);
 
+    // Re-throw with a consistent prefix for client-side handling, ensuring the original message is preserved if it's an Error instance
     if (error instanceof Error) {
-      // If it's already an Error, its message should be a string.
-      // We prefix it to indicate the context.
-      finalErrorMessage = `Network error or issue during Google Elevation API call: ${error.message}`;
-    } else if (error instanceof RegExp) {
-      // Explicitly handle if the caught error is a RegExp
-      finalErrorMessage = `Network error or issue during Google Elevation API call. Received RegExp error: ${error.toString()} (Source: ${error.source})`;
-    } else {
-      // Fallback for other types of thrown values
-      finalErrorMessage = `Network error or issue during Google Elevation API call. Received: ${String(error)}`;
+        // This specific error message is checked in actions.ts
+        throw new Error(`Network error while trying to reach Google Elevation API: ${error.message}`);
     }
-    console.error("Error in getGoogleElevationData (final catch):", finalErrorMessage, "Original error:", error);
-    throw new Error(finalErrorMessage); // Always throw a new Error with a guaranteed string message
+    // This specific error message is checked in actions.ts
+    throw new Error('Network error while trying to reach Google Elevation API. Unknown error type.');
   }
 }
 

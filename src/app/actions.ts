@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from 'zod';
-import type { AnalysisResult, ActionErrorState, PointCoordinates, ElevationSampleAPI } from '@/types';
+import type { AnalysisResult, ActionErrorState, PointCoordinates } from '@/types';
 import { getGoogleElevationData, analyzeLOS } from '@/lib/los-calculator';
 
 // Define Zod schema for form validation
@@ -49,11 +49,10 @@ export async function performLosAnalysis(
       for (const field in fieldErrors) {
         const messages = fieldErrors[field as keyof typeof fieldErrors];
         if (messages) {
-          sanitizedFieldErrors[field] = messages.map(msg => String(msg ?? 'Validation message undefined'));
+          sanitizedFieldErrors[field] = messages.map(msg => String(msg)); // Ensure messages are strings
         }
       }
-      // Simplified logging for validation errors
-      console.error("Validation errors occurred. Field details suppressed for this log message.");
+      console.error("Validation errors:", sanitizedFieldErrors);
       return { error: "Invalid input. Please check the fields highlighted below.", fieldErrors: sanitizedFieldErrors };
     }
 
@@ -63,7 +62,7 @@ export async function performLosAnalysis(
       pointA: {
         name: validatedData.pointA.name,
         lat: parseFloat(validatedData.pointA.lat),
-        lng: parseFloat(validatedData.pointA.lng),
+        lng: parseFloat(validatedData.pointA.lng), // Corrected: was pointB.lng
         towerHeight: parseFloat(validatedData.pointA.height),
       },
       pointB: {
@@ -103,18 +102,51 @@ export async function performLosAnalysis(
       return fullResult;
 
     } catch (err: unknown) { // Inner catch for LOS analysis specific errors
-      // Simplified logging: Avoid logging the raw error object if it might be complex
-      console.error("Error during LOS analysis (inner catch). A generic message will be returned to the client. Original error suppressed from this log line.");
-      
-      return { 
-        error: "An error occurred during the Line-of-Sight analysis process. Please check the server logs for more details or try again later.", 
-        fieldErrors: undefined 
-      };
+      let clientErrorMessageString: string;
+      let errorForLogging: string = "Unknown error in LOS analysis (inner catch)";
+
+      if (err instanceof RegExp) {
+        errorForLogging = `RegExp Error in LOS analysis (inner catch): ${err.toString()}`;
+        clientErrorMessageString = `Analysis failed due to an unexpected issue (RegExp source: ${err.source})`;
+      } else if (err instanceof Error) {
+        const messageSource = err.message;
+        if (messageSource instanceof RegExp) {
+            errorForLogging = `Error with RegExp message in LOS analysis (inner catch): ${messageSource.toString()}`;
+            clientErrorMessageString = `Analysis failed (Error with RegExp message source: ${messageSource.source})`;
+        } else {
+            errorForLogging = String(messageSource);
+            clientErrorMessageString = String(messageSource); 
+            
+            if (clientErrorMessageString.includes("Google Elevation API key is not configured")) {
+                clientErrorMessageString = "Elevation service is not configured. Please check the API key and ensure it's enabled for the Google Elevation API in your Google Cloud Console.";
+            } else if (clientErrorMessageString.includes("Google Elevation API request failed") || clientErrorMessageString.includes("Google Elevation API error") || clientErrorMessageString.includes("Google Elevation API request timed out")) {
+                clientErrorMessageString = `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, billing issues with Google Cloud Platform, or the service being temporarily unavailable. Details: ${clientErrorMessageString}`;
+            } else if (clientErrorMessageString.includes("Network error while trying to reach Google Elevation API")) {
+                // Keep specific network error message
+            } else {
+               clientErrorMessageString = `Analysis failed due to an unexpected issue: ${clientErrorMessageString}`;
+            }
+        }
+      } else {
+        errorForLogging = String(err);
+        clientErrorMessageString = `Analysis failed due to an unexpected issue: ${String(err)}`;
+      }
+      console.error("Error during LOS analysis (inner catch):", errorForLogging);
+      return { error: clientErrorMessageString, fieldErrors: undefined };
     }
   } catch (e: unknown) { // Outermost catch for any other errors in the action
-    // Simplified logging
-    console.error("Unhandled error in performLosAnalysis (outer catch). A generic message will be returned to the client. Original error suppressed from this log line.");
+    // Log the original error for server-side debugging, ensuring it's a string.
+    let errorToLogMessage: string;
+    if (e instanceof Error) {
+        errorToLogMessage = e.stack || e.message;
+    } else if (e instanceof RegExp) {
+        errorToLogMessage = e.toString();
+    } else {
+        errorToLogMessage = String(e);
+    }
+    console.error("Unhandled error in performLosAnalysis (outer catch):", errorToLogMessage);
 
+    // Return a generic, completely safe error message to the client.
     return {
       error: "An unexpected server error occurred. Please contact support or check server logs for more details.",
       fieldErrors: undefined,
