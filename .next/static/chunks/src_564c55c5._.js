@@ -929,11 +929,22 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
+const isBrowser = "object" !== 'undefined';
 const BulkAnalysisFormSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].object({
     globalTowerHeight: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].coerce.number().min(0, "Tower height must be non-negative.").max(200, "Tower height seems too high."),
     globalFresnelHeight: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].coerce.number().min(0, "Fresnel height (clearance) must be non-negative.").max(100, "Fresnel height seems too high."),
     losCheckRadiusKm: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].coerce.number().min(0.1, "Check radius must be at least 0.1 km.").max(100, "Check radius too large for practical bulk analysis."),
-    kmzFile: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].instanceof(FileList).refine((files)=>files.length === 1, "A KMZ file is required.")
+    kmzFile: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["z"].custom((val)=>!isBrowser || val instanceof FileList, // This error message is a fallback, unlikely to be seen by users as RHF handles file inputs.
+    {
+        message: "Invalid file input. Expected a FileList."
+    }).refine((files)=>!isBrowser || files && files.length === 1, {
+        message: "A single KMZ file is required."
+    }).refine(// Validate by checking file extension or MIME type.
+    (files)=>!isBrowser || files?.[0] && (files[0].name?.toLowerCase().endsWith('.kmz') || files[0].type === 'application/vnd.google-earth.kmz'), {
+        message: "File must be a .kmz file. Please select a valid KMZ."
+    }).refine((files)=>!isBrowser || files?.[0]?.size <= 15 * 1024 * 1024, {
+        message: "KMZ file size must be 15MB or less."
+    })
 });
 function BulkLosAnalyzerPage() {
     _s();
@@ -949,8 +960,10 @@ function BulkLosAnalyzerPage() {
         defaultValues: {
             globalTowerHeight: 20,
             globalFresnelHeight: 10,
-            losCheckRadiusKm: 10
-        }
+            losCheckRadiusKm: 10,
+            kmzFile: undefined
+        },
+        mode: 'onBlur'
     });
     const { register, handleSubmit, control, formState: { errors }, setValue } = form;
     const handleFileChange = async (event)=>{
@@ -960,7 +973,7 @@ function BulkLosAnalyzerPage() {
             setFileName(file.name);
             setValue("kmzFile", files, {
                 shouldValidate: true
-            });
+            }); // Pass FileList to RHF
             try {
                 const placemarks = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$kmz$2d$parser$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["parseKmzFile"])(file);
                 if (placemarks.length < 2) {
@@ -986,16 +999,24 @@ function BulkLosAnalyzerPage() {
                 });
                 setKmzPlacemarks([]);
                 setFileName(null);
-                setValue("kmzFile", new DataTransfer().files, {
-                    shouldValidate: true
-                }); // Reset file input
+                if ("TURBOPACK compile-time truthy", 1) {
+                    setValue("kmzFile", new DataTransfer().files, {
+                        shouldValidate: true
+                    }); // Reset file input
+                } else {
+                    "TURBOPACK unreachable";
+                }
             }
         } else {
             setFileName(null);
             setKmzPlacemarks([]);
-            setValue("kmzFile", new DataTransfer().files, {
-                shouldValidate: true
-            });
+            if ("TURBOPACK compile-time truthy", 1) {
+                setValue("kmzFile", new DataTransfer().files, {
+                    shouldValidate: true
+                });
+            } else {
+                "TURBOPACK unreachable";
+            }
         }
     };
     const generateRemarks = (result, params, fullAnalysisResult)=>{
@@ -1004,6 +1025,7 @@ function BulkLosAnalyzerPage() {
         }
         let remark = "LOS Blocked.";
         if (fullAnalysisResult.minClearance !== null && fullAnalysisResult.profile.length > 0) {
+            // Find the point with the absolute minimum clearance for remarks
             const criticalPoint = fullAnalysisResult.profile.reduce((prev, curr)=>curr.clearance < prev.clearance ? curr : prev);
             remark += ` Obstruction at ${criticalPoint.distance.toFixed(1)}km (Terrain: ${criticalPoint.terrainElevation.toFixed(1)}m, LOS: ${criticalPoint.losHeight.toFixed(1)}m). Actual min clearance: ${fullAnalysisResult.minClearance.toFixed(1)}m.`;
         }
@@ -1027,6 +1049,7 @@ function BulkLosAnalyzerPage() {
         setBulkResults([]);
         const { globalTowerHeight, globalFresnelHeight, losCheckRadiusKm } = data;
         const pairsToAnalyze = [];
+        // Generate unique pairs to analyze based on radius
         for(let i = 0; i < kmzPlacemarks.length; i++){
             for(let j = i + 1; j < kmzPlacemarks.length; j++){
                 const pA = kmzPlacemarks[i];
@@ -1049,7 +1072,7 @@ function BulkLosAnalyzerPage() {
         if (pairsToAnalyze.length === 0) {
             toast({
                 title: "No Pairs Found",
-                description: "No point pairs found within the specified radius.",
+                description: `No point pairs found within the specified ${losCheckRadiusKm}km radius.`,
                 variant: "default"
             });
             setIsProcessing(false);
@@ -1060,6 +1083,7 @@ function BulkLosAnalyzerPage() {
             const { pA, pB } = pairsToAnalyze[i];
             setProcessingMessage(`Analyzing pair ${i + 1} of ${pairsToAnalyze.length}: ${pA.name} - ${pB.name}`);
             try {
+                // Fetch elevation profile for the pair
                 const elevationProfileResponse = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getElevationProfileForPairAction"])({
                     lat: pA.lat,
                     lng: pA.lng
@@ -1068,7 +1092,7 @@ function BulkLosAnalyzerPage() {
                     lng: pB.lng
                 });
                 if (elevationProfileResponse.error || !elevationProfileResponse.profile) {
-                    throw new Error(elevationProfileResponse.error || "Failed to get elevation profile.");
+                    throw new Error(elevationProfileResponse.error || "Failed to get elevation profile for the pair.");
                 }
                 const elevationDataAPI = elevationProfileResponse.profile;
                 const analysisParams = {
@@ -1086,6 +1110,7 @@ function BulkLosAnalyzerPage() {
                     },
                     clearanceThreshold: globalFresnelHeight
                 };
+                // Perform LOS analysis using existing utility
                 const singlePairAnalysis = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["analyzeLOS"])(analysisParams, elevationDataAPI);
                 const resultItemBase = {
                     pointAName: pA.name,
@@ -1112,14 +1137,13 @@ function BulkLosAnalyzerPage() {
                 };
                 tempResults.push({
                     ...resultItemBase,
-                    id: `${pA.name}_${pB.name}_${i}`,
+                    id: `${pA.name}_${pB.name}_${Date.now()}_${i}`,
                     pointACoords: `${pA.lat.toFixed(6)}, ${pA.lng.toFixed(6)}`,
                     pointBCoords: `${pB.lat.toFixed(6)}, ${pB.lng.toFixed(6)}`,
                     remarks: generateRemarks(resultItemBase, analysisParams, singlePairAnalysis)
                 });
             } catch (error) {
                 console.error(`Error analyzing pair ${pA.name} - ${pB.name}:`, error);
-                // Add a failed result item
                 const distance = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$los$2d$calculator$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["calculateDistanceKm"])({
                     lat: pA.lat,
                     lng: pA.lng
@@ -1128,7 +1152,7 @@ function BulkLosAnalyzerPage() {
                     lng: pB.lng
                 });
                 tempResults.push({
-                    id: `${pA.name}_${pB.name}_${i}_error`,
+                    id: `${pA.name}_${pB.name}_${Date.now()}_${i}_error`,
                     pointAName: pA.name,
                     pointACoords: `${pA.lat.toFixed(6)}, ${pA.lng.toFixed(6)}`,
                     pointBName: pB.name,
@@ -1173,7 +1197,7 @@ function BulkLosAnalyzerPage() {
             });
             return;
         }
-        (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$export$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["exportResultsToExcel"])(bulkResults, fileName || "bulk_los_analysis_results.xlsx");
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$export$2d$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["exportResultsToExcel"])(bulkResults, fileName ? `results_${fileName.replace(/\.[^/.]+$/, "")}.xlsx` : "bulk_los_analysis_results.xlsx");
         toast({
             title: "Excel Exported",
             description: "Results downloaded as Excel file."
@@ -1202,7 +1226,7 @@ function BulkLosAnalyzerPage() {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$app$2d$header$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                lineNumber: 255,
+                lineNumber: 284,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1219,27 +1243,27 @@ function BulkLosAnalyzerPage() {
                                             className: "mr-2 h-7 w-7 text-primary"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                            lineNumber: 259,
+                                            lineNumber: 288,
                                             columnNumber: 63
                                         }, this),
                                         "Bulk LOS Analyzer"
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                    lineNumber: 259,
+                                    lineNumber: 288,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardDescription"], {
                                     children: "Upload a KMZ file, set global parameters, and analyze Line-of-Sight for multiple point pairs."
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                    lineNumber: 260,
+                                    lineNumber: 289,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                            lineNumber: 258,
+                            lineNumber: 287,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -1261,26 +1285,26 @@ function BulkLosAnalyzerPage() {
                                                                 children: "KMZ File Upload"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 270,
+                                                                lineNumber: 299,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                                 className: "text-sm text-muted-foreground mb-2",
-                                                                children: "Select a .kmz file containing placemarks."
+                                                                children: "Select a .kmz file containing placemarks. (Max 15MB)"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 271,
+                                                                lineNumber: 300,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
                                                                 id: "kmzFile",
                                                                 type: "file",
-                                                                accept: ".kmz",
+                                                                accept: ".kmz,application/vnd.google-earth.kmz",
                                                                 className: "bg-input/70 border-border hover:border-primary focus:border-primary",
                                                                 onChange: handleFileChange
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 272,
+                                                                lineNumber: 301,
                                                                 columnNumber: 21
                                                             }, this),
                                                             fileName && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1290,11 +1314,11 @@ function BulkLosAnalyzerPage() {
                                                                     fileName,
                                                                     " (",
                                                                     kmzPlacemarks.length,
-                                                                    " placemarks)"
+                                                                    " placemarks found)"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 279,
+                                                                lineNumber: 308,
                                                                 columnNumber: 34
                                                             }, this),
                                                             errors.kmzFile && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1302,13 +1326,13 @@ function BulkLosAnalyzerPage() {
                                                                 children: errors.kmzFile.message
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 280,
+                                                                lineNumber: 309,
                                                                 columnNumber: 40
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 269,
+                                                        lineNumber: 298,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1319,7 +1343,7 @@ function BulkLosAnalyzerPage() {
                                                                 children: "Analysis Parameters"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 284,
+                                                                lineNumber: 313,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1329,7 +1353,7 @@ function BulkLosAnalyzerPage() {
                                                                         children: "Global Tower Height (meters)"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 286,
+                                                                        lineNumber: 315,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -1339,7 +1363,7 @@ function BulkLosAnalyzerPage() {
                                                                         className: "bg-input/70"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 287,
+                                                                        lineNumber: 316,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     errors.globalTowerHeight && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1347,13 +1371,13 @@ function BulkLosAnalyzerPage() {
                                                                         children: errors.globalTowerHeight.message
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 288,
+                                                                        lineNumber: 317,
                                                                         columnNumber: 52
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 285,
+                                                                lineNumber: 314,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1363,7 +1387,7 @@ function BulkLosAnalyzerPage() {
                                                                         children: "Global Fresnel/Clearance Height (meters)"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 291,
+                                                                        lineNumber: 320,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -1373,7 +1397,7 @@ function BulkLosAnalyzerPage() {
                                                                         className: "bg-input/70"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 292,
+                                                                        lineNumber: 321,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     errors.globalFresnelHeight && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1381,13 +1405,13 @@ function BulkLosAnalyzerPage() {
                                                                         children: errors.globalFresnelHeight.message
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 293,
+                                                                        lineNumber: 322,
                                                                         columnNumber: 54
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 290,
+                                                                lineNumber: 319,
                                                                 columnNumber: 21
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1397,7 +1421,7 @@ function BulkLosAnalyzerPage() {
                                                                         children: "LOS Check Radius (kilometers)"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 296,
+                                                                        lineNumber: 325,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -1408,7 +1432,7 @@ function BulkLosAnalyzerPage() {
                                                                         className: "bg-input/70"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 297,
+                                                                        lineNumber: 326,
                                                                         columnNumber: 23
                                                                     }, this),
                                                                     errors.losCheckRadiusKm && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1416,19 +1440,19 @@ function BulkLosAnalyzerPage() {
                                                                         children: errors.losCheckRadiusKm.message
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 298,
+                                                                        lineNumber: 327,
                                                                         columnNumber: 51
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 295,
+                                                                lineNumber: 324,
                                                                 columnNumber: 21
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 283,
+                                                        lineNumber: 312,
                                                         columnNumber: 19
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -1440,26 +1464,26 @@ function BulkLosAnalyzerPage() {
                                                                 className: "mr-2 h-5 w-5 animate-spin"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 302,
+                                                                lineNumber: 331,
                                                                 columnNumber: 37
                                                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$route$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Route$3e$__["Route"], {
                                                                 className: "mr-2 h-5 w-5"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 302,
+                                                                lineNumber: 331,
                                                                 columnNumber: 89
                                                             }, this),
                                                             isProcessing ? 'Analyzing...' : 'Start Bulk Analysis'
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 301,
+                                                        lineNumber: 330,
                                                         columnNumber: 20
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                lineNumber: 268,
+                                                lineNumber: 297,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
@@ -1470,7 +1494,7 @@ function BulkLosAnalyzerPage() {
                                                         children: "Processing & Export"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 309,
+                                                        lineNumber: 338,
                                                         columnNumber: 20
                                                     }, this),
                                                     isProcessing && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1481,7 +1505,7 @@ function BulkLosAnalyzerPage() {
                                                                 children: processingMessage
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 312,
+                                                                lineNumber: 341,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$progress$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Progress"], {
@@ -1489,7 +1513,7 @@ function BulkLosAnalyzerPage() {
                                                                 className: "w-full [&>div]:bg-primary"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 313,
+                                                                lineNumber: 342,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1500,13 +1524,13 @@ function BulkLosAnalyzerPage() {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 314,
+                                                                lineNumber: 343,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 311,
+                                                        lineNumber: 340,
                                                         columnNumber: 21
                                                     }, this),
                                                     !isProcessing && bulkResults.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1521,7 +1545,7 @@ function BulkLosAnalyzerPage() {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 319,
+                                                                lineNumber: 348,
                                                                 columnNumber: 24
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -1533,14 +1557,14 @@ function BulkLosAnalyzerPage() {
                                                                         className: "mr-2 h-4 w-4"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 321,
+                                                                        lineNumber: 350,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     " Export Results to Excel"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 320,
+                                                                lineNumber: 349,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -1552,20 +1576,20 @@ function BulkLosAnalyzerPage() {
                                                                         className: "mr-2 h-4 w-4"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 324,
+                                                                        lineNumber: 353,
                                                                         columnNumber: 25
                                                                     }, this),
                                                                     " Export Feasible Links to KMZ"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 323,
+                                                                lineNumber: 352,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 318,
+                                                        lineNumber: 347,
                                                         columnNumber: 21
                                                     }, this),
                                                     !isProcessing && bulkResults.length === 0 && !fileName && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1575,7 +1599,7 @@ function BulkLosAnalyzerPage() {
                                                                 className: "mx-auto h-12 w-12 text-muted-foreground mb-2"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 330,
+                                                                lineNumber: 359,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1583,13 +1607,13 @@ function BulkLosAnalyzerPage() {
                                                                 children: "Upload a KMZ and set parameters to begin."
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 331,
+                                                                lineNumber: 360,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 329,
+                                                        lineNumber: 358,
                                                         columnNumber: 21
                                                     }, this),
                                                     !isProcessing && bulkResults.length === 0 && fileName && kmzPlacemarks.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1599,7 +1623,7 @@ function BulkLosAnalyzerPage() {
                                                                 className: "mx-auto h-12 w-12 text-amber-500 mb-2"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 336,
+                                                                lineNumber: 365,
                                                                 columnNumber: 23
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1607,30 +1631,54 @@ function BulkLosAnalyzerPage() {
                                                                 children: 'Ready to analyze. Click "Start Bulk Analysis".'
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 337,
+                                                                lineNumber: 366,
                                                                 columnNumber: 23
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 335,
+                                                        lineNumber: 364,
+                                                        columnNumber: 22
+                                                    }, this),
+                                                    !isProcessing && bulkResults.length === 0 && fileName && kmzPlacemarks.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "text-center py-6",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertTriangle$3e$__["AlertTriangle"], {
+                                                                className: "mx-auto h-12 w-12 text-destructive mb-2"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
+                                                                lineNumber: 371,
+                                                                columnNumber: 23
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-muted-foreground",
+                                                                children: "No placemarks found or KMZ parsing failed. Please check the file."
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
+                                                                lineNumber: 372,
+                                                                columnNumber: 23
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
+                                                        lineNumber: 370,
                                                         columnNumber: 22
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                lineNumber: 308,
+                                                lineNumber: 337,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                        lineNumber: 266,
+                                        lineNumber: 295,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                    lineNumber: 265,
+                                    lineNumber: 294,
                                     columnNumber: 13
                                 }, this),
                                 bulkResults.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
@@ -1642,20 +1690,20 @@ function BulkLosAnalyzerPage() {
                                                     children: "Analysis Results"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                    lineNumber: 347,
+                                                    lineNumber: 382,
                                                     columnNumber: 19
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardDescription"], {
                                                     children: "Detailed Line-of-Sight analysis for each processed pair."
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                    lineNumber: 348,
+                                                    lineNumber: 383,
                                                     columnNumber: 19
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                            lineNumber: 346,
+                                            lineNumber: 381,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -1669,35 +1717,35 @@ function BulkLosAnalyzerPage() {
                                                                     children: "Pair"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                    lineNumber: 354,
+                                                                    lineNumber: 389,
                                                                     columnNumber: 25
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableHead"], {
                                                                     children: "Distance (km)"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                    lineNumber: 355,
+                                                                    lineNumber: 390,
                                                                     columnNumber: 25
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableHead"], {
                                                                     children: "LOS Possible"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                    lineNumber: 356,
+                                                                    lineNumber: 391,
                                                                     columnNumber: 25
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableHead"], {
                                                                     children: "Min. Clearance (m)"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                    lineNumber: 357,
+                                                                    lineNumber: 392,
                                                                     columnNumber: 25
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableHead"], {
                                                                     children: "Add. Height (m)"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                    lineNumber: 358,
+                                                                    lineNumber: 393,
                                                                     columnNumber: 25
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableHead"], {
@@ -1705,18 +1753,18 @@ function BulkLosAnalyzerPage() {
                                                                     children: "Remarks"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                    lineNumber: 359,
+                                                                    lineNumber: 394,
                                                                     columnNumber: 25
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                            lineNumber: 353,
+                                                            lineNumber: 388,
                                                             columnNumber: 23
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 352,
+                                                        lineNumber: 387,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableBody"], {
@@ -1731,14 +1779,14 @@ function BulkLosAnalyzerPage() {
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 365,
+                                                                        lineNumber: 400,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableCell"], {
                                                                         children: item.aerialDistanceKm.toFixed(2)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 366,
+                                                                        lineNumber: 401,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableCell"], {
@@ -1746,21 +1794,21 @@ function BulkLosAnalyzerPage() {
                                                                         children: item.losPossible ? 'Yes' : 'No'
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 367,
+                                                                        lineNumber: 402,
                                                                         columnNumber: 27
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableCell"], {
                                                                         children: item.minClearanceActual?.toFixed(1) ?? 'N/A'
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 370,
+                                                                        lineNumber: 405,
                                                                         columnNumber: 28
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableCell"], {
                                                                         children: item.additionalHeightNeeded?.toFixed(1) ?? 'N/A'
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 371,
+                                                                        lineNumber: 406,
                                                                         columnNumber: 28
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableCell"], {
@@ -1768,18 +1816,18 @@ function BulkLosAnalyzerPage() {
                                                                         children: item.remarks
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                        lineNumber: 372,
+                                                                        lineNumber: 407,
                                                                         columnNumber: 27
                                                                     }, this)
                                                                 ]
                                                             }, item.id, true, {
                                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                                lineNumber: 364,
+                                                                lineNumber: 399,
                                                                 columnNumber: 25
                                                             }, this))
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 362,
+                                                        lineNumber: 397,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$table$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TableCaption"], {
@@ -1794,41 +1842,41 @@ function BulkLosAnalyzerPage() {
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                        lineNumber: 376,
+                                                        lineNumber: 411,
                                                         columnNumber: 22
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                                lineNumber: 351,
+                                                lineNumber: 386,
                                                 columnNumber: 19
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                            lineNumber: 350,
+                                            lineNumber: 385,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                                    lineNumber: 345,
+                                    lineNumber: 380,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                            lineNumber: 264,
+                            lineNumber: 293,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                    lineNumber: 257,
+                    lineNumber: 286,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/bulk-los-analyzer/page.tsx",
-                lineNumber: 256,
+                lineNumber: 285,
                 columnNumber: 7
             }, this)
         ]
