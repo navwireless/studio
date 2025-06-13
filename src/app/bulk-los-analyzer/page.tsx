@@ -20,11 +20,27 @@ import type { AnalysisParams, LOSPoint, PointCoordinates, ElevationSampleAPI } f
 import { getElevationProfileForPairAction } from './actions';
 import AppHeader from '@/components/layout/app-header';
 
+const isBrowser = typeof window !== 'undefined';
+
 const BulkAnalysisFormSchema = z.object({
   globalTowerHeight: z.coerce.number().min(0, "Tower height must be non-negative.").max(200, "Tower height seems too high."),
   globalFresnelHeight: z.coerce.number().min(0, "Fresnel height (clearance) must be non-negative.").max(100, "Fresnel height seems too high."),
   losCheckRadiusKm: z.coerce.number().min(0.1, "Check radius must be at least 0.1 km.").max(100, "Check radius too large for practical bulk analysis."),
-  kmzFile: z.instanceof(FileList).refine(files => files.length === 1, "A KMZ file is required."),
+  kmzFile: z.custom<FileList>( // Expect FileList on client
+    (val): val is FileList => !isBrowser || (val instanceof FileList),
+    // This error message is a fallback, unlikely to be seen by users as RHF handles file inputs.
+    { message: "Invalid file input. Expected a FileList." } 
+  ).refine(
+    (files) => !isBrowser || (files && files.length === 1), // On client, check for exactly one file
+    { message: "A single KMZ file is required." }
+  ).refine(
+    // Validate by checking file extension or MIME type.
+    (files) => !isBrowser || (files?.[0] && (files[0].name?.toLowerCase().endsWith('.kmz') || files[0].type === 'application/vnd.google-earth.kmz')),
+    { message: "File must be a .kmz file. Please select a valid KMZ." }
+  ).refine(
+    (files) => !isBrowser || (files?.[0]?.size <= 15 * 1024 * 1024), // 15MB limit
+    { message: "KMZ file size must be 15MB or less." }
+  ),
 });
 
 type BulkAnalysisFormValues = z.infer<typeof BulkAnalysisFormSchema>;
@@ -64,7 +80,9 @@ export default function BulkLosAnalyzerPage() {
       globalTowerHeight: 20,
       globalFresnelHeight: 10,
       losCheckRadiusKm: 10,
+      kmzFile: undefined, // Default kmzFile to undefined
     },
+    mode: 'onBlur', // Validate on blur for better UX
   });
 
   const { register, handleSubmit, control, formState: { errors }, setValue } = form;
@@ -74,7 +92,7 @@ export default function BulkLosAnalyzerPage() {
     if (files && files.length > 0) {
       const file = files[0];
       setFileName(file.name);
-      setValue("kmzFile", files, { shouldValidate: true });
+      setValue("kmzFile", files, { shouldValidate: true }); // Pass FileList to RHF
       try {
         const placemarks = await parseKmzFile(file);
         if (placemarks.length < 2) {
@@ -89,12 +107,20 @@ export default function BulkLosAnalyzerPage() {
         toast({ title: "KMZ Parsing Error", description: error instanceof Error ? error.message : "Could not parse the KMZ file.", variant: "destructive" });
         setKmzPlacemarks([]);
         setFileName(null);
-        setValue("kmzFile", new DataTransfer().files, { shouldValidate: true }); // Reset file input
+        if (isBrowser) {
+          setValue("kmzFile", new DataTransfer().files, { shouldValidate: true }); // Reset file input
+        } else {
+           setValue("kmzFile", undefined, { shouldValidate: true });
+        }
       }
     } else {
       setFileName(null);
       setKmzPlacemarks([]);
-      setValue("kmzFile", new DataTransfer().files, { shouldValidate: true });
+      if (isBrowser) {
+        setValue("kmzFile", new DataTransfer().files, { shouldValidate: true });
+      } else {
+        setValue("kmzFile", undefined, { shouldValidate: true });
+      }
     }
   };
 
@@ -108,6 +134,7 @@ export default function BulkLosAnalyzerPage() {
     }
     let remark = "LOS Blocked.";
     if (fullAnalysisResult.minClearance !== null && fullAnalysisResult.profile.length > 0) {
+      // Find the point with the absolute minimum clearance for remarks
       const criticalPoint = fullAnalysisResult.profile.reduce((prev, curr) => (curr.clearance < prev.clearance ? curr : prev));
       remark += ` Obstruction at ${criticalPoint.distance.toFixed(1)}km (Terrain: ${criticalPoint.terrainElevation.toFixed(1)}m, LOS: ${criticalPoint.losHeight.toFixed(1)}m). Actual min clearance: ${fullAnalysisResult.minClearance.toFixed(1)}m.`;
     }
@@ -132,6 +159,7 @@ export default function BulkLosAnalyzerPage() {
     const { globalTowerHeight, globalFresnelHeight, losCheckRadiusKm } = data;
     const pairsToAnalyze: Array<{ pA: KmzPlacemark, pB: KmzPlacemark }> = [];
 
+    // Generate unique pairs to analyze based on radius
     for (let i = 0; i < kmzPlacemarks.length; i++) {
       for (let j = i + 1; j < kmzPlacemarks.length; j++) {
         const pA = kmzPlacemarks[i];
@@ -144,7 +172,7 @@ export default function BulkLosAnalyzerPage() {
     }
 
     if (pairsToAnalyze.length === 0) {
-      toast({ title: "No Pairs Found", description: "No point pairs found within the specified radius.", variant: "default" });
+      toast({ title: "No Pairs Found", description: `No point pairs found within the specified ${losCheckRadiusKm}km radius.`, variant: "default" });
       setIsProcessing(false);
       return;
     }
@@ -155,13 +183,14 @@ export default function BulkLosAnalyzerPage() {
       setProcessingMessage(`Analyzing pair ${i + 1} of ${pairsToAnalyze.length}: ${pA.name} - ${pB.name}`);
       
       try {
+        // Fetch elevation profile for the pair
         const elevationProfileResponse = await getElevationProfileForPairAction(
           { lat: pA.lat, lng: pA.lng },
           { lat: pB.lat, lng: pB.lng }
         );
 
         if (elevationProfileResponse.error || !elevationProfileResponse.profile) {
-          throw new Error(elevationProfileResponse.error || "Failed to get elevation profile.");
+          throw new Error(elevationProfileResponse.error || "Failed to get elevation profile for the pair.");
         }
         
         const elevationDataAPI: ElevationSampleAPI[] = elevationProfileResponse.profile;
@@ -172,9 +201,10 @@ export default function BulkLosAnalyzerPage() {
           clearanceThreshold: globalFresnelHeight,
         };
         
+        // Perform LOS analysis using existing utility
         const singlePairAnalysis = analyzeLOS(analysisParams, elevationDataAPI);
 
-        const resultItemBase = {
+        const resultItemBase = { // Create a base object for remarks generation and final result
             pointAName: pA.name,
             pointBName: pB.name,
             pointA: { lat: pA.lat, lng: pA.lng, name: pA.name, towerHeight: globalTowerHeight },
@@ -185,12 +215,12 @@ export default function BulkLosAnalyzerPage() {
             losPossible: singlePairAnalysis.losPossible,
             minClearanceActual: singlePairAnalysis.minClearance,
             additionalHeightNeeded: singlePairAnalysis.additionalHeightNeeded,
-            profile: singlePairAnalysis.profile,
+            profile: singlePairAnalysis.profile, // Include profile for potential future use or KMZ
         };
         
         tempResults.push({
             ...resultItemBase,
-            id: `${pA.name}_${pB.name}_${i}`,
+            id: `${pA.name}_${pB.name}_${Date.now()}_${i}`, // More unique ID
             pointACoords: `${pA.lat.toFixed(6)}, ${pA.lng.toFixed(6)}`,
             pointBCoords: `${pB.lat.toFixed(6)}, ${pB.lng.toFixed(6)}`,
             remarks: generateRemarks(resultItemBase, analysisParams, singlePairAnalysis),
@@ -198,10 +228,9 @@ export default function BulkLosAnalyzerPage() {
 
       } catch (error) {
         console.error(`Error analyzing pair ${pA.name} - ${pB.name}:`, error);
-        // Add a failed result item
         const distance = calculateDistanceKm({ lat: pA.lat, lng: pA.lng }, { lat: pB.lat, lng: pB.lng });
         tempResults.push({
-          id: `${pA.name}_${pB.name}_${i}_error`,
+          id: `${pA.name}_${pB.name}_${Date.now()}_${i}_error`,
           pointAName: pA.name,
           pointACoords: `${pA.lat.toFixed(6)}, ${pA.lng.toFixed(6)}`,
           pointBName: pB.name,
@@ -231,7 +260,7 @@ export default function BulkLosAnalyzerPage() {
       toast({ title: "No Results", description: "No analysis results to export.", variant: "destructive" });
       return;
     }
-    exportResultsToExcel(bulkResults, fileName || "bulk_los_analysis_results.xlsx");
+    exportResultsToExcel(bulkResults, fileName ? `results_${fileName.replace(/\.[^/.]+$/, "")}.xlsx` : "bulk_los_analysis_results.xlsx");
     toast({ title: "Excel Exported", description: "Results downloaded as Excel file." });
   };
 
@@ -268,15 +297,15 @@ export default function BulkLosAnalyzerPage() {
                 <Card className="p-6 space-y-6 bg-background/50">
                   <div>
                     <Label htmlFor="kmzFile" className="text-lg font-semibold">KMZ File Upload</Label>
-                    <p className="text-sm text-muted-foreground mb-2">Select a .kmz file containing placemarks.</p>
+                    <p className="text-sm text-muted-foreground mb-2">Select a .kmz file containing placemarks. (Max 15MB)</p>
                     <Input
                       id="kmzFile"
                       type="file"
-                      accept=".kmz"
+                      accept=".kmz,application/vnd.google-earth.kmz"
                       className="bg-input/70 border-border hover:border-primary focus:border-primary"
-                      onChange={handleFileChange}
+                      onChange={handleFileChange} // RHF register is not needed for type="file" if onChange handles setValue
                     />
-                    {fileName && <p className="mt-2 text-sm text-muted-foreground">Selected file: {fileName} ({kmzPlacemarks.length} placemarks)</p>}
+                    {fileName && <p className="mt-2 text-sm text-muted-foreground">Selected file: {fileName} ({kmzPlacemarks.length} placemarks found)</p>}
                     {errors.kmzFile && <p className="text-destructive text-sm mt-1">{errors.kmzFile.message}</p>}
                   </div>
 
@@ -337,6 +366,12 @@ export default function BulkLosAnalyzerPage() {
                       <p className="text-muted-foreground">Ready to analyze. Click "Start Bulk Analysis".</p>
                     </div>
                   )}
+                   {!isProcessing && bulkResults.length === 0 && fileName && kmzPlacemarks.length === 0 && (
+                     <div className="text-center py-6">
+                      <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-2" />
+                      <p className="text-muted-foreground">No placemarks found or KMZ parsing failed. Please check the file.</p>
+                    </div>
+                  )}
                 </Card>
               </div>
             </form>
@@ -385,3 +420,5 @@ export default function BulkLosAnalyzerPage() {
   );
 }
 
+
+    
