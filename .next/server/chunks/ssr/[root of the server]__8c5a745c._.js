@@ -2166,6 +2166,8 @@ const BulkAnalysisMap = ({ placemarks, results })=>{
                 children: [
                     " ",
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["LoadScript"], {
+                        // Use a common, static ID for the script to prevent multiple loads by the library.
+                        id: "google-maps-api-script-loader",
                         googleMapsApiKey: GOOGLE_MAPS_API_KEY,
                         loadingElement: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "w-full h-full flex items-center justify-center bg-muted",
@@ -2173,12 +2175,12 @@ const BulkAnalysisMap = ({ placemarks, results })=>{
                                 className: "h-8 w-8 animate-spin text-primary"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                lineNumber: 106,
+                                lineNumber: 108,
                                 columnNumber: 15
                             }, void 0)
                         }, void 0, false, {
                             fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                            lineNumber: 105,
+                            lineNumber: 107,
                             columnNumber: 13
                         }, void 0),
                         onError: (error)=>setMapLoadError(`Failed to load Google Maps: ${error.message}`),
@@ -2208,7 +2210,7 @@ const BulkAnalysisMap = ({ placemarks, results })=>{
                                         }
                                     }, `${p.name}-${p.lat}-${p.lng}`, false, {
                                         fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                        lineNumber: 118,
+                                        lineNumber: 120,
                                         columnNumber: 15
                                     }, this)),
                                 feasibleLinks.map((link)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Polyline"], {
@@ -2230,7 +2232,7 @@ const BulkAnalysisMap = ({ placemarks, results })=>{
                                         }
                                     }, link.id, false, {
                                         fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                        lineNumber: 134,
+                                        lineNumber: 136,
                                         columnNumber: 15
                                     }, this)),
                                 selectedMarker && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["InfoWindow"], {
@@ -2247,7 +2249,7 @@ const BulkAnalysisMap = ({ placemarks, results })=>{
                                                 children: selectedMarker.name
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                                lineNumber: 151,
+                                                lineNumber: 153,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2257,7 +2259,7 @@ const BulkAnalysisMap = ({ placemarks, results })=>{
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                                lineNumber: 152,
+                                                lineNumber: 154,
                                                 columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2267,24 +2269,24 @@ const BulkAnalysisMap = ({ placemarks, results })=>{
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                                lineNumber: 153,
+                                                lineNumber: 155,
                                                 columnNumber: 19
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                        lineNumber: 150,
+                                        lineNumber: 152,
                                         columnNumber: 17
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                                    lineNumber: 146,
+                                    lineNumber: 148,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/bulk-los/BulkAnalysisMap.tsx",
-                            lineNumber: 111,
+                            lineNumber: 113,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {

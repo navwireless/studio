@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,17 +19,32 @@ import BulkAnalysisParameters from '@/components/bulk-los/BulkAnalysisParameters
 import BulkAnalysisActions from '@/components/bulk-los/BulkAnalysisActions';
 import BulkAnalysisResultsTable from '@/components/bulk-los/BulkAnalysisResultsTable';
 import BulkAnalysisDownloads from '@/components/bulk-los/BulkAnalysisDownloads';
-import BulkAnalysisMap from '@/components/bulk-los/BulkAnalysisMap';
+// import BulkAnalysisMap from '@/components/bulk-los/BulkAnalysisMap'; // Direct import removed
 import BulkAnalysisAnalytics from '@/components/bulk-los/BulkAnalysisAnalytics';
 import { Separator } from '@/components/ui/separator';
+import { Loader2 } from 'lucide-react';
 
 const isBrowser = typeof window !== 'undefined';
+
+const BulkAnalysisMap = dynamic(() => import('@/components/bulk-los/BulkAnalysisMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] md:h-[500px] flex items-center justify-center bg-muted rounded-md">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="ml-2 text-muted-foreground">Loading Map...</p>
+    </div>
+  ),
+});
+
 
 const BulkAnalysisFormSchema = z.object({
   globalTowerHeight: z.coerce.number().min(0, "Tower height must be non-negative.").max(200, "Tower height seems too high (max 200m)."),
   globalFresnelHeight: z.coerce.number().min(0, "Fresnel height (clearance) must be non-negative.").max(100, "Fresnel height seems too high (max 100m)."),
   losCheckRadiusKm: z.coerce.number().min(0.1, "Check radius must be at least 0.1 km.").max(100, "Check radius too large (max 100km)."),
-  // KMZ file validation is handled by the Uploader component and its state
+  // KMZ file validation is primarily handled by the Uploader's internal logic and state.
+  // The schema can have a placeholder or a more complex custom validation if needed here,
+  // but for now, we rely on the uploader's direct feedback.
+  // kmzFile: isBrowser ? z.instanceof(FileList).optional() : z.any().optional(), // Optional here as actual file managed by state
 });
 
 export type BulkAnalysisFormValues = z.infer<typeof BulkAnalysisFormSchema>;
