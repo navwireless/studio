@@ -169,9 +169,11 @@ export default function InteractiveMap({
   }
 
   return (
-    <div className={`${mapContainerClassName}`}>
+    <div className={cn(mapContainerClassName)}>
       <LoadScript
-        googleMapsApiKey={GOOGLE_MAPS_API_KEY as string} // Cast as string after check
+        // Use a common, static ID for the script to prevent multiple loads by the library.
+        id="google-maps-api-script-loader" 
+        googleMapsApiKey={GOOGLE_MAPS_API_KEY as string} 
         loadingElement={
           <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
             <Loader2 className="w-12 h-12 animate-spin mb-3" />

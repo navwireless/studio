@@ -100,6 +100,8 @@ const BulkAnalysisMap: React.FC<BulkAnalysisMapProps> = ({ placemarks, results }
       <CardHeader><CardTitle className="text-lg">Site Map</CardTitle></CardHeader>
       <CardContent className="h-[calc(100%-4rem)] p-0"> {/* Adjust height based on CardHeader padding */}
         <LoadScript
+          // Use a common, static ID for the script to prevent multiple loads by the library.
+          id="google-maps-api-script-loader"
           googleMapsApiKey={GOOGLE_MAPS_API_KEY as string}
           loadingElement={
             <div className="w-full h-full flex items-center justify-center bg-muted">

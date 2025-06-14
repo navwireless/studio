@@ -21,7 +21,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-const GOOGLE_MAPS_API_KEY = ("TURBOPACK compile-time value", "0188c72e6153b262239fba4c592f585b68134867");
+const GOOGLE_MAPS_API_KEY = ("TURBOPACK compile-time value", "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ");
 const defaultCenter = {
     lat: 20.5937,
     lng: 78.9629
@@ -183,8 +183,10 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
         }, this);
     }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: `${mapContainerClassName}`,
+        className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])(mapContainerClassName),
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["LoadScript"], {
+            // Use a common, static ID for the script to prevent multiple loads by the library.
+            id: "google-maps-api-script-loader",
             googleMapsApiKey: GOOGLE_MAPS_API_KEY,
             loadingElement: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground",
@@ -193,7 +195,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                         className: "w-12 h-12 animate-spin mb-3"
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 177,
+                        lineNumber: 179,
                         columnNumber: 13
                     }, void 0),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -201,13 +203,13 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                         children: "Initializing Map Service..."
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 178,
+                        lineNumber: 180,
                         columnNumber: 13
                     }, void 0)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 176,
+                lineNumber: 178,
                 columnNumber: 11
             }, void 0),
             onError: (error)=>{
@@ -244,7 +246,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                 }
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 200,
+                                lineNumber: 202,
                                 columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -259,12 +261,12 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                     children: formPointA.name || "Site A"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                    lineNumber: 212,
+                                    lineNumber: 214,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 207,
+                                lineNumber: 209,
                                 columnNumber: 15
                             }, this)
                         ]
@@ -287,7 +289,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                 }
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 221,
+                                lineNumber: 223,
                                 columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -302,12 +304,12 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                                     children: formPointB.name || "Site B"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                    lineNumber: 233,
+                                    lineNumber: 235,
                                     columnNumber: 17
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                                lineNumber: 228,
+                                lineNumber: 230,
                                 columnNumber: 15
                             }, this)
                         ]
@@ -332,7 +334,7 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 241,
+                        lineNumber: 243,
                         columnNumber: 13
                     }, this),
                     midPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -344,18 +346,18 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
                             children: currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 261,
+                            lineNumber: 263,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 256,
+                        lineNumber: 258,
                         columnNumber: 13
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 186,
+                lineNumber: 188,
                 columnNumber: 9
             }, this)
         }, void 0, false, {

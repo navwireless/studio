@@ -10,6 +10,17 @@
       "layer": {
         "app/page": "action-browser"
       }
+    },
+    "60b3b4fe382537ef24a7e556bf3a571850aa00627c": {
+      "workers": {
+        "app/bulk-los-analyzer/page": {
+          "moduleId": "[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/bulk-los-analyzer/page": "action-browser"
+      }
     }
   },
   "edge": {},
