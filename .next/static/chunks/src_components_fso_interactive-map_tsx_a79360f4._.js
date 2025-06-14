@@ -21,7 +21,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-const GOOGLE_MAPS_API_KEY = ("TURBOPACK compile-time value", "YOUR_GOOGLE_MAPS_JS_API_KEY_HERE");
+const GOOGLE_MAPS_API_KEY = ("TURBOPACK compile-time value", "0188c72e6153b262239fba4c592f585b68134867");
 const defaultCenter = {
     lat: 20.5937,
     lng: 78.9629
@@ -73,9 +73,8 @@ function InteractiveMap({ pointA: formPointA, pointB: formPointB, onMapClick, on
     ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "InteractiveMap.useEffect": ()=>{
-            if ("TURBOPACK compile-time truthy", 1) {
-                setMapLoadError("Google Maps API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.");
-                console.error("Google Maps API key is missing or is a placeholder.");
+            if ("TURBOPACK compile-time falsy", 0) {
+                "TURBOPACK unreachable";
             }
         }
     }["InteractiveMap.useEffect"], []);
