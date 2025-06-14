@@ -4,9 +4,7 @@
 import type { PointCoordinates, ElevationSampleAPI } from '@/types';
 
 // --- Google Elevation API Configuration ---
-// WARNING: Storing API keys directly in code is insecure for production. 
-// Consider using environment variables and restricting API key usage.
-const GOOGLE_ELEVATION_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; // Replace with your actual key or env variable
+const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
 const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
 const GOOGLE_ELEVATION_API_SAMPLES = 100; // Number of samples along the path
 // --- End Google Elevation API Configuration ---
@@ -22,8 +20,9 @@ interface ElevationProfileResponse {
  * This is a simplified version of getGoogleElevationData for bulk use.
  */
 async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = GOOGLE_ELEVATION_API_SAMPLES): Promise<ElevationSampleAPI[]> {
-  if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "") {
-    throw new Error("Google Elevation API key is not configured or is empty.");
+  if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
+    console.error("Google Elevation API key is not configured or is a placeholder for bulk analysis.");
+    throw new Error("Elevation service API key is not configured. Please check server environment variables.");
   }
 
   const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
@@ -35,7 +34,7 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
   } catch (networkError: unknown) {
     const errorMessage = networkError instanceof Error ? networkError.message : String(networkError);
     console.error("Network error fetching elevation data for bulk analysis:", errorMessage);
-    throw new Error(`Network error while trying to reach Google Elevation API: ${errorMessage}`);
+    throw new Error(`Network error while trying to reach Google Elevation API for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}: ${errorMessage}`);
   }
 
   if (!response.ok) {
@@ -45,8 +44,8 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
     } catch (textError) {
       // Ignore if reading error body fails
     }
-    console.error(`Google Elevation API request failed for bulk analysis: ${response.status}`, errorBody);
-    throw new Error(`Google Elevation API request failed with status ${response.status}. Details: ${errorBody}`);
+    console.error(`Google Elevation API request failed for bulk analysis (Pair: ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}): ${response.status}`, errorBody);
+    throw new Error(`Google Elevation API request failed for pair with status ${response.status}. Details: ${errorBody.substring(0,200)}`);
   }
 
   let data;
@@ -55,16 +54,16 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
   } catch (jsonError: unknown) {
     const errorMessage = jsonError instanceof Error ? jsonError.message : String(jsonError);
     console.error("Failed to parse JSON response from Google Elevation API for bulk analysis:", errorMessage);
-    throw new Error(`Failed to parse response from Google Elevation API: ${errorMessage}`);
+    throw new Error(`Failed to parse response from Google Elevation API for pair: ${errorMessage}`);
   }
   
   if (data.status !== 'OK') {
-    console.error("Google Elevation API error for bulk analysis:", data.status, data.error_message);
-    throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown API error'}`);
+    console.error("Google Elevation API error for bulk analysis (Pair: ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}):", data.status, data.error_message);
+    throw new Error(`Google Elevation API error for pair: ${data.status} - ${data.error_message || 'Unknown API error'}`);
   }
 
   if (!data.results || data.results.length === 0) {
-    throw new Error("Google Elevation API returned no results for the given path.");
+    throw new Error("Google Elevation API returned no results for the given path in bulk analysis. Check coordinates.");
   }
     
   return data.results.map((sample: any) => ({
@@ -73,7 +72,7 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
           lat: sample.location.lat,
           lng: sample.location.lng,
       },
-      resolution: sample.resolution, // This might be useful
+      resolution: sample.resolution, 
   }));
 }
 
@@ -86,18 +85,8 @@ export async function getElevationProfileForPairAction(
     const elevationProfile = await fetchElevationForPair(pointA, pointB, GOOGLE_ELEVATION_API_SAMPLES);
     return { profile: elevationProfile };
   } catch (error: unknown) {
-    console.error("Error in getElevationProfileForPairAction:", error);
-    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred fetching elevation profile.";
-    
-    if (errorMessage.includes("Google Elevation API key is not configured")) {
-        return { error: "Elevation service is not configured. Please check the API key."};
-    }
-    if (errorMessage.includes("Google Elevation API request failed") || errorMessage.includes("Google Elevation API error")) {
-        return { error: `Failed to retrieve elevation data. This could be due to an invalid API key, restrictions, or billing issues. Details: ${errorMessage}` };
-    }
-     if (errorMessage.includes("Network error while trying to reach Google Elevation API")) {
-        return { error: errorMessage };
-    }
-    return { error: `Analysis failed for pair due to an unexpected issue: ${errorMessage}` };
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred fetching elevation profile for pair.";
+    console.error("Error in getElevationProfileForPairAction:", errorMessage);
+    return { error: errorMessage }; // Return error as part of the response object
   }
 }

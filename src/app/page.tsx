@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect, useCallback, useId } from 'react';
 import dynamic from 'next/dynamic';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, Controller as FormController } from 'react-hook-form'; // Renamed Controller to FormController
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, Waypoints, MapPin } from 'lucide-react'; // Added MapPin
+import { Loader2, AlertTriangle, Waypoints, MapPin } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
@@ -35,9 +35,12 @@ const BottomPanel = dynamic(() => import('@/components/fso/bottom-panel'), {
 
 export default function Home() {
   const { toast } = useToast();
-  const [serverState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
+  const [rawServerState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [displayedError, setDisplayedError] = useState<string | null>(null);
+  const [displayedFieldErrors, setDisplayedFieldErrors] = useState<Record<string, string[]> | null>(null);
+
   const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
   const [isStale, setIsStale] = useState(false);
@@ -48,7 +51,7 @@ export default function Home() {
 
 
   const form = useForm<AnalysisFormValues>({
-    resolver: zodResolver(AnalysisFormSchema),
+    resolver: zodResolver(AnalysisFormSchema), // Client-side schema
     defaultValues: defaultFormStateValues,
     mode: 'onBlur',
   });
@@ -63,81 +66,99 @@ export default function Home() {
   const formPointBForMap = useWatch({ control, name: 'pointB' });
 
   const processSubmit = useCallback((data: AnalysisFormValues) => {
+    // Clear previous server errors before new submission
+    setDisplayedError(null);
+    setDisplayedFieldErrors(null);
+
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', data.pointA.lat);
     formData.append('pointA.lng', data.pointA.lng);
-    formData.append('pointA.height', data.pointA.height.toString());
+    formData.append('pointA.height', data.pointA.height.toString()); // Server action expects string for height
     formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', data.pointB.lat);
     formData.append('pointB.lng', data.pointB.lng);
-    formData.append('pointB.height', data.pointB.height.toString());
-    formData.append('clearanceThreshold', data.clearanceThreshold);
+    formData.append('pointB.height', data.pointB.height.toString()); // Server action expects string for height
+    formData.append('clearanceThreshold', data.clearanceThreshold); // Server action expects string
     
     React.startTransition(() => {
       formAction(formData);
     });
   }, [formAction]);
 
-  // Effect to handle server action results
+  // Effect to handle server action results or thrown errors
   useEffect(() => {
-    if (serverState) {
-      if (serverState.error) {
-        setAnalysisResult(null); 
+    if (rawServerState === null) return; // Initial state, do nothing
+
+    if (rawServerState instanceof Error) {
+      setAnalysisResult(null);
+      const errorMessage = rawServerState.message || "An unexpected error occurred.";
+      setDisplayedError(errorMessage);
+      toast({
+        title: "Analysis Error",
+        description: errorMessage,
+        variant: "destructive",
+        duration: 7000,
+      });
+      // No field errors when a generic Error is thrown by the action
+      setDisplayedFieldErrors(null); 
+    } else if ('losPossible' in rawServerState) { // Success case
+      // This is an AnalysisResult object
+      const successfulResult = rawServerState as AnalysisResult;
+      
+      setAnalysisResult(successfulResult);
+      setHistoryList(prev => [successfulResult, ...prev.slice(0, 19)]);
+      setLiveDistanceKm(successfulResult.distanceKm);
+      
+      const currentFormValues = getValues(); 
+      // Update form with potentially server-adjusted names or ensure data consistency
+      // The server action adds id and timestamp to the result.
+      // We reset the form to the values that led to *this* successful result
+      // to make `isStale` logic accurate.
+      const formValuesForResult: AnalysisFormValues = {
+        pointA: {
+          name: successfulResult.pointA.name || currentFormValues.pointA.name,
+          lat: successfulResult.pointA.lat.toString(),
+          lng: successfulResult.pointA.lng.toString(),
+          height: successfulResult.pointA.towerHeight,
+        },
+        pointB: {
+          name: successfulResult.pointB.name || currentFormValues.pointB.name,
+          lat: successfulResult.pointB.lat.toString(),
+          lng: successfulResult.pointB.lng.toString(),
+          height: successfulResult.pointB.towerHeight,
+        },
+        clearanceThreshold: successfulResult.clearanceThresholdUsed.toString(),
+      };
+      reset(formValuesForResult); 
+      setIsStale(false); 
+      setDisplayedError(null); // Clear any previous errors
+      setDisplayedFieldErrors(null);
+
+      if (!isAnalysisPanelGloballyOpen) { 
+          setIsAnalysisPanelGloballyOpen(true);
+          setIsBottomPanelContentExpanded(true);
+      }
+      
+      toast({
+        title: "Analysis Complete",
+        description: successfulResult.message || "LOS analysis performed successfully.",
+      });
+    } else if ('error' in rawServerState) { // Error object returned by action (older pattern, now action throws)
+        // This case should ideally not be hit if server action always throws standard Error
+        setAnalysisResult(null);
+        const errorState = rawServerState as { error: string; fieldErrors?: any };
+        setDisplayedError(errorState.error);
+        setDisplayedFieldErrors(errorState.fieldErrors || null);
         toast({
           title: "Analysis Error",
-          description: serverState.error,
+          description: errorState.error,
           variant: "destructive",
           duration: 7000,
         });
-      } else if ('losPossible' in serverState) {
-        // Explicitly type assertion for successful result
-        const successfulResult = serverState as Omit<AnalysisResult, 'id' | 'timestamp'>; 
-        
-        const newResultWithId: AnalysisResult = {
-          ...successfulResult,
-          id: new Date().toISOString() + Math.random().toString(36).substring(2,9), // Simple unique ID
-          timestamp: Date.now(),
-          // Ensure pointA and pointB from params are correctly structured if they were part of serverState
-          // If serverState already includes full pointA/pointB from params, this might be redundant
-          // but ensures they are present as per AnalysisResult type.
-          pointA: { 
-            name: getValues('pointA.name'), 
-            lat: parseFloat(getValues('pointA.lat')), 
-            lng: parseFloat(getValues('pointA.lng')), 
-            towerHeight: getValues('pointA.height')
-          },
-          pointB: { 
-            name: getValues('pointB.name'),
-            lat: parseFloat(getValues('pointB.lat')),
-            lng: parseFloat(getValues('pointB.lng')),
-            towerHeight: getValues('pointB.height')
-          },
-          clearanceThresholdUsed: parseFloat(getValues('clearanceThreshold'))
-        };
-
-        setAnalysisResult(newResultWithId);
-        setHistoryList(prev => [newResultWithId, ...prev.slice(0, 19)]); // Keep last 20 history items
-        setLiveDistanceKm(newResultWithId.distanceKm);
-        
-        const currentFormValues = getValues(); 
-        reset(currentFormValues); 
-        setIsStale(false); 
-
-        if (!isAnalysisPanelGloballyOpen) { 
-            setIsAnalysisPanelGloballyOpen(true);
-            setIsBottomPanelContentExpanded(true);
-        }
-        
-        toast({
-          title: "Analysis Complete",
-          description: newResultWithId.message || "LOS analysis performed successfully.",
-        });
-      }
     }
-  }, [serverState, toast, reset, getValues, isAnalysisPanelGloballyOpen, setValue]);
+  }, [rawServerState, toast, reset, getValues, isAnalysisPanelGloballyOpen, setValue]);
   
-  // Effect to determine if form data is stale compared to current analysisResult
   useEffect(() => {
     const formValues = getValues();
     const currentPointA = formValues.pointA;
@@ -176,11 +197,11 @@ export default function Home() {
         } else {
             newIsStale = false;
         }
-    } else { // No analysisResult exists
+    } else { 
         if (canPerformAnalysisWithCurrentForm) {
-            newIsStale = true; // Ready for a new analysis
+            newIsStale = true; 
         } else {
-            newIsStale = false; // Not ready, or form is pristine matching no analysis
+            newIsStale = false; 
         }
     }
     setIsStale(newIsStale);
@@ -228,8 +249,7 @@ export default function Home() {
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
     const currentValues = getValues();
-    // Auto-analyze on tower height change from graph IS desired
-    handleSubmit(processSubmit)(currentValues); 
+    handleSubmit(processSubmit)(); 
   }, [setValue, handleSubmit, processSubmit, getValues]);
 
 
@@ -244,17 +264,13 @@ export default function Home() {
   const handleStartAnalysisClick = () => {
     setIsAnalysisPanelGloballyOpen(true);
     setIsBottomPanelContentExpanded(true);
-    const formValues = getValues();
-    const { pointA, pointB, clearanceThreshold } = formValues;
-    const isPointDataSufficient = (p: PointFormInputType) => isValidNumericString(p.lat) && isValidNumericString(p.lng);
-    
-    if (isPointDataSufficient(pointA) && isPointDataSufficient(pointB) && isValidNumericString(clearanceThreshold)) {
-        handleSubmit(processSubmit)();
-    }
+    // Trigger RHF validation and then submit
+    handleSubmit(processSubmit)();
   };
 
   const dismissErrorModal = useCallback(() => {
-    // This is primarily a visual dismissal. Error remains in serverState until a new action.
+    setDisplayedError(null); 
+    setDisplayedFieldErrors(null);
   }, []);
 
   const handleToggleHistoryPanel = () => {
@@ -266,19 +282,19 @@ export default function Home() {
     setAnalysisResult(null);
     setLiveDistanceKm(null);
     setIsStale(false);
-    // setHistoryList([]); // Optionally clear history too
+    setDisplayedError(null);
+    setDisplayedFieldErrors(null);
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     if (isAnalysisPanelGloballyOpen) {
-        setIsAnalysisPanelGloballyOpen(false); // Close bottom panel if open
+        setIsAnalysisPanelGloballyOpen(false); 
     }
   };
   
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      setAnalysisResult(itemToLoad);
+      setAnalysisResult(itemToLoad); // This is the full AnalysisResult from server
       
-      // Populate form with history item's data
       const formValuesFromHistory: AnalysisFormValues = {
         pointA: {
           name: itemToLoad.pointA.name || 'Site A',
@@ -296,8 +312,10 @@ export default function Home() {
       };
       reset(formValuesFromHistory);
       setLiveDistanceKm(itemToLoad.distanceKm);
-      setIsStale(false); // Loaded state is not stale initially
-      setIsAnalysisPanelGloballyOpen(true); // Open bottom panel
+      setIsStale(false); 
+      setDisplayedError(null);
+      setDisplayedFieldErrors(null);
+      setIsAnalysisPanelGloballyOpen(true); 
       setIsBottomPanelContentExpanded(true);
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
     }
@@ -310,11 +328,12 @@ export default function Home() {
 
 
   return (
-    <> {/* Using fragment to wrap AppHeader and the main content div */}
+    <> 
       <AppHeader 
         onToggleHistory={handleToggleHistoryPanel}
         onClearMap={handleClearMap}
         isHistoryPanelSupported={true}
+        currentPage="home"
       />
       <div className="flex-1 flex flex-col overflow-hidden relative h-full">
         <div className="flex-1 w-full relative">
@@ -356,7 +375,7 @@ export default function Home() {
           </div>
         )}
 
-        {serverState?.error && !isActionPending && (
+        {displayedError && !isActionPending && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={dismissErrorModal}>
               <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4">
                 <CardHeader>
@@ -365,11 +384,11 @@ export default function Home() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-destructive-foreground mb-4">{serverState.error}</p>
+                  <p className="text-destructive-foreground mb-4 whitespace-pre-wrap">{displayedError}</p>
                   <Button 
                     variant="outline" 
                     className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-                    onClick={(e) => e.stopPropagation()} // Allow main div onClick to dismiss visually
+                    onClick={(e) => { e.stopPropagation(); dismissErrorModal();}} 
                   >
                     Dismiss
                   </Button>
@@ -390,7 +409,7 @@ export default function Home() {
           handleSubmit={handleSubmit}
           processSubmit={processSubmit}
           clientFormErrors={clientFormErrors}
-          serverFormErrors={serverState?.fieldErrors}
+          serverFormErrors={displayedFieldErrors} // Pass displayedFieldErrors here
           isActionPending={isActionPending}
           getValues={getValues}
           setValue={setValue}

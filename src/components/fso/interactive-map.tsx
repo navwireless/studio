@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult } from '@/types';
 import { cn } from '@/lib/utils';
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyDrXNokew1fgXpZmHqgjYB7fGVAkxUfkRQ"; 
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY; 
 
 const defaultCenter = {
   lat: 20.5937, 
@@ -73,9 +73,17 @@ export default function InteractiveMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const [isMapInstanceLoaded, setIsMapInstanceLoaded] = useState(false);
   const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
+  const [mapLoadError, setMapLoadError] = useState<string | null>(null);
 
   const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapInstanceLoaded), [isMapInstanceLoaded]);
   const markerIconB = React.useMemo(() => getCustomMarkerIcon("B", isMapInstanceLoaded), [isMapInstanceLoaded]);
+
+  useEffect(() => {
+    if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_JS_API_KEY_HERE") {
+      setMapLoadError("Google Maps API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.");
+      console.error("Google Maps API key is missing or is a placeholder.");
+    }
+  }, []);
 
   const handleActualMapLoad = useCallback((mapInstance: google.maps.Map) => {
     mapRef.current = mapInstance;
@@ -152,10 +160,18 @@ export default function InteractiveMap({
   } : null;
 
 
+  if (mapLoadError) {
+    return (
+      <div className={cn("w-full h-full flex items-center justify-center bg-destructive/10 text-destructive p-4 text-center", mapContainerClassName)}>
+        <p>{mapLoadError}</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`${mapContainerClassName}`}>
       <LoadScript
-        googleMapsApiKey={GOOGLE_MAPS_API_KEY}
+        googleMapsApiKey={GOOGLE_MAPS_API_KEY as string} // Cast as string after check
         loadingElement={
           <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
             <Loader2 className="w-12 h-12 animate-spin mb-3" />
@@ -164,6 +180,7 @@ export default function InteractiveMap({
         }
         onError={(error) => {
           console.error("[InteractiveMap] LoadScript.onError:", error);
+          setMapLoadError(`Failed to load Google Maps script. Check your API key and network connection. Details: ${error.message}`);
         }}
       >
         <GoogleMap

@@ -1,19 +1,20 @@
 
 import * as XLSX from 'xlsx';
+import type { WorkBook } from 'xlsx';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver'; // For robust downloads
 import type { BulkAnalysisResultItem } from '@/app/bulk-los-analyzer/page';
 import type { KmzPlacemark } from './kmz-parser';
 
 // Excel Export
-export function exportResultsToExcel(results: BulkAnalysisResultItem[], fileName: string = 'bulk_los_analysis.xlsx'): void {
+export function createExcelWorkbook(results: BulkAnalysisResultItem[]): WorkBook {
   const worksheetData = results.map(r => ({
     'Point A Name': r.pointAName,
     'Point A Coordinates': r.pointACoords,
-    'Tower Height A (m)': r.towerHeightUsed, // Assuming global tower height for A
+    'Tower Height A (m)': r.towerHeightUsed,
     'Point B Name': r.pointBName,
     'Point B Coordinates': r.pointBCoords,
-    'Tower Height B (m)': r.towerHeightUsed, // Assuming global tower height for B
+    'Tower Height B (m)': r.towerHeightUsed,
     'Fresnel/Clearance Height (m)': r.fresnelHeightUsed,
     'Aerial Distance (km)': r.aerialDistanceKm,
     'LOS Possible': r.losPossible ? 'Yes' : 'No',
@@ -26,12 +27,22 @@ export function exportResultsToExcel(results: BulkAnalysisResultItem[], fileName
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'LOS Results');
   
-  // Auto-size columns (basic attempt)
-  const colWidths = Object.keys(worksheetData[0] || {}).map(key => ({
-    wch: Math.max(key.length, ...worksheetData.map(row => String(row[key as keyof typeof row] ?? '').length)) + 2
-  }));
-  worksheet['!cols'] = colWidths;
+  if (worksheetData.length > 0) {
+    const colWidths = Object.keys(worksheetData[0] || {}).map(key => ({
+      wch: Math.max(key.length, ...worksheetData.map(row => String(row[key as keyof typeof row] ?? '').length)) + 2
+    }));
+    worksheet['!cols'] = colWidths;
+  } else {
+     worksheet['!cols'] = [
+        { wch: 20 },{ wch: 25 },{ wch: 20 },{ wch: 20 },{ wch: 25 },{ wch: 20 },
+        { wch: 25 },{ wch: 20 },{ wch: 15 },{ wch: 25 },{ wch: 30 },{ wch: 50 }
+     ];
+  }
+  return workbook;
+}
 
+export function exportResultsToExcel(results: BulkAnalysisResultItem[], fileName: string = 'bulk_los_analysis_results.xlsx'): void {
+  const workbook = createExcelWorkbook(results);
   XLSX.writeFile(workbook, fileName);
 }
 
@@ -104,7 +115,7 @@ function generateKmlContent(
     </Folder>
     
     <Folder>
-      <name>Feasible Links</name>
+      <name>Feasible Links (Tower: ${analysisParams.towerHeight}m, Fresnel: ${analysisParams.fresnelHeight}m)</name>
       ${kmlFeasibleLinks}
     </Folder>
   </Document>
@@ -124,24 +135,61 @@ function xmlEscape(str: string): string {
     });
 }
 
+export async function generateKmzBlob(
+  originalPlacemarks: KmzPlacemark[],
+  feasibleLinks: BulkAnalysisResultItem[],
+  analysisParams: { towerHeight: number; fresnelHeight: number }
+): Promise<Blob> {
+  try {
+    const kmlString = generateKmlContent(originalPlacemarks, feasibleLinks, analysisParams);
+    const zip = new JSZip();
+    zip.file("doc.kml", kmlString);
+    return await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
+  } catch (error) {
+    console.error("Error generating KMZ blob:", error);
+    throw new Error(`Failed to generate KMZ blob: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 export async function generateAndDownloadFeasibleLinksKmz(
   originalPlacemarks: KmzPlacemark[],
   feasibleLinks: BulkAnalysisResultItem[],
   analysisParams: { towerHeight: number; fresnelHeight: number },
   fileName: string = 'feasible_links.kmz'
 ): Promise<void> {
-  try {
-    const kmlString = generateKmlContent(originalPlacemarks, feasibleLinks, analysisParams);
-    
-    const zip = new JSZip();
-    zip.file("doc.kml", kmlString); // Standard name for KML file in KMZ
+  const kmzBlob = await generateKmzBlob(originalPlacemarks, feasibleLinks, analysisParams);
+  saveAs(kmzBlob, fileName);
+}
 
-    const kmzBlob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
+export async function generateAndDownloadZipPackage(
+  originalPlacemarks: KmzPlacemark[],
+  bulkResults: BulkAnalysisResultItem[],
+  analysisParams: { towerHeight: number; fresnelHeight: number },
+  baseFileName: string = 'bulk_analysis_package'
+): Promise<void> {
+  try {
+    const zip = new JSZip();
+
+    // Generate Excel data
+    const excelWorkbook = createExcelWorkbook(bulkResults);
+    const excelBuffer = XLSX.write(excelWorkbook, { bookType: 'xlsx', type: 'array' });
+    const excelBlob = new Blob([excelBuffer], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    zip.file(`${baseFileName}_results.xlsx`, excelBlob);
+
+    // Generate KMZ data for feasible links
+    const feasibleLinks = bulkResults.filter(r => r.losPossible);
+    if (feasibleLinks.length > 0) {
+      const kmzBlob = await generateKmzBlob(originalPlacemarks, feasibleLinks, analysisParams);
+      zip.file(`${baseFileName}_feasible_links.kmz`, kmzBlob);
+    } else {
+       zip.file('no_feasible_links_found.txt', 'No feasible links were identified in this analysis run.');
+    }
     
-    saveAs(kmzBlob, fileName);
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    saveAs(zipBlob, `${baseFileName}.zip`);
 
   } catch (error) {
-    console.error("Error generating or downloading KMZ file:", error);
-    throw new Error(`Failed to generate KMZ: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Error generating ZIP package:", error);
+    throw new Error(`Failed to generate ZIP package: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
