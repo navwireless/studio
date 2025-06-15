@@ -2,8 +2,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useId } from 'react';
-import dynamic from 'next/dynamic';
-import { useForm, useWatch, Controller as FormController } from 'react-hook-form'; // Renamed Controller to FormController
+// Removed dynamic import for InteractiveMap as it's now loaded via context
+import InteractiveMap from '@/components/fso/interactive-map';
+import { useForm, useWatch, Controller as FormController } from 'react-hook-form'; 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, AlertTriangle, Waypoints, MapPin } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
@@ -15,22 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
 import HistoryPanel from '@/components/layout/history-panel';
 import { calculateDistanceKm } from '@/lib/los-calculator';
-
-
-const InteractiveMap = dynamic(() => import('@/components/fso/interactive-map'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-muted">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="ml-2 text-muted-foreground">Loading Map...</p>
-    </div>
-  ),
-});
-
-const BottomPanel = dynamic(() => import('@/components/fso/bottom-panel'), {
-  ssr: false,
-  loading: () => null, 
-});
+import BottomPanel from '@/components/fso/bottom-panel';
 
 
 export default function Home() {
@@ -39,8 +25,7 @@ export default function Home() {
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [displayedError, setDisplayedError] = useState<string | null>(null);
-  const [displayedFieldErrors, setDisplayedFieldErrors] = useState<Record<string, string[]> | null>(null);
-
+  
   const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
   const [isStale, setIsStale] = useState(false);
@@ -51,12 +36,12 @@ export default function Home() {
 
 
   const form = useForm<AnalysisFormValues>({
-    resolver: zodResolver(AnalysisFormSchema), // Client-side schema
+    resolver: zodResolver(AnalysisFormSchema), 
     defaultValues: defaultFormStateValues,
     mode: 'onBlur',
   });
 
-  const { register, handleSubmit, control, formState: { errors: clientFormErrors, dirtyFields }, getValues, setValue, reset, watch } = form;
+  const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
 
   const watchedPointA = watch('pointA');
   const watchedPointB = watch('pointB');
@@ -66,29 +51,26 @@ export default function Home() {
   const formPointBForMap = useWatch({ control, name: 'pointB' });
 
   const processSubmit = useCallback((data: AnalysisFormValues) => {
-    // Clear previous server errors before new submission
     setDisplayedError(null);
-    setDisplayedFieldErrors(null);
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
     formData.append('pointA.lat', data.pointA.lat);
     formData.append('pointA.lng', data.pointA.lng);
-    formData.append('pointA.height', data.pointA.height.toString()); // Server action expects string for height
+    formData.append('pointA.height', data.pointA.height.toString()); 
     formData.append('pointB.name', data.pointB.name);
     formData.append('pointB.lat', data.pointB.lat);
     formData.append('pointB.lng', data.pointB.lng);
-    formData.append('pointB.height', data.pointB.height.toString()); // Server action expects string for height
-    formData.append('clearanceThreshold', data.clearanceThreshold); // Server action expects string
+    formData.append('pointB.height', data.pointB.height.toString()); 
+    formData.append('clearanceThreshold', data.clearanceThreshold); 
     
     React.startTransition(() => {
       formAction(formData);
     });
   }, [formAction]);
 
-  // Effect to handle server action results or thrown errors
   useEffect(() => {
-    if (rawServerState === null) return; // Initial state, do nothing
+    if (rawServerState === null) return; 
 
     if (rawServerState instanceof Error) {
       setAnalysisResult(null);
@@ -100,10 +82,7 @@ export default function Home() {
         variant: "destructive",
         duration: 7000,
       });
-      // No field errors when a generic Error is thrown by the action
-      setDisplayedFieldErrors(null); 
-    } else if ('losPossible' in rawServerState) { // Success case
-      // This is an AnalysisResult object
+    } else if ('losPossible' in rawServerState) { 
       const successfulResult = rawServerState as AnalysisResult;
       
       setAnalysisResult(successfulResult);
@@ -111,10 +90,6 @@ export default function Home() {
       setLiveDistanceKm(successfulResult.distanceKm);
       
       const currentFormValues = getValues(); 
-      // Update form with potentially server-adjusted names or ensure data consistency
-      // The server action adds id and timestamp to the result.
-      // We reset the form to the values that led to *this* successful result
-      // to make `isStale` logic accurate.
       const formValuesForResult: AnalysisFormValues = {
         pointA: {
           name: successfulResult.pointA.name || currentFormValues.pointA.name,
@@ -132,8 +107,7 @@ export default function Home() {
       };
       reset(formValuesForResult); 
       setIsStale(false); 
-      setDisplayedError(null); // Clear any previous errors
-      setDisplayedFieldErrors(null);
+      setDisplayedError(null); 
 
       if (!isAnalysisPanelGloballyOpen) { 
           setIsAnalysisPanelGloballyOpen(true);
@@ -144,19 +118,9 @@ export default function Home() {
         title: "Analysis Complete",
         description: successfulResult.message || "LOS analysis performed successfully.",
       });
-    } else if ('error' in rawServerState) { // Error object returned by action (older pattern, now action throws)
-        // This case should ideally not be hit if server action always throws standard Error
-        setAnalysisResult(null);
-        const errorState = rawServerState as { error: string; fieldErrors?: any };
-        setDisplayedError(errorState.error);
-        setDisplayedFieldErrors(errorState.fieldErrors || null);
-        toast({
-          title: "Analysis Error",
-          description: errorState.error,
-          variant: "destructive",
-          duration: 7000,
-        });
     }
+    // Note: The case for `else if ('error' in rawServerState)` for plain error objects from action
+    // is removed because the action now consistently throws `Error` instances.
   }, [rawServerState, toast, reset, getValues, isAnalysisPanelGloballyOpen, setValue]);
   
   useEffect(() => {
@@ -264,13 +228,11 @@ export default function Home() {
   const handleStartAnalysisClick = () => {
     setIsAnalysisPanelGloballyOpen(true);
     setIsBottomPanelContentExpanded(true);
-    // Trigger RHF validation and then submit
     handleSubmit(processSubmit)();
   };
 
   const dismissErrorModal = useCallback(() => {
     setDisplayedError(null); 
-    setDisplayedFieldErrors(null);
   }, []);
 
   const handleToggleHistoryPanel = () => {
@@ -283,7 +245,6 @@ export default function Home() {
     setLiveDistanceKm(null);
     setIsStale(false);
     setDisplayedError(null);
-    setDisplayedFieldErrors(null);
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     if (isAnalysisPanelGloballyOpen) {
         setIsAnalysisPanelGloballyOpen(false); 
@@ -293,7 +254,7 @@ export default function Home() {
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      setAnalysisResult(itemToLoad); // This is the full AnalysisResult from server
+      setAnalysisResult(itemToLoad); 
       
       const formValuesFromHistory: AnalysisFormValues = {
         pointA: {
@@ -314,7 +275,6 @@ export default function Home() {
       setLiveDistanceKm(itemToLoad.distanceKm);
       setIsStale(false); 
       setDisplayedError(null);
-      setDisplayedFieldErrors(null);
       setIsAnalysisPanelGloballyOpen(true); 
       setIsBottomPanelContentExpanded(true);
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
@@ -409,7 +369,7 @@ export default function Home() {
           handleSubmit={handleSubmit}
           processSubmit={processSubmit}
           clientFormErrors={clientFormErrors}
-          serverFormErrors={displayedFieldErrors} // Pass displayedFieldErrors here
+          serverFormErrors={undefined} // Server field errors are no longer passed with this error handling strategy
           isActionPending={isActionPending}
           getValues={getValues}
           setValue={setValue}

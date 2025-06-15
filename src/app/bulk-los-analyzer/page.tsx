@@ -2,7 +2,8 @@
 "use client";
 
 import React, { useState, useCallback } from 'react';
-import dynamic from 'next/dynamic';
+// Removed dynamic import for BulkAnalysisMap
+import BulkAnalysisMap from '@/components/bulk-los/BulkAnalysisMap';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,32 +20,16 @@ import BulkAnalysisParameters from '@/components/bulk-los/BulkAnalysisParameters
 import BulkAnalysisActions from '@/components/bulk-los/BulkAnalysisActions';
 import BulkAnalysisResultsTable from '@/components/bulk-los/BulkAnalysisResultsTable';
 import BulkAnalysisDownloads from '@/components/bulk-los/BulkAnalysisDownloads';
-// import BulkAnalysisMap from '@/components/bulk-los/BulkAnalysisMap'; // Direct import removed
 import BulkAnalysisAnalytics from '@/components/bulk-los/BulkAnalysisAnalytics';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 
 const isBrowser = typeof window !== 'undefined';
 
-const BulkAnalysisMap = dynamic(() => import('@/components/bulk-los/BulkAnalysisMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[400px] md:h-[500px] flex items-center justify-center bg-muted rounded-md">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="ml-2 text-muted-foreground">Loading Map...</p>
-    </div>
-  ),
-});
-
-
 const BulkAnalysisFormSchema = z.object({
   globalTowerHeight: z.coerce.number().min(0, "Tower height must be non-negative.").max(200, "Tower height seems too high (max 200m)."),
   globalFresnelHeight: z.coerce.number().min(0, "Fresnel height (clearance) must be non-negative.").max(100, "Fresnel height seems too high (max 100m)."),
   losCheckRadiusKm: z.coerce.number().min(0.1, "Check radius must be at least 0.1 km.").max(100, "Check radius too large (max 100km)."),
-  // KMZ file validation is primarily handled by the Uploader's internal logic and state.
-  // The schema can have a placeholder or a more complex custom validation if needed here,
-  // but for now, we rely on the uploader's direct feedback.
-  // kmzFile: isBrowser ? z.instanceof(FileList).optional() : z.any().optional(), // Optional here as actual file managed by state
 });
 
 export type BulkAnalysisFormValues = z.infer<typeof BulkAnalysisFormSchema>;
@@ -52,9 +37,9 @@ export type BulkAnalysisFormValues = z.infer<typeof BulkAnalysisFormSchema>;
 export interface BulkAnalysisResultItem {
   id: string;
   pointAName: string;
-  pointACoords: string; // "lat, lng"
+  pointACoords: string; 
   pointBName: string;
-  pointBCoords: string; // "lat, lng"
+  pointBCoords: string; 
   towerHeightUsed: number;
   fresnelHeightUsed: number;
   aerialDistanceKm: number;
@@ -123,7 +108,7 @@ export default function BulkLosAnalyzerPage() {
     setIsProcessing(true);
     setProgress(0);
     setProcessingMessage('Starting analysis...');
-    setBulkResults([]); // Clear previous results before starting a new analysis
+    setBulkResults([]); 
 
     const { globalTowerHeight, globalFresnelHeight, losCheckRadiusKm } = data;
     const pairsToAnalyze: Array<{ pA: KmzPlacemark, pB: KmzPlacemark }> = [];
@@ -215,8 +200,6 @@ export default function BulkLosAnalyzerPage() {
         });
       }
       setProgress(Math.round(((i + 1) / totalPairs) * 100));
-       // Optional: Short delay to allow UI updates if processing is very fast
-       // await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     setBulkResults(tempResults);
@@ -229,7 +212,7 @@ export default function BulkLosAnalyzerPage() {
     setKmzFile(file);
     setKmzPlacemarks(placemarks);
     setFileName(fName);
-    setBulkResults([]); // Clear results when a new file is uploaded
+    setBulkResults([]); 
     setProgress(0);
     setProcessingMessage('');
   };
@@ -238,7 +221,7 @@ export default function BulkLosAnalyzerPage() {
   return (
     <>
       <AppHeader currentPage="bulk" />
-      <div className="container mx-auto p-2 sm:p-4 md:p-6 lg:p-8 h-[calc(100vh-theme(spacing.12)-theme(spacing.12))] overflow-y-auto custom-scrollbar"> {/* Adjusted height for footer */}
+      <div className="container mx-auto p-2 sm:p-4 md:p-6 lg:p-8 h-[calc(100vh-theme(spacing.12)-theme(spacing.12))] overflow-y-auto custom-scrollbar">
         <Card className="max-w-7xl mx-auto shadow-xl bg-card/90 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>

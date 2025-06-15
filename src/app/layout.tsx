@@ -3,9 +3,8 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-// AppHeader is now rendered within page.tsx or specific layouts that need it, to pass props.
-// import AppHeader from '@/components/layout/app-header'; 
 import Footer from '@/components/layout/footer';
+import { GoogleMapsLoaderProvider } from '@/components/GoogleMapsLoaderProvider'; // Import the provider
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -34,12 +33,13 @@ export default function RootLayout({
                    bg-background text-foreground 
                    flex flex-col h-screen overflow-hidden`}
       >
-        {/* AppHeader will be part of the children, typically in page.tsx */}
-        <main className="flex-1 overflow-hidden relative flex flex-col"> {/* Ensure main can flex its children */}
-          {children}
-        </main>
-        <Footer />
-        <Toaster />
+        <GoogleMapsLoaderProvider> {/* Wrap with the provider */}
+          <main className="flex-1 overflow-hidden relative flex flex-col">
+            {children}
+          </main>
+          <Footer />
+          <Toaster />
+        </GoogleMapsLoaderProvider>
       </body>
     </html>
   );
