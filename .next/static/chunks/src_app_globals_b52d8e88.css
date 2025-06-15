@@ -467,10 +467,6 @@ body {
   visibility: hidden;
 }
 
-.static {
-  position: static;
-}
-
 .fixed {
   position: fixed;
 }
@@ -691,10 +687,6 @@ body {
 
 .mb-4 {
   margin-bottom: 1rem;
-}
-
-.ml-2 {
-  margin-left: .5rem;
 }
 
 .ml-auto {
@@ -980,10 +972,6 @@ body {
 
 .w-72 {
   width: 18rem;
-}
-
-.w-8 {
-  width: 2rem;
 }
 
 .w-9 {
