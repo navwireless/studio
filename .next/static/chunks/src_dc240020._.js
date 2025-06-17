@@ -495,6 +495,7 @@ const GoogleMapsLoaderProvider = ({ children })=>{
         googleMapsApiKey: GOOGLE_MAPS_API_KEY,
         libraries: libraries
     });
+    // If loadError occurs after attempting to load with a key, GoogleMapsScriptGuard will handle displaying it.
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(GoogleMapsLoaderContext.Provider, {
         value: {
             isLoaded,
@@ -503,7 +504,7 @@ const GoogleMapsLoaderProvider = ({ children })=>{
         children: children
     }, void 0, false, {
         fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
-        lineNumber: 48,
+        lineNumber: 52,
         columnNumber: 5
     }, this);
 };
@@ -513,26 +514,69 @@ _s1(GoogleMapsLoaderProvider, "Cye17iwlLw61yP2k5hqy29yMy+o=", false, function() 
     ];
 });
 _c = GoogleMapsLoaderProvider;
-const GoogleMapsScriptGuard = ({ children, loadingMessage = "Loading Map...", errorMessage = "Error loading Google Maps." })=>{
+const GoogleMapsScriptGuard = ({ children, loadingMessage = "Loading Map...", errorMessagePrefix = "Error loading Google Maps:" })=>{
     _s2();
     const { isLoaded, loadError } = useGoogleMapsLoader();
     if (loadError) {
+        console.error("Google Maps Load Error:", loadError);
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "w-full h-full flex items-center justify-center bg-destructive/10 text-destructive p-4 text-center",
-            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                children: [
-                    errorMessage,
-                    " Details: ",
-                    loadError.message
-                ]
-            }, void 0, true, {
-                fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
-                lineNumber: 65,
-                columnNumber: 9
-            }, this)
-        }, void 0, false, {
+            className: "w-full h-full flex flex-col items-center justify-center bg-destructive/10 text-destructive p-4 text-center",
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                    className: "text-lg font-semibold mb-2",
+                    children: "Google Maps Error"
+                }, void 0, false, {
+                    fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
+                    lineNumber: 70,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                    children: errorMessagePrefix
+                }, void 0, false, {
+                    fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
+                    lineNumber: 71,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                    className: "mt-1 text-sm",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
+                        children: [
+                            loadError.name,
+                            ": ",
+                            loadError.message
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
+                        lineNumber: 72,
+                        columnNumber: 37
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
+                    lineNumber: 72,
+                    columnNumber: 9
+                }, this),
+                loadError.message?.includes("InvalidKeyMapError") && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                    className: "mt-2 text-xs",
+                    children: [
+                        "This usually means the ",
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("code", {
+                            children: "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"
+                        }, void 0, false, {
+                            fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
+                            lineNumber: 75,
+                            columnNumber: 40
+                        }, this),
+                        " is invalid, expired, or has incorrect restrictions (e.g., HTTP referrers) in the Google Cloud Console. Ensure the Maps JavaScript API is enabled for this key."
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
+                    lineNumber: 74,
+                    columnNumber: 13
+                }, this)
+            ]
+        }, void 0, true, {
             fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
-            lineNumber: 64,
+            lineNumber: 69,
             columnNumber: 7
         }, this);
     }
@@ -544,7 +588,7 @@ const GoogleMapsScriptGuard = ({ children, loadingMessage = "Loading Map...", er
                     className: "w-12 h-12 animate-spin mb-3"
                 }, void 0, false, {
                     fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
-                    lineNumber: 73,
+                    lineNumber: 86,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -552,13 +596,13 @@ const GoogleMapsScriptGuard = ({ children, loadingMessage = "Loading Map...", er
                     children: loadingMessage
                 }, void 0, false, {
                     fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
-                    lineNumber: 74,
+                    lineNumber: 87,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/components/GoogleMapsLoaderProvider.tsx",
-            lineNumber: 72,
+            lineNumber: 85,
             columnNumber: 7
         }, this);
     }

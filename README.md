@@ -18,6 +18,9 @@ Create a `.env.local` file in the root of your project and add the following var
 GOOGLE_ELEVATION_API_KEY=YOUR_GOOGLE_ELEVATION_API_KEY_HERE
 
 # For Google Maps JavaScript API (used for client-side maps)
+# THIS IS A COMMON SOURCE OF "InvalidKeyMapError".
+# Ensure this key is valid, unrestricted for your dev/prod domains,
+# and has the "Maps JavaScript API" enabled in Google Cloud Console.
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_JS_API_KEY_HERE
 
 # For Google Directions API (used in server actions for fiber path calculations)
@@ -72,7 +75,7 @@ CRON_SECRET_TOKEN=YOUR_SECURE_RANDOM_CRON_TOKEN
 ### Important Notes on Environment Variables:
 
 *   Replace all `YOUR_..._HERE` placeholders with your actual credentials and values.
-*   **`GOOGLE_..._API_KEY`s**: Ensure the respective APIs (Elevation, Maps JavaScript, Directions) are enabled in your Google Cloud Console for the project associated with these keys. Apply appropriate restrictions (e.g., API restrictions, HTTP referrers for client-side keys).
+*   **`GOOGLE_..._API_KEY`s**: Ensure the respective APIs (Elevation, Maps JavaScript, Directions) are enabled in your Google Cloud Console for the project associated with these keys. Apply appropriate restrictions (e.g., API restrictions, HTTP referrers for client-side keys like `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`).
 *   **`NEXTAUTH_URL`**: Critical for NextAuth.js. It must exactly match how you access the app. For local development, if `npm run dev` runs on port 9002, it should be `http://localhost:9002`. For production, it's your production URL (e.g., `https://your-app.com`).
 *   **`FIREBASE_PRIVATE_KEY`**: The private key should be the full multi-line string. When placing it in `.env.local`, ensure that actual newline characters within the key are represented as `\\n`.
 *   **Security**: `.env.local` is ignored by Git by default (as it should be, to protect your keys). Ensure it's listed in your `.gitignore` file.
@@ -82,6 +85,13 @@ CRON_SECRET_TOKEN=YOUR_SECURE_RANDOM_CRON_TOKEN
 
 ### Troubleshooting Common Errors:
 
+*   **Google Maps `InvalidKeyMapError`**:
+    1.  **Check `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`**: Is it set in `.env.local`? Is it the correct key, not a placeholder?
+    2.  **Enable Maps JavaScript API**: In Google Cloud Console, ensure the "Maps JavaScript API" is enabled for the project associated with this key.
+    3.  **API Key Restrictions**:
+        *   **Application restrictions**: If you have "HTTP referrers" set, ensure your development URL (e.g., `http://localhost:9002/*`) and production URL are listed. For local development, sometimes using no referrer restriction or a very broad one (like `*`) temporarily can help isolate if this is the issue. *Remember to secure it properly for production.*
+        *   **API restrictions**: Ensure the key is permitted to use the "Maps JavaScript API".
+    4.  **Billing**: Verify that billing is enabled for your Google Cloud project and the account is in good standing.
 *   **NextAuth `CLIENT_FETCH_ERROR` ("Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON")**:
     1.  **Check `NEXTAUTH_URL`**: Is it *exactly* correct in `.env.local`? (e.g., `http://localhost:9002` vs `http://127.0.0.1:9002`).
     2.  **Google OAuth Redirect URIs**: In Google Cloud Console, ensure your "Authorized redirect URIs" for your OAuth 2.0 Client ID include `${NEXTAUTH_URL}/api/auth/callback/google`.
