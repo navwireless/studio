@@ -10,9 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart'; 
-import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React from 'react'; 
+import React, { useState } from 'react'; 
+import { useToast } from '@/hooks/use-toast';
+import { saveAs } from 'file-saver';
+import { generateSingleAnalysisPdfReportAction } from '@/app/actions';
+
 
 interface SiteInputGroupProps {
   id: 'pointA' | 'pointB';
@@ -111,6 +115,8 @@ interface ProfilePanelMiddleColumnProps {
   pointAName: string;
   pointBName: string;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
+  onDownloadPdf: () => void;
+  isGeneratingPdf: boolean;
 }
 
 const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
@@ -126,6 +132,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   pointAName,
   pointBName,
   onTowerHeightChangeFromGraph,
+  onDownloadPdf,
+  isGeneratingPdf,
 }) => {
   const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
   const minRequiredClearance = parseFloat(watchedClearanceThresholdString); 
@@ -200,17 +208,31 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </>
         )}
         
-        <div className="order-3 flex-grow-0 md:flex-grow-0 text-center">
+        <div className="order-3 flex-grow-0 md:flex-grow-0 text-center flex items-center gap-2">
              <Button
                 type="submit"
                 onClick={handleSubmit(processSubmit)}
-                disabled={isActionPending}
+                disabled={isActionPending || isGeneratingPdf}
                 size="sm"
                 className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight"
             >
                 <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
                 {buttonText}
             </Button>
+            {analysisResult && !isStale && (
+                 <Button
+                    type="button"
+                    onClick={onDownloadPdf}
+                    disabled={isActionPending || isGeneratingPdf || !analysisResult || isStale}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10"
+                >
+                    <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin" )} />
+                    <Download className={cn("mr-1.5 h-3.5 w-3.5", isGeneratingPdf && "hidden")} />
+                    PDF
+                </Button>
+            )}
         </div>
 
 
@@ -310,6 +332,8 @@ export default function BottomPanel({
   setValue, 
   onTowerHeightChangeFromGraph,
 }: BottomPanelProps) {
+  const { toast } = useToast();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
     if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
@@ -318,6 +342,40 @@ export default function BottomPanel({
   
   const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: analysisResult?.pointA?.name || "Site A" });
   const pointBName = useWatch({ control, name: 'pointB.name', defaultValue: analysisResult?.pointB?.name || "Site B" });
+
+  const handleDownloadPdf = async () => {
+    if (!analysisResult) {
+      toast({ title: "Error", description: "No analysis data available to generate PDF.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingPdf(true);
+    try {
+      const response = await generateSingleAnalysisPdfReportAction(analysisResult, {
+        // reportTitle: "Custom Report Title", // Example of passing options
+      });
+
+      if (response.success) {
+        const { base64Pdf, fileName } = response.data;
+        const byteCharacters = atob(base64Pdf);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        saveAs(blob, fileName);
+        toast({ title: "Success", description: "PDF report downloaded." });
+      } else {
+        throw new Error(response.error);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error generating PDF.";
+      console.error("PDF Generation Error:", error);
+      toast({ title: "PDF Generation Failed", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
   
   return (
     <form 
@@ -329,20 +387,6 @@ export default function BottomPanel({
         "z-[50]" // Ensure panel is above map, but below modals/toasts
       )}
     >
-      {/* Removed the explicit X close button as per user request */}
-      {/* 
-      <div className="absolute -top-3 right-3 z-[60]">
-        <button
-          type="button" 
-          onClick={onToggleGlobalVisibility}
-          className="p-1.5 rounded-full bg-card hover:bg-muted border border-border shadow-md text-muted-foreground hover:text-foreground transition-all duration-200"
-          aria-label={isPanelGloballyVisible ? "Hide Analysis Panel" : "Show Analysis Panel"}
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      */}
-
       <div 
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
@@ -377,6 +421,8 @@ export default function BottomPanel({
               pointAName={pointAName || "Site A"}
               pointBName={pointBName || "Site B"}
               onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
+              onDownloadPdf={handleDownloadPdf}
+              isGeneratingPdf={isGeneratingPdf}
             />
             
             <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">

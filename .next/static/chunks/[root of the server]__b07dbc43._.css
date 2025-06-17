@@ -1577,6 +1577,10 @@ body {
   border-color: #fff3;
 }
 
+.border-primary\/50 {
+  border-color: hsl(var(--primary) / .5);
+}
+
 .border-l-transparent {
   border-left-color: #0000;
 }
@@ -2604,6 +2608,10 @@ body {
 
 .hover\:bg-slate-900\/10:hover {
   background-color: #0f172a1a;
+}
+
+.hover\:bg-primary\/10:hover {
+  background-color: hsl(var(--primary) / .1);
 }
 
 .hover\:text-accent-foreground:hover {

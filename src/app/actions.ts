@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI } from '@/types';
 import { analyzeLOS } from '@/lib/los-calculator';
+import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/tools/report-generator';
 
 // --- Google Elevation API Configuration ---
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
@@ -143,39 +144,34 @@ export async function performLosAnalysis(
       }
       
       console.error("Server-side Zod validation errors:", finalErrorMessage, flattenedErrors);
-      // For client display, we return an object with an error and potentially structured field errors
-      // if the client-side page is set up to handle them.
-      // For now, a general error message from the thrown Error will be used by page.tsx.
       throw new Error(finalErrorMessage.trim());
     }
 
-    // At this point, validationResult.data contains transformed and validated data
     const validatedData = validationResult.data;
 
     const params: AnalysisParams = {
       pointA: {
         name: validatedData.pointA.name,
-        lat: parseFloat(rawFormData.pointA.lat), // lat/lng strings are fine here as parseFloat is robust
+        lat: parseFloat(rawFormData.pointA.lat), 
         lng: parseFloat(rawFormData.pointA.lng),
-        towerHeight: validatedData.pointA.height, // height is now a number from Zod transform
+        towerHeight: validatedData.pointA.height, 
       },
       pointB: {
         name: validatedData.pointB.name,
         lat: parseFloat(rawFormData.pointB.lat),
         lng: parseFloat(rawFormData.pointB.lng),
-        towerHeight: validatedData.pointB.height, // height is now a number
+        towerHeight: validatedData.pointB.height, 
       },
-      clearanceThreshold: validatedData.clearanceThreshold, // clearanceThreshold is now a number
+      clearanceThreshold: validatedData.clearanceThreshold, 
     };
     
     const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
     const result = analyzeLOS(params, elevationData);
     
-    // Ensure the returned object is serializable and matches AnalysisResult or Error state
     return { 
-      ...result, // Contains all fields from analyzeLOS output
-      id: new Date().toISOString() + Math.random().toString(36).substring(2,9), // Ensure ID is added server-side
-      timestamp: Date.now(), // Ensure timestamp is added server-side
+      ...result, 
+      id: new Date().toISOString() + Math.random().toString(36).substring(2,9), 
+      timestamp: Date.now(), 
       message: `${result.message} Using Google Elevation API data.` 
     };
 
@@ -183,17 +179,37 @@ export async function performLosAnalysis(
     let clientErrorMessageString: string;
 
     if (err instanceof Error) {
-      clientErrorMessageString = String(err.message); // Ensure message is a string
+      clientErrorMessageString = String(err.message); 
     } else {
       clientErrorMessageString = "An unknown error occurred during analysis.";
     }
     
     console.error("Error in performLosAnalysis server action:", clientErrorMessageString, err);
-
-    // Match the expected return type for errors
-    // The page.tsx will handle displaying this error.
-    // No need to return fieldErrors here if we are throwing, as the client
-    // will get the error instance via useActionState.
     throw new Error(clientErrorMessageString);
+  }
+}
+
+
+export async function generateSingleAnalysisPdfReportAction(
+  analysisResult: AnalysisResult,
+  reportOptions?: ReportGenerationOptions
+): Promise<{ success: true; data: { base64Pdf: string; fileName: string } } | { success: false; error: string }> {
+  try {
+    if (!analysisResult) {
+      return { success: false, error: "Analysis result data is missing." };
+    }
+
+    const pdfBytes = await generatePdfReportForSingleAnalysis(analysisResult, reportOptions);
+    const base64Pdf = Buffer.from(pdfBytes).toString('base64');
+    
+    const safePointAName = (analysisResult.pointA.name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
+    const safePointBName = (analysisResult.pointB.name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `LOS_Report_${safePointAName}_to_${safePointBName}.pdf`;
+
+    return { success: true, data: { base64Pdf, fileName } };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during PDF report generation.";
+    console.error("Error generating PDF report action:", errorMessage, error);
+    return { success: false, error: `Failed to generate PDF report: ${errorMessage}` };
   }
 }
