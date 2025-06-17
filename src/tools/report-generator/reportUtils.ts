@@ -8,92 +8,114 @@ import type { AnalysisResult } from '@/types';
 
 export const DEFAULT_COMPANY_NAME = "Nav Wireless Technologies Pvt. Ltd.";
 export const DEFAULT_REPORT_TITLE = "LiFi Link Feasibility Report";
+export const DEFAULT_LOGO_URL = "https://storage.googleapis.com/project-fabrica-chat-agent-test-assets/images/ZepPjV2n7N_nav_wireless_logo.png";
+
 
 // Common styling constants (can be expanded)
-export const BRAND_COLOR_PRIMARY_RGB = { r: 63/255, g: 81/255, b: 181/255 }; // #3F51B5
-export const BRAND_COLOR_ACCENT_RGB = { r: 139/255, g: 195/255, b: 74/255 }; // #8BC34A
+export const BRAND_COLOR_PRIMARY_RGB = { r: 63/255, g: 81/255, b: 181/255 }; // #3F51B5 (Example Blue)
+export const BRAND_COLOR_ACCENT_RGB = { r: 0/255, g: 150/255, b: 136/255 }; // #009688 (Example Teal)
+export const TEXT_COLOR_DARK_RGB = { r: 0.1, g: 0.1, b: 0.1 };
+export const TEXT_COLOR_LIGHT_RGB = { r: 0.4, g: 0.4, b: 0.4 };
+export const LINE_COLOR_RGB = { r: 0.8, g: 0.8, b: 0.8 };
 
 // --- PDF Utilities ---
 
 export async function addHeaderToPdfPage(
     page: PDFPage,
     font: PDFFont,
-    logoImageBytes: Uint8Array | undefined,
     pdfDoc: PDFDocument,
     reportTitle: string = DEFAULT_REPORT_TITLE,
-    companyName: string = DEFAULT_COMPANY_NAME
+    companyName: string = DEFAULT_COMPANY_NAME,
+    logoImageBytes?: Uint8Array
 ) {
     const { width, height } = page.getSize();
-    const margin = 30;
-    const headerHeight = 50;
+    const margin = 40; // Increased margin
+    const headerHeight = 60; // Increased header area
+    const titleFontSize = 16;
+    const companyFontSize = 10;
+    const logoMaxHeight = 40;
 
-    // Placeholder for company logo
+    // Draw Company Name (or logo placeholder)
     if (logoImageBytes) {
         try {
             const logoImage = await pdfDoc.embedPng(logoImageBytes);
-            const logoDims = logoImage.scale(0.25); // Adjust scale as needed
-             page.drawImage(logoImage, {
+            let logoWidth = logoImage.width;
+            let logoHeight = logoImage.height;
+
+            if (logoHeight > logoMaxHeight) {
+                const scale = logoMaxHeight / logoHeight;
+                logoHeight = logoMaxHeight;
+                logoWidth = logoWidth * scale;
+            }
+            
+            page.drawImage(logoImage, {
                 x: margin,
-                y: height - margin - logoDims.height + 10, // Adjust Y to align better
-                width: logoDims.width,
-                height: logoDims.height,
+                y: height - margin - logoHeight + (logoMaxHeight - logoHeight) / 2, // Vertically center logo in its allocated space
+                width: logoWidth,
+                height: logoHeight,
             });
         } catch (e) {
-            console.warn("Could not embed logo in PDF:", e);
+            console.warn("Could not embed logo in PDF, drawing company name text instead:", e);
+            page.drawText(companyName, {
+                x: margin,
+                y: height - margin - companyFontSize,
+                font: font,
+                size: companyFontSize,
+                color: TEXT_COLOR_LIGHT_RGB,
+            });
         }
     } else {
-         page.drawText(companyName, {
+        page.drawText(companyName, {
             x: margin,
-            y: height - margin - 12,
+            y: height - margin - companyFontSize,
             font: font,
-            size: 10,
-            color: rgb(0.3, 0.3, 0.3),
+            size: companyFontSize,
+            color: TEXT_COLOR_LIGHT_RGB,
         });
     }
 
-
+    // Draw Report Title (aligned right)
+    const titleWidth = font.widthOfTextAtSize(reportTitle, titleFontSize);
     page.drawText(reportTitle, {
-        x: width - margin,
-        y: height - margin - 18, // Adjusted for better alignment if logo is present
+        x: width - margin - titleWidth,
+        y: height - margin - titleFontSize, 
         font: font,
-        size: 14,
-        color: rgb(0, 0, 0),
-        maxWidth: width / 2 - margin,
-        lineHeight: 15,
-        // @ts-ignore//This is a valid property in pdf-lib for text alignment
-        textAlign: 'right', 
+        size: titleFontSize,
+        color: TEXT_COLOR_DARK_RGB,
     });
     
     // Draw a line below header
+    const lineY = height - headerHeight - margin + 10;
     page.drawLine({
-        start: { x: margin, y: height - headerHeight - margin + 5 },
-        end: { x: width - margin, y: height - headerHeight - margin + 5 },
-        thickness: 0.5,
-        color: rgb(0.7, 0.7, 0.7),
+        start: { x: margin, y: lineY },
+        end: { x: width - margin, y: lineY },
+        thickness: 0.8,
+        color: LINE_COLOR_RGB,
     });
 
-    return height - headerHeight - margin - 10; // Return usable Y coordinate after header
+    return lineY - 20; // Return usable Y coordinate below header line
 }
 
-export function addFooterToPdfPage(page: PDFPage, font: PDFFont, pageNumber: number, totalPages: number) {
+export function addFooterToPdfPage(page: PDFPage, font: PDFFont, pageNumber: number, totalPages: number, companyName: string = DEFAULT_COMPANY_NAME) {
     const { width, height } = page.getSize();
-    const margin = 30;
-    const footerText = `Page ${pageNumber} of ${totalPages} | ${DEFAULT_COMPANY_NAME} | ${new Date().toLocaleDateString()}`;
-    const textSize = 8;
+    const margin = 40;
+    const footerText = `Page ${pageNumber} of ${totalPages} | ${companyName} | ${new Date().toLocaleDateString()}`;
+    const textSize = 9;
     const textWidth = font.widthOfTextAtSize(footerText, textSize);
     
     page.drawText(footerText, {
         x: (width - textWidth) / 2,
-        y: margin,
+        y: margin - 10, // Position slightly lower
         size: textSize,
         font: font,
-        color: rgb(0.5, 0.5, 0.5),
+        color: TEXT_COLOR_LIGHT_RGB,
     });
 }
 
 // --- DOCX Utilities ---
 
 export function createDocxHeader(logoImageBuffer?: Buffer): Header {
+    // Implementation for DOCX header can be refined later
     const children = [
         new Paragraph({
             alignment: AlignmentType.RIGHT,
@@ -115,8 +137,8 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                         new ImageRun({
                             data: logoImageBuffer,
                             transformation: {
-                                width: 100, // adjust as needed
-                                height: 24, // adjust as needed
+                                width: 100, 
+                                height: 24, 
                             },
                         }),
                     ],
@@ -134,7 +156,7 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
     return new Header({
         children: [
             new Table({
-                columnWidths: [2000, 7500], // Adjust as needed
+                columnWidths: [2000, 7500], 
                 borders: {
                     top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
                     bottom: { style: BorderStyle.SINGLE, size: 6, color: "auto" },
@@ -157,7 +179,7 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                                 children: [new Paragraph({
                                     text: DEFAULT_REPORT_TITLE,
                                     alignment: AlignmentType.RIGHT,
-                                    style: "Heading1", // Assuming a style 'Heading1' is defined or use direct formatting
+                                    // style: "Heading1", // Assuming a style 'Heading1' is defined or use direct formatting
                                 })],
                                 verticalAlign: VerticalAlign.CENTER,
                                 borders: { left: { style: BorderStyle.NONE } } as IBorderOptions,
@@ -216,21 +238,22 @@ export function formatAnalysisDataForReportTable(analysisResult: AnalysisResult)
 }
 
 export async function fetchLogoImageBytes(url: string): Promise<Uint8Array | undefined> {
-    // In a browser environment, you'd use fetch.
-    // For server-side with Node.js, you might use node-fetch or http module.
-    // For simplicity and client-side pdf-lib usage, let's assume fetch.
-    // This function will be more useful if reports are generated client-side or if image is passed.
-    // For server-side generation, you'd fetch and process it there.
     try {
-        const response = await fetch(url);
+        // This check is important because 'fetch' behaves differently in Node.js vs. browser.
+        // For this prototyping environment, we assume a browser-like fetch is available or polyfilled.
+        if (typeof fetch === 'undefined') {
+            console.warn("fetch is not defined. Cannot fetch logo image. This might happen in a Node.js environment without node-fetch.");
+            return undefined;
+        }
+        const response = await fetch(url, { mode: 'cors' }); // Added cors mode
         if (!response.ok) {
-            console.warn(`Failed to fetch logo image: ${response.statusText}`);
+            console.warn(`Failed to fetch logo image: ${response.status} ${response.statusText} from ${url}`);
             return undefined;
         }
         const arrayBuffer = await response.arrayBuffer();
         return new Uint8Array(arrayBuffer);
     } catch (error) {
-        console.error("Error fetching logo image:", error);
+        console.error(`Error fetching logo image from ${url}:`, error);
         return undefined;
     }
 }

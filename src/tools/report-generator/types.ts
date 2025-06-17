@@ -9,6 +9,7 @@ export interface ReportGenerationOptions {
   reportTitle?: string;
   includeProfileChart?: boolean; // Placeholder for future chart inclusion
   logoUrl?: string; // URL for the company logo
+  logoImageBytes?: Uint8Array; // Directly pass logo bytes if already fetched
 }
 
 // Possible formats for the report
