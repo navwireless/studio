@@ -3,8 +3,7 @@
 // using Google Maps Platform APIs.
 // IMPORTANT: This module should only be used server-side.
 
-'use server'; // Can be used if functions are directly called by Server Components or other server modules.
-              // If only used by actions.ts, this directive might not be strictly needed here but is good practice.
+'use server'; 
 
 import { Client, DirectionsRequest, TravelMode, UnitSystem } from "@googlemaps/google-maps-services-js";
 import type { PointCoordinates, FiberCalculatorParams, FiberPathResult, FiberPathSegment } from './types';
@@ -23,19 +22,17 @@ function calculateOffsetDistanceMeters(p1: PointCoordinates, p2: PointCoordinate
 
 /**
  * Finds the nearest point on a road to a given coordinate within a specified radius
- * and calculates the offset distance.
- * 
- * This function uses the Google Directions API by requesting a route from the point
- * to itself. The API often snaps the origin to the nearest road network.
+ * and calculates the offset distance using the Google Directions API.
  * 
  * @param point The original coordinate.
  * @param radiusMeters The maximum distance to search for a road.
+ * @param client The Google Maps API client.
  * @returns A promise that resolves to an object with the snapped road point and offset distance, or null if no road is found within radius.
  */
 async function findNearestRoadPointWithOffset(
   point: PointCoordinates,
   radiusMeters: number,
-  client: Client // Pass the client for testability and consistent API key usage
+  client: Client
 ): Promise<{ roadPoint: PointCoordinates; offsetDistanceMeters: number } | null> {
   if (!GOOGLE_DIRECTIONS_API_KEY) {
     console.error("GOOGLE_DIRECTIONS_API_KEY is not configured.");
@@ -45,8 +42,8 @@ async function findNearestRoadPointWithOffset(
   const request: DirectionsRequest = {
     params: {
       origin: { lat: point.lat, lng: point.lng },
-      destination: { lat: point.lat, lng: point.lng }, // Route to itself
-      mode: TravelMode.driving, // Driving mode is good for road snapping
+      destination: { lat: point.lat, lng: point.lng }, // Route to itself to snap to nearest road
+      mode: TravelMode.driving, 
       units: UnitSystem.metric,
       key: GOOGLE_DIRECTIONS_API_KEY,
     },
@@ -57,7 +54,7 @@ async function findNearestRoadPointWithOffset(
 
     if (response.data.status === 'OK' && response.data.routes.length > 0) {
       const route = response.data.routes[0];
-      if (route.legs.length > 0) {
+      if (route.legs.length > 0 && route.legs[0].steps.length > 0) {
         const leg = route.legs[0];
         // The start_location of the first leg is the point Google snapped to the road network
         const snappedRoadPoint: PointCoordinates = {
@@ -70,16 +67,19 @@ async function findNearestRoadPointWithOffset(
         if (offsetDistanceMeters <= radiusMeters) {
           return { roadPoint: snappedRoadPoint, offsetDistanceMeters };
         } else {
-          // Road found, but it's outside the specified radius
+          console.log(`Road found for point ${point.lat},${point.lng}, but offset ${offsetDistanceMeters}m exceeds radius ${radiusMeters}m.`);
           return null; 
         }
+      } else {
+         console.log(`Directions API OK, but no route/legs/steps found for snapping point ${point.lat},${point.lng}. This might mean it's too far from any road network for the API to snap.`);
+         return null;
       }
+    } else {
+      console.log(`Directions API status not OK for snapping point ${point.lat},${point.lng}: ${response.data.status}. Error: ${response.data.error_message}`);
+      return null;
     }
-    // If status is not OK, or no routes/legs, consider no suitable road point found
-    return null;
   } catch (error: any) {
-    console.error("Error calling Google Directions API for road snapping:", error.response?.data || error.message);
-    // Rethrow or handle as an API error for the main calculator function
+    console.error(`Error calling Google Directions API for road snapping (point: ${point.lat},${point.lng}):`, error.response?.data || error.message);
     throw new Error(`Google Directions API error during road snapping: ${error.response?.data?.error_message || error.message}`);
   }
 }
@@ -89,7 +89,8 @@ async function findNearestRoadPointWithOffset(
  * Gets the driving route between two points using Google Directions API.
  * @param origin The starting road point.
  * @param destination The ending road point.
- * @returns A promise resolving to route details (distance, polyline) or null if no route found.
+ * @param client The Google Maps API client.
+ * @returns A promise resolving to route details (distance, polyline, segments) or null if no route found.
  */
 async function getRoadRoute(
   origin: PointCoordinates,
@@ -119,8 +120,8 @@ async function getRoadRoute(
       const leg = route.legs[0];
       
       if (leg && leg.distance && route.overview_polyline) {
-        const routeSegments: FiberPathSegment[] = route.legs.flatMap(leg => 
-          leg.steps.map(step => ({
+        const routeSegmentsDetailed: FiberPathSegment[] = route.legs.flatMap(currentLeg => 
+          currentLeg.steps.map(step => ({
             type: 'road_route' as const,
             distanceMeters: step.distance.value,
             pathPolyline: step.polyline.points,
@@ -131,14 +132,22 @@ async function getRoadRoute(
 
         return {
           distanceMeters: leg.distance.value,
-          polyline: route.overview_polyline.points,
-          segments: routeSegments,
+          polyline: route.overview_polyline.points, // Overview polyline for the whole road route part
+          segments: routeSegmentsDetailed,
         };
+      } else {
+        console.log("Directions API OK, but missing leg, distance, or polyline for route between", origin, "and", destination);
+        return null;
       }
+    } else if (response.data.status === 'ZERO_RESULTS') {
+        console.log("No road route found (ZERO_RESULTS) between", origin, "and", destination);
+        return null;
+    } else {
+        console.log(`Directions API status not OK for routing: ${response.data.status}. Error: ${response.data.error_message}`);
+        return null;
     }
-    return null; // No route found or error in response
   } catch (error: any) {
-    console.error("Error calling Google Directions API for road routing:", error.response?.data || error.message);
+    console.error(`Error calling Google Directions API for road routing (origin: ${origin.lat},${origin.lng}, dest: ${destination.lat},${destination.lng}):`, error.response?.data || error.message);
     throw new Error(`Google Directions API error during road routing: ${error.response?.data?.error_message || error.message}`);
   }
 }
@@ -147,7 +156,7 @@ async function getRoadRoute(
 export async function calculateFiberPath(params: FiberCalculatorParams): Promise<FiberPathResult> {
   const { pointA, pointB, radiusMeters, isLosFeasible } = params;
 
-  const baseResult = {
+  const baseResult = { // Common fields for all return paths
     pointA_original: pointA,
     pointB_original: pointB,
     losFeasible: isLosFeasible,
@@ -185,7 +194,7 @@ export async function calculateFiberPath(params: FiberCalculatorParams): Promise
       return {
         ...baseResult,
         status: 'no_road_for_a',
-        errorMessage: `No road found within ${radiusMeters}m of Point A.`,
+        errorMessage: `No road found within ${radiusMeters}m of Point A (${pointA.lat.toFixed(5)}, ${pointA.lng.toFixed(5)}). Try increasing the radius.`,
       };
     }
     const { roadPoint: pointA_snappedToRoad, offsetDistanceMeters: offsetDistanceA_meters } = snappedAData;
@@ -195,9 +204,9 @@ export async function calculateFiberPath(params: FiberCalculatorParams): Promise
       return {
         ...baseResult,
         status: 'no_road_for_b',
-        pointA_snappedToRoad,
-        offsetDistanceA_meters,
-        errorMessage: `No road found within ${radiusMeters}m of Point B.`,
+        pointA_snappedToRoad, // Include if Point A was successfully snapped
+        offsetDistanceA_meters: parseFloat(offsetDistanceA_meters.toFixed(1)),
+        errorMessage: `No road found within ${radiusMeters}m of Point B (${pointB.lat.toFixed(5)}, ${pointB.lng.toFixed(5)}). Try increasing the radius.`,
       };
     }
     const { roadPoint: pointB_snappedToRoad, offsetDistanceMeters: offsetDistanceB_meters } = snappedBData;
@@ -208,46 +217,36 @@ export async function calculateFiberPath(params: FiberCalculatorParams): Promise
         ...baseResult,
         status: 'no_route_between_roads',
         pointA_snappedToRoad,
-        offsetDistanceA_meters,
+        offsetDistanceA_meters: parseFloat(offsetDistanceA_meters.toFixed(1)),
         pointB_snappedToRoad,
-        offsetDistanceB_meters,
+        offsetDistanceB_meters: parseFloat(offsetDistanceB_meters.toFixed(1)),
         errorMessage: 'No drivable route found between the snapped road points for A and B.',
       };
     }
-    const { distanceMeters: roadRouteDistanceMeters, polyline: roadRoutePolyline, segments: roadSegmentsDetailed } = roadRouteData;
+    const { distanceMeters: roadRouteDistanceMeters, segments: roadSegmentsDetailed } = roadRouteData;
 
     const totalDistanceMeters = offsetDistanceA_meters + roadRouteDistanceMeters + offsetDistanceB_meters;
 
     const segments: FiberPathSegment[] = [];
     segments.push({
       type: 'offset_a',
-      distanceMeters: offsetDistanceA_meters,
+      distanceMeters: parseFloat(offsetDistanceA_meters.toFixed(1)),
       startPoint: pointA,
       endPoint: pointA_snappedToRoad,
-      // No polyline for straight offset, can be drawn as straight line
+      // No polyline for straight offset, can be drawn as straight line by client
     });
     
-    // Add detailed road segments
-    segments.push(...roadSegmentsDetailed);
+    // Add detailed road segments from getRoadRoute
+    segments.push(...roadSegmentsDetailed.map(seg => ({...seg, distanceMeters: parseFloat(seg.distanceMeters.toFixed(1))})));
 
     segments.push({
       type: 'offset_b',
-      distanceMeters: offsetDistanceB_meters,
+      distanceMeters: parseFloat(offsetDistanceB_meters.toFixed(1)),
       startPoint: pointB_snappedToRoad,
       endPoint: pointB,
       // No polyline for straight offset
     });
     
-    // For a simpler overview polyline for the road route part:
-    // segments.push({
-    //   type: 'road_route',
-    //   distanceMeters: roadRouteDistanceMeters,
-    //   pathPolyline: roadRoutePolyline,
-    //   startPoint: pointA_snappedToRoad,
-    //   endPoint: pointB_snappedToRoad,
-    // });
-
-
     return {
       ...baseResult,
       status: 'success',
@@ -261,10 +260,12 @@ export async function calculateFiberPath(params: FiberCalculatorParams): Promise
     };
 
   } catch (error: any) {
-    console.error("Error in calculateFiberPath:", error.message);
+    // This catch block handles errors thrown from findNearestRoadPointWithOffset or getRoadRoute,
+    // or any other unexpected errors within this function.
+    console.error("Error in calculateFiberPath main try-catch block:", error.message, error);
     return {
       ...baseResult,
-      status: 'api_error',
+      status: 'api_error', // Or a more specific error if identifiable
       errorMessage: error.message || 'An unknown error occurred during fiber path calculation.',
     };
   }
