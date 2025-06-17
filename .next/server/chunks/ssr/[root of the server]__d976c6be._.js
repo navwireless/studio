@@ -138,35 +138,18 @@ __turbopack_context__.s({
     "formatAnalysisDataForReportTable": (()=>formatAnalysisDataForReportTable)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$docx$2f$build$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/docx/build/index.mjs [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/node_modules/pdf-lib/es/index.js [app-rsc] (ecmascript) <module evaluation>"); // Import rgb from pdf-lib
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/pdf-lib/es/api/colors.js [app-rsc] (ecmascript)");
+;
 ;
 const DEFAULT_COMPANY_NAME = "Nav Wireless Technologies Pvt. Ltd.";
 const DEFAULT_REPORT_TITLE = "LiFi Link Feasibility Report";
 const DEFAULT_LOGO_URL = "https://storage.googleapis.com/project-fabrica-chat-agent-test-assets/images/ZepPjV2n7N_nav_wireless_logo.png";
-const BRAND_COLOR_PRIMARY_RGB = {
-    r: 63 / 255,
-    g: 81 / 255,
-    b: 181 / 255
-}; // #3F51B5 (Example Blue)
-const BRAND_COLOR_ACCENT_RGB = {
-    r: 0 / 255,
-    g: 150 / 255,
-    b: 136 / 255
-}; // #009688 (Example Teal)
-const TEXT_COLOR_DARK_RGB = {
-    r: 0.1,
-    g: 0.1,
-    b: 0.1
-};
-const TEXT_COLOR_LIGHT_RGB = {
-    r: 0.4,
-    g: 0.4,
-    b: 0.4
-};
-const LINE_COLOR_RGB = {
-    r: 0.8,
-    g: 0.8,
-    b: 0.8
-};
+const BRAND_COLOR_PRIMARY_RGB = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(63 / 255, 81 / 255, 181 / 255); // #3F51B5 (Example Blue)
+const BRAND_COLOR_ACCENT_RGB = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0 / 255, 150 / 255, 136 / 255); // #009688 (Example Teal)
+const TEXT_COLOR_DARK_RGB = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.1, 0.1, 0.1);
+const TEXT_COLOR_LIGHT_RGB = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.4, 0.4, 0.4);
+const LINE_COLOR_RGB = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.8, 0.8, 0.8);
 async function addHeaderToPdfPage(page, font, pdfDoc, reportTitle = DEFAULT_REPORT_TITLE, companyName = DEFAULT_COMPANY_NAME, logoImageBytes) {
     const { width, height } = page.getSize();
     const margin = 40; // Increased margin

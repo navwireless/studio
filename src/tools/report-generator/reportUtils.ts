@@ -3,7 +3,7 @@
 // such as creating common headers, footers, formatting data, etc.
 
 import { AlignmentType, BorderStyle, Footer, Header, IBorderOptions, ImageRun, Packer, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, VerticalAlign, WidthType } from 'docx';
-import { PDFPage, StandardFonts, rgb, PDFFont, PDFDocument } from 'pdf-lib';
+import { PDFPage, StandardFonts, rgb, PDFFont, PDFDocument } from 'pdf-lib'; // Import rgb from pdf-lib
 import type { AnalysisResult } from '@/types';
 
 export const DEFAULT_COMPANY_NAME = "Nav Wireless Technologies Pvt. Ltd.";
@@ -12,11 +12,12 @@ export const DEFAULT_LOGO_URL = "https://storage.googleapis.com/project-fabrica-
 
 
 // Common styling constants (can be expanded)
-export const BRAND_COLOR_PRIMARY_RGB = { r: 63/255, g: 81/255, b: 181/255 }; // #3F51B5 (Example Blue)
-export const BRAND_COLOR_ACCENT_RGB = { r: 0/255, g: 150/255, b: 136/255 }; // #009688 (Example Teal)
-export const TEXT_COLOR_DARK_RGB = { r: 0.1, g: 0.1, b: 0.1 };
-export const TEXT_COLOR_LIGHT_RGB = { r: 0.4, g: 0.4, b: 0.4 };
-export const LINE_COLOR_RGB = { r: 0.8, g: 0.8, b: 0.8 };
+// Updated to use pdf-lib's rgb function
+export const BRAND_COLOR_PRIMARY_RGB = rgb(63/255, 81/255, 181/255); // #3F51B5 (Example Blue)
+export const BRAND_COLOR_ACCENT_RGB = rgb(0/255, 150/255, 136/255); // #009688 (Example Teal)
+export const TEXT_COLOR_DARK_RGB = rgb(0.1, 0.1, 0.1);
+export const TEXT_COLOR_LIGHT_RGB = rgb(0.4, 0.4, 0.4);
+export const LINE_COLOR_RGB = rgb(0.8, 0.8, 0.8);
 
 // --- PDF Utilities ---
 
