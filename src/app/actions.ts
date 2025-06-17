@@ -213,3 +213,4 @@ export async function generateSingleAnalysisPdfReportAction(
     return { success: false, error: `Failed to generate PDF report: ${errorMessage}` };
   }
 }
+
