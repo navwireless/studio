@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 // Removed dynamic import for BulkAnalysisMap
 import BulkAnalysisMap from '@/components/bulk-los/BulkAnalysisMap';
 import { useForm } from 'react-hook-form';
@@ -24,7 +24,15 @@ import BulkAnalysisAnalytics from '@/components/bulk-los/BulkAnalysisAnalytics';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 
+import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
+import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
+
 const isBrowser = typeof window !== 'undefined';
+
+const LOCAL_STORAGE_KEYS_BULK = {
+  FIBER_TOGGLE_BULK: 'fiberPathEnabledBulk',
+  FIBER_RADIUS_BULK: 'fiberPathRadiusMetersBulk',
+};
 
 const BulkAnalysisFormSchema = z.object({
   globalTowerHeight: z.coerce.number().min(0, "Tower height must be non-negative.").max(200, "Tower height seems too high (max 200m)."),
@@ -50,6 +58,11 @@ export interface BulkAnalysisResultItem {
   pointA: PointCoordinates & { name: string; towerHeight: number };
   pointB: PointCoordinates & { name: string; towerHeight: number };
   profile?: LOSPoint[];
+  // Fiber Path related fields
+  fiberPathStatus?: FiberPathResult['status'] | null;
+  fiberPathTotalDistanceMeters?: number | null;
+  fiberPathErrorMessage?: string | null;
+  fiberPathSegments?: FiberPathSegment[] | null;
 }
 
 
@@ -58,10 +71,27 @@ export default function BulkLosAnalyzerPage() {
   const [kmzPlacemarks, setKmzPlacemarks] = useState<KmzPlacemark[]>([]);
   const [kmzFile, setKmzFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // Covers both LOS and Fiber processing phases
   const [progress, setProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState('');
   const [bulkResults, setBulkResults] = useState<BulkAnalysisResultItem[]>([]);
+
+  // State for Fiber Path Calculation in Bulk mode
+  const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = useState<boolean>(() => {
+    if (isBrowser) {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS_BULK.FIBER_TOGGLE_BULK);
+      return stored ? JSON.parse(stored) : false;
+    }
+    return false;
+  });
+  const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = useState<number>(() => {
+    if (isBrowser) {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS_BULK.FIBER_RADIUS_BULK);
+      return stored ? parseInt(stored, 10) : 500; // Default 500m
+    }
+    return 500;
+  });
+
 
   const form = useForm<BulkAnalysisFormValues>({
     resolver: zodResolver(BulkAnalysisFormSchema),
@@ -74,7 +104,7 @@ export default function BulkLosAnalyzerPage() {
   });
 
   const generateRemarks = (
-    result: Omit<BulkAnalysisResultItem, 'remarks' | 'id' | 'pointACoords' | 'pointBCoords'>,
+    result: Omit<BulkAnalysisResultItem, 'remarks' | 'id' | 'pointACoords' | 'pointBCoords' | 'fiberPathStatus' | 'fiberPathTotalDistanceMeters' | 'fiberPathErrorMessage' | 'fiberPathSegments'>,
     params: AnalysisParams,
     fullAnalysisResult: ReturnType<typeof analyzeLOS>
   ): string => {
@@ -107,7 +137,7 @@ export default function BulkLosAnalyzerPage() {
 
     setIsProcessing(true);
     setProgress(0);
-    setProcessingMessage('Starting analysis...');
+    setProcessingMessage('Starting LOS analysis...');
     setBulkResults([]); 
 
     const { globalTowerHeight, globalFresnelHeight, losCheckRadiusKm } = data;
@@ -130,12 +160,13 @@ export default function BulkLosAnalyzerPage() {
       return;
     }
 
-    const tempResults: BulkAnalysisResultItem[] = [];
+    let tempResults: BulkAnalysisResultItem[] = [];
     const totalPairs = pairsToAnalyze.length;
 
+    // Phase 1: LOS Analysis
     for (let i = 0; i < totalPairs; i++) {
       const { pA, pB } = pairsToAnalyze[i];
-      setProcessingMessage(`Analyzing pair ${i + 1} of ${totalPairs}: ${pA.name} ↔ ${pB.name}`);
+      setProcessingMessage(`LOS Analysis: ${pA.name} ↔ ${pB.name} (${i + 1}/${totalPairs})`);
       
       try {
         const elevationProfileResponse = await getElevationProfileForPairAction(
@@ -180,7 +211,7 @@ export default function BulkLosAnalyzerPage() {
         });
 
       } catch (error) {
-        console.error(`Error analyzing pair ${pA.name} - ${pB.name}:`, error);
+        console.error(`Error analyzing LOS for pair ${pA.name} - ${pB.name}:`, error);
         const distance = calculateDistanceKm({ lat: pA.lat, lng: pA.lng }, { lat: pB.lat, lng: pB.lng });
         tempResults.push({
           id: `${pA.name}_${pB.name}_${Date.now()}_${i}_error`,
@@ -194,18 +225,75 @@ export default function BulkLosAnalyzerPage() {
           losPossible: false,
           minClearanceActual: null,
           additionalHeightNeeded: null,
-          remarks: `Error: ${error instanceof Error ? error.message : 'Unknown analysis error.'}`,
+          remarks: `LOS Error: ${error instanceof Error ? error.message : 'Unknown analysis error.'}`,
           pointA: { lat: pA.lat, lng: pA.lng, name: pA.name, towerHeight: globalTowerHeight },
           pointB: { lat: pB.lat, lng: pB.lng, name: pB.name, towerHeight: globalTowerHeight },
         });
       }
-      setProgress(Math.round(((i + 1) / totalPairs) * 100));
+      setProgress(Math.round(((i + 1) / totalPairs) * 50)); // LOS is 50% of total progress if fiber is enabled
+      setBulkResults([...tempResults]); // Update results incrementally
     }
 
-    setBulkResults(tempResults);
+    // Phase 2: Fiber Path Analysis (if enabled)
+    if (calculateFiberPathBulkEnabled && tempResults.length > 0) {
+      const losFeasibleLinks = tempResults.filter(r => r.losPossible);
+      
+      if (losFeasibleLinks.length > 0) {
+        setProcessingMessage(`Calculating fiber paths for ${losFeasibleLinks.length} feasible links...`);
+        // Progress for fiber calculation will start from 50% to 100%
+        
+        for (let k = 0; k < losFeasibleLinks.length; k++) {
+          const link = losFeasibleLinks[k];
+          setProcessingMessage(`Fiber Path: ${link.pointAName} ↔ ${link.pointBName} (${k + 1}/${losFeasibleLinks.length})`);
+
+          try {
+            const fiberResult = await performFiberPathAnalysisAction(
+              link.pointA.lat, link.pointA.lng,
+              link.pointB.lat, link.pointB.lng,
+              fiberRadiusMetersBulk,
+              true // isLosFeasible is true here
+            );
+
+            const resultIndex = tempResults.findIndex(r => r.id === link.id);
+            if (resultIndex !== -1) {
+              tempResults[resultIndex] = {
+                ...tempResults[resultIndex],
+                fiberPathStatus: fiberResult.status,
+                fiberPathTotalDistanceMeters: fiberResult.totalDistanceMeters,
+                fiberPathErrorMessage: fiberResult.errorMessage,
+                fiberPathSegments: fiberResult.segments,
+              };
+            }
+          } catch (fiberError) {
+            console.error(`Error calculating fiber path for ${link.pointAName} - ${link.pointBName}:`, fiberError);
+            const resultIndex = tempResults.findIndex(r => r.id === link.id);
+            if (resultIndex !== -1) {
+              tempResults[resultIndex].fiberPathStatus = 'api_error';
+              tempResults[resultIndex].fiberPathErrorMessage = fiberError instanceof Error ? fiberError.message : 'Unknown fiber calculation error.';
+            }
+          }
+          // Base progress is 50% (from LOS), add fiber progress (scaled to remaining 50%)
+          setProgress(50 + Math.round(((k + 1) / losFeasibleLinks.length) * 50));
+          setBulkResults([...tempResults]); // Update results incrementally
+        }
+        setProcessingMessage(`Fiber path analysis complete for ${losFeasibleLinks.length} links.`);
+      } else {
+        setProcessingMessage('No LOS-feasible links found for fiber path calculation.');
+        setProgress(100); // If no feasible links, consider processing complete
+      }
+    } else {
+        setProgress(100); // If fiber not enabled, LOS progress goes to 100%
+    }
+
+    setBulkResults(tempResults); // Final results update
     setIsProcessing(false);
-    setProcessingMessage(`Analysis Complete. Processed ${totalPairs} pairs.`);
-    toast({ title: "Bulk Analysis Complete", description: `Processed ${totalPairs} pairs.` });
+    
+    let finalMessage = `LOS Analysis Complete. Processed ${totalPairs} pairs.`;
+    if (calculateFiberPathBulkEnabled) {
+        finalMessage += ` Fiber path analysis also performed.`;
+    }
+    setProcessingMessage(finalMessage);
+    toast({ title: "Bulk Analysis Complete", description: finalMessage, duration: 7000 });
   };
   
   const handleKmzUploaded = (file: File, placemarks: KmzPlacemark[], fName: string) => {
@@ -217,6 +305,23 @@ export default function BulkLosAnalyzerPage() {
     setProcessingMessage('');
   };
 
+  const handleToggleFiberPathBulk = (checked: boolean) => {
+    setCalculateFiberPathBulkEnabled(checked);
+    if (isBrowser) {
+      localStorage.setItem(LOCAL_STORAGE_KEYS_BULK.FIBER_TOGGLE_BULK, JSON.stringify(checked));
+    }
+  };
+
+  const handleFiberRadiusMetersBulkChange = (value: string) => {
+    const newRadius = parseInt(value, 10);
+    if (!isNaN(newRadius) && newRadius >= 0) {
+      setFiberRadiusMetersBulk(newRadius);
+      if (isBrowser) {
+        localStorage.setItem(LOCAL_STORAGE_KEYS_BULK.FIBER_RADIUS_BULK, newRadius.toString());
+      }
+    }
+  };
+
 
   return (
     <>
@@ -226,14 +331,22 @@ export default function BulkLosAnalyzerPage() {
           <CardHeader>
             <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
             <CardDescription>
-              Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs.
+              Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1 space-y-6">
                 <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
-                <BulkAnalysisParameters control={form.control} register={form.register} errors={form.formState.errors} />
+                <BulkAnalysisParameters 
+                    control={form.control} 
+                    register={form.register} 
+                    errors={form.formState.errors}
+                    calculateFiberPathBulkEnabled={calculateFiberPathBulkEnabled}
+                    onToggleFiberPathBulk={handleToggleFiberPathBulk}
+                    fiberRadiusMetersBulk={fiberRadiusMetersBulk}
+                    onFiberRadiusMetersBulkChange={handleFiberRadiusMetersBulkChange}
+                />
               </div>
               <div className="lg:col-span-2 space-y-6">
                 <BulkAnalysisActions
@@ -276,3 +389,4 @@ export default function BulkLosAnalyzerPage() {
     </>
   );
 }
+
