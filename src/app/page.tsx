@@ -119,8 +119,6 @@ export default function Home() {
         description: successfulResult.message || "LOS analysis performed successfully.",
       });
     }
-    // Note: The case for `else if ('error' in rawServerState)` for plain error objects from action
-    // is removed because the action now consistently throws `Error` instances.
   }, [rawServerState, toast, reset, getValues, isAnalysisPanelGloballyOpen, setValue]);
   
   useEffect(() => {
@@ -212,7 +210,8 @@ export default function Home() {
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
-    const currentValues = getValues();
+    // Trigger analysis after graph height change
+    // Ensure handleSubmit is called with the processSubmit function correctly
     handleSubmit(processSubmit)(); 
   }, [setValue, handleSubmit, processSubmit, getValues]);
 
@@ -226,8 +225,10 @@ export default function Home() {
   }, []);
   
   const handleStartAnalysisClick = () => {
+    // This function is called when the "Start Link Analysis" button is clicked
+    // It should open the bottom panel and immediately submit the form for analysis.
     setIsAnalysisPanelGloballyOpen(true);
-    setIsBottomPanelContentExpanded(true);
+    setIsBottomPanelContentExpanded(true); // Ensure content area is expanded
     handleSubmit(processSubmit)();
   };
 
@@ -247,6 +248,7 @@ export default function Home() {
     setDisplayedError(null);
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     if (isAnalysisPanelGloballyOpen) {
+        // Optionally close the panel or just clear its content
         setIsAnalysisPanelGloballyOpen(false); 
     }
   };
@@ -254,8 +256,9 @@ export default function Home() {
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      setAnalysisResult(itemToLoad); 
+      setAnalysisResult(itemToLoad); // This sets the result that BottomPanel will use
       
+      // Update form values to match the loaded history item
       const formValuesFromHistory: AnalysisFormValues = {
         pointA: {
           name: itemToLoad.pointA.name || 'Site A',
@@ -272,11 +275,11 @@ export default function Home() {
         clearanceThreshold: itemToLoad.clearanceThresholdUsed.toString(),
       };
       reset(formValuesFromHistory);
-      setLiveDistanceKm(itemToLoad.distanceKm);
-      setIsStale(false); 
+      setLiveDistanceKm(itemToLoad.distanceKm); // Update live distance display
+      setIsStale(false); // Data is now in sync with the form
       setDisplayedError(null);
-      setIsAnalysisPanelGloballyOpen(true); 
-      setIsBottomPanelContentExpanded(true);
+      setIsAnalysisPanelGloballyOpen(true); // Ensure panel is open to show loaded data
+      setIsBottomPanelContentExpanded(true); // Ensure content is expanded
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
     }
   };
@@ -296,23 +299,25 @@ export default function Home() {
         currentPage="home"
       />
       <div className="flex-1 flex flex-col overflow-hidden relative h-full">
+        {/* Map takes up remaining space */}
         <div className="flex-1 w-full relative">
           <InteractiveMap
             pointA={formPointAForMap && formPointAForMap.lat && formPointAForMap.lng ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name } : undefined}
             pointB={formPointBForMap && formPointBForMap.lat && formPointBForMap.lng ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name } : undefined}
             onMapClick={handleMapClick}
             onMarkerDrag={handleMarkerDrag}
-            mapContainerClassName="w-full h-full"
+            mapContainerClassName="w-full h-full" // ensure map fills its container
             analysisResult={analysisResult}
             isStale={isStale}
             currentDistanceKm={liveDistanceKm}
           />
         </div>
 
+        {/* Floating "Start Link Analysis" button - shown only if panel is closed */}
         {!isAnalysisPanelGloballyOpen && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
             <Button
-              onClick={handleStartAnalysisClick}
+              onClick={handleStartAnalysisClick} // This should open the panel AND submit
               size="lg"
               className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm"
               aria-label="Start Link Analysis"
@@ -323,8 +328,9 @@ export default function Home() {
           </div>
         )}
         
+        {/* Global Loading Spinner Modal */}
         {isActionPending && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]"> {/* Higher z-index for modals */}
               <Card className="p-6 shadow-2xl bg-card/90">
                 <CardContent className="flex flex-col items-center text-center">
                   <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -335,8 +341,9 @@ export default function Home() {
           </div>
         )}
 
-        {displayedError && !isActionPending && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={dismissErrorModal}>
+        {/* Global Error Display Modal */}
+        {displayedError && !isActionPending && ( // Only show if not pending and error exists
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={dismissErrorModal}> {/* Click overlay to dismiss */}
               <Card className="p-6 shadow-2xl bg-destructive/90 max-w-md w-full mx-4">
                 <CardHeader>
                   <CardTitle className="text-destructive-foreground flex items-center">
@@ -348,7 +355,7 @@ export default function Home() {
                   <Button 
                     variant="outline" 
                     className="w-full bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90"
-                    onClick={(e) => { e.stopPropagation(); dismissErrorModal();}} 
+                    onClick={(e) => { e.stopPropagation(); dismissErrorModal();}} // Stop propagation to prevent overlay click
                   >
                     Dismiss
                   </Button>
@@ -357,6 +364,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Bottom Panel for Inputs and Results */}
         <BottomPanel
           analysisResult={analysisResult}
           isPanelGloballyVisible={isAnalysisPanelGloballyOpen}
@@ -364,10 +372,11 @@ export default function Home() {
           isContentExpanded={isBottomPanelContentExpanded}
           onToggleContentExpansion={toggleBottomPanelContentExpansion}
           isStale={isStale}
+          // Form related props
           control={control}
           register={register}
           handleSubmit={handleSubmit}
-          processSubmit={processSubmit}
+          processSubmit={processSubmit} // The function to call on form submit
           clientFormErrors={clientFormErrors}
           serverFormErrors={undefined} // Server field errors are no longer passed with this error handling strategy
           isActionPending={isActionPending}
@@ -375,6 +384,7 @@ export default function Home() {
           setValue={setValue}
           onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
         />
+        {/* History Panel (Sheet) */}
         <HistoryPanel 
           historyList={historyList}
           onLoadHistoryItem={handleLoadHistoryItem}
@@ -386,3 +396,5 @@ export default function Home() {
     </>
   );
 }
+
+    
