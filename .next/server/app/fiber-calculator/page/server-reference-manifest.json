@@ -22,6 +22,17 @@
         "app/fiber-calculator/page": "action-browser"
       }
     },
+    "4041e2f7f83ffb09b59671e5406bd714b8f54cba07": {
+      "workers": {
+        "app/fiber-calculator/page": {
+          "moduleId": "[project]/.next-internal/server/app/fiber-calculator/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/fiber-calculator/page": "action-browser"
+      }
+    },
     "6032618b8418ac76277e7b9b725912dd40e39f206e": {
       "workers": {
         "app/fiber-calculator/page": {

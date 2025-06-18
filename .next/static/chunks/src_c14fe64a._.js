@@ -1038,6 +1038,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$map$2d$pin$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__MapPin$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/map-pin.js [app-client] (ecmascript) <export default as MapPin>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$download$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Download$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/download.js [app-client] (ecmascript) <export default as Download>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-client] (ecmascript) <export default as Loader2>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$archive$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__FileArchive$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/file-archive.js [app-client] (ecmascript) <export default as FileArchive>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$separator$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/separator.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/utils.ts [app-client] (ecmascript)");
 "use client";
@@ -1192,7 +1193,7 @@ const SiteInputGroupFC = ({ id, title, register, clientFormErrors, getCombinedEr
         columnNumber: 3
     }, this);
 _c = SiteInputGroupFC;
-function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, onGeneratePdfReport, clientFormErrors, isCalculating, isGeneratingPdf, fiberPathResult, calculationError }) {
+function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, onGeneratePdfReport, onGenerateKmzReport, clientFormErrors, isCalculating, isGeneratingPdf, isGeneratingKmz, fiberPathResult, calculationError }) {
     const getCombinedError = (clientFieldError)=>{
         return clientFieldError?.message;
     };
@@ -1220,20 +1221,35 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
         }
     };
     const getStatusIcon = (status)=>{
+        if (isCalculating) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+            className: "h-5 w-5 mr-2 animate-spin text-primary"
+        }, void 0, false, {
+            fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+            lineNumber: 127,
+            columnNumber: 31
+        }, this);
+        if (!status && !calculationError) return null; // No result, no error yet
+        if (calculationError && !fiberPathResult) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$x$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__XCircle$3e$__["XCircle"], {
+            className: "h-5 w-5 mr-2 text-red-500"
+        }, void 0, false, {
+            fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+            lineNumber: 129,
+            columnNumber: 54
+        }, this); // Global error before result
         if (!status) return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$x$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__XCircle$3e$__["XCircle"], {
             className: "h-5 w-5 mr-2 text-red-500"
         }, void 0, false, {
             fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-            lineNumber: 123,
+            lineNumber: 131,
             columnNumber: 25
-        }, this);
+        }, this); // Should not happen if fiberPathResult exists
         switch(status){
             case 'success':
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$check$2d$big$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CheckCircle$3e$__["CheckCircle"], {
                     className: "h-5 w-5 mr-2 text-green-500"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                    lineNumber: 125,
+                    lineNumber: 133,
                     columnNumber: 30
                 }, this);
             case 'no_road_for_a':
@@ -1244,7 +1260,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                     className: "h-5 w-5 mr-2 text-amber-500"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                    lineNumber: 129,
+                    lineNumber: 137,
                     columnNumber: 39
                 }, this);
             default:
@@ -1252,7 +1268,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                     className: "h-5 w-5 mr-2 text-red-500"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                    lineNumber: 130,
+                    lineNumber: 138,
                     columnNumber: 23
                 }, this);
         }
@@ -1271,6 +1287,8 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                 return 'text-red-400';
         }
     };
+    const canExport = fiberPathResult?.status === 'success';
+    const anyOperationPending = isCalculating || isGeneratingPdf || isGeneratingKmz;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TooltipProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
             onSubmit: handleSubmit(onSubmit),
@@ -1289,14 +1307,14 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                         className: "mr-2 h-5 w-5 text-primary"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 152,
+                                        lineNumber: 163,
                                         columnNumber: 15
                                     }, this),
                                     "Fiber Path Calculator"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 151,
+                                lineNumber: 162,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardDescription"], {
@@ -1304,13 +1322,13 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                 children: "Define two points and a snap radius to estimate the fiber optic path length using road networks."
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 155,
+                                lineNumber: 166,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                        lineNumber: 150,
+                        lineNumber: 161,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -1325,12 +1343,12 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                 getCombinedError: getCombinedError
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 160,
+                                lineNumber: 171,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$separator$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Separator"], {}, void 0, false, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 168,
+                                lineNumber: 179,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(SiteInputGroupFC, {
@@ -1342,12 +1360,12 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                 getCombinedError: getCombinedError
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 169,
+                                lineNumber: 180,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$separator$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Separator"], {}, void 0, false, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 177,
+                                lineNumber: 188,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1361,7 +1379,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                 children: "Snap to Road Radius (meters)"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 180,
+                                                lineNumber: 191,
                                                 columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Tooltip"], {
@@ -1379,17 +1397,17 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                                 className: "h-4 w-4 text-muted-foreground/70 cursor-help"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                                lineNumber: 186,
+                                                                lineNumber: 197,
                                                                 columnNumber: 29
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                            lineNumber: 185,
+                                                            lineNumber: 196,
                                                             columnNumber: 25
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 184,
+                                                        lineNumber: 195,
                                                         columnNumber: 21
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TooltipContent"], {
@@ -1398,19 +1416,19 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                         children: "Max distance from each site (A or B) to search for a road. If a road is found further than this radius, calculation for that point might fail. (e.g., 500 for 500m)"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 189,
+                                                        lineNumber: 200,
                                                         columnNumber: 21
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 183,
+                                                lineNumber: 194,
                                                 columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 179,
+                                        lineNumber: 190,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
@@ -1422,7 +1440,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                         className: "mt-1 bg-input/70 h-9"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 196,
+                                        lineNumber: 207,
                                         columnNumber: 15
                                     }, this),
                                     clientFormErrors.fiberSnapRadius && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1430,13 +1448,13 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                         children: getCombinedError(clientFormErrors.fiberSnapRadius)
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 205,
+                                        lineNumber: 216,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 178,
+                                lineNumber: 189,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1445,26 +1463,26 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                         type: "submit",
                                         className: "w-full",
-                                        disabled: isCalculating || isGeneratingPdf,
+                                        disabled: anyOperationPending,
                                         children: [
                                             isCalculating ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
                                                 className: "mr-2 h-4 w-4 animate-spin"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 210,
+                                                lineNumber: 221,
                                                 columnNumber: 34
                                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$route$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Route$3e$__["Route"], {
                                                 className: "mr-2 h-4 w-4"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 210,
+                                                lineNumber: 221,
                                                 columnNumber: 86
                                             }, this),
                                             isCalculating ? 'Calculating...' : 'Calculate Fiber Path'
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 209,
+                                        lineNumber: 220,
                                         columnNumber: 16
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -1472,29 +1490,29 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                         variant: "outline",
                                         className: "w-full",
                                         onClick: onClear,
-                                        disabled: isCalculating || isGeneratingPdf,
+                                        disabled: anyOperationPending,
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__["Trash2"], {
                                                 className: "mr-2 h-4 w-4"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 214,
+                                                lineNumber: 225,
                                                 columnNumber: 17
                                             }, this),
                                             "Clear & Reset"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 213,
+                                        lineNumber: 224,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 208,
+                                lineNumber: 219,
                                 columnNumber: 13
                             }, this),
-                            (fiberPathResult || calculationError) && !isCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            (fiberPathResult || calculationError || isCalculating) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "mt-4 p-3 border rounded-md bg-muted/30 space-y-1.5 text-xs",
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1508,44 +1526,89 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 222,
+                                                lineNumber: 233,
                                                 columnNumber: 21
                                             }, this),
-                                            fiberPathResult?.status === 'success' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
-                                                type: "button",
-                                                variant: "outline",
-                                                size: "sm",
-                                                onClick: onGeneratePdfReport,
-                                                disabled: isGeneratingPdf || !fiberPathResult || fiberPathResult.status !== 'success',
-                                                className: "h-7 text-xs px-2 py-1",
+                                            canExport && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "flex items-center gap-2",
                                                 children: [
-                                                    isGeneratingPdf ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
-                                                        className: "mr-1.5 h-3.5 w-3.5 animate-spin"
-                                                    }, void 0, false, {
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                                                        type: "button",
+                                                        variant: "outline",
+                                                        size: "sm",
+                                                        onClick: onGenerateKmzReport,
+                                                        disabled: !canExport || anyOperationPending,
+                                                        className: "h-7 text-xs px-2 py-1",
+                                                        children: [
+                                                            isGeneratingKmz ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+                                                                className: "mr-1.5 h-3.5 w-3.5 animate-spin"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+                                                                lineNumber: 247,
+                                                                columnNumber: 52
+                                                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$file$2d$archive$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__FileArchive$3e$__["FileArchive"], {
+                                                                className: "mr-1.5 h-3.5 w-3.5"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+                                                                lineNumber: 247,
+                                                                columnNumber: 110
+                                                            }, this),
+                                                            "KMZ"
+                                                        ]
+                                                    }, void 0, true, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 235,
-                                                        columnNumber: 48
-                                                    }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$download$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Download$3e$__["Download"], {
-                                                        className: "mr-1.5 h-3.5 w-3.5"
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 235,
-                                                        columnNumber: 106
+                                                        lineNumber: 239,
+                                                        columnNumber: 30
                                                     }, this),
-                                                    "PDF Report"
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                                                        type: "button",
+                                                        variant: "outline",
+                                                        size: "sm",
+                                                        onClick: onGeneratePdfReport,
+                                                        disabled: !canExport || anyOperationPending,
+                                                        className: "h-7 text-xs px-2 py-1",
+                                                        children: [
+                                                            isGeneratingPdf ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
+                                                                className: "mr-1.5 h-3.5 w-3.5 animate-spin"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+                                                                lineNumber: 258,
+                                                                columnNumber: 52
+                                                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$download$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Download$3e$__["Download"], {
+                                                                className: "mr-1.5 h-3.5 w-3.5"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+                                                                lineNumber: 258,
+                                                                columnNumber: 110
+                                                            }, this),
+                                                            "PDF"
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+                                                        lineNumber: 250,
+                                                        columnNumber: 29
+                                                    }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 227,
+                                                lineNumber: 238,
                                                 columnNumber: 25
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 221,
+                                        lineNumber: 232,
                                         columnNumber: 17
                                     }, this),
-                                    fiberPathResult && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                                    isCalculating && !fiberPathResult && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: "text-primary text-sm",
+                                        children: "Calculating, please wait..."
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
+                                        lineNumber: 266,
+                                        columnNumber: 21
+                                    }, this),
+                                    fiberPathResult && !isCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                                 children: [
@@ -1554,7 +1617,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                         children: "Status:"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 244,
+                                                        lineNumber: 272,
                                                         columnNumber: 23
                                                     }, this),
                                                     ' ',
@@ -1563,13 +1626,13 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                         children: formatFiberStatus(fiberPathResult.status)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 245,
+                                                        lineNumber: 273,
                                                         columnNumber: 23
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 243,
+                                                lineNumber: 271,
                                                 columnNumber: 21
                                             }, this),
                                             fiberPathResult.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -1583,7 +1646,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 251,
+                                                        lineNumber: 279,
                                                         columnNumber: 25
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1596,7 +1659,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                                         children: "Offset A (Site to Road):"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                                        lineNumber: 255,
+                                                                        lineNumber: 283,
                                                                         columnNumber: 32
                                                                     }, this),
                                                                     " ",
@@ -1605,7 +1668,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                                lineNumber: 255,
+                                                                lineNumber: 283,
                                                                 columnNumber: 29
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1615,7 +1678,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                                         children: "Road Route Distance:"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                                        lineNumber: 256,
+                                                                        lineNumber: 284,
                                                                         columnNumber: 32
                                                                     }, this),
                                                                     " ",
@@ -1624,7 +1687,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                                lineNumber: 256,
+                                                                lineNumber: 284,
                                                                 columnNumber: 29
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1634,7 +1697,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                                         children: "Offset B (Road to Site):"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                                        lineNumber: 257,
+                                                                        lineNumber: 285,
                                                                         columnNumber: 32
                                                                     }, this),
                                                                     " ",
@@ -1643,13 +1706,13 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                                lineNumber: 257,
+                                                                lineNumber: 285,
                                                                 columnNumber: 29
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 254,
+                                                        lineNumber: 282,
                                                         columnNumber: 25
                                                     }, this)
                                                 ]
@@ -1659,30 +1722,30 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                 children: [
                                                     fiberPathResult.errorMessage,
                                                     (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "block text-xs text-amber-300/80",
+                                                        className: "block text-xs text-amber-300/80 mt-0.5",
                                                         children: " Consider increasing the Snap Radius or verifying site coordinates."
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 268,
+                                                        lineNumber: 296,
                                                         columnNumber: 26
                                                     }, this),
                                                     fiberPathResult.status === 'no_route_between_roads' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "block text-xs text-amber-300/80",
+                                                        className: "block text-xs text-amber-300/80 mt-0.5",
                                                         children: " The snapped road points for Site A and Site B may be on disconnected road networks."
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                        lineNumber: 271,
+                                                        lineNumber: 299,
                                                         columnNumber: 30
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 262,
+                                                lineNumber: 290,
                                                 columnNumber: 23
                                             }, this)
                                         ]
                                     }, void 0, true),
-                                    calculationError && !fiberPathResult && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    calculationError && !fiberPathResult && !isCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         className: "text-red-400 text-sm",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1690,7 +1753,7 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                                 children: "Error:"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                                lineNumber: 278,
+                                                lineNumber: 306,
                                                 columnNumber: 58
                                             }, this),
                                             " ",
@@ -1698,35 +1761,35 @@ function FiberInputPanel({ control, register, handleSubmit, onSubmit, onClear, o
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                        lineNumber: 278,
+                                        lineNumber: 306,
                                         columnNumber: 22
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                                lineNumber: 220,
+                                lineNumber: 231,
                                 columnNumber: 15
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                        lineNumber: 159,
+                        lineNumber: 170,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-                lineNumber: 149,
+                lineNumber: 160,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-            lineNumber: 148,
+            lineNumber: 159,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fiber-calculator/FiberInputPanel.tsx",
-        lineNumber: 147,
+        lineNumber: 158,
         columnNumber: 5
     }, this);
 }
@@ -1779,9 +1842,10 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCal
 
 var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
 {
-/* __next_internal_action_entry_do_not_use__ {"402d3049fed11f2d39fa3d58520db39f6249045915":"generateFiberReportAction","6032618b8418ac76277e7b9b725912dd40e39f206e":"performLosAnalysis","606e059f8f40dd4b377c51875d12e3221ca87a227e":"generateSingleAnalysisPdfReportAction"} */ __turbopack_context__.s({
+/* __next_internal_action_entry_do_not_use__ {"402d3049fed11f2d39fa3d58520db39f6249045915":"generateFiberReportAction","4041e2f7f83ffb09b59671e5406bd714b8f54cba07":"generateSingleFiberPathKmzAction","6032618b8418ac76277e7b9b725912dd40e39f206e":"performLosAnalysis","606e059f8f40dd4b377c51875d12e3221ca87a227e":"generateSingleAnalysisPdfReportAction"} */ __turbopack_context__.s({
     "generateFiberReportAction": (()=>generateFiberReportAction),
     "generateSingleAnalysisPdfReportAction": (()=>generateSingleAnalysisPdfReportAction),
+    "generateSingleFiberPathKmzAction": (()=>generateSingleFiberPathKmzAction),
     "performLosAnalysis": (()=>performLosAnalysis)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-client-wrapper.js [app-client] (ecmascript)");
@@ -1789,6 +1853,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var performLosAnalysis = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("6032618b8418ac76277e7b9b725912dd40e39f206e", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "performLosAnalysis");
 var generateSingleAnalysisPdfReportAction = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("606e059f8f40dd4b377c51875d12e3221ca87a227e", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "generateSingleAnalysisPdfReportAction");
 var generateFiberReportAction = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("402d3049fed11f2d39fa3d58520db39f6249045915", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "generateFiberReportAction");
+var generateSingleFiberPathKmzAction = /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["createServerReference"])("4041e2f7f83ffb09b59671e5406bd714b8f54cba07", __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["callServer"], void 0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$client$2d$wrapper$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["findSourceMapURL"], "generateSingleFiberPathKmzAction");
 }}),
 "[project]/src/app/fiber-calculator/page.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
@@ -1811,7 +1876,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fiber$2d$calculator$2f$FiberInputPanel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/fiber-calculator/FiberInputPanel.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$index$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/src/tools/fiberPathCalculator/index.ts [app-client] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/tools/fiberPathCalculator/actions.ts [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-client] (ecmascript)"); // Import the new action
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-client] (ecmascript)"); // Import KMZ action
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/file-saver/dist/FileSaver.min.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
@@ -1843,6 +1908,7 @@ function FiberCalculatorPage() {
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
     const [isCalculating, setIsCalculating] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [isGeneratingKmz, setIsGeneratingKmz] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [calculationError, setCalculationError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [fiberPathResult, setFiberPathResult] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const form = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"])({
@@ -1882,7 +1948,6 @@ function FiberCalculatorPage() {
     const watchedSnapRadius = watch('fiberSnapRadius');
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "FiberCalculatorPage.useEffect": ()=>{
-            // Ensure watchedSnapRadius is a number before saving to localStorage
             if (typeof watchedSnapRadius === 'number' && !isNaN(watchedSnapRadius)) {
                 localStorage.setItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS, watchedSnapRadius.toString());
             }
@@ -1933,7 +1998,7 @@ function FiberCalculatorPage() {
                 setIsCalculating(false);
                 return;
             }
-            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(pointA_lat_num, pointA_lng_num, pointB_lat_num, pointB_lng_num, data.fiberSnapRadius, true // isLosFeasible is always true for dedicated calculator
+            const result = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(pointA_lat_num, pointA_lng_num, pointB_lat_num, pointB_lng_num, data.fiberSnapRadius, true // For dedicated fiber calculator, LOS is implicitly considered "feasible" for path finding
             );
             setFiberPathResult(result);
             if (result.status !== 'success') {
@@ -1974,7 +2039,6 @@ function FiberCalculatorPage() {
         setIsGeneratingPdf(true);
         try {
             const currentFormValues = getValues();
-            // Ensure snap radius is a number
             const snapRadius = typeof currentFormValues.fiberSnapRadius === 'number' ? currentFormValues.fiberSnapRadius : parseInt(String(currentFormValues.fiberSnapRadius), 10);
             if (isNaN(snapRadius)) {
                 throw new Error("Invalid snap radius for report generation.");
@@ -2018,6 +2082,58 @@ function FiberCalculatorPage() {
             });
         } finally{
             setIsGeneratingPdf(false);
+        }
+    };
+    const handleGenerateKmzReport = async ()=>{
+        if (!fiberPathResult || fiberPathResult.status !== 'success') {
+            toast({
+                title: "Error",
+                description: "No successful fiber path data available to generate KMZ.",
+                variant: "destructive"
+            });
+            return;
+        }
+        setIsGeneratingKmz(true);
+        try {
+            const currentFormValues = getValues();
+            const kmzParams = {
+                fiberPathResult: fiberPathResult,
+                pointA_name: currentFormValues.pointA.name || "Site A",
+                pointB_name: currentFormValues.pointB.name || "Site B"
+            };
+            const response = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["generateSingleFiberPathKmzAction"])(kmzParams);
+            if (response.success && response.data) {
+                const { base64Kmz, fileName } = response.data;
+                const byteCharacters = atob(base64Kmz);
+                const byteNumbers = new Array(byteCharacters.length);
+                for(let i = 0; i < byteCharacters.length; i++){
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([
+                    byteArray
+                ], {
+                    type: 'application/vnd.google-earth.kmz'
+                });
+                (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["saveAs"])(blob, fileName);
+                toast({
+                    title: "Success",
+                    description: "KMZ file downloaded."
+                });
+            } else {
+                throw new Error(response.error || "KMZ generation failed without specific error message.");
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error generating KMZ.";
+            console.error("KMZ Generation Error:", error);
+            toast({
+                title: "KMZ Generation Failed",
+                description: errorMessage,
+                variant: "destructive",
+                duration: 7000
+            });
+        } finally{
+            setIsGeneratingKmz(false);
         }
     };
     const handleMapClick = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
@@ -2068,7 +2184,6 @@ function FiberCalculatorPage() {
         localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
         localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
         localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
-        // Keep snap radius from localStorage unless explicitly reset
         const storedRadius = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS);
         setValue('fiberSnapRadius', storedRadius ? parseInt(storedRadius, 10) : __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$fiber$2d$calculator$2d$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFiberCalculatorFormValues"].fiberSnapRadius);
         setFiberPathResult(null);
@@ -2090,13 +2205,14 @@ function FiberCalculatorPage() {
         lng: parseFloat(formPointBForMap.lng),
         name: formPointBForMap.name
     } : undefined;
+    const anyOperationPending = isCalculating || isGeneratingPdf || isGeneratingKmz;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$app$2d$header$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                 currentPage: "fiber"
             }, void 0, false, {
                 fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                lineNumber: 247,
+                lineNumber: 286,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2111,19 +2227,21 @@ function FiberCalculatorPage() {
                             onSubmit: handleCalculateSubmit,
                             onClear: handleClearForm,
                             onGeneratePdfReport: handleGeneratePdfReport,
+                            onGenerateKmzReport: handleGenerateKmzReport,
                             clientFormErrors: clientFormErrors,
                             isCalculating: isCalculating,
                             isGeneratingPdf: isGeneratingPdf,
+                            isGeneratingKmz: isGeneratingKmz,
                             fiberPathResult: fiberPathResult,
                             calculationError: calculationError
                         }, void 0, false, {
                             fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                            lineNumber: 250,
+                            lineNumber: 289,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                        lineNumber: 249,
+                        lineNumber: 288,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2139,15 +2257,15 @@ function FiberCalculatorPage() {
                             fiberPathResult: fiberPathResult
                         }, void 0, false, {
                             fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                            lineNumber: 265,
+                            lineNumber: 306,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                        lineNumber: 264,
+                        lineNumber: 305,
                         columnNumber: 9
                     }, this),
-                    (isCalculating || isGeneratingPdf) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    anyOperationPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Card"], {
                             className: "p-6 shadow-2xl bg-card/90",
@@ -2158,15 +2276,15 @@ function FiberCalculatorPage() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                                        lineNumber: 281,
+                                        lineNumber: 322,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         className: "text-lg font-semibold text-foreground",
-                                        children: isCalculating ? "Calculating Fiber Path..." : "Generating PDF Report..."
+                                        children: isCalculating ? "Calculating Fiber Path..." : isGeneratingPdf ? "Generating PDF Report..." : isGeneratingKmz ? "Generating KMZ File..." : "Processing..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                                        lineNumber: 282,
+                                        lineNumber: 323,
                                         columnNumber: 17
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2174,35 +2292,35 @@ function FiberCalculatorPage() {
                                         children: isCalculating ? "Accessing road network data..." : "Please wait..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                                        lineNumber: 285,
+                                        lineNumber: 328,
                                         columnNumber: 17
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                                lineNumber: 280,
+                                lineNumber: 321,
                                 columnNumber: 15
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                            lineNumber: 279,
+                            lineNumber: 320,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                        lineNumber: 278,
+                        lineNumber: 319,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/fiber-calculator/page.tsx",
-                lineNumber: 248,
+                lineNumber: 287,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true);
 }
-_s(FiberCalculatorPage, "pdo4oWpKs57EPn4YS1D6wZnPN2Y=", false, function() {
+_s(FiberCalculatorPage, "AwHz+9PbYT0iwKQkdXJv8Rxscc0=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"]

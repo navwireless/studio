@@ -1262,7 +1262,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
         <Point><coordinates>${fiberPathResult.pointB_original.lng},${fiberPathResult.pointB_original.lat},0</coordinates></Point>
       </Placemark>
     </Folder>
-    
+
     <Folder><name>Fiber Path Segments</name>`;
         const offsetASeg = fiberPathResult.segments?.find((s)=>s.type === 'offset_a');
         const offsetBSeg = fiberPathResult.segments?.find((s)=>s.type === 'offset_b');
@@ -1312,45 +1312,13 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
 </kml>`;
         const zip = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$jszip$2f$lib$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"]();
         zip.file("doc.kml", kmlContent);
-        // Using "application/octet-stream" for broader compatibility, though "application/vnd.google-earth.kmz" is more specific.
-        // Some systems might not recognize vnd.google-earth.kmz correctly as a default for ZIP archives.
-        // Forcing a specific KMZ mime type might be better for Google Earth, but octet-stream is safer for generic ZIP tools.
-        // Let's stick to specific KMZ mime for GE compatibility.
-        const kmzBlob = await zip.generateAsync({
-            type: "blob",
+        // Generate KMZ as a Node.js buffer
+        const kmzBuffer = await zip.generateAsync({
+            type: "nodebuffer",
             mimeType: "application/vnd.google-earth.kmz"
         });
-        // Convert Blob to base64 string for server action response
-        // This requires browser APIs (FileReader), so if this action needs to run purely server-side without browser context,
-        // this part would need adjustment (e.g., returning the Blob directly if the environment supports it, or buffer).
-        // For Next.js server actions called from client, returning base64 is common.
-        const base64Kmz = await new Promise((resolve, reject)=>{
-            if (typeof FileReader === "undefined") {
-                // Fallback for environments without FileReader (e.g., some pure Node.js test environments)
-                // This part is mainly for client-side consumption which will have FileReader.
-                // If run in a pure Node context without Blob/FileReader polyfills, this would fail.
-                // However, Next.js server actions are often called from client which then handles the base64.
-                // Let's assume this action's result is processed where FileReader is available.
-                // A more robust server-only solution might return a buffer and handle base64 conversion elsewhere if needed.
-                // For now, this is common for client-triggered server actions.
-                // If we want a buffer for true server-side (e.g. Node.js script):
-                // const buffer = await zip.generateAsync({ type: "nodebuffer" });
-                // resolve(buffer.toString('base64'));
-                // For client-side, FileReader on Blob is fine.
-                // The prompt implies client-side usage of the returned base64, so FileReader is appropriate.
-                return reject(new Error("FileReader API not available in this environment. Cannot convert KMZ blob to base64."));
-            }
-            const reader = new FileReader();
-            reader.onloadend = ()=>{
-                if (typeof reader.result === 'string') {
-                    resolve(reader.result.split(',')[1]); // Get the base64 part
-                } else {
-                    reject(new Error("Failed to read KMZ blob as data URL string."));
-                }
-            };
-            reader.onerror = (error)=>reject(error || new Error("FileReader error during KMZ conversion."));
-            reader.readAsDataURL(kmzBlob);
-        });
+        // Convert buffer to base64 string
+        const base64Kmz = kmzBuffer.toString('base64');
         const safePointAName = (pointA_name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
         const safePointBName = (pointB_name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
         const fileName = `Fiber_Path_KMZ_${safePointAName}_to_${safePointBName}.kmz`;

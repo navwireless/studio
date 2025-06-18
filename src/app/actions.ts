@@ -8,8 +8,8 @@ import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/t
 import { FiberCalculatorFormSchema, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema';
 import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
 import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport';
-import JSZip from 'jszip'; 
-import { xmlEscape } from '@/lib/xml-escape'; 
+import JSZip from 'jszip';
+import { xmlEscape } from '@/lib/xml-escape';
 
 // --- Google Elevation API Configuration ---
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
@@ -243,23 +243,23 @@ export async function generateFiberReportAction(
     if (!fiberPathResult || fiberPathResult.status !== 'success') {
       return { success: false, error: "Cannot generate report: Fiber path calculation was not successful or data is missing." };
     }
-    
-    const pointA_coords_report: PointCoordinates = { 
-        lat: parseFloat(pointA_form.lat), 
-        lng: parseFloat(pointA_form.lng) 
+
+    const pointA_coords_report: PointCoordinates = {
+        lat: parseFloat(pointA_form.lat),
+        lng: parseFloat(pointA_form.lng)
     };
-    const pointB_coords_report: PointCoordinates = { 
-        lat: parseFloat(pointB_form.lat), 
-        lng: parseFloat(pointB_form.lng) 
+    const pointB_coords_report: PointCoordinates = {
+        lat: parseFloat(pointB_form.lat),
+        lng: parseFloat(pointB_form.lng)
     };
-    
+
     if (isNaN(pointA_coords_report.lat) || isNaN(pointA_coords_report.lng) || isNaN(pointB_coords_report.lat) || isNaN(pointB_coords_report.lng)) {
         return { success: false, error: "Invalid coordinates provided in form data for report generation." };
     }
 
     const pdfBytes = await generatePdfReportForFiberAnalysis(
         fiberPathResult,
-        { name: pointA_form.name, ...pointA_coords_report }, 
+        { name: pointA_form.name, ...pointA_coords_report },
         { name: pointB_form.name, ...pointB_coords_report },
         snapRadiusUsed_form,
         reportOptions
@@ -343,7 +343,7 @@ export async function generateSingleFiberPathKmzAction(
         <Point><coordinates>${fiberPathResult.pointB_original.lng},${fiberPathResult.pointB_original.lat},0</coordinates></Point>
       </Placemark>
     </Folder>
-    
+
     <Folder><name>Fiber Path Segments</name>`;
 
     const offsetASeg = fiberPathResult.segments?.find(s => s.type === 'offset_a');
@@ -376,7 +376,7 @@ export async function generateSingleFiberPathKmzAction(
         <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0 ${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></LineString>
       </Placemark>`;
     }
-    
+
     if (offsetBSeg && fiberPathResult.pointB_snappedToRoad) {
       kmlContent += `
       <Placemark>
@@ -399,45 +399,12 @@ export async function generateSingleFiberPathKmzAction(
 
     const zip = new JSZip();
     zip.file("doc.kml", kmlContent);
-    // Using "application/octet-stream" for broader compatibility, though "application/vnd.google-earth.kmz" is more specific.
-    // Some systems might not recognize vnd.google-earth.kmz correctly as a default for ZIP archives.
-    // Forcing a specific KMZ mime type might be better for Google Earth, but octet-stream is safer for generic ZIP tools.
-    // Let's stick to specific KMZ mime for GE compatibility.
-    const kmzBlob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
-    
-    // Convert Blob to base64 string for server action response
-    // This requires browser APIs (FileReader), so if this action needs to run purely server-side without browser context,
-    // this part would need adjustment (e.g., returning the Blob directly if the environment supports it, or buffer).
-    // For Next.js server actions called from client, returning base64 is common.
-    const base64Kmz = await new Promise<string>((resolve, reject) => {
-        if (typeof FileReader === "undefined") {
-            // Fallback for environments without FileReader (e.g., some pure Node.js test environments)
-            // This part is mainly for client-side consumption which will have FileReader.
-            // If run in a pure Node context without Blob/FileReader polyfills, this would fail.
-            // However, Next.js server actions are often called from client which then handles the base64.
-            // Let's assume this action's result is processed where FileReader is available.
-            // A more robust server-only solution might return a buffer and handle base64 conversion elsewhere if needed.
-            // For now, this is common for client-triggered server actions.
-            
-            // If we want a buffer for true server-side (e.g. Node.js script):
-            // const buffer = await zip.generateAsync({ type: "nodebuffer" });
-            // resolve(buffer.toString('base64'));
-            // For client-side, FileReader on Blob is fine.
-            
-            // The prompt implies client-side usage of the returned base64, so FileReader is appropriate.
-            return reject(new Error("FileReader API not available in this environment. Cannot convert KMZ blob to base64."));
-        }
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-                resolve(reader.result.split(',')[1]); // Get the base64 part
-            } else {
-                reject(new Error("Failed to read KMZ blob as data URL string."));
-            }
-        };
-        reader.onerror = (error) => reject(error || new Error("FileReader error during KMZ conversion."));
-        reader.readAsDataURL(kmzBlob);
-    });
+
+    // Generate KMZ as a Node.js buffer
+    const kmzBuffer = await zip.generateAsync({ type: "nodebuffer", mimeType: "application/vnd.google-earth.kmz" });
+
+    // Convert buffer to base64 string
+    const base64Kmz = kmzBuffer.toString('base64');
 
     const safePointAName = (pointA_name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
     const safePointBName = (pointB_name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
