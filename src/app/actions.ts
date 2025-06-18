@@ -144,7 +144,8 @@ export async function performLosAnalysis(
       }
       
       console.error("Server-side Zod validation errors:", finalErrorMessage, flattenedErrors);
-      throw new Error(finalErrorMessage.trim());
+      // Instead of throwing, return an error object for useActionState
+      return { error: finalErrorMessage.trim(), fieldErrors: flattenedErrors.fieldErrors };
     }
 
     const validatedData = validationResult.data;
@@ -185,7 +186,8 @@ export async function performLosAnalysis(
     }
     
     console.error("Error in performLosAnalysis server action:", clientErrorMessageString, err);
-    throw new Error(clientErrorMessageString);
+    // Return an error object instead of throwing
+    return { error: clientErrorMessageString };
   }
 }
 

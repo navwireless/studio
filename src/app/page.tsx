@@ -25,6 +25,8 @@ export default function Home() {
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [displayedError, setDisplayedError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<any | null>(null);
+
 
   const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
   const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
@@ -59,6 +61,7 @@ export default function Home() {
 
   const processSubmit = useCallback((data: AnalysisFormValues) => {
     setDisplayedError(null);
+    setFieldErrors(null);
     setFiberPathResult(null); 
     setFiberPathError(null);
 
@@ -82,22 +85,31 @@ export default function Home() {
   useEffect(() => {
     if (rawServerState === null) return;
 
-    if (rawServerState instanceof Error) {
+    // Check for a returned error object from the server action
+    if (typeof rawServerState === 'object' && rawServerState !== null && 'error' in rawServerState && typeof rawServerState.error === 'string') {
       setAnalysisResult(null);
-      const errorMessage = rawServerState.message || "An unexpected error occurred during LOS analysis.";
+      const errorMessage = rawServerState.error || "An unexpected error occurred during LOS analysis.";
       setDisplayedError(errorMessage);
+      if ('fieldErrors' in rawServerState && rawServerState.fieldErrors) {
+        setFieldErrors(rawServerState.fieldErrors);
+      } else {
+        setFieldErrors(null);
+      }
       toast({
         title: "LOS Analysis Error",
         description: errorMessage,
         variant: "destructive",
         duration: 7000,
       });
-      setFiberPathResult(null); 
-    } else if ('losPossible' in rawServerState) {
+      setFiberPathResult(null);
+    } else if (typeof rawServerState === 'object' && rawServerState !== null && 'losPossible' in rawServerState) {
+      // Successful LOS analysis result
       const successfulLosResult = rawServerState as AnalysisResult;
       setAnalysisResult(successfulLosResult);
       setHistoryList(prev => [successfulLosResult, ...prev.slice(0, 19)]);
       setLiveDistanceKm(successfulLosResult.distanceKm);
+      setDisplayedError(null);
+      setFieldErrors(null);
 
       const currentFormValues = getValues();
       const formValuesForResult: AnalysisFormValues = {
@@ -117,8 +129,7 @@ export default function Home() {
       };
       reset(formValuesForResult);
       setIsStale(false);
-      setDisplayedError(null);
-
+      
       if (!isAnalysisPanelGloballyOpen) {
           setIsAnalysisPanelGloballyOpen(true);
           setIsBottomPanelContentExpanded(true);
@@ -288,6 +299,7 @@ export default function Home() {
 
   const dismissErrorModal = useCallback(() => {
     setDisplayedError(null);
+    setFieldErrors(null);
   }, []);
 
   const handleToggleHistoryPanel = () => {
@@ -300,6 +312,7 @@ export default function Home() {
     setLiveDistanceKm(null);
     setIsStale(false);
     setDisplayedError(null);
+    setFieldErrors(null);
     setFiberPathResult(null); 
     setFiberPathError(null);
     setCalculateFiberPathEnabled(false); 
@@ -332,6 +345,7 @@ export default function Home() {
       setLiveDistanceKm(itemToLoad.distanceKm);
       setIsStale(false);
       setDisplayedError(null);
+      setFieldErrors(null);
       setFiberPathResult(null); 
       setFiberPathError(null);
       
@@ -510,7 +524,7 @@ export default function Home() {
           handleSubmit={handleSubmit}
           processSubmit={processSubmit}
           clientFormErrors={clientFormErrors}
-          serverFormErrors={undefined}
+          serverFormErrors={fieldErrors} 
           isActionPending={isActionPending}
           getValues={getValues}
           setValue={setValue}
@@ -535,3 +549,4 @@ export default function Home() {
     </>
   );
 }
+
