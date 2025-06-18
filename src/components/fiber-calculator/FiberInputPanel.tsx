@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Cable, Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin, Download, Loader2 } from 'lucide-react';
+import { Cable, Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin, Download, Loader2, FileArchive } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
@@ -79,9 +79,11 @@ interface FiberInputPanelProps {
   onSubmit: (data: FiberCalculatorFormValues) => void;
   onClear: () => void;
   onGeneratePdfReport: () => void;
+  onGenerateKmzReport: () => void; // New prop for KMZ
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
   isCalculating: boolean;
   isGeneratingPdf: boolean;
+  isGeneratingKmz: boolean; // New prop for KMZ loading state
   fiberPathResult: FiberPathResult | null;
   calculationError: string | null;
 }
@@ -93,9 +95,11 @@ export default function FiberInputPanel({
   onSubmit,
   onClear,
   onGeneratePdfReport,
+  onGenerateKmzReport, // New prop
   clientFormErrors,
   isCalculating,
   isGeneratingPdf,
+  isGeneratingKmz, // New prop
   fiberPathResult,
   calculationError,
 }: FiberInputPanelProps) {
@@ -121,10 +125,10 @@ export default function FiberInputPanel({
 
   const getStatusIcon = (status?: FiberPathResult['status']) => {
     if (isCalculating) return <Loader2 className="h-5 w-5 mr-2 animate-spin text-primary" />;
-    if (!status && !calculationError) return null; // No icon if no result/error yet and not loading
-    if (calculationError && !fiberPathResult) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // General error before any result object
+    if (!status && !calculationError) return null;
+    if (calculationError && !fiberPathResult) return <XCircle className="h-5 w-5 mr-2 text-red-500" />;
 
-    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // Fallback for status if error but no explicit status
+    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />;
     switch (status) {
       case 'success': return <CheckCircle className="h-5 w-5 mr-2 text-green-500" />;
       case 'no_road_for_a':
@@ -136,7 +140,7 @@ export default function FiberInputPanel({
   };
 
   const getStatusColorClass = (status?: FiberPathResult['status']): string => {
-     if (!status) return 'text-red-400'; // Default to error color if no status
+     if (!status) return 'text-red-400';
      switch (status) {
       case 'success': return 'text-green-400';
       case 'no_road_for_a':
@@ -146,6 +150,9 @@ export default function FiberInputPanel({
       default: return 'text-red-400';
     }
   }
+  
+  const canExport = fiberPathResult?.status === 'success';
+  const anyOperationPending = isCalculating || isGeneratingPdf || isGeneratingKmz;
 
   return (
     <TooltipProvider>
@@ -210,11 +217,11 @@ export default function FiberInputPanel({
             </div>
 
             <div className="pt-2 space-y-2">
-               <Button type="submit" className="w-full" disabled={isCalculating || isGeneratingPdf}>
+               <Button type="submit" className="w-full" disabled={anyOperationPending}>
                 {isCalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Route className="mr-2 h-4 w-4" />}
                 {isCalculating ? 'Calculating...' : 'Calculate Fiber Path'}
               </Button>
-              <Button type="button" variant="outline" className="w-full" onClick={onClear} disabled={isCalculating || isGeneratingPdf}>
+              <Button type="button" variant="outline" className="w-full" onClick={onClear} disabled={anyOperationPending}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear & Reset
               </Button>
@@ -227,18 +234,31 @@ export default function FiberInputPanel({
                     {getStatusIcon(fiberPathResult?.status)}
                     Calculation Result
                     </h4>
-                    {fiberPathResult?.status === 'success' && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={onGeneratePdfReport}
-                            disabled={isCalculating || isGeneratingPdf || !fiberPathResult || fiberPathResult.status !== 'success'}
-                            className="h-7 text-xs px-2 py-1"
-                        >
-                            {isGeneratingPdf ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
-                            PDF Report
-                        </Button>
+                    {canExport && (
+                        <div className="flex items-center gap-2">
+                             <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={onGenerateKmzReport}
+                                disabled={!canExport || anyOperationPending}
+                                className="h-7 text-xs px-2 py-1"
+                            >
+                                {isGeneratingKmz ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileArchive className="mr-1.5 h-3.5 w-3.5" />}
+                                KMZ
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={onGeneratePdfReport}
+                                disabled={!canExport || anyOperationPending}
+                                className="h-7 text-xs px-2 py-1"
+                            >
+                                {isGeneratingPdf ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
+                                PDF
+                            </Button>
+                        </div>
                     )}
                 </div>
 
@@ -269,7 +289,7 @@ export default function FiberInputPanel({
                     {fiberPathResult.errorMessage && (
                       <p className={cn(
                          "italic mt-1.5 text-sm",
-                         getStatusColorClass(fiberPathResult.status) // Use status color for its own error message
+                         getStatusColorClass(fiberPathResult.status)
                        )}>
                         {fiberPathResult.errorMessage}
                         {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') &&
@@ -282,7 +302,7 @@ export default function FiberInputPanel({
                     )}
                   </>
                 )}
-                {calculationError && !fiberPathResult && !isCalculating && ( // General error if no fiberPathResult object
+                {calculationError && !fiberPathResult && !isCalculating && (
                      <p className="text-red-400 text-sm"><span className="font-semibold">Error:</span> {calculationError}</p>
                 )}
               </div>

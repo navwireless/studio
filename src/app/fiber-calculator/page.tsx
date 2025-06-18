@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import FiberInputPanel from '@/components/fiber-calculator/FiberInputPanel';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
-import { generateFiberReportAction } from '@/app/actions'; // Import the new action
+import { generateFiberReportAction, generateSingleFiberPathKmzAction } from '@/app/actions'; // Import KMZ action
 import { saveAs } from 'file-saver';
 
 const FC_LOCAL_STORAGE_KEYS = {
@@ -32,6 +32,7 @@ export default function FiberCalculatorPage() {
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingKmz, setIsGeneratingKmz] = useState(false); // New state for KMZ
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
 
@@ -70,7 +71,6 @@ export default function FiberCalculatorPage() {
 
   const watchedSnapRadius = watch('fiberSnapRadius');
   useEffect(() => {
-    // Ensure watchedSnapRadius is a number before saving to localStorage
     if (typeof watchedSnapRadius === 'number' && !isNaN(watchedSnapRadius)) {
       localStorage.setItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS, watchedSnapRadius.toString());
     }
@@ -121,7 +121,7 @@ export default function FiberCalculatorPage() {
         pointB_lat_num,
         pointB_lng_num,
         data.fiberSnapRadius,
-        true // isLosFeasible is always true for dedicated calculator
+        true
       );
 
       setFiberPathResult(result);
@@ -154,7 +154,6 @@ export default function FiberCalculatorPage() {
     setIsGeneratingPdf(true);
     try {
       const currentFormValues = getValues();
-      // Ensure snap radius is a number
       const snapRadius = typeof currentFormValues.fiberSnapRadius === 'number' ? currentFormValues.fiberSnapRadius : parseInt(String(currentFormValues.fiberSnapRadius), 10);
       if(isNaN(snapRadius)){
         throw new Error("Invalid snap radius for report generation.");
@@ -162,7 +161,7 @@ export default function FiberCalculatorPage() {
 
       const reportParams = {
         fiberPathResult: fiberPathResult,
-        pointA_form: currentFormValues.pointA, // Pass form values as they are (string-based lat/lng)
+        pointA_form: currentFormValues.pointA, 
         pointB_form: currentFormValues.pointB,
         snapRadiusUsed_form: snapRadius,
       };
@@ -189,6 +188,47 @@ export default function FiberCalculatorPage() {
       toast({ title: "PDF Generation Failed", description: errorMessage, variant: "destructive", duration: 7000 });
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleGenerateKmzReport = async () => {
+    if (!fiberPathResult || fiberPathResult.status !== 'success') {
+      toast({ title: "Error", description: "No successful fiber path data available to generate KMZ.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingKmz(true);
+    try {
+      const currentFormValues = getValues();
+      const kmzParams = {
+        fiberPathResult: fiberPathResult,
+        pointA_name: currentFormValues.pointA.name,
+        pointB_name: currentFormValues.pointB.name,
+        // Original point coordinates will be taken from fiberPathResult.pointA_original etc.
+      };
+
+      const response = await generateSingleFiberPathKmzAction(kmzParams);
+
+      if (response.success && response.data) {
+        const { base64Kmz, fileName } = response.data;
+        const byteCharacters = atob(base64Kmz);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        // KMZ MIME type: application/vnd.google-earth.kmz or application/vnd.google-earth.kmz+xml
+        const blob = new Blob([byteArray], { type: 'application/vnd.google-earth.kmz' });
+        saveAs(blob, fileName);
+        toast({ title: "Success", description: "KMZ file downloaded." });
+      } else {
+        throw new Error(response.error || "KMZ generation failed without specific error message.");
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error generating KMZ.";
+      console.error("KMZ Generation Error:", error);
+      toast({ title: "KMZ Generation Failed", description: errorMessage, variant: "destructive", duration: 7000 });
+    } finally {
+      setIsGeneratingKmz(false);
     }
   };
 
@@ -223,7 +263,6 @@ export default function FiberCalculatorPage() {
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
-    // Keep snap radius from localStorage unless explicitly reset
     const storedRadius = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS);
     setValue('fiberSnapRadius', storedRadius ? parseInt(storedRadius, 10) : defaultFiberCalculatorFormValues.fiberSnapRadius);
 
@@ -241,6 +280,8 @@ export default function FiberCalculatorPage() {
   const mapPointB = formPointBForMap.lat && formPointBForMap.lng && !isNaN(parseFloat(formPointBForMap.lat)) && !isNaN(parseFloat(formPointBForMap.lng))
     ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name }
     : undefined;
+  
+  const anyOperationPending = isCalculating || isGeneratingPdf || isGeneratingKmz;
 
   return (
     <>
@@ -253,10 +294,12 @@ export default function FiberCalculatorPage() {
             handleSubmit={handleSubmit}
             onSubmit={handleCalculateSubmit}
             onClear={handleClearForm}
-            onGeneratePdfReport={handleGeneratePdfReport} // Pass handler
+            onGeneratePdfReport={handleGeneratePdfReport}
+            onGenerateKmzReport={handleGenerateKmzReport} // Pass KMZ handler
             clientFormErrors={clientFormErrors}
             isCalculating={isCalculating}
-            isGeneratingPdf={isGeneratingPdf} // Pass loading state
+            isGeneratingPdf={isGeneratingPdf}
+            isGeneratingKmz={isGeneratingKmz} // Pass KMZ loading state
             fiberPathResult={fiberPathResult}
             calculationError={calculationError}
           />
@@ -268,19 +311,21 @@ export default function FiberCalculatorPage() {
             onMapClick={handleMapClick}
             onMarkerDrag={handleMarkerDrag}
             mapContainerClassName="w-full h-full"
-            analysisResult={null} // No LOS analysis result for this page
-            isStale={false} // Not applicable here
+            analysisResult={null}
+            isStale={false}
             fiberPathResult={fiberPathResult}
           />
         </div>
 
-        {(isCalculating || isGeneratingPdf) && (
+        {anyOperationPending && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
             <Card className="p-6 shadow-2xl bg-card/90">
               <CardContent className="flex flex-col items-center text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
                 <p className="text-lg font-semibold text-foreground">
-                  {isCalculating ? "Calculating Fiber Path..." : "Generating PDF Report..."}
+                  {isCalculating ? "Calculating Fiber Path..." : 
+                   isGeneratingPdf ? "Generating PDF Report..." :
+                   isGeneratingKmz ? "Generating KMZ File..." : "Processing..."}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   {isCalculating ? "Accessing road network data..." : "Please wait..."}
@@ -293,5 +338,3 @@ export default function FiberCalculatorPage() {
     </>
   );
 }
-
-    

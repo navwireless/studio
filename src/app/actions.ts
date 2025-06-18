@@ -5,9 +5,11 @@ import { z } from 'zod';
 import type { AnalysisParams, AnalysisResult, PointInput, PointCoordinates, ElevationSampleAPI } from '@/types';
 import { analyzeLOS } from '@/lib/los-calculator';
 import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/tools/report-generator';
-import { FiberCalculatorFormSchema, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema'; // For Fiber report
-import type { FiberPathResult } from '@/tools/fiberPathCalculator'; // For Fiber report
-import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport'; // Specific fiber PDF generator
+import { FiberCalculatorFormSchema, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema';
+import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
+import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport';
+import JSZip from 'jszip'; // For KMZ generation
+import { xmlEscape } from '@/lib/xml-escape'; // Helper for KML content
 
 // --- Google Elevation API Configuration ---
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
@@ -43,9 +45,6 @@ const ServerActionAnalysisSchema = z.object({
 });
 
 
-/**
- * Fetches elevation data from Google Elevation API.
- */
 async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
   if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
     console.error("Google Elevation API key is not configured or is a placeholder.");
@@ -137,7 +136,7 @@ export async function performLosAnalysis(
 
       const fieldErrorMessages = Object.entries(flattenedErrors.fieldErrors)
         .map(([path, messages]) => {
-          const typedMessages = messages as string[]; // Ensure messages is treated as string[]
+          const typedMessages = messages as string[];
           return `${String(path)}: ${typedMessages.map(String).join(', ')}`;
         })
         .join('\n');
@@ -155,17 +154,17 @@ export async function performLosAnalysis(
     const params: AnalysisParams = {
       pointA: {
         name: validatedData.pointA.name,
-        lat: parseFloat(rawFormData.pointA.lat), // Use original string for parseFloat
-        lng: parseFloat(rawFormData.pointA.lng), // Use original string for parseFloat
-        towerHeight: validatedData.pointA.height, // Already a number from Zod transform
+        lat: parseFloat(rawFormData.pointA.lat),
+        lng: parseFloat(rawFormData.pointA.lng),
+        towerHeight: validatedData.pointA.height,
       },
       pointB: {
         name: validatedData.pointB.name,
-        lat: parseFloat(rawFormData.pointB.lat), // Use original string for parseFloat
-        lng: parseFloat(rawFormData.pointB.lng), // Use original string for parseFloat
-        towerHeight: validatedData.pointB.height, // Already a number from Zod transform
+        lat: parseFloat(rawFormData.pointB.lat),
+        lng: parseFloat(rawFormData.pointB.lng),
+        towerHeight: validatedData.pointB.height,
       },
-      clearanceThreshold: validatedData.clearanceThreshold, // Already a number
+      clearanceThreshold: validatedData.clearanceThreshold,
     };
 
     const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
@@ -217,13 +216,10 @@ export async function generateSingleAnalysisPdfReportAction(
   }
 }
 
-// Zod schema for Fiber Report Action parameters
 const FiberReportParamsSchema = z.object({
   fiberPathResult: z.custom<FiberPathResult>((val) => val !== null && typeof val === 'object' && 'status' in (val as any), {
     message: "Valid FiberPathResult object is required."
   }),
-  // PointInputSchema_FC uses string for lat/lng, which matches form values.
-  // The report generator will handle parsing them to numbers if needed internally.
   pointA_form: PointInputSchema_FC,
   pointB_form: PointInputSchema_FC,
   snapRadiusUsed_form: z.number().min(0, "Snap radius must be non-negative."),
@@ -248,24 +244,23 @@ export async function generateFiberReportAction(
       return { success: false, error: "Cannot generate report: Fiber path calculation was not successful or data is missing." };
     }
     
-    // Convert lat/lng from string to number for the report generator, which expects PointCoordinates
-    const pointA_coords: PointCoordinates = { 
+    const pointA_coords_report: PointCoordinates = { 
         lat: parseFloat(pointA_form.lat), 
         lng: parseFloat(pointA_form.lng) 
     };
-    const pointB_coords: PointCoordinates = { 
+    const pointB_coords_report: PointCoordinates = { 
         lat: parseFloat(pointB_form.lat), 
         lng: parseFloat(pointB_form.lng) 
     };
     
-    if (isNaN(pointA_coords.lat) || isNaN(pointA_coords.lng) || isNaN(pointB_coords.lat) || isNaN(pointB_coords.lng)) {
+    if (isNaN(pointA_coords_report.lat) || isNaN(pointA_coords_report.lng) || isNaN(pointB_coords_report.lat) || isNaN(pointB_coords_report.lng)) {
         return { success: false, error: "Invalid coordinates provided in form data for report generation." };
     }
 
     const pdfBytes = await generatePdfReportForFiberAnalysis(
         fiberPathResult,
-        { name: pointA_form.name, ...pointA_coords }, 
-        { name: pointB_form.name, ...pointB_coords },
+        { name: pointA_form.name, ...pointA_coords_report }, 
+        { name: pointB_form.name, ...pointB_coords_report },
         snapRadiusUsed_form,
         reportOptions
     );
@@ -280,6 +275,145 @@ export async function generateFiberReportAction(
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during Fiber PDF report generation.";
     console.error("Error generating Fiber PDF report action:", errorMessage, error);
     return { success: false, error: `Failed to generate Fiber PDF report: ${errorMessage}` };
+  }
+}
+
+
+// Schema for KMZ generation parameters
+const SingleFiberPathKmzParamsSchema = z.object({
+  fiberPathResult: z.custom<FiberPathResult>((val) => val !== null && typeof val === 'object' && 'status' in (val as any) && (val as FiberPathResult).status === 'success', {
+    message: "Successful FiberPathResult object is required for KMZ generation."
+  }),
+  pointA_name: z.string().min(1, "Point A name is required."),
+  pointB_name: z.string().min(1, "Point B name is required."),
+});
+
+// Helper to get encoded polyline strings for road_route segments
+function getRoadRouteEncodedPolylines(segments?: FiberPathSegment[]): string {
+    if (!segments) return "";
+    return segments.filter(s => s.type === 'road_route' && s.pathPolyline).map(s => s.pathPolyline).join('; ');
+}
+
+export async function generateSingleFiberPathKmzAction(
+  params: z.infer<typeof SingleFiberPathKmzParamsSchema>
+): Promise<{ success: true; data: { base64Kmz: string; fileName: string } } | { success: false; error: string }> {
+  try {
+    const validation = SingleFiberPathKmzParamsSchema.safeParse(params);
+    if (!validation.success) {
+      const errorMessages = validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+      return { success: false, error: `Invalid input for KMZ generation: ${errorMessages}` };
+    }
+
+    const { fiberPathResult, pointA_name, pointB_name } = validation.data;
+
+    let kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Fiber Path: ${xmlEscape(pointA_name)} to ${xmlEscape(pointB_name)}</name>
+    <Style id="originalPointStyle">
+      <IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href></Icon><scale>1.0</scale></IconStyle>
+      <LabelStyle><scale>0.8</scale></LabelStyle>
+    </Style>
+    <Style id="snappedPointStyle">
+      <IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-blank.png</href></Icon><scale>0.8</scale></IconStyle>
+    </Style>
+    <Style id="offsetLineStyle">
+      <LineStyle><color>a000aaff</color><width>3</width></LineStyle> <!-- Orange-ish, slightly transparent -->
+    </Style>
+    <Style id="roadRouteLineStyle">
+      <LineStyle><color>a0ffaa00</color><width>4</width></LineStyle> <!-- Cyan-ish, slightly transparent -->
+    </Style>
+
+    <Folder><name>Original Sites</name>
+      <Placemark>
+        <name>${xmlEscape(pointA_name)} (Original)</name>
+        <styleUrl>#originalPointStyle</styleUrl>
+        <Point><coordinates>${fiberPathResult.pointA_original.lng},${fiberPathResult.pointA_original.lat},0</coordinates></Point>
+      </Placemark>
+      <Placemark>
+        <name>${xmlEscape(pointB_name)} (Original)</name>
+        <styleUrl>#originalPointStyle</styleUrl>
+        <Point><coordinates>${fiberPathResult.pointB_original.lng},${fiberPathResult.pointB_original.lat},0</coordinates></Point>
+      </Placemark>
+    </Folder>
+    
+    <Folder><name>Fiber Path Segments</name>`;
+
+    const offsetASeg = fiberPathResult.segments?.find(s => s.type === 'offset_a');
+    const offsetBSeg = fiberPathResult.segments?.find(s => s.type === 'offset_b');
+    const roadSegments = fiberPathResult.segments?.filter(s => s.type === 'road_route') || [];
+    const totalRoadDist = roadSegments.reduce((sum, s) => sum + s.distanceMeters, 0);
+
+    // Offset A Placemark
+    if (offsetASeg && fiberPathResult.pointA_snappedToRoad) {
+      kmlContent += `
+      <Placemark>
+        <name>Offset A: ${xmlEscape(pointA_name)} to Road</name>
+        <styleUrl>#offsetLineStyle</styleUrl>
+        <description>Distance: ${offsetASeg.distanceMeters.toFixed(1)} m</description>
+        <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointA_original.lng},${fiberPathResult.pointA_original.lat},0 ${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0</coordinates></LineString>
+      </Placemark>
+      <Placemark>
+        <name>${xmlEscape(pointA_name)} (Snapped to Road)</name>
+        <styleUrl>#snappedPointStyle</styleUrl>
+        <Point><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0</coordinates></Point>
+      </Placemark>`;
+    }
+
+    // Road Route Placemark (Simplified Line)
+    if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad && roadSegments.length > 0) {
+      const encodedPolylines = getRoadRouteEncodedPolylines(roadSegments);
+      kmlContent += `
+      <Placemark>
+        <name>Road Route (Simplified)</name>
+        <styleUrl>#roadRouteLineStyle</styleUrl>
+        <description>Total Road Distance: ${totalRoadDist.toFixed(1)} m. Encoded Polyline(s): ${xmlEscape(encodedPolylines)}</description>
+        <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0 ${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></LineString>
+      </Placemark>`;
+    }
+    
+    // Offset B Placemark
+    if (offsetBSeg && fiberPathResult.pointB_snappedToRoad) {
+      kmlContent += `
+      <Placemark>
+        <name>Offset B: Road to ${xmlEscape(pointB_name)}</name>
+        <styleUrl>#offsetLineStyle</styleUrl>
+        <description>Distance: ${offsetBSeg.distanceMeters.toFixed(1)} m</description>
+        <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0 ${fiberPathResult.pointB_original.lng},${fiberPathResult.pointB_original.lat},0</coordinates></LineString>
+      </Placemark>
+      <Placemark>
+        <name>${xmlEscape(pointB_name)} (Snapped to Road)</name>
+        <styleUrl>#snappedPointStyle</styleUrl>
+        <Point><coordinates>${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></Point>
+      </Placemark>`;
+    }
+
+    kmlContent += `
+    </Folder>
+  </Document>
+</kml>`;
+
+    const zip = new JSZip();
+    zip.file("doc.kml", kmlContent);
+    const kmzBlob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz+xml" });
+    
+    const reader = new FileReader();
+    const base64Kmz = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(kmzBlob);
+    });
+
+    const safePointAName = pointA_name.replace(/[^a-zA-Z0-9]/g, '_');
+    const safePointBName = pointB_name.replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `Fiber_Path_KMZ_${safePointAName}_to_${safePointBName}.kmz`;
+
+    return { success: true, data: { base64Kmz, fileName } };
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during KMZ generation.";
+    console.error("Error generating Single Fiber Path KMZ action:", errorMessage, error);
+    return { success: false, error: `Failed to generate KMZ: ${errorMessage}` };
   }
 }
 
