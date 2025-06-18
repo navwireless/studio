@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Cable, Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin } from 'lucide-react';
+import { Cable, Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin, Download, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
@@ -78,10 +78,12 @@ interface FiberInputPanelProps {
   handleSubmit: UseFormHandleSubmit<FiberCalculatorFormValues>;
   onSubmit: (data: FiberCalculatorFormValues) => void;
   onClear: () => void;
+  onGeneratePdfReport: () => void;
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
   isCalculating: boolean;
+  isGeneratingPdf: boolean;
   fiberPathResult: FiberPathResult | null;
-  calculationError: string | null; 
+  calculationError: string | null;
 }
 
 export default function FiberInputPanel({
@@ -90,12 +92,14 @@ export default function FiberInputPanel({
   handleSubmit,
   onSubmit,
   onClear,
+  onGeneratePdfReport,
   clientFormErrors,
   isCalculating,
+  isGeneratingPdf,
   fiberPathResult,
   calculationError,
 }: FiberInputPanelProps) {
-  
+
   const getCombinedError = (clientFieldError?: { message?: string }) => {
     return clientFieldError?.message;
   };
@@ -104,7 +108,7 @@ export default function FiberInputPanel({
     if (!status) return 'N/A';
     switch (status) {
       case 'success': return 'Calculation Successful';
-      case 'los_not_feasible': return 'LOS Not Feasible (Not applicable for this tool)'; 
+      case 'los_not_feasible': return 'LOS Not Feasible (N/A for this tool)';
       case 'no_road_for_a': return 'No Road Found Near Site A';
       case 'no_road_for_b': return 'No Road Found Near Site B';
       case 'no_route_between_roads': return 'No Road Route Between Snapped Points';
@@ -116,11 +120,11 @@ export default function FiberInputPanel({
   };
 
   const getStatusIcon = (status?: FiberPathResult['status']) => {
-    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // Default to error if no status
+    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />;
     switch (status) {
       case 'success': return <CheckCircle className="h-5 w-5 mr-2 text-green-500" />;
-      case 'no_road_for_a': 
-      case 'no_road_for_b': 
+      case 'no_road_for_a':
+      case 'no_road_for_b':
       case 'no_route_between_roads':
       case 'radius_too_small': return <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />;
       default: return <XCircle className="h-5 w-5 mr-2 text-red-500" />;
@@ -131,8 +135,8 @@ export default function FiberInputPanel({
      if (!status) return 'text-red-400';
      switch (status) {
       case 'success': return 'text-green-400';
-      case 'no_road_for_a': 
-      case 'no_road_for_b': 
+      case 'no_road_for_a':
+      case 'no_road_for_b':
       case 'no_route_between_roads':
       case 'radius_too_small': return 'text-amber-400';
       default: return 'text-red-400';
@@ -202,24 +206,38 @@ export default function FiberInputPanel({
             </div>
 
             <div className="pt-2 space-y-2">
-               <Button type="submit" className="w-full" disabled={isCalculating}>
+               <Button type="submit" className="w-full" disabled={isCalculating || isGeneratingPdf}>
                 <Route className="mr-2 h-4 w-4" />
                 {isCalculating ? 'Calculating...' : 'Calculate Fiber Path'}
               </Button>
-              <Button type="button" variant="outline" className="w-full" onClick={onClear} disabled={isCalculating}>
+              <Button type="button" variant="outline" className="w-full" onClick={onClear} disabled={isCalculating || isGeneratingPdf}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear & Reset
               </Button>
             </div>
 
-            {/* Results Area */}
             {(fiberPathResult || calculationError) && !isCalculating && (
               <div className="mt-4 p-3 border rounded-md bg-muted/30 space-y-1.5 text-xs">
-                <h4 className="font-semibold text-sm mb-2 flex items-center">
-                  {getStatusIcon(fiberPathResult?.status)}
-                  Calculation Result
-                </h4>
-                
+                <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold text-sm flex items-center">
+                    {getStatusIcon(fiberPathResult?.status)}
+                    Calculation Result
+                    </h4>
+                    {fiberPathResult?.status === 'success' && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={onGeneratePdfReport}
+                            disabled={isGeneratingPdf || !fiberPathResult}
+                            className="h-7 text-xs px-2 py-1"
+                        >
+                            {isGeneratingPdf ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
+                            PDF Report
+                        </Button>
+                    )}
+                </div>
+
                 {fiberPathResult && (
                   <>
                     <p>
@@ -240,14 +258,13 @@ export default function FiberInputPanel({
                         </div>
                       </>
                     )}
-                     {/* Display detailed error message or suggestion */}
                     {fiberPathResult.errorMessage && (
                       <p className={cn(
-                         "italic mt-1.5 text-sm", 
+                         "italic mt-1.5 text-sm",
                          getStatusColorClass(fiberPathResult.status)
                        )}>
                         {fiberPathResult.errorMessage}
-                        {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && 
+                        {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') &&
                          <span className="block text-xs text-amber-300/80"> Consider increasing the Snap Radius or verifying site coordinates.</span>
                         }
                          {fiberPathResult.status === 'no_route_between_roads' &&
@@ -257,7 +274,6 @@ export default function FiberInputPanel({
                     )}
                   </>
                 )}
-                {/* General calculation error if fiberPathResult itself is null but calculationError string exists */}
                 {calculationError && !fiberPathResult && (
                      <p className="text-red-400 text-sm"><span className="font-semibold">Error:</span> {calculationError}</p>
                 )}
@@ -269,5 +285,3 @@ export default function FiberInputPanel({
     </TooltipProvider>
   );
 }
-
-    

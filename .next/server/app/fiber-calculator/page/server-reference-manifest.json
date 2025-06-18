@@ -1,0 +1,16 @@
+{
+  "node": {
+    "7e9053ee96b2a8ff08a5535b919d94d4648359fba6": {
+      "workers": {
+        "app/fiber-calculator/page": {
+          "moduleId": "[project]/.next-internal/server/app/fiber-calculator/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/fiber-calculator/page": "action-browser"
+      }
+    }
+  },
+  "edge": {}
+}

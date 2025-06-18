@@ -8,13 +8,15 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppHeader from '@/components/layout/app-header';
-import InteractiveMap from '@/components/fso/interactive-map'; 
+import InteractiveMap from '@/components/fso/interactive-map';
 import type { PointCoordinates } from '@/types';
 import { FiberCalculatorFormSchema, type FiberCalculatorFormValues, defaultFiberCalculatorFormValues } from '@/lib/fiber-calculator-form-schema';
 import { useToast } from '@/hooks/use-toast';
 import FiberInputPanel from '@/components/fiber-calculator/FiberInputPanel';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
-import type { FiberPathResult } from '@/tools/fiberPathCalculator'; 
+import type { FiberPathResult } from '@/tools/fiberPathCalculator';
+import { generateFiberReportAction } from '@/app/actions'; // Import the new action
+import { saveAs } from 'file-saver';
 
 const FC_LOCAL_STORAGE_KEYS = {
   SNAP_RADIUS: 'fiberCalculatorSnapRadius',
@@ -29,6 +31,7 @@ const FC_LOCAL_STORAGE_KEYS = {
 export default function FiberCalculatorPage() {
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
 
@@ -45,7 +48,7 @@ export default function FiberCalculatorPage() {
     if (storedRadius) {
       setValue('fiberSnapRadius', parseInt(storedRadius, 10), { shouldValidate: true });
     }
-    
+
     const storedPointALat = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT);
     const storedPointALng = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG);
     const storedPointAName = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME);
@@ -109,25 +112,25 @@ export default function FiberCalculatorPage() {
         setIsCalculating(false);
         return;
       }
-      
+
       const result = await performFiberPathAnalysisAction(
-        pointA_lat_num, 
-        pointA_lng_num, 
-        pointB_lat_num, 
-        pointB_lng_num, 
+        pointA_lat_num,
+        pointA_lng_num,
+        pointB_lat_num,
+        pointB_lng_num,
         data.fiberSnapRadius,
-        true // For dedicated fiber calculator, LOS feasibility is assumed or not a pre-requisite for trying.
+        true
       );
 
       setFiberPathResult(result);
 
       if (result.status !== 'success') {
         setCalculationError(result.errorMessage || 'Fiber path calculation failed.');
-        toast({ 
-            title: result.status === 'api_error' ? "API Error" : "Calculation Info", 
-            description: result.errorMessage || 'Could not calculate fiber path.', 
+        toast({
+            title: result.status === 'api_error' ? "API Error" : "Calculation Info",
+            description: result.errorMessage || 'Could not calculate fiber path.',
             variant: result.status === 'api_error' ? "destructive" : "default",
-            duration: 7000 
+            duration: 7000
         });
       } else {
         toast({ title: "Fiber Path Calculated", description: `Total distance: ${result.totalDistanceMeters?.toFixed(0)}m` });
@@ -141,13 +144,54 @@ export default function FiberCalculatorPage() {
     }
   };
 
+  const handleGeneratePdfReport = async () => {
+    if (!fiberPathResult || fiberPathResult.status !== 'success') {
+      toast({ title: "Error", description: "No successful fiber path data available to generate PDF.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingPdf(true);
+    try {
+      const currentFormValues = getValues();
+      const reportParams = {
+        fiberPathResult: fiberPathResult,
+        pointA_form: currentFormValues.pointA,
+        pointB_form: currentFormValues.pointB,
+        snapRadiusUsed_form: currentFormValues.fiberSnapRadius,
+      };
+
+      const response = await generateFiberReportAction(reportParams);
+
+      if (response.success) {
+        const { base64Pdf, fileName } = response.data;
+        const byteCharacters = atob(base64Pdf);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        saveAs(blob, fileName);
+        toast({ title: "Success", description: "PDF report downloaded." });
+      } else {
+        throw new Error(response.error);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error generating PDF.";
+      console.error("PDF Generation Error:", error);
+      toast({ title: "PDF Generation Failed", description: errorMessage, variant: "destructive", duration: 7000 });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     if (event.latLng) {
       const lat = event.latLng.lat().toFixed(6);
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
-      setFiberPathResult(null); 
+      setFiberPathResult(null);
       setCalculationError(null);
     }
   }, [setValue]);
@@ -175,20 +219,20 @@ export default function FiberCalculatorPage() {
     setCalculationError(null);
     toast({ title: "Form Cleared", description: "Inputs reset to default values." });
   };
-  
+
   const formPointAForMap = watch('pointA');
   const formPointBForMap = watch('pointB');
 
-  const mapPointA = formPointAForMap.lat && formPointAForMap.lng && !isNaN(parseFloat(formPointAForMap.lat)) && !isNaN(parseFloat(formPointAForMap.lng)) 
-    ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name } 
+  const mapPointA = formPointAForMap.lat && formPointAForMap.lng && !isNaN(parseFloat(formPointAForMap.lat)) && !isNaN(parseFloat(formPointAForMap.lng))
+    ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name }
     : undefined;
   const mapPointB = formPointBForMap.lat && formPointBForMap.lng && !isNaN(parseFloat(formPointBForMap.lat)) && !isNaN(parseFloat(formPointBForMap.lng))
-    ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name } 
+    ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name }
     : undefined;
 
   return (
     <>
-      <AppHeader currentPage="fiber" /> 
+      <AppHeader currentPage="fiber" />
       <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden h-[calc(100vh-theme(spacing.12)-theme(spacing.12))]">
         <div className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-auto md:h-full overflow-y-auto custom-scrollbar bg-card/80 backdrop-blur-sm shadow-lg border-t md:border-t-0 md:border-r border-border p-1 print:hidden">
           <FiberInputPanel
@@ -197,8 +241,10 @@ export default function FiberCalculatorPage() {
             handleSubmit={handleSubmit}
             onSubmit={handleCalculateSubmit}
             onClear={handleClearForm}
+            onGeneratePdfReport={handleGeneratePdfReport}
             clientFormErrors={clientFormErrors}
             isCalculating={isCalculating}
+            isGeneratingPdf={isGeneratingPdf}
             fiberPathResult={fiberPathResult}
             calculationError={calculationError}
           />
@@ -210,19 +256,23 @@ export default function FiberCalculatorPage() {
             onMapClick={handleMapClick}
             onMarkerDrag={handleMarkerDrag}
             mapContainerClassName="w-full h-full"
-            analysisResult={null} // No LOS analysis on this page
-            isStale={false} // No concept of staleness for LOS on this page
-            fiberPathResult={fiberPathResult} 
+            analysisResult={null}
+            isStale={false}
+            fiberPathResult={fiberPathResult}
           />
         </div>
 
-        {isCalculating && (
+        {(isCalculating || isGeneratingPdf) && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
             <Card className="p-6 shadow-2xl bg-card/90">
               <CardContent className="flex flex-col items-center text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-lg font-semibold text-foreground">Calculating Fiber Path...</p>
-                <p className="text-sm text-muted-foreground mt-1">Accessing road network data...</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {isCalculating ? "Calculating Fiber Path..." : "Generating PDF Report..."}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {isCalculating ? "Accessing road network data..." : "Please wait..."}
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -231,5 +281,3 @@ export default function FiberCalculatorPage() {
     </>
   );
 }
-
-    

@@ -1,14 +1,14 @@
 {
   "node": {
-    "6091a7f5eb670c7a62c05633ebf85658287acaec18": {
+    "402d3049fed11f2d39fa3d58520db39f6249045915": {
       "workers": {
-        "app/bulk-los-analyzer/page": {
-          "moduleId": "[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+        "app/page": {
+          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false
         }
       },
       "layer": {
-        "app/bulk-los-analyzer/page": "action-browser"
+        "app/page": "action-browser"
       }
     },
     "6032618b8418ac76277e7b9b725912dd40e39f206e": {
@@ -35,13 +35,34 @@
     },
     "7e9053ee96b2a8ff08a5535b919d94d4648359fba6": {
       "workers": {
+        "app/bulk-los-analyzer/page": {
+          "moduleId": "[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        },
+        "app/fiber-calculator/page": {
+          "moduleId": "[project]/.next-internal/server/app/fiber-calculator/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        },
         "app/page": {
           "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false
         }
       },
       "layer": {
+        "app/bulk-los-analyzer/page": "action-browser",
+        "app/fiber-calculator/page": "action-browser",
         "app/page": "action-browser"
+      }
+    },
+    "6091a7f5eb670c7a62c05633ebf85658287acaec18": {
+      "workers": {
+        "app/bulk-los-analyzer/page": {
+          "moduleId": "[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/bulk-los-analyzer/page": "action-browser"
       }
     }
   },

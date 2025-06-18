@@ -2,9 +2,12 @@
 "use server";
 
 import { z } from 'zod';
-import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI } from '@/types';
+import type { AnalysisParams, AnalysisResult, PointInput, PointCoordinates, ElevationSampleAPI } from '@/types';
 import { analyzeLOS } from '@/lib/los-calculator';
 import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/tools/report-generator';
+import { FiberCalculatorFormValues, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema'; // For Fiber report
+import type { FiberPathResult } from '@/tools/fiberPathCalculator'; // For Fiber report
+import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport'; // Specific fiber PDF generator
 
 // --- Google Elevation API Configuration ---
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
@@ -80,7 +83,7 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
     console.error("Failed to parse JSON response from Google Elevation API:", errorMessage);
     throw new Error(`Failed to parse response from Google Elevation API: ${errorMessage}`);
   }
-  
+
   if (data.status !== 'OK') {
     console.error("Google Elevation API error:", data.status, data.error_message);
     throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown API error'}`);
@@ -89,7 +92,7 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
   if (!data.results || data.results.length === 0) {
     throw new Error("Google Elevation API returned no results for the given path. Check coordinates.");
   }
-    
+
   return data.results.map((sample: any) => ({
       elevation: sample.elevation,
       location: {
@@ -102,7 +105,7 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
 
 
 export async function performLosAnalysis(
-  prevState: AnalysisResult | { error: string; fieldErrors?: any } | null, // Can be null initially
+  prevState: AnalysisResult | { error: string; fieldErrors?: any } | null,
   formData: FormData
 ): Promise<AnalysisResult | { error: string; fieldErrors?: any }> {
   try {
@@ -127,14 +130,14 @@ export async function performLosAnalysis(
     if (!validationResult.success) {
       const flattenedErrors = validationResult.error.flatten();
       let finalErrorMessage = "Input validation failed. Issues:\n";
-      
+
       if (flattenedErrors.formErrors.length > 0) {
         finalErrorMessage += `Form Errors: ${flattenedErrors.formErrors.map(String).join(', ')}\n`;
       }
-      
+
       const fieldErrorMessages = Object.entries(flattenedErrors.fieldErrors)
         .map(([path, messages]) => {
-          const typedMessages = messages as string[]; // Assuming messages are string arrays
+          const typedMessages = messages as string[];
           return `${String(path)}: ${typedMessages.map(String).join(', ')}`;
         })
         .join('\n');
@@ -142,9 +145,8 @@ export async function performLosAnalysis(
       if (fieldErrorMessages) {
         finalErrorMessage += `Field Errors:\n${fieldErrorMessages}`;
       }
-      
+
       console.error("Server-side Zod validation errors:", finalErrorMessage, flattenedErrors);
-      // Instead of throwing, return an error object for useActionState
       return { error: finalErrorMessage.trim(), fieldErrors: flattenedErrors.fieldErrors };
     }
 
@@ -153,40 +155,39 @@ export async function performLosAnalysis(
     const params: AnalysisParams = {
       pointA: {
         name: validatedData.pointA.name,
-        lat: parseFloat(rawFormData.pointA.lat), 
+        lat: parseFloat(rawFormData.pointA.lat),
         lng: parseFloat(rawFormData.pointA.lng),
-        towerHeight: validatedData.pointA.height, 
+        towerHeight: validatedData.pointA.height,
       },
       pointB: {
         name: validatedData.pointB.name,
         lat: parseFloat(rawFormData.pointB.lat),
         lng: parseFloat(rawFormData.pointB.lng),
-        towerHeight: validatedData.pointB.height, 
+        towerHeight: validatedData.pointB.height,
       },
-      clearanceThreshold: validatedData.clearanceThreshold, 
+      clearanceThreshold: validatedData.clearanceThreshold,
     };
-    
+
     const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
     const result = analyzeLOS(params, elevationData);
-    
-    return { 
-      ...result, 
-      id: new Date().toISOString() + Math.random().toString(36).substring(2,9), 
-      timestamp: Date.now(), 
-      message: `${result.message} Using Google Elevation API data.` 
+
+    return {
+      ...result,
+      id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+      timestamp: Date.now(),
+      message: `${result.message} Using Google Elevation API data.`
     };
 
   } catch (err: unknown) {
     let clientErrorMessageString: string;
 
     if (err instanceof Error) {
-      clientErrorMessageString = String(err.message); 
+      clientErrorMessageString = String(err.message);
     } else {
       clientErrorMessageString = "An unknown error occurred during analysis.";
     }
-    
+
     console.error("Error in performLosAnalysis server action:", clientErrorMessageString, err);
-    // Return an error object instead of throwing
     return { error: clientErrorMessageString };
   }
 }
@@ -203,7 +204,7 @@ export async function generateSingleAnalysisPdfReportAction(
 
     const pdfBytes = await generatePdfReportForSingleAnalysis(analysisResult, reportOptions);
     const base64Pdf = Buffer.from(pdfBytes).toString('base64');
-    
+
     const safePointAName = (analysisResult.pointA.name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
     const safePointBName = (analysisResult.pointB.name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `LOS_Report_${safePointAName}_to_${safePointBName}.pdf`;
@@ -216,3 +217,53 @@ export async function generateSingleAnalysisPdfReportAction(
   }
 }
 
+// Zod schema for Fiber Report Action parameters
+// We expect fiberPathResult to be passed as a structured object, and form values as simple types.
+// For PointInput, we use the string-based version from form-schema because that's what the form holds.
+const FiberReportParamsSchema = z.object({
+  fiberPathResult: z.custom<FiberPathResult>((val) => val !== null && typeof val === 'object' && 'status' in (val as any), {
+    message: "Valid FiberPathResult object is required."
+  }),
+  pointA_form: PointInputSchema_FC, // From fiber-calculator-form-schema
+  pointB_form: PointInputSchema_FC, // From fiber-calculator-form-schema
+  snapRadiusUsed_form: z.number().min(0),
+  reportOptions: z.custom<ReportGenerationOptions>().optional()
+});
+
+
+export async function generateFiberReportAction(
+  params: z.infer<typeof FiberReportParamsSchema>
+): Promise<{ success: true; data: { base64Pdf: string; fileName: string } } | { success: false; error: string }> {
+  try {
+    const validation = FiberReportParamsSchema.safeParse(params);
+    if (!validation.success) {
+      console.error("Invalid parameters for generateFiberReportAction:", validation.error.flatten());
+      return { success: false, error: `Invalid input: ${validation.error.flatten().formErrors.join(', ')}` };
+    }
+
+    const { fiberPathResult, pointA_form, pointB_form, snapRadiusUsed_form, reportOptions } = validation.data;
+
+    if (!fiberPathResult || fiberPathResult.status !== 'success') {
+      return { success: false, error: "Cannot generate report: Fiber path calculation was not successful or data is missing." };
+    }
+    
+    const pdfBytes = await generatePdfReportForFiberAnalysis(
+        fiberPathResult,
+        { name: pointA_form.name, lat: parseFloat(pointA_form.lat), lng: parseFloat(pointB_form.lng) }, // Convert to PointCoordinates
+        { name: pointB_form.name, lat: parseFloat(pointB_form.lat), lng: parseFloat(pointB_form.lng) }, // Convert to PointCoordinates
+        snapRadiusUsed_form,
+        reportOptions
+    );
+    const base64Pdf = Buffer.from(pdfBytes).toString('base64');
+
+    const safePointAName = (pointA_form.name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
+    const safePointBName = (pointB_form.name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
+    const fileName = `Fiber_Path_Report_${safePointAName}_to_${safePointBName}.pdf`;
+
+    return { success: true, data: { base64Pdf, fileName } };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during Fiber PDF report generation.";
+    console.error("Error generating Fiber PDF report action:", errorMessage, error);
+    return { success: false, error: `Failed to generate Fiber PDF report: ${errorMessage}` };
+  }
+}
