@@ -1,6 +1,7 @@
 
 "use client";
 
+// Ensure all UI components are explicitly imported to avoid ReferenceError
 import React from 'react';
 import type { Control, UseFormRegister, FieldErrors } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Target, Cable, HelpCircle } from 'lucide-react';
 import type { BulkAnalysisFormValues } from '@/app/bulk-los-analyzer/page';
-import { Separator } from '../ui/separator';
+import { Separator } from '@/components/ui/separator';
+import { Button } from "@/components/ui/button"; // Added missing Button import
 
 interface BulkAnalysisParametersProps {
   control: Control<BulkAnalysisFormValues>;

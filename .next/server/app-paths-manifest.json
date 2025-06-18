@@ -1,6 +1,3 @@
 {
-  "/bulk-los-analyzer/page": "app/bulk-los-analyzer/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/fiber-calculator/page": "app/fiber-calculator/page.js",
   "/page": "app/page.js"
 }
