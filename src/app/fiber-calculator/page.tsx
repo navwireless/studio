@@ -8,13 +8,13 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppHeader from '@/components/layout/app-header';
-import InteractiveMap from '@/components/fso/interactive-map'; // Reusing for map display
+import InteractiveMap from '@/components/fso/interactive-map'; 
 import type { PointCoordinates } from '@/types';
 import { FiberCalculatorFormSchema, type FiberCalculatorFormValues, defaultFiberCalculatorFormValues } from '@/lib/fiber-calculator-form-schema';
 import { useToast } from '@/hooks/use-toast';
-import FiberInputPanel from '@/components/fiber-calculator/FiberInputPanel'; // New component for this page
+import FiberInputPanel from '@/components/fiber-calculator/FiberInputPanel';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
-import type { FiberPathResult } from '@/tools/fiberPathCalculator';
+import type { FiberPathResult } from '@/tools/fiberPathCalculator'; 
 
 const FC_LOCAL_STORAGE_KEYS = {
   SNAP_RADIUS: 'fiberCalculatorSnapRadius',
@@ -32,7 +32,6 @@ export default function FiberCalculatorPage() {
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
 
-  // Form handling using react-hook-form
   const form = useForm<FiberCalculatorFormValues>({
     resolver: zodResolver(FiberCalculatorFormSchema),
     defaultValues: defaultFiberCalculatorFormValues,
@@ -41,27 +40,29 @@ export default function FiberCalculatorPage() {
 
   const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
 
-  // Persist and load snap radius from localStorage
   useEffect(() => {
     const storedRadius = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS);
     if (storedRadius) {
       setValue('fiberSnapRadius', parseInt(storedRadius, 10), { shouldValidate: true });
     }
-    // Load other persisted fields
+    
     const storedPointALat = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT);
     const storedPointALng = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG);
     const storedPointAName = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME);
-    if (storedPointALat) setValue('pointA.lat', storedPointALat);
-    if (storedPointALng) setValue('pointA.lng', storedPointALng);
-    if (storedPointAName) setValue('pointA.name', storedPointAName);
+    if (storedPointALat && storedPointALng) {
+        setValue('pointA.lat', storedPointALat);
+        setValue('pointA.lng', storedPointALng);
+        setValue('pointA.name', storedPointAName || defaultFiberCalculatorFormValues.pointA.name);
+    }
 
     const storedPointBLat = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
     const storedPointBLng = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
     const storedPointBName = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
-    if (storedPointBLat) setValue('pointB.lat', storedPointBLat);
-    if (storedPointBLng) setValue('pointB.lng', storedPointBLng);
-    if (storedPointBName) setValue('pointB.name', storedPointBName);
-
+     if (storedPointBLat && storedPointBLng) {
+        setValue('pointB.lat', storedPointBLat);
+        setValue('pointB.lng', storedPointBLng);
+        setValue('pointB.name', storedPointBName || defaultFiberCalculatorFormValues.pointB.name);
+    }
   }, [setValue]);
 
   const watchedSnapRadius = watch('fiberSnapRadius');
@@ -75,15 +76,19 @@ export default function FiberCalculatorPage() {
   const watchedPointB = watch('pointB');
 
   useEffect(() => {
-    localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT, watchedPointA.lat);
-    localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG, watchedPointA.lng);
-    localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME, watchedPointA.name);
+    if (watchedPointA.lat && watchedPointA.lng) {
+        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT, watchedPointA.lat);
+        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG, watchedPointA.lng);
+        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME, watchedPointA.name);
+    }
   }, [watchedPointA]);
 
    useEffect(() => {
-    localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT, watchedPointB.lat);
-    localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG, watchedPointB.lng);
-    localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME, watchedPointB.name);
+    if (watchedPointB.lat && watchedPointB.lng) {
+        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT, watchedPointB.lat);
+        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG, watchedPointB.lng);
+        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME, watchedPointB.name);
+    }
   }, [watchedPointB]);
 
 
@@ -93,25 +98,37 @@ export default function FiberCalculatorPage() {
     setFiberPathResult(null);
 
     try {
-      const pointA: PointCoordinates = { lat: parseFloat(data.pointA.lat), lng: parseFloat(data.pointA.lng) };
-      const pointB: PointCoordinates = { lat: parseFloat(data.pointB.lat), lng: parseFloat(data.pointB.lng) };
+      const pointA_lat_num = parseFloat(data.pointA.lat);
+      const pointA_lng_num = parseFloat(data.pointA.lng);
+      const pointB_lat_num = parseFloat(data.pointB.lat);
+      const pointB_lng_num = parseFloat(data.pointB.lng);
+
+      if (isNaN(pointA_lat_num) || isNaN(pointA_lng_num) || isNaN(pointB_lat_num) || isNaN(pointB_lng_num)) {
+        setCalculationError("Invalid coordinates provided for Point A or Point B.");
+        toast({ title: "Input Error", description: "Please provide valid numeric coordinates for both points.", variant: "destructive"});
+        setIsCalculating(false);
+        return;
+      }
       
-      // For the dedicated fiber calculator, LOS feasibility is not a direct input/concern for the calculation itself.
-      // The `performFiberPathAnalysisAction` will proceed as if LOS is feasible or this check is bypassed.
       const result = await performFiberPathAnalysisAction(
-        pointA.lat, 
-        pointA.lng, 
-        pointB.lat, 
-        pointB.lng, 
+        pointA_lat_num, 
+        pointA_lng_num, 
+        pointB_lat_num, 
+        pointB_lng_num, 
         data.fiberSnapRadius,
-        true // Marking true here as LOS check is not part of this page's direct workflow before calculation
+        true 
       );
 
       setFiberPathResult(result);
 
       if (result.status !== 'success') {
         setCalculationError(result.errorMessage || 'Fiber path calculation failed.');
-        toast({ title: "Calculation Info", description: result.errorMessage || 'Could not calculate fiber path.', variant: result.status === 'api_error' ? "destructive" : "default" });
+        toast({ 
+            title: result.status === 'api_error' ? "API Error" : "Calculation Info", 
+            description: result.errorMessage || 'Could not calculate fiber path.', 
+            variant: result.status === 'api_error' ? "destructive" : "default",
+            duration: 7000 
+        });
       } else {
         toast({ title: "Fiber Path Calculated", description: `Total distance: ${result.totalDistanceMeters?.toFixed(0)}m` });
       }
@@ -130,6 +147,8 @@ export default function FiberCalculatorPage() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
+      setFiberPathResult(null); 
+      setCalculationError(null);
     }
   }, [setValue]);
 
@@ -139,33 +158,39 @@ export default function FiberCalculatorPage() {
       const lng = event.latLng.lng().toFixed(6);
       setValue(pointId === 'pointA' ? 'pointA.lat' : 'pointB.lat', lat, { shouldDirty: true, shouldValidate: true });
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
+      setFiberPathResult(null);
+      setCalculationError(null);
     }
   }, [setValue]);
 
   const handleClearForm = () => {
     reset(defaultFiberCalculatorFormValues);
-    // Optionally clear localStorage for points too, or keep them for convenience
+    // Clear persisted point data
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
-    // Snap radius might be kept or reset based on preference. For now, let's keep it.
+    // Snap radius is kept as it's a user preference not tied to specific points.
     setFiberPathResult(null);
     setCalculationError(null);
-    toast({ title: "Form Cleared", description: "Inputs reset to default." });
+    toast({ title: "Form Cleared", description: "Inputs reset to default values." });
   };
   
   const formPointAForMap = watch('pointA');
   const formPointBForMap = watch('pointB');
 
-  const mapPointA = formPointAForMap.lat && formPointAForMap.lng ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name } : undefined;
-  const mapPointB = formPointBForMap.lat && formPointBForMap.lng ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name } : undefined;
+  const mapPointA = formPointAForMap.lat && formPointAForMap.lng && !isNaN(parseFloat(formPointAForMap.lat)) && !isNaN(parseFloat(formPointAForMap.lng)) 
+    ? { lat: parseFloat(formPointAForMap.lat), lng: parseFloat(formPointAForMap.lng), name: formPointAForMap.name } 
+    : undefined;
+  const mapPointB = formPointBForMap.lat && formPointBForMap.lng && !isNaN(parseFloat(formPointBForMap.lat)) && !isNaN(parseFloat(formPointBForMap.lng))
+    ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name } 
+    : undefined;
 
   return (
     <>
-      <AppHeader currentPage="bulk" /> {/* TODO: Add 'fiber' to currentPage options and set it here */}
+      <AppHeader currentPage="fiber" /> 
       <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden h-[calc(100vh-theme(spacing.12)-theme(spacing.12))]">
         <div className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-auto md:h-full overflow-y-auto custom-scrollbar bg-card/80 backdrop-blur-sm shadow-lg border-t md:border-t-0 md:border-r border-border p-1 print:hidden">
           <FiberInputPanel
@@ -187,9 +212,9 @@ export default function FiberCalculatorPage() {
             onMapClick={handleMapClick}
             onMarkerDrag={handleMarkerDrag}
             mapContainerClassName="w-full h-full"
-            analysisResult={null} // No LOS analysis result on this page
-            isStale={false} // Not applicable here
-            fiberPathResult={fiberPathResult} // To draw the fiber path
+            analysisResult={null} 
+            isStale={false} 
+            fiberPathResult={fiberPathResult} 
           />
         </div>
 
@@ -208,3 +233,5 @@ export default function FiberCalculatorPage() {
     </>
   );
 }
+
+    

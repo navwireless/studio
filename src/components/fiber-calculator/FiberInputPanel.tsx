@@ -19,13 +19,13 @@ interface SiteInputGroupFCProps {
   control: Control<FiberCalculatorFormValues>;
   register: UseFormRegister<FiberCalculatorFormValues>;
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
-  getCombinedError: (clientError: any) => string | undefined; // Simplified for this panel
+  getCombinedError: (clientError: any) => string | undefined;
 }
 
 const SiteInputGroupFC: React.FC<SiteInputGroupFCProps> = ({
   id,
   title,
-  register, // control is not strictly needed if using register directly
+  register,
   clientFormErrors,
   getCombinedError,
 }) => (
@@ -81,7 +81,7 @@ interface FiberInputPanelProps {
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
   isCalculating: boolean;
   fiberPathResult: FiberPathResult | null;
-  calculationError: string | null; // General calculation error not tied to form fields
+  calculationError: string | null; 
 }
 
 export default function FiberInputPanel({
@@ -98,6 +98,33 @@ export default function FiberInputPanel({
   
   const getCombinedError = (clientFieldError?: { message?: string }) => {
     return clientFieldError?.message;
+  };
+
+  const formatFiberStatus = (status?: FiberPathResult['status']): string => {
+    if (!status) return 'N/A';
+    switch (status) {
+      case 'success': return 'Success';
+      case 'los_not_feasible': return 'LOS Not Feasible (Not applicable here)'; // Should not occur on this page
+      case 'no_road_for_a': return 'No Road Near Site A';
+      case 'no_road_for_b': return 'No Road Near Site B';
+      case 'no_route_between_roads': return 'No Road Route Between Snapped Points';
+      case 'radius_too_small': return 'Snap Radius Too Small';
+      case 'api_error': return 'API Error';
+      case 'input_error': return 'Input Error';
+      default: return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+  };
+
+  const getStatusIcon = (status?: FiberPathResult['status']) => {
+    if (!status) return null;
+    switch (status) {
+      case 'success': return <CheckCircle className="h-4 w-4 mr-2 text-green-500" />;
+      case 'no_road_for_a': 
+      case 'no_road_for_b': 
+      case 'no_route_between_roads':
+      case 'radius_too_small': return <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />;
+      default: return <XCircle className="h-4 w-4 mr-2 text-red-500" />;
+    }
   };
 
   return (
@@ -174,47 +201,48 @@ export default function FiberInputPanel({
             </div>
 
             {/* Results Area */}
-            {fiberPathResult && !isCalculating && (
-              <div className="mt-4 p-3 border rounded-md bg-muted/30 space-y-2 text-xs">
-                <h4 className="font-semibold text-sm mb-1.5 flex items-center">
-                  {fiberPathResult.status === 'success' ? <CheckCircle className="h-4 w-4 mr-2 text-green-500" /> : 
-                   (fiberPathResult.status === 'los_not_feasible' || fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small') ? <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" /> :
-                   <XCircle className="h-4 w-4 mr-2 text-red-500" />}
+            {(fiberPathResult || calculationError) && !isCalculating && (
+              <div className="mt-4 p-3 border rounded-md bg-muted/30 space-y-1.5 text-xs">
+                <h4 className="font-semibold text-sm mb-2 flex items-center">
+                  {fiberPathResult ? getStatusIcon(fiberPathResult.status) : <XCircle className="h-4 w-4 mr-2 text-red-500" /> }
                   Calculation Result:
                 </h4>
-                <p>
-                  <span className="font-medium">Status:</span>{' '}
-                  <span className={cn(
-                    fiberPathResult.status === 'success' ? 'text-green-400' : 
-                    (fiberPathResult.status === 'los_not_feasible' || fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small') ? 'text-amber-400' :
-                    'text-red-400',
-                    "font-semibold"
-                  )}>
-                    {fiberPathResult.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </span>
-                </p>
-                {fiberPathResult.totalDistanceMeters !== undefined && (
-                  <p><span className="font-medium">Total Fiber Distance:</span> {fiberPathResult.totalDistanceMeters.toFixed(1)} m</p>
-                )}
-                {fiberPathResult.status === 'success' && (
+                {fiberPathResult && (
                   <>
-                    <p><span className="font-medium">Offset A (Site to Road):</span> {fiberPathResult.offsetDistanceA_meters?.toFixed(1)} m</p>
-                    <p><span className="font-medium">Road Route Distance:</span> {fiberPathResult.roadRouteDistanceMeters?.toFixed(1)} m</p>
-                    <p><span className="font-medium">Offset B (Road to Site):</span> {fiberPathResult.offsetDistanceB_meters?.toFixed(1)} m</p>
+                    <p>
+                      <span className="font-medium">Status:</span>{' '}
+                      <span className={cn(
+                        fiberPathResult.status === 'success' ? 'text-green-400' : 
+                        (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small') ? 'text-amber-400' :
+                        'text-red-400',
+                        "font-semibold"
+                      )}>
+                        {formatFiberStatus(fiberPathResult.status)}
+                      </span>
+                    </p>
+                    {fiberPathResult.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && (
+                      <>
+                        <p><span className="font-medium">Total Fiber Distance:</span> {fiberPathResult.totalDistanceMeters.toFixed(1)} m</p>
+                        <p><span className="font-medium">Offset A (Site to Road):</span> {fiberPathResult.offsetDistanceA_meters?.toFixed(1)} m</p>
+                        <p><span className="font-medium">Road Route Distance:</span> {fiberPathResult.roadRouteDistanceMeters?.toFixed(1)} m</p>
+                        <p><span className="font-medium">Offset B (Road to Site):</span> {fiberPathResult.offsetDistanceB_meters?.toFixed(1)} m</p>
+                      </>
+                    )}
+                    {fiberPathResult.errorMessage && (
+                      <p className={cn(
+                         "italic mt-1",
+                         (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small' || fiberPathResult.status === 'no_route_between_roads') ? 'text-amber-400' : 'text-red-400'
+                      )}>
+                        <span className="font-medium">Note:</span> {fiberPathResult.errorMessage}
+                        {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && " Consider increasing the Snap Radius."}
+                      </p>
+                    )}
                   </>
                 )}
-                {fiberPathResult.errorMessage && (
-                  <p className="text-amber-400 italic mt-1">
-                    <span className="font-medium">Note:</span> {fiberPathResult.errorMessage}
-                    {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && " Consider increasing the Snap Radius."}
-                  </p>
+                {calculationError && !fiberPathResult && (
+                     <p className="text-red-400"><span className="font-semibold">Error:</span> {calculationError}</p>
                 )}
               </div>
-            )}
-            {calculationError && !isCalculating && !fiberPathResult && (
-                 <div className="mt-4 p-3 border border-destructive/50 rounded-md bg-destructive/10 text-destructive text-xs">
-                    <p><span className="font-semibold">Error:</span> {calculationError}</p>
-                 </div>
             )}
           </CardContent>
         </Card>
@@ -222,3 +250,5 @@ export default function FiberInputPanel({
     </TooltipProvider>
   );
 }
+
+    
