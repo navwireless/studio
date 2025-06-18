@@ -10,14 +10,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart';
-import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, Download, Cable, Router, HelpCircle } from 'lucide-react'; // Added Cable, Router
+import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, Download, Cable, Router, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { saveAs } from 'file-saver';
 import { generateSingleAnalysisPdfReportAction } from '@/app/actions';
-import type { FiberPathResult } from '@/tools/fiberPathCalculator'; // Import FiberPathResult
-import { Switch } from '@/components/ui/switch'; // Import Switch
+import type { FiberPathResult } from '@/tools/fiberPathCalculator';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
@@ -305,10 +305,14 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             </Label>
             <Tooltip delayDuration={100}>
                 <TooltipTrigger asChild>
-                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
+                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info">
+                         <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
+                    </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-xs p-2">
-                    Calculates estimated fiber optic cable path length using road networks. Requires LOS to be feasible.
+                <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
+                    <p>Calculates estimated fiber optic cable path length using road networks within a specified radius from each site.</p>
+                    <p className="mt-1">Requires Line-of-Sight (LOS) to be feasible.</p>
+                    <p className="mt-1">Results include offsets from sites to roads and the road route distance.</p>
                 </TooltipContent>
             </Tooltip>
           </div>
@@ -337,24 +341,27 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           <div className="text-xs p-1.5 rounded-sm bg-muted/50 space-y-0.5">
             <p>
               <span className="font-semibold">Fiber Path Status:</span>{' '}
-              <span className={cn(fiberPathResult.status === 'success' ? 'text-los-success' : 'text-los-failure')}>
+              <span className={cn(
+                fiberPathResult.status === 'success' ? 'text-los-success' : 
+                (fiberPathResult.status === 'los_not_feasible' || fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small') ? 'text-amber-500' :
+                'text-los-failure'
+              )}>
                 {fiberPathResult.status === 'success' ? 'Calculated' : 
                  fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' :
                  fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' :
                  fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' :
                  fiberPathResult.status === 'no_route_between_roads' ? 'No Road Route' :
-                 fiberPathResult.status === 'radius_too_small' ? 'Radius Too Small' :
+                 fiberPathResult.status === 'radius_too_small' ? 'Snap Radius Too Small' :
                  'Error'}
               </span>
             </p>
-            {fiberPathResult.totalDistanceMeters !== undefined && (
+            {fiberPathResult.totalDistanceMeters !== undefined && fiberPathResult.status === 'success' && (
               <p><span className="font-semibold">Total Fiber Distance:</span> {fiberPathResult.totalDistanceMeters.toFixed(0)} m</p>
             )}
             {fiberPathError && <p className="text-destructive">{fiberPathError}</p>}
             {fiberPathResult.errorMessage && fiberPathResult.status !== 'success' && !fiberPathError && (
                 <p className="text-muted-foreground italic">{fiberPathResult.errorMessage}</p>
             )}
-             {/* Basic breakdown - can be expanded later */}
             {fiberPathResult.status === 'success' && (
                 <div className="text-[0.65rem] text-muted-foreground/80">
                    (Offset A: {fiberPathResult.offsetDistanceA_meters?.toFixed(0)}m
@@ -363,6 +370,21 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                 </div>
             )}
           </div>
+        )}
+        {/* Display suggestion if fiber calculation failed due to no road found or radius too small */}
+        {fiberPathResult && (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && !isFiberCalculating && (
+            <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
+                <AlertTriangle className="inline h-3 w-3 mr-1" />
+                {fiberPathResult.status === 'radius_too_small' ? "Snap radius is too small. " : "No road found near one or both sites. "}
+                Try increasing the Snap Radius.
+            </p>
+        )}
+         {/* Display suggestion if no route between snapped points */}
+        {fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && (
+            <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
+                <AlertTriangle className="inline h-3 w-3 mr-1" />
+                Could not find a road route between the snapped points for Site A and Site B. They might be on disconnected road networks.
+            </p>
         )}
       </div>
 
@@ -376,7 +398,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             pointBName={pointBName}
             isStale={isStale}
             totalDistanceKm={analysisResult.distanceKm}
-            isActionPending={isActionPending || isFiberCalculating} // Chart interaction disabled if fiber calc
+            isActionPending={isActionPending || isFiberCalculating} 
             onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
           />
         ) : isActionPending ? (
@@ -418,7 +440,7 @@ interface BottomPanelProps {
   calculateFiberPathEnabled: boolean;
   onToggleFiberPath: (checked: boolean) => void;
   fiberRadiusMeters: number;
-  onFiberRadiusChange: (value: string) => void; // string due to input type
+  onFiberRadiusChange: (value: string) => void; 
   fiberPathResult: FiberPathResult | null;
   isFiberCalculating: boolean;
   fiberPathError: string | null;

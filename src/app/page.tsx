@@ -19,6 +19,11 @@ import BottomPanel from '@/components/fso/bottom-panel';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator'; 
 import type { FiberPathResult } from '@/tools/fiberPathCalculator'; 
 
+const LOCAL_STORAGE_KEYS = {
+  FIBER_TOGGLE: 'fiberPathEnabled',
+  FIBER_RADIUS: 'fiberPathRadiusMeters',
+};
+
 export default function Home() {
   const { toast } = useToast();
   const [rawServerState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
@@ -37,8 +42,20 @@ export default function Home() {
   const [liveDistanceKm, setLiveDistanceKm] = useState<number | null>(null);
 
   // State for Fiber Path Calculation
-  const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = useState(false);
-  const [fiberRadiusMeters, setFiberRadiusMeters] = useState<number>(500); // Default radius
+  const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const storedValue = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE);
+      return storedValue ? JSON.parse(storedValue) : false;
+    }
+    return false;
+  });
+  const [fiberRadiusMeters, setFiberRadiusMeters] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const storedValue = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS);
+      return storedValue ? parseInt(storedValue, 10) : 500; // Default radius 500m
+    }
+    return 500;
+  });
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
   const [isFiberCalculating, setIsFiberCalculating] = useState(false);
   const [fiberPathError, setFiberPathError] = useState<string | null>(null);
@@ -101,7 +118,8 @@ export default function Home() {
         variant: "destructive",
         duration: 7000,
       });
-      setFiberPathResult(null);
+      setFiberPathResult(null); // Clear fiber result on LOS error
+      setFiberPathError(null);
     } else if (typeof rawServerState === 'object' && rawServerState !== null && 'losPossible' in rawServerState) {
       // Successful LOS analysis result
       const successfulLosResult = rawServerState as AnalysisResult;
@@ -140,47 +158,51 @@ export default function Home() {
         description: successfulLosResult.message || "LOS analysis performed successfully.",
       });
 
-      // --- Trigger Fiber Path Calculation if enabled and LOS is feasible ---
-      if (calculateFiberPathEnabled && successfulLosResult.losPossible) {
+      // --- Trigger Fiber Path Calculation if enabled ---
+      if (calculateFiberPathEnabled) {
         setIsFiberCalculating(true);
         setFiberPathError(null);
-        setFiberPathResult(null);
+        setFiberPathResult(null); // Clear previous fiber result
 
-        performFiberPathAnalysisAction(
-          successfulLosResult.pointA.lat,
-          successfulLosResult.pointA.lng,
-          successfulLosResult.pointB.lat,
-          successfulLosResult.pointB.lng,
-          fiberRadiusMeters,
-          true 
-        ).then(fiberResult => {
-          setFiberPathResult(fiberResult);
-          if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-            setFiberPathError(fiberResult.errorMessage);
-            toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
-          } else if (fiberResult.status === 'success') {
-            toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
-          }
-        }).catch(err => {
-          const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-          setFiberPathError(fiberErrorMessage);
-          toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
-        }).finally(() => {
-          setIsFiberCalculating(false);
-        });
-      } else if (calculateFiberPathEnabled && !successfulLosResult.losPossible) {
-        setFiberPathResult({
-            status: 'los_not_feasible',
-            errorMessage: 'Fiber path not calculated: LOS is not feasible.',
-            pointA_original: successfulLosResult.pointA,
-            pointB_original: successfulLosResult.pointB,
-            losFeasible: false,
-            radiusMetersUsed: fiberRadiusMeters,
-        });
-        setFiberPathError('Fiber path not calculated: LOS is not feasible.');
-        setIsFiberCalculating(false); 
+        if (successfulLosResult.losPossible) {
+          performFiberPathAnalysisAction(
+            successfulLosResult.pointA.lat,
+            successfulLosResult.pointA.lng,
+            successfulLosResult.pointB.lat,
+            successfulLosResult.pointB.lng,
+            fiberRadiusMeters,
+            true // isLosFeasible is true here
+          ).then(fiberResult => {
+            setFiberPathResult(fiberResult);
+            if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
+              setFiberPathError(fiberResult.errorMessage);
+              toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
+            } else if (fiberResult.status === 'success') {
+              toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
+            }
+          }).catch(err => {
+            const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
+            setFiberPathError(fiberErrorMessage);
+            toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+          }).finally(() => {
+            setIsFiberCalculating(false);
+          });
+        } else {
+          // LOS is not feasible, but fiber calculation was enabled.
+          setFiberPathResult({
+              status: 'los_not_feasible',
+              errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
+              pointA_original: successfulLosResult.pointA,
+              pointB_original: successfulLosResult.pointB,
+              losFeasible: false,
+              radiusMetersUsed: fiberRadiusMeters,
+          });
+          setFiberPathError('Fiber path not calculated: LOS is not feasible.');
+          setIsFiberCalculating(false); 
+        }
       } else {
-        setFiberPathResult(null);
+        setFiberPathResult(null); // Clear fiber result if toggle is off
+        setFiberPathError(null);
         setIsFiberCalculating(false);
       }
     }
@@ -315,7 +337,8 @@ export default function Home() {
     setFieldErrors(null);
     setFiberPathResult(null); 
     setFiberPathError(null);
-    setCalculateFiberPathEnabled(false); 
+    // setCalculateFiberPathEnabled(false); // Keep persisted state or reset to default? For now, keep persisted.
+    // setFiberRadiusMeters(500); // Keep persisted state or reset? For now, keep persisted.
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     if (isAnalysisPanelGloballyOpen) {
         setIsAnalysisPanelGloballyOpen(false);
@@ -346,12 +369,33 @@ export default function Home() {
       setIsStale(false);
       setDisplayedError(null);
       setFieldErrors(null);
-      setFiberPathResult(null); 
+      setFiberPathResult(null); // Clear fiber results when loading from history
       setFiberPathError(null);
       
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
+
+      // Optionally, re-run fiber calculation if toggle is ON and LOS is feasible for the loaded item
+      if (calculateFiberPathEnabled && itemToLoad.losPossible) {
+        setIsFiberCalculating(true);
+        performFiberPathAnalysisAction(
+          itemToLoad.pointA.lat, itemToLoad.pointA.lng,
+          itemToLoad.pointB.lat, itemToLoad.pointB.lng,
+          fiberRadiusMeters, true
+        ).then(setFiberPathResult).catch(err => {
+          setFiberPathError(err.message || "Error re-calculating fiber for history item.");
+        }).finally(() => setIsFiberCalculating(false));
+      } else if (calculateFiberPathEnabled && !itemToLoad.losPossible) {
+         setFiberPathResult({
+            status: 'los_not_feasible',
+            errorMessage: 'Fiber path not calculated: LOS is not feasible for this historical link.',
+            pointA_original: itemToLoad.pointA,
+            pointB_original: itemToLoad.pointB,
+            losFeasible: false,
+            radiusMetersUsed: fiberRadiusMeters,
+        });
+      }
     }
   };
 
@@ -362,44 +406,53 @@ export default function Home() {
 
   const handleToggleFiberPath = (checked: boolean) => {
     setCalculateFiberPathEnabled(checked);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE, JSON.stringify(checked));
+    }
     if (!checked) { 
         setFiberPathResult(null);
         setFiberPathError(null);
-    } else if (analysisResult && analysisResult.losPossible && !isStale) {
+    } else if (analysisResult && !isStale) { // If toggled ON and there's a current, non-stale LOS result
         setIsFiberCalculating(true);
         setFiberPathError(null);
-        performFiberPathAnalysisAction(
-          analysisResult.pointA.lat,
-          analysisResult.pointA.lng,
-          analysisResult.pointB.lat,
-          analysisResult.pointB.lng,
-          fiberRadiusMeters,
-          true
-        ).then(fiberResult => {
-          setFiberPathResult(fiberResult);
-          if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-            setFiberPathError(fiberResult.errorMessage);
-            toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
-          } else if (fiberResult.status === 'success') {
-             toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
-          }
-        }).catch(err => {
-          const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-          setFiberPathError(fiberErrorMessage);
-          toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
-        }).finally(() => {
-          setIsFiberCalculating(false);
-        });
-    } else if (checked && analysisResult && !analysisResult.losPossible) {
-        setFiberPathResult({
-            status: 'los_not_feasible',
-            errorMessage: 'Fiber path not calculated: LOS is not feasible.',
-            pointA_original: analysisResult.pointA,
-            pointB_original: analysisResult.pointB,
-            losFeasible: false,
-            radiusMetersUsed: fiberRadiusMeters,
-        });
-        setFiberPathError('Fiber path not calculated: LOS is not feasible.');
+        setFiberPathResult(null);
+
+        if (analysisResult.losPossible) {
+            performFiberPathAnalysisAction(
+              analysisResult.pointA.lat,
+              analysisResult.pointA.lng,
+              analysisResult.pointB.lat,
+              analysisResult.pointB.lng,
+              fiberRadiusMeters,
+              true
+            ).then(fiberResult => {
+              setFiberPathResult(fiberResult);
+              if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
+                setFiberPathError(fiberResult.errorMessage);
+                toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
+              } else if (fiberResult.status === 'success') {
+                 toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
+              }
+            }).catch(err => {
+              const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
+              setFiberPathError(fiberErrorMessage);
+              toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+            }).finally(() => {
+              setIsFiberCalculating(false);
+            });
+        } else {
+             // LOS is not feasible for the current analysisResult
+            setFiberPathResult({
+                status: 'los_not_feasible',
+                errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
+                pointA_original: analysisResult.pointA,
+                pointB_original: analysisResult.pointB,
+                losFeasible: false,
+                radiusMetersUsed: fiberRadiusMeters,
+            });
+            setFiberPathError('Fiber path not calculated: LOS is not feasible.');
+            setIsFiberCalculating(false);
+        }
     }
   };
 
@@ -407,31 +460,51 @@ export default function Home() {
     const newRadius = parseInt(value, 10);
     if (!isNaN(newRadius) && newRadius >= 0) {
       setFiberRadiusMeters(newRadius);
-      if (calculateFiberPathEnabled && analysisResult && analysisResult.losPossible && !isStale) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
+      }
+      // If toggle is enabled and there's a valid, non-stale LOS result, re-calculate
+      if (calculateFiberPathEnabled && analysisResult && !isStale) {
         setIsFiberCalculating(true);
         setFiberPathError(null);
-         performFiberPathAnalysisAction(
-          analysisResult.pointA.lat,
-          analysisResult.pointA.lng,
-          analysisResult.pointB.lat,
-          analysisResult.pointB.lng,
-          newRadius, 
-          true
-        ).then(fiberResult => {
-          setFiberPathResult(fiberResult);
-          if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-            setFiberPathError(fiberResult.errorMessage);
-             toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
-          } else if (fiberResult.status === 'success') {
-             toast({ title: "Fiber Path Re-calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
-          }
-        }).catch(err => {
-           const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-          setFiberPathError(fiberErrorMessage);
-          toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
-        }).finally(() => {
-          setIsFiberCalculating(false);
-        });
+        setFiberPathResult(null);
+        
+        if (analysisResult.losPossible) {
+             performFiberPathAnalysisAction(
+              analysisResult.pointA.lat,
+              analysisResult.pointA.lng,
+              analysisResult.pointB.lat,
+              analysisResult.pointB.lng,
+              newRadius, 
+              true
+            ).then(fiberResult => {
+              setFiberPathResult(fiberResult);
+              if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
+                setFiberPathError(fiberResult.errorMessage);
+                 toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
+              } else if (fiberResult.status === 'success') {
+                 toast({ title: "Fiber Path Re-calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
+              }
+            }).catch(err => {
+               const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
+              setFiberPathError(fiberErrorMessage);
+              toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+            }).finally(() => {
+              setIsFiberCalculating(false);
+            });
+        } else {
+            // LOS is not feasible for the current analysisResult
+            setFiberPathResult({
+                status: 'los_not_feasible',
+                errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link with new radius.',
+                pointA_original: analysisResult.pointA,
+                pointB_original: analysisResult.pointB,
+                losFeasible: false,
+                radiusMetersUsed: newRadius,
+            });
+            setFiberPathError('Fiber path not calculated: LOS is not feasible.');
+            setIsFiberCalculating(false);
+        }
       }
     }
   };

@@ -2431,7 +2431,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$i
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/label.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$tower$2d$height$2d$control$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/fso/tower-height-control.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$custom$2d$profile$2d$chart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/fso/custom-profile-chart.tsx [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-down.js [app-ssr] (ecmascript) <export default as ChevronDown>"); // Added Cable, Router
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-down.js [app-ssr] (ecmascript) <export default as ChevronDown>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-up.js [app-ssr] (ecmascript) <export default as ChevronUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$target$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Target$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/target.js [app-ssr] (ecmascript) <export default as Target>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-ssr] (ecmascript) <export default as Loader2>");
@@ -2444,7 +2444,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/file-saver/dist/FileSaver.min.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$switch$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/switch.tsx [app-ssr] (ecmascript)"); // Import Switch
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$switch$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/switch.tsx [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/tooltip.tsx [app-ssr] (ecmascript)");
 "use client";
 ;
@@ -2958,8 +2958,19 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TooltipTrigger"], {
                                                     asChild: true,
-                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$help$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__HelpCircle$3e$__["HelpCircle"], {
-                                                        className: "h-3.5 w-3.5 text-muted-foreground/70 cursor-help"
+                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
+                                                        variant: "ghost",
+                                                        size: "icon",
+                                                        className: "h-4 w-4 p-0 m-0",
+                                                        onClick: (e)=>e.preventDefault(),
+                                                        "aria-label": "Fiber path calculation info",
+                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$help$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__HelpCircle$3e$__["HelpCircle"], {
+                                                            className: "h-3.5 w-3.5 text-muted-foreground/70 cursor-help"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                                            lineNumber: 309,
+                                                            columnNumber: 26
+                                                        }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
                                                         lineNumber: 308,
@@ -2972,11 +2983,35 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TooltipContent"], {
                                                     side: "top",
-                                                    className: "max-w-xs text-xs p-2",
-                                                    children: "Calculates estimated fiber optic cable path length using road networks. Requires LOS to be feasible."
-                                                }, void 0, false, {
+                                                    className: "max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                            children: "Calculates estimated fiber optic cable path length using road networks within a specified radius from each site."
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                                            lineNumber: 313,
+                                                            columnNumber: 21
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                            className: "mt-1",
+                                                            children: "Requires Line-of-Sight (LOS) to be feasible."
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                                            lineNumber: 314,
+                                                            columnNumber: 21
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                            className: "mt-1",
+                                                            children: "Results include offsets from sites to roads and the road route distance."
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                                            lineNumber: 315,
+                                                            columnNumber: 21
+                                                        }, this)
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                    lineNumber: 310,
+                                                    lineNumber: 312,
                                                     columnNumber: 17
                                                 }, this)
                                             ]
@@ -3000,7 +3035,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: "Snap Radius (m):"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 317,
+                                            lineNumber: 321,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Input"], {
@@ -3014,13 +3049,13 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             disabled: isActionPending || isFiberCalculating
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 318,
+                                            lineNumber: 322,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 316,
+                                    lineNumber: 320,
                                     columnNumber: 13
                                 }, this)
                             ]
@@ -3036,14 +3071,14 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     className: "mr-1.5 h-3.5 w-3.5 animate-spin"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 333,
+                                    lineNumber: 337,
                                     columnNumber: 13
                                 }, this),
                                 " Calculating fiber path..."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 332,
+                            lineNumber: 336,
                             columnNumber: 11
                         }, this),
                         fiberPathResult && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3056,32 +3091,32 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: "Fiber Path Status:"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 339,
+                                            lineNumber: 343,
                                             columnNumber: 15
                                         }, this),
                                         ' ',
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])(fiberPathResult.status === 'success' ? 'text-los-success' : 'text-los-failure'),
-                                            children: fiberPathResult.status === 'success' ? 'Calculated' : fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' : fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' : fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' : fiberPathResult.status === 'no_route_between_roads' ? 'No Road Route' : fiberPathResult.status === 'radius_too_small' ? 'Radius Too Small' : 'Error'
+                                            className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["cn"])(fiberPathResult.status === 'success' ? 'text-los-success' : fiberPathResult.status === 'los_not_feasible' || fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small' ? 'text-amber-500' : 'text-los-failure'),
+                                            children: fiberPathResult.status === 'success' ? 'Calculated' : fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' : fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' : fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' : fiberPathResult.status === 'no_route_between_roads' ? 'No Road Route' : fiberPathResult.status === 'radius_too_small' ? 'Snap Radius Too Small' : 'Error'
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 340,
+                                            lineNumber: 344,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 338,
+                                    lineNumber: 342,
                                     columnNumber: 13
                                 }, this),
-                                fiberPathResult.totalDistanceMeters !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                fiberPathResult.totalDistanceMeters !== undefined && fiberPathResult.status === 'success' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "font-semibold",
                                             children: "Total Fiber Distance:"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 351,
+                                            lineNumber: 359,
                                             columnNumber: 18
                                         }, this),
                                         " ",
@@ -3090,7 +3125,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 351,
+                                    lineNumber: 359,
                                     columnNumber: 15
                                 }, this),
                                 fiberPathError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3098,7 +3133,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     children: fiberPathError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 353,
+                                    lineNumber: 361,
                                     columnNumber: 32
                                 }, this),
                                 fiberPathResult.errorMessage && fiberPathResult.status !== 'success' && !fiberPathError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3106,7 +3141,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     children: fiberPathResult.errorMessage
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 355,
+                                    lineNumber: 363,
                                     columnNumber: 17
                                 }, this),
                                 fiberPathResult.status === 'success' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3122,14 +3157,49 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 359,
+                                    lineNumber: 366,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 337,
+                            lineNumber: 341,
                             columnNumber: 11
+                        }, this),
+                        fiberPathResult && (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                            className: "text-xs text-amber-600 dark:text-amber-500 mt-1 text-center",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertTriangle$3e$__["AlertTriangle"], {
+                                    className: "inline h-3 w-3 mr-1"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 377,
+                                    columnNumber: 17
+                                }, this),
+                                fiberPathResult.status === 'radius_too_small' ? "Snap radius is too small. " : "No road found near one or both sites. ",
+                                "Try increasing the Snap Radius."
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 376,
+                            columnNumber: 13
+                        }, this),
+                        fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                            className: "text-xs text-amber-600 dark:text-amber-500 mt-1 text-center",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertTriangle$3e$__["AlertTriangle"], {
+                                    className: "inline h-3 w-3 mr-1"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 385,
+                                    columnNumber: 17
+                                }, this),
+                                "Could not find a road route between the snapped points for Site A and Site B. They might be on disconnected road networks."
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 384,
+                            columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
@@ -3149,7 +3219,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                         onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph
                     }, chartKey, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 372,
+                        lineNumber: 394,
                         columnNumber: 11
                     }, this) : isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "h-full flex items-center justify-center p-2 bg-muted/30 rounded-md",
@@ -3158,12 +3228,12 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                             children: "Loading analysis data..."
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 384,
+                            lineNumber: 406,
                             columnNumber: 17
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 383,
+                        lineNumber: 405,
                         columnNumber: 13
                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground",
@@ -3171,17 +3241,17 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                             children: "Perform analysis to see profile."
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 388,
+                            lineNumber: 410,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 387,
+                        lineNumber: 409,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 370,
+                    lineNumber: 392,
                     columnNumber: 7
                 }, this)
             ]
@@ -3283,12 +3353,12 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 516,
+                                    lineNumber: 538,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 515,
+                                lineNumber: 537,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(ProfilePanelMiddleColumn, {
@@ -3316,7 +3386,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                 fiberPathError: fiberPathError
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 527,
+                                lineNumber: 549,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3331,28 +3401,28 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 553,
+                                    lineNumber: 575,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 552,
+                                lineNumber: 574,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 513,
+                        lineNumber: 535,
                         columnNumber: 12
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 512,
+                    lineNumber: 534,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 506,
+                lineNumber: 528,
                 columnNumber: 7
             }, this),
             isPanelGloballyVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3363,24 +3433,24 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 573,
+                    lineNumber: 595,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 574,
+                    lineNumber: 596,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 567,
+                lineNumber: 589,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 497,
+        lineNumber: 519,
         columnNumber: 5
     }, this);
 }
@@ -3462,6 +3532,10 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCal
 ;
 ;
 ;
+const LOCAL_STORAGE_KEYS = {
+    FIBER_TOGGLE: 'fiberPathEnabled',
+    FIBER_RADIUS: 'fiberPathRadiusMeters'
+};
 function Home() {
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useToast"])();
     const [rawServerState, formAction, isActionPending] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useActionState(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performLosAnalysis"], null);
@@ -3475,8 +3549,18 @@ function Home() {
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [liveDistanceKm, setLiveDistanceKm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     // State for Fiber Path Calculation
-    const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [fiberRadiusMeters, setFiberRadiusMeters] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(500); // Default radius
+    const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(()=>{
+        if ("TURBOPACK compile-time falsy", 0) {
+            "TURBOPACK unreachable";
+        }
+        return false;
+    });
+    const [fiberRadiusMeters, setFiberRadiusMeters] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(()=>{
+        if ("TURBOPACK compile-time falsy", 0) {
+            "TURBOPACK unreachable";
+        }
+        return 500;
+    });
     const [fiberPathResult, setFiberPathResult] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isFiberCalculating, setIsFiberCalculating] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [fiberPathError, setFiberPathError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
@@ -3537,7 +3621,8 @@ function Home() {
                 variant: "destructive",
                 duration: 7000
             });
-            setFiberPathResult(null);
+            setFiberPathResult(null); // Clear fiber result on LOS error
+            setFiberPathError(null);
         } else if (typeof rawServerState === 'object' && rawServerState !== null && 'losPossible' in rawServerState) {
             // Successful LOS analysis result
             const successfulLosResult = rawServerState;
@@ -3575,53 +3660,58 @@ function Home() {
                 title: "LOS Analysis Complete",
                 description: successfulLosResult.message || "LOS analysis performed successfully."
             });
-            // --- Trigger Fiber Path Calculation if enabled and LOS is feasible ---
-            if (calculateFiberPathEnabled && successfulLosResult.losPossible) {
+            // --- Trigger Fiber Path Calculation if enabled ---
+            if (calculateFiberPathEnabled) {
                 setIsFiberCalculating(true);
                 setFiberPathError(null);
-                setFiberPathResult(null);
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(successfulLosResult.pointA.lat, successfulLosResult.pointA.lng, successfulLosResult.pointB.lat, successfulLosResult.pointB.lng, fiberRadiusMeters, true).then((fiberResult)=>{
-                    setFiberPathResult(fiberResult);
-                    if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-                        setFiberPathError(fiberResult.errorMessage);
+                setFiberPathResult(null); // Clear previous fiber result
+                if (successfulLosResult.losPossible) {
+                    (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(successfulLosResult.pointA.lat, successfulLosResult.pointA.lng, successfulLosResult.pointB.lat, successfulLosResult.pointB.lng, fiberRadiusMeters, true // isLosFeasible is true here
+                    ).then((fiberResult)=>{
+                        setFiberPathResult(fiberResult);
+                        if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
+                            setFiberPathError(fiberResult.errorMessage);
+                            toast({
+                                title: "Fiber Path Info",
+                                description: fiberResult.errorMessage,
+                                variant: "default",
+                                duration: 6000
+                            });
+                        } else if (fiberResult.status === 'success') {
+                            toast({
+                                title: "Fiber Path Calculated",
+                                description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
+                                duration: 5000
+                            });
+                        }
+                    }).catch((err)=>{
+                        const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
+                        setFiberPathError(fiberErrorMessage);
                         toast({
-                            title: "Fiber Path Info",
-                            description: fiberResult.errorMessage,
-                            variant: "default",
-                            duration: 6000
+                            title: "Fiber Path Error",
+                            description: fiberErrorMessage,
+                            variant: "destructive",
+                            duration: 7000
                         });
-                    } else if (fiberResult.status === 'success') {
-                        toast({
-                            title: "Fiber Path Calculated",
-                            description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
-                            duration: 5000
-                        });
-                    }
-                }).catch((err)=>{
-                    const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-                    setFiberPathError(fiberErrorMessage);
-                    toast({
-                        title: "Fiber Path Error",
-                        description: fiberErrorMessage,
-                        variant: "destructive",
-                        duration: 7000
+                    }).finally(()=>{
+                        setIsFiberCalculating(false);
                     });
-                }).finally(()=>{
+                } else {
+                    // LOS is not feasible, but fiber calculation was enabled.
+                    setFiberPathResult({
+                        status: 'los_not_feasible',
+                        errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
+                        pointA_original: successfulLosResult.pointA,
+                        pointB_original: successfulLosResult.pointB,
+                        losFeasible: false,
+                        radiusMetersUsed: fiberRadiusMeters
+                    });
+                    setFiberPathError('Fiber path not calculated: LOS is not feasible.');
                     setIsFiberCalculating(false);
-                });
-            } else if (calculateFiberPathEnabled && !successfulLosResult.losPossible) {
-                setFiberPathResult({
-                    status: 'los_not_feasible',
-                    errorMessage: 'Fiber path not calculated: LOS is not feasible.',
-                    pointA_original: successfulLosResult.pointA,
-                    pointB_original: successfulLosResult.pointB,
-                    losFeasible: false,
-                    radiusMetersUsed: fiberRadiusMeters
-                });
-                setFiberPathError('Fiber path not calculated: LOS is not feasible.');
-                setIsFiberCalculating(false);
+                }
             } else {
-                setFiberPathResult(null);
+                setFiberPathResult(null); // Clear fiber result if toggle is off
+                setFiberPathError(null);
                 setIsFiberCalculating(false);
             }
         }
@@ -3775,7 +3865,8 @@ function Home() {
         setFieldErrors(null);
         setFiberPathResult(null);
         setFiberPathError(null);
-        setCalculateFiberPathEnabled(false);
+        // setCalculateFiberPathEnabled(false); // Keep persisted state or reset to default? For now, keep persisted.
+        // setFiberRadiusMeters(500); // Keep persisted state or reset? For now, keep persisted.
         toast({
             title: "Map Cleared",
             description: "Form reset to default values."
@@ -3808,7 +3899,7 @@ function Home() {
             setIsStale(false);
             setDisplayedError(null);
             setFieldErrors(null);
-            setFiberPathResult(null);
+            setFiberPathResult(null); // Clear fiber results when loading from history
             setFiberPathError(null);
             setIsAnalysisPanelGloballyOpen(true);
             setIsBottomPanelContentExpanded(true);
@@ -3816,6 +3907,22 @@ function Home() {
                 title: "History Loaded",
                 description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.`
             });
+            // Optionally, re-run fiber calculation if toggle is ON and LOS is feasible for the loaded item
+            if (calculateFiberPathEnabled && itemToLoad.losPossible) {
+                setIsFiberCalculating(true);
+                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(itemToLoad.pointA.lat, itemToLoad.pointA.lng, itemToLoad.pointB.lat, itemToLoad.pointB.lng, fiberRadiusMeters, true).then(setFiberPathResult).catch((err)=>{
+                    setFiberPathError(err.message || "Error re-calculating fiber for history item.");
+                }).finally(()=>setIsFiberCalculating(false));
+            } else if (calculateFiberPathEnabled && !itemToLoad.losPossible) {
+                setFiberPathResult({
+                    status: 'los_not_feasible',
+                    errorMessage: 'Fiber path not calculated: LOS is not feasible for this historical link.',
+                    pointA_original: itemToLoad.pointA,
+                    pointB_original: itemToLoad.pointB,
+                    losFeasible: false,
+                    radiusMetersUsed: fiberRadiusMeters
+                });
+            }
         }
     };
     const handleClearHistory = ()=>{
@@ -3826,61 +3933,18 @@ function Home() {
     };
     const handleToggleFiberPath = (checked)=>{
         setCalculateFiberPathEnabled(checked);
+        if ("TURBOPACK compile-time falsy", 0) {
+            "TURBOPACK unreachable";
+        }
         if (!checked) {
             setFiberPathResult(null);
             setFiberPathError(null);
-        } else if (analysisResult && analysisResult.losPossible && !isStale) {
+        } else if (analysisResult && !isStale) {
             setIsFiberCalculating(true);
             setFiberPathError(null);
-            (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, fiberRadiusMeters, true).then((fiberResult)=>{
-                setFiberPathResult(fiberResult);
-                if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-                    setFiberPathError(fiberResult.errorMessage);
-                    toast({
-                        title: "Fiber Path Info",
-                        description: fiberResult.errorMessage,
-                        variant: "default",
-                        duration: 6000
-                    });
-                } else if (fiberResult.status === 'success') {
-                    toast({
-                        title: "Fiber Path Calculated",
-                        description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
-                        duration: 5000
-                    });
-                }
-            }).catch((err)=>{
-                const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-                setFiberPathError(fiberErrorMessage);
-                toast({
-                    title: "Fiber Path Error",
-                    description: fiberErrorMessage,
-                    variant: "destructive",
-                    duration: 7000
-                });
-            }).finally(()=>{
-                setIsFiberCalculating(false);
-            });
-        } else if (checked && analysisResult && !analysisResult.losPossible) {
-            setFiberPathResult({
-                status: 'los_not_feasible',
-                errorMessage: 'Fiber path not calculated: LOS is not feasible.',
-                pointA_original: analysisResult.pointA,
-                pointB_original: analysisResult.pointB,
-                losFeasible: false,
-                radiusMetersUsed: fiberRadiusMeters
-            });
-            setFiberPathError('Fiber path not calculated: LOS is not feasible.');
-        }
-    };
-    const handleFiberRadiusChange = (value)=>{
-        const newRadius = parseInt(value, 10);
-        if (!isNaN(newRadius) && newRadius >= 0) {
-            setFiberRadiusMeters(newRadius);
-            if (calculateFiberPathEnabled && analysisResult && analysisResult.losPossible && !isStale) {
-                setIsFiberCalculating(true);
-                setFiberPathError(null);
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, newRadius, true).then((fiberResult)=>{
+            setFiberPathResult(null);
+            if (analysisResult.losPossible) {
+                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, fiberRadiusMeters, true).then((fiberResult)=>{
                     setFiberPathResult(fiberResult);
                     if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
                         setFiberPathError(fiberResult.errorMessage);
@@ -3892,7 +3956,7 @@ function Home() {
                         });
                     } else if (fiberResult.status === 'success') {
                         toast({
-                            title: "Fiber Path Re-calculated",
+                            title: "Fiber Path Calculated",
                             description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
                             duration: 5000
                         });
@@ -3909,6 +3973,76 @@ function Home() {
                 }).finally(()=>{
                     setIsFiberCalculating(false);
                 });
+            } else {
+                // LOS is not feasible for the current analysisResult
+                setFiberPathResult({
+                    status: 'los_not_feasible',
+                    errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
+                    pointA_original: analysisResult.pointA,
+                    pointB_original: analysisResult.pointB,
+                    losFeasible: false,
+                    radiusMetersUsed: fiberRadiusMeters
+                });
+                setFiberPathError('Fiber path not calculated: LOS is not feasible.');
+                setIsFiberCalculating(false);
+            }
+        }
+    };
+    const handleFiberRadiusChange = (value)=>{
+        const newRadius = parseInt(value, 10);
+        if (!isNaN(newRadius) && newRadius >= 0) {
+            setFiberRadiusMeters(newRadius);
+            if ("TURBOPACK compile-time falsy", 0) {
+                "TURBOPACK unreachable";
+            }
+            // If toggle is enabled and there's a valid, non-stale LOS result, re-calculate
+            if (calculateFiberPathEnabled && analysisResult && !isStale) {
+                setIsFiberCalculating(true);
+                setFiberPathError(null);
+                setFiberPathResult(null);
+                if (analysisResult.losPossible) {
+                    (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, newRadius, true).then((fiberResult)=>{
+                        setFiberPathResult(fiberResult);
+                        if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
+                            setFiberPathError(fiberResult.errorMessage);
+                            toast({
+                                title: "Fiber Path Info",
+                                description: fiberResult.errorMessage,
+                                variant: "default",
+                                duration: 6000
+                            });
+                        } else if (fiberResult.status === 'success') {
+                            toast({
+                                title: "Fiber Path Re-calculated",
+                                description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
+                                duration: 5000
+                            });
+                        }
+                    }).catch((err)=>{
+                        const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
+                        setFiberPathError(fiberErrorMessage);
+                        toast({
+                            title: "Fiber Path Error",
+                            description: fiberErrorMessage,
+                            variant: "destructive",
+                            duration: 7000
+                        });
+                    }).finally(()=>{
+                        setIsFiberCalculating(false);
+                    });
+                } else {
+                    // LOS is not feasible for the current analysisResult
+                    setFiberPathResult({
+                        status: 'los_not_feasible',
+                        errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link with new radius.',
+                        pointA_original: analysisResult.pointA,
+                        pointB_original: analysisResult.pointB,
+                        losFeasible: false,
+                        radiusMetersUsed: newRadius
+                    });
+                    setFiberPathError('Fiber path not calculated: LOS is not feasible.');
+                    setIsFiberCalculating(false);
+                }
             }
         }
     };
@@ -3921,7 +4055,7 @@ function Home() {
                 currentPage: "home"
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 442,
+                lineNumber: 515,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3949,12 +4083,12 @@ function Home() {
                             fiberPathResult: fiberPathResult
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 450,
+                            lineNumber: 523,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 449,
+                        lineNumber: 522,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3969,19 +4103,19 @@ function Home() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 471,
+                                    lineNumber: 544,
                                     columnNumber: 15
                                 }, this),
                                 "Start Link Analysis"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 465,
+                            lineNumber: 538,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 464,
+                        lineNumber: 537,
                         columnNumber: 11
                     }, this),
                     (isActionPending || isFiberCalculating) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3995,7 +4129,7 @@ function Home() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 481,
+                                        lineNumber: 554,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4003,7 +4137,7 @@ function Home() {
                                         children: isActionPending ? "Analyzing Link..." : "Calculating Fiber Path..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 482,
+                                        lineNumber: 555,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4011,23 +4145,23 @@ function Home() {
                                         children: isActionPending ? "Please wait while we process elevation data." : "Accessing road network data..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 485,
+                                        lineNumber: 558,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 480,
+                                lineNumber: 553,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 479,
+                            lineNumber: 552,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 478,
+                        lineNumber: 551,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4044,19 +4178,19 @@ function Home() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 498,
+                                                lineNumber: 571,
                                                 columnNumber: 21
                                             }, this),
                                             " LOS Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 497,
+                                        lineNumber: 570,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 496,
+                                    lineNumber: 569,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -4066,7 +4200,7 @@ function Home() {
                                             children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 502,
+                                            lineNumber: 575,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -4079,24 +4213,24 @@ function Home() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 503,
+                                            lineNumber: 576,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 501,
+                                    lineNumber: 574,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 495,
+                            lineNumber: 568,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 494,
+                        lineNumber: 567,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$bottom$2d$panel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -4126,7 +4260,7 @@ function Home() {
                         fiberPathError: fiberPathError
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 515,
+                        lineNumber: 588,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -4137,13 +4271,13 @@ function Home() {
                         onToggle: handleToggleHistoryPanel
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 541,
+                        lineNumber: 614,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 448,
+                lineNumber: 521,
                 columnNumber: 7
             }, this)
         ]
