@@ -765,7 +765,11 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
                 finalErrorMessage += `Field Errors:\n${fieldErrorMessages}`;
             }
             console.error("Server-side Zod validation errors:", finalErrorMessage, flattenedErrors);
-            throw new Error(finalErrorMessage.trim());
+            // Instead of throwing, return an error object for useActionState
+            return {
+                error: finalErrorMessage.trim(),
+                fieldErrors: flattenedErrors.fieldErrors
+            };
         }
         const validatedData = validationResult.data;
         const params = {
@@ -799,7 +803,10 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
             clientErrorMessageString = "An unknown error occurred during analysis.";
         }
         console.error("Error in performLosAnalysis server action:", clientErrorMessageString, err);
-        throw new Error(clientErrorMessageString);
+        // Return an error object instead of throwing
+        return {
+            error: clientErrorMessageString
+        };
     }
 }
 async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleAnalysisPdfReportAction(analysisResult, reportOptions) {
