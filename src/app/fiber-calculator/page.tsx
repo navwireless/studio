@@ -70,10 +70,12 @@ export default function FiberCalculatorPage() {
 
   const watchedSnapRadius = watch('fiberSnapRadius');
   useEffect(() => {
-    if (typeof watchedSnapRadius === 'number') {
+    // Ensure watchedSnapRadius is a number before saving to localStorage
+    if (typeof watchedSnapRadius === 'number' && !isNaN(watchedSnapRadius)) {
       localStorage.setItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS, watchedSnapRadius.toString());
     }
   }, [watchedSnapRadius]);
+
 
   const watchedPointA = watch('pointA');
   const watchedPointB = watch('pointB');
@@ -119,7 +121,7 @@ export default function FiberCalculatorPage() {
         pointB_lat_num,
         pointB_lng_num,
         data.fiberSnapRadius,
-        true
+        true // isLosFeasible is always true for dedicated calculator
       );
 
       setFiberPathResult(result);
@@ -152,11 +154,17 @@ export default function FiberCalculatorPage() {
     setIsGeneratingPdf(true);
     try {
       const currentFormValues = getValues();
+      // Ensure snap radius is a number
+      const snapRadius = typeof currentFormValues.fiberSnapRadius === 'number' ? currentFormValues.fiberSnapRadius : parseInt(String(currentFormValues.fiberSnapRadius), 10);
+      if(isNaN(snapRadius)){
+        throw new Error("Invalid snap radius for report generation.");
+      }
+
       const reportParams = {
         fiberPathResult: fiberPathResult,
-        pointA_form: currentFormValues.pointA,
+        pointA_form: currentFormValues.pointA, // Pass form values as they are (string-based lat/lng)
         pointB_form: currentFormValues.pointB,
-        snapRadiusUsed_form: currentFormValues.fiberSnapRadius,
+        snapRadiusUsed_form: snapRadius,
       };
 
       const response = await generateFiberReportAction(reportParams);
@@ -215,9 +223,13 @@ export default function FiberCalculatorPage() {
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
+    // Keep snap radius from localStorage unless explicitly reset
+    const storedRadius = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS);
+    setValue('fiberSnapRadius', storedRadius ? parseInt(storedRadius, 10) : defaultFiberCalculatorFormValues.fiberSnapRadius);
+
     setFiberPathResult(null);
     setCalculationError(null);
-    toast({ title: "Form Cleared", description: "Inputs reset to default values." });
+    toast({ title: "Form Cleared", description: "Inputs reset to default values (Snap Radius retained from storage if set)." });
   };
 
   const formPointAForMap = watch('pointA');
@@ -241,10 +253,10 @@ export default function FiberCalculatorPage() {
             handleSubmit={handleSubmit}
             onSubmit={handleCalculateSubmit}
             onClear={handleClearForm}
-            onGeneratePdfReport={handleGeneratePdfReport}
+            onGeneratePdfReport={handleGeneratePdfReport} // Pass handler
             clientFormErrors={clientFormErrors}
             isCalculating={isCalculating}
-            isGeneratingPdf={isGeneratingPdf}
+            isGeneratingPdf={isGeneratingPdf} // Pass loading state
             fiberPathResult={fiberPathResult}
             calculationError={calculationError}
           />
@@ -256,8 +268,8 @@ export default function FiberCalculatorPage() {
             onMapClick={handleMapClick}
             onMarkerDrag={handleMarkerDrag}
             mapContainerClassName="w-full h-full"
-            analysisResult={null}
-            isStale={false}
+            analysisResult={null} // No LOS analysis result for this page
+            isStale={false} // Not applicable here
             fiberPathResult={fiberPathResult}
           />
         </div>
@@ -281,3 +293,5 @@ export default function FiberCalculatorPage() {
     </>
   );
 }
+
+    

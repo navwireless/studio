@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { AnalysisParams, AnalysisResult, PointInput, PointCoordinates, ElevationSampleAPI } from '@/types';
 import { analyzeLOS } from '@/lib/los-calculator';
 import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/tools/report-generator';
-import { FiberCalculatorFormValues, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema'; // For Fiber report
+import { FiberCalculatorFormSchema, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema'; // For Fiber report
 import type { FiberPathResult } from '@/tools/fiberPathCalculator'; // For Fiber report
 import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport'; // Specific fiber PDF generator
 
@@ -137,7 +137,7 @@ export async function performLosAnalysis(
 
       const fieldErrorMessages = Object.entries(flattenedErrors.fieldErrors)
         .map(([path, messages]) => {
-          const typedMessages = messages as string[];
+          const typedMessages = messages as string[]; // Ensure messages is treated as string[]
           return `${String(path)}: ${typedMessages.map(String).join(', ')}`;
         })
         .join('\n');
@@ -155,17 +155,17 @@ export async function performLosAnalysis(
     const params: AnalysisParams = {
       pointA: {
         name: validatedData.pointA.name,
-        lat: parseFloat(rawFormData.pointA.lat),
-        lng: parseFloat(rawFormData.pointA.lng),
-        towerHeight: validatedData.pointA.height,
+        lat: parseFloat(rawFormData.pointA.lat), // Use original string for parseFloat
+        lng: parseFloat(rawFormData.pointA.lng), // Use original string for parseFloat
+        towerHeight: validatedData.pointA.height, // Already a number from Zod transform
       },
       pointB: {
         name: validatedData.pointB.name,
-        lat: parseFloat(rawFormData.pointB.lat),
-        lng: parseFloat(rawFormData.pointB.lng),
-        towerHeight: validatedData.pointB.height,
+        lat: parseFloat(rawFormData.pointB.lat), // Use original string for parseFloat
+        lng: parseFloat(rawFormData.pointB.lng), // Use original string for parseFloat
+        towerHeight: validatedData.pointB.height, // Already a number from Zod transform
       },
-      clearanceThreshold: validatedData.clearanceThreshold,
+      clearanceThreshold: validatedData.clearanceThreshold, // Already a number
     };
 
     const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
@@ -218,15 +218,15 @@ export async function generateSingleAnalysisPdfReportAction(
 }
 
 // Zod schema for Fiber Report Action parameters
-// We expect fiberPathResult to be passed as a structured object, and form values as simple types.
-// For PointInput, we use the string-based version from form-schema because that's what the form holds.
 const FiberReportParamsSchema = z.object({
   fiberPathResult: z.custom<FiberPathResult>((val) => val !== null && typeof val === 'object' && 'status' in (val as any), {
     message: "Valid FiberPathResult object is required."
   }),
-  pointA_form: PointInputSchema_FC, // From fiber-calculator-form-schema
-  pointB_form: PointInputSchema_FC, // From fiber-calculator-form-schema
-  snapRadiusUsed_form: z.number().min(0),
+  // PointInputSchema_FC uses string for lat/lng, which matches form values.
+  // The report generator will handle parsing them to numbers if needed internally.
+  pointA_form: PointInputSchema_FC,
+  pointB_form: PointInputSchema_FC,
+  snapRadiusUsed_form: z.number().min(0, "Snap radius must be non-negative."),
   reportOptions: z.custom<ReportGenerationOptions>().optional()
 });
 
@@ -238,7 +238,8 @@ export async function generateFiberReportAction(
     const validation = FiberReportParamsSchema.safeParse(params);
     if (!validation.success) {
       console.error("Invalid parameters for generateFiberReportAction:", validation.error.flatten());
-      return { success: false, error: `Invalid input: ${validation.error.flatten().formErrors.join(', ')}` };
+      const errorMessages = validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+      return { success: false, error: `Invalid input: ${errorMessages}` };
     }
 
     const { fiberPathResult, pointA_form, pointB_form, snapRadiusUsed_form, reportOptions } = validation.data;
@@ -247,10 +248,24 @@ export async function generateFiberReportAction(
       return { success: false, error: "Cannot generate report: Fiber path calculation was not successful or data is missing." };
     }
     
+    // Convert lat/lng from string to number for the report generator, which expects PointCoordinates
+    const pointA_coords: PointCoordinates = { 
+        lat: parseFloat(pointA_form.lat), 
+        lng: parseFloat(pointA_form.lng) 
+    };
+    const pointB_coords: PointCoordinates = { 
+        lat: parseFloat(pointB_form.lat), 
+        lng: parseFloat(pointB_form.lng) 
+    };
+    
+    if (isNaN(pointA_coords.lat) || isNaN(pointA_coords.lng) || isNaN(pointB_coords.lat) || isNaN(pointB_coords.lng)) {
+        return { success: false, error: "Invalid coordinates provided in form data for report generation." };
+    }
+
     const pdfBytes = await generatePdfReportForFiberAnalysis(
         fiberPathResult,
-        { name: pointA_form.name, lat: parseFloat(pointA_form.lat), lng: parseFloat(pointB_form.lng) }, // Convert to PointCoordinates
-        { name: pointB_form.name, lat: parseFloat(pointB_form.lat), lng: parseFloat(pointB_form.lng) }, // Convert to PointCoordinates
+        { name: pointA_form.name, ...pointA_coords }, 
+        { name: pointB_form.name, ...pointB_coords },
         snapRadiusUsed_form,
         reportOptions
     );
@@ -267,3 +282,5 @@ export async function generateFiberReportAction(
     return { success: false, error: `Failed to generate Fiber PDF report: ${errorMessage}` };
   }
 }
+
+    

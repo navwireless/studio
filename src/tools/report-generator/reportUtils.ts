@@ -2,9 +2,8 @@
 // src/tools/report-generator/reportUtils.ts
 import { AlignmentType, BorderStyle, Footer, Header, IBorderOptions, ImageRun, Packer, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, VerticalAlign, WidthType } from 'docx';
 import { PDFPage, StandardFonts, rgb, PDFFont, PDFDocument } from 'pdf-lib';
-import type { AnalysisResult, PointCoordinates as AppPointCoordinates } from '@/types'; // Renamed to avoid conflict
-import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator'; // For Fiber reports
-import type { PointInput } from '@/lib/fiber-calculator-form-schema'; // For Fiber reports (form values)
+import type { AnalysisResult, PointCoordinates as AppPointCoordinates } from '@/types'; 
+import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator'; 
 
 
 export const DEFAULT_COMPANY_NAME = "Nav Wireless Technologies Pvt. Ltd.";
@@ -26,7 +25,7 @@ export async function addHeaderToPdfPage(
     reportTitle: string = DEFAULT_REPORT_TITLE,
     companyName: string = DEFAULT_COMPANY_NAME,
     logoImageBytes?: Uint8Array
-) {
+): Promise<number> { // Return currentY position after header
     const { width, height } = page.getSize();
     const margin = 40;
     const headerHeight = 60;
@@ -48,7 +47,7 @@ export async function addHeaderToPdfPage(
 
             page.drawImage(logoImage, {
                 x: margin,
-                y: height - margin - logoHeight + (logoMaxHeight - logoHeight) / 2,
+                y: height - margin - logoHeight + (logoMaxHeight - logoHeight) / 2, // Center logo vertically within its slot
                 width: logoWidth,
                 height: logoHeight,
             });
@@ -89,11 +88,11 @@ export async function addHeaderToPdfPage(
         color: LINE_COLOR_RGB,
     });
 
-    return lineY - 20;
+    return lineY - 20; // Return Y position below the header line
 }
 
 export function addFooterToPdfPage(page: PDFPage, font: PDFFont, pageNumber: number, totalPages: number, companyName: string = DEFAULT_COMPANY_NAME) {
-    const { width } = page.getSize();
+    const { width, height } = page.getSize();
     const margin = 40;
     const footerText = `Page ${pageNumber} of ${totalPages} | ${companyName} | ${new Date().toLocaleDateString()}`;
     const textSize = 9;
@@ -101,7 +100,7 @@ export function addFooterToPdfPage(page: PDFPage, font: PDFFont, pageNumber: num
 
     page.drawText(footerText, {
         x: (width - textWidth) / 2,
-        y: margin - 10,
+        y: margin - 10, // Position from bottom
         size: textSize,
         font: font,
         color: TEXT_COLOR_LIGHT_RGB,
@@ -128,8 +127,9 @@ export function formatAnalysisDataForReportTable(analysisResult: AnalysisResult)
 
 export function formatFiberDataForReportTable(
     fiberResult: FiberPathResult,
-    pointA_form: { name: string; lat: number; lng: number; }, // Using PointCoordinates structure
-    pointB_form: { name: string; lat: number; lng: number; }, // Using PointCoordinates structure
+    // Ensure these have lat/lng as numbers for formatting consistency in the report
+    pointA_form: { name: string; lat: number; lng: number; }, 
+    pointB_form: { name: string; lat: number; lng: number; },
     snapRadiusUsed: number
 ): Array<{ key: string, value: string }> {
     const data = [
@@ -150,8 +150,6 @@ export function formatFiberDataForReportTable(
             { key: "Offset B (Road to Site)", value: `${fiberResult.offsetDistanceB_meters?.toFixed(1) ?? 'N/A'} m` },
             { key: "Site B Snapped Coords", value: fiberResult.pointB_snappedToRoad ? `${fiberResult.pointB_snappedToRoad.lat.toFixed(6)}, ${fiberResult.pointB_snappedToRoad.lng.toFixed(6)}` : "N/A"},
         );
-        // Optionally, add polyline if needed, but it's long:
-        // { key: "Road Route Encoded Polyline", value: fiberResult.segments?.find(s => s.type === 'road_route')?.pathPolyline || "N/A" }
     }
 
     if (fiberResult.errorMessage) {
@@ -180,7 +178,7 @@ export async function fetchLogoImageBytes(url: string): Promise<Uint8Array | und
     }
 }
 
-// DOCX Utilities (currently not used by fiber report, but kept for completeness)
+
 export function createDocxHeader(logoImageBuffer?: Buffer): Header {
     const children = [
         new Paragraph({
@@ -189,7 +187,7 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                 new TextRun({
                     text: DEFAULT_REPORT_TITLE,
                     bold: true,
-                    size: 28,
+                    size: 28, // size is in half-points, so 14pt
                 }),
             ],
         }),
@@ -203,8 +201,8 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                         new ImageRun({
                             data: logoImageBuffer,
                             transformation: {
-                                width: 100,
-                                height: 24,
+                                width: 100, // example width
+                                height: 24, // example height
                             },
                         }),
                     ],
@@ -221,7 +219,7 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
     return new Header({
         children: [
             new Table({
-                columnWidths: [2000, 7500],
+                columnWidths: [2000, 7500], // Adjust as needed
                 borders: {
                     top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
                     bottom: { style: BorderStyle.SINGLE, size: 6, color: "auto" },
@@ -235,15 +233,16 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                         children: [
                             new TableCell({
                                 children: logoImageBuffer ? [new Paragraph({
-                                    children: [new ImageRun({ data: logoImageBuffer, transformation: { width: 100, height: 24}})],
+                                    children: [new ImageRun({ data: logoImageBuffer, transformation: { width: 100, height: 24}})], // Adjust size
                                 })] : [new Paragraph(DEFAULT_COMPANY_NAME)],
                                 verticalAlign: VerticalAlign.CENTER,
                                 borders: { right: { style: BorderStyle.NONE } } as IBorderOptions,
                             }),
                             new TableCell({
                                 children: [new Paragraph({
-                                    text: DEFAULT_REPORT_TITLE,
+                                    text: DEFAULT_REPORT_TITLE, // Change to fiber specific if needed, or pass as arg
                                     alignment: AlignmentType.RIGHT,
+                                    // TODO: Style this text (font, size)
                                 })],
                                 verticalAlign: VerticalAlign.CENTER,
                                 borders: { left: { style: BorderStyle.NONE } } as IBorderOptions,
@@ -253,7 +252,7 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                 ],
                 width: { size: 100, type: WidthType.PERCENTAGE },
             }),
-             new Paragraph({ text: "", spacing: { after: 100 } }),
+             new Paragraph({ text: "", spacing: { after: 100 } }), // Spacing after header
         ],
     });
 }
@@ -266,18 +265,20 @@ export function createDocxFooter(): Footer {
                 children: [
                     new TextRun({
                         children: ["Page ", PageNumber.CURRENT],
-                        size: 16,
+                        size: 16, // 8pt
                     }),
                     new TextRun({
                         children: [" of ", PageNumber.TOTAL_PAGES],
-                        size: 16,
+                        size: 16, // 8pt
                     }),
                     new TextRun({
                         text: ` | ${DEFAULT_COMPANY_NAME} | ${new Date().toLocaleDateString()}`,
-                        size: 16,
+                        size: 16, // 8pt
                     }),
                 ],
             }),
         ],
     });
 }
+
+    

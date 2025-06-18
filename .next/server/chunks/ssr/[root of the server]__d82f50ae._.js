@@ -214,10 +214,10 @@ async function addHeaderToPdfPage(page, font, pdfDoc, reportTitle = DEFAULT_REPO
         thickness: 0.8,
         color: LINE_COLOR_RGB
     });
-    return lineY - 20;
+    return lineY - 20; // Return Y position below the header line
 }
 function addFooterToPdfPage(page, font, pageNumber, totalPages, companyName = DEFAULT_COMPANY_NAME) {
-    const { width } = page.getSize();
+    const { width, height } = page.getSize();
     const margin = 40;
     const footerText = `Page ${pageNumber} of ${totalPages} | ${companyName} | ${new Date().toLocaleDateString()}`;
     const textSize = 9;
@@ -282,7 +282,8 @@ function formatAnalysisDataForReportTable(analysisResult) {
         }
     ];
 }
-function formatFiberDataForReportTable(fiberResult, pointA_form, pointB_form, snapRadiusUsed) {
+function formatFiberDataForReportTable(fiberResult, // Ensure these have lat/lng as numbers for formatting consistency in the report
+pointA_form, pointB_form, snapRadiusUsed) {
     const data = [
         {
             key: "Site A Name",
@@ -329,8 +330,6 @@ function formatFiberDataForReportTable(fiberResult, pointA_form, pointB_form, sn
             key: "Site B Snapped Coords",
             value: fiberResult.pointB_snappedToRoad ? `${fiberResult.pointB_snappedToRoad.lat.toFixed(6)}, ${fiberResult.pointB_snappedToRoad.lng.toFixed(6)}` : "N/A"
         });
-    // Optionally, add polyline if needed, but it's long:
-    // { key: "Road Route Encoded Polyline", value: fiberResult.segments?.find(s => s.type === 'road_route')?.pathPolyline || "N/A" }
     }
     if (fiberResult.errorMessage) {
         data.push({
@@ -690,12 +689,14 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/tools/report-generator/reportUtils.ts [app-rsc] (ecmascript)");
 ;
 ;
-async function generatePdfReportForFiberAnalysis(fiberPathResult, pointA_form, pointB_form, snapRadiusUsed, options) {
+const smallFontSize = 8;
+async function generatePdfReportForFiberAnalysis(fiberPathResult, // These `pointA_form` and `pointB_form` will now have name (string) and lat/lng (number)
+pointA_form, pointB_form, snapRadiusUsed, options) {
     const pdfDoc = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$PDFDocument$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$export__default__as__PDFDocument$3e$__["PDFDocument"].create();
     const helveticaFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].Helvetica);
     const helveticaBoldFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].HelveticaBold);
-    let page = pdfDoc.addPage(); // Start with the first page
-    const { width } = page.getSize();
+    let page = pdfDoc.addPage();
+    const { width, height } = page.getSize(); // Get initial page dimensions
     const reportTitle = options?.reportTitle || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_FIBER_REPORT_TITLE"];
     const companyName = options?.companyName || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_COMPANY_NAME"];
     let logoBytes = options?.logoImageBytes;
@@ -708,9 +709,8 @@ async function generatePdfReportForFiberAnalysis(fiberPathResult, pointA_form, p
     const regularFontSize = 10;
     const lineHeight = 15;
     const sectionSpacing = 20;
-    const keyColumnWidth = 200; // Adjusted for potentially longer keys in fiber report
+    const keyColumnWidth = 200;
     const valueColumnX = contentMargin + keyColumnWidth + 10;
-    // Report Date
     page.drawText(`Date: ${new Date().toLocaleDateString()}`, {
         x: contentMargin,
         y: currentY,
@@ -719,7 +719,6 @@ async function generatePdfReportForFiberAnalysis(fiberPathResult, pointA_form, p
         color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
     });
     currentY -= lineHeight * 1.5;
-    // --- Fiber Path Analysis Summary Table ---
     page.drawText("Fiber Path Analysis Summary", {
         x: contentMargin,
         y: currentY,
@@ -728,15 +727,14 @@ async function generatePdfReportForFiberAnalysis(fiberPathResult, pointA_form, p
         color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
     });
     currentY -= lineHeight * 1.5;
+    // Pass PointCoordinates (lat/lng as numbers) to the formatter
     const fiberReportData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["formatFiberDataForReportTable"])(fiberPathResult, pointA_form, pointB_form, snapRadiusUsed);
     for (const item of fiberReportData){
-        // Check for page overflow before drawing each item
-        if (currentY < contentMargin + lineHeight * 2) {
-            (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName); // Footer for current page
-            page = pdfDoc.addPage(); // Create a new page
+        if (currentY < contentMargin + lineHeight * 3) {
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName);
+            page = pdfDoc.addPage();
             currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
-            currentY -= 20; // Space after header on new page
-            // Re-draw section title if it's a new page for the table
+            currentY -= 20;
             page.drawText("Fiber Path Analysis Summary (Continued)", {
                 x: contentMargin,
                 y: currentY,
@@ -764,7 +762,6 @@ async function generatePdfReportForFiberAnalysis(fiberPathResult, pointA_form, p
         currentY -= lineHeight;
     }
     currentY -= sectionSpacing;
-    // Placeholder for Map Snapshot
     if (currentY < contentMargin + 150) {
         (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName);
         page = pdfDoc.addPage();
@@ -787,17 +784,15 @@ async function generatePdfReportForFiberAnalysis(fiberPathResult, pointA_form, p
         color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
     });
     currentY -= lineHeight;
-    // Example placeholder box for map
     page.drawRectangle({
         x: contentMargin,
         y: currentY - 120,
         width: width - 2 * contentMargin,
         height: 100,
-        borderColor: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.8, 0.8, 0.8),
+        borderColor: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["LINE_COLOR_RGB"],
         borderWidth: 1
     });
     currentY -= 130;
-    // Finalize footers for all pages with the correct total page count
     const totalPages = pdfDoc.getPageCount();
     for(let i = 0; i < totalPages; i++){
         const currentPageObject = pdfDoc.getPage(i);
@@ -806,7 +801,6 @@ async function generatePdfReportForFiberAnalysis(fiberPathResult, pointA_form, p
     const pdfBytes = await pdfDoc.save();
     return pdfBytes;
 }
-const smallFontSize = 8; // Define if not already defined globally in this file
 }}),
 "[project]/src/tools/report-generator/index.ts [app-rsc] (ecmascript) <locals>": ((__turbopack_context__) => {
 "use strict";
@@ -998,7 +992,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
                 finalErrorMessage += `Form Errors: ${flattenedErrors.formErrors.map(String).join(', ')}\n`;
             }
             const fieldErrorMessages = Object.entries(flattenedErrors.fieldErrors).map(([path, messages])=>{
-                const typedMessages = messages;
+                const typedMessages = messages; // Ensure messages is treated as string[]
                 return `${String(path)}: ${typedMessages.map(String).join(', ')}`;
             }).join('\n');
             if (fieldErrorMessages) {
@@ -1077,15 +1071,15 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleAnalysisP
     }
 }
 // Zod schema for Fiber Report Action parameters
-// We expect fiberPathResult to be passed as a structured object, and form values as simple types.
-// For PointInput, we use the string-based version from form-schema because that's what the form holds.
 const FiberReportParamsSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
     fiberPathResult: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].custom((val)=>val !== null && typeof val === 'object' && 'status' in val, {
         message: "Valid FiberPathResult object is required."
     }),
+    // PointInputSchema_FC uses string for lat/lng, which matches form values.
+    // The report generator will handle parsing them to numbers if needed internally.
     pointA_form: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$fiber$2d$calculator$2d$form$2d$schema$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["PointInputSchema_FC"],
     pointB_form: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$fiber$2d$calculator$2d$form$2d$schema$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["PointInputSchema_FC"],
-    snapRadiusUsed_form: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].number().min(0),
+    snapRadiusUsed_form: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].number().min(0, "Snap radius must be non-negative."),
     reportOptions: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].custom().optional()
 });
 async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportAction(params) {
@@ -1093,9 +1087,10 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
         const validation = FiberReportParamsSchema.safeParse(params);
         if (!validation.success) {
             console.error("Invalid parameters for generateFiberReportAction:", validation.error.flatten());
+            const errorMessages = validation.error.errors.map((e)=>`${e.path.join('.')}: ${e.message}`).join('; ');
             return {
                 success: false,
-                error: `Invalid input: ${validation.error.flatten().formErrors.join(', ')}`
+                error: `Invalid input: ${errorMessages}`
             };
         }
         const { fiberPathResult, pointA_form, pointB_form, snapRadiusUsed_form, reportOptions } = validation.data;
@@ -1105,14 +1100,27 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
                 error: "Cannot generate report: Fiber path calculation was not successful or data is missing."
             };
         }
-        const pdfBytes = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$generateFiberPdfReport$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["generatePdfReportForFiberAnalysis"])(fiberPathResult, {
-            name: pointA_form.name,
+        // Convert lat/lng from string to number for the report generator, which expects PointCoordinates
+        const pointA_coords = {
             lat: parseFloat(pointA_form.lat),
-            lng: parseFloat(pointB_form.lng)
-        }, {
-            name: pointB_form.name,
+            lng: parseFloat(pointA_form.lng)
+        };
+        const pointB_coords = {
             lat: parseFloat(pointB_form.lat),
             lng: parseFloat(pointB_form.lng)
+        };
+        if (isNaN(pointA_coords.lat) || isNaN(pointA_coords.lng) || isNaN(pointB_coords.lat) || isNaN(pointB_coords.lng)) {
+            return {
+                success: false,
+                error: "Invalid coordinates provided in form data for report generation."
+            };
+        }
+        const pdfBytes = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$generateFiberPdfReport$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["generatePdfReportForFiberAnalysis"])(fiberPathResult, {
+            name: pointA_form.name,
+            ...pointA_coords
+        }, {
+            name: pointB_form.name,
+            ...pointB_coords
         }, snapRadiusUsed_form, reportOptions);
         const base64Pdf = Buffer.from(pdfBytes).toString('base64');
         const safePointAName = (pointA_form.name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');

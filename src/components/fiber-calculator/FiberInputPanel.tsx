@@ -78,10 +78,10 @@ interface FiberInputPanelProps {
   handleSubmit: UseFormHandleSubmit<FiberCalculatorFormValues>;
   onSubmit: (data: FiberCalculatorFormValues) => void;
   onClear: () => void;
-  onGeneratePdfReport: () => void;
+  onGeneratePdfReport: () => void; // New prop for PDF report
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
   isCalculating: boolean;
-  isGeneratingPdf: boolean;
+  isGeneratingPdf: boolean; // New prop for PDF loading state
   fiberPathResult: FiberPathResult | null;
   calculationError: string | null;
 }
@@ -92,10 +92,10 @@ export default function FiberInputPanel({
   handleSubmit,
   onSubmit,
   onClear,
-  onGeneratePdfReport,
+  onGeneratePdfReport, // New prop
   clientFormErrors,
   isCalculating,
-  isGeneratingPdf,
+  isGeneratingPdf, // New prop
   fiberPathResult,
   calculationError,
 }: FiberInputPanelProps) {
@@ -207,7 +207,7 @@ export default function FiberInputPanel({
 
             <div className="pt-2 space-y-2">
                <Button type="submit" className="w-full" disabled={isCalculating || isGeneratingPdf}>
-                <Route className="mr-2 h-4 w-4" />
+                {isCalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Route className="mr-2 h-4 w-4" />}
                 {isCalculating ? 'Calculating...' : 'Calculate Fiber Path'}
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={onClear} disabled={isCalculating || isGeneratingPdf}>
@@ -229,7 +229,7 @@ export default function FiberInputPanel({
                             variant="outline"
                             size="sm"
                             onClick={onGeneratePdfReport}
-                            disabled={isGeneratingPdf || !fiberPathResult}
+                            disabled={isGeneratingPdf || !fiberPathResult || fiberPathResult.status !== 'success'}
                             className="h-7 text-xs px-2 py-1"
                         >
                             {isGeneratingPdf ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
@@ -285,3 +285,5 @@ export default function FiberInputPanel({
     </TooltipProvider>
   );
 }
+
+    
