@@ -116,7 +116,7 @@ export default function FiberCalculatorPage() {
         pointB_lat_num, 
         pointB_lng_num, 
         data.fiberSnapRadius,
-        true 
+        true // For dedicated fiber calculator, LOS feasibility is assumed or not a pre-requisite for trying.
       );
 
       setFiberPathResult(result);
@@ -165,14 +165,12 @@ export default function FiberCalculatorPage() {
 
   const handleClearForm = () => {
     reset(defaultFiberCalculatorFormValues);
-    // Clear persisted point data
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
     localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
-    // Snap radius is kept as it's a user preference not tied to specific points.
     setFiberPathResult(null);
     setCalculationError(null);
     toast({ title: "Form Cleared", description: "Inputs reset to default values." });
@@ -212,8 +210,8 @@ export default function FiberCalculatorPage() {
             onMapClick={handleMapClick}
             onMarkerDrag={handleMarkerDrag}
             mapContainerClassName="w-full h-full"
-            analysisResult={null} 
-            isStale={false} 
+            analysisResult={null} // No LOS analysis on this page
+            isStale={false} // No concept of staleness for LOS on this page
             fiberPathResult={fiberPathResult} 
           />
         </div>
