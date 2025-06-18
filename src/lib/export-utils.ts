@@ -6,19 +6,9 @@ import { saveAs } from 'file-saver'; // For robust downloads
 import type { BulkAnalysisResultItem } from '@/app/bulk-los-analyzer/page';
 import type { KmzPlacemark } from './kmz-parser';
 import type { FiberPathSegment, FiberPathResult } from '@/tools/fiberPathCalculator';
+import { xmlEscape } from './xml-escape'; // Ensure xmlEscape is available
+import { decodePolyline, formatCoordinatesForKml } from './polyline-decoder';
 
-// Helper function to get the encoded polyline for the road route segment
-// This extracts the encoded polyline for the main road route portion.
-function getRoadRouteEncodedPolyline(segments?: FiberPathSegment[]): string {
-    if (!segments) return "";
-    const roadSegments = segments.filter(s => s.type === 'road_route');
-    // Assuming Google Directions API might return multiple steps for the road route.
-    // Concatenate their polylines if they exist. Or, if a single overview polyline for the road part
-    // was available and stored, that would be better. Here, we take polylines from all 'road_route' type segments.
-    // Note: Simple concatenation might not be visually perfect if segments aren't perfectly contiguous.
-    // For KML description, it's usually fine to list them or provide the primary one.
-    return roadSegments.map(s => s.pathPolyline || "").join('; '); // Join with semicolon if multiple.
-}
 
 // Helper to format fiber status for display/export
 const formatFiberStatusForExport = (status?: FiberPathResult['status']): string => {
@@ -88,14 +78,12 @@ export function createExcelWorkbook(results: BulkAnalysisResultItem[]): WorkBook
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'LOS_Fiber_Results');
   
-  // Auto-column widths
   if (worksheetData.length > 0) {
     const colWidths = Object.keys(worksheetData[0] || {}).map(key => ({
       wch: Math.max(String(key).length, ...worksheetData.map(row => String(row[key as keyof typeof row] ?? '').length)) + 2
     }));
     worksheet['!cols'] = colWidths;
   } else {
-     // Default widths if no data, ensure fiber columns are accounted for if hasFiberData is true
      const defaultLOSCols = [
         { wch: 20 },{ wch: 25 },{ wch: 20 },{ wch: 20 },{ wch: 25 },{ wch: 20 },
         { wch: 25 },{ wch: 20 },{ wch: 15 },{ wch: 25 },{ wch: 30 },{ wch: 50 },
@@ -114,7 +102,7 @@ export function exportResultsToExcel(results: BulkAnalysisResultItem[], fileName
 }
 
 
-// KMZ Export for Feasible Links
+// KMZ Export for Feasible Links (Bulk Analysis)
 function generateKmlContent(
     originalPlacemarks: KmzPlacemark[], 
     analysisResults: BulkAnalysisResultItem[], 
@@ -134,7 +122,7 @@ function generateKmlContent(
   });
 
   let kmlFeasibleLosLinks = '';
-  let kmlFiberPathGeometries = ''; // Separate folder for fiber path geometries
+  let kmlFiberPathGeometries = '';
 
   analysisResults.forEach(link => {
     if (link.losPossible) {
@@ -144,61 +132,57 @@ function generateKmlContent(
           <Data name="Min Clearance (m)"><value>${link.minClearanceActual?.toFixed(1) ?? 'N/A'}</value></Data>
           <Data name="LOS Remarks"><value>${xmlEscape(link.remarks)}</value></Data>`;
       
-      // Fiber Path Data if available
-      if (link.fiberPathStatus) {
+      // Fiber Path Data if available and successful
+      if (link.fiberPathStatus === 'success' && link.fiberPathSegments) {
         extendedDataContent += `
-          <Data name="Fiber Path Status"><value>${xmlEscape(formatFiberStatusForExport(link.fiberPathStatus))}</value></Data>`;
-        if (link.fiberPathStatus === 'success') {
-          extendedDataContent += `
+          <Data name="Fiber Path Status"><value>${xmlEscape(formatFiberStatusForExport(link.fiberPathStatus))}</value></Data>
           <Data name="Fiber Total Distance (m)"><value>${link.fiberPathTotalDistanceMeters?.toFixed(0) ?? 'N/A'}</value></Data>`;
-          
-          const offsetASeg = link.fiberPathSegments?.find(s => s.type === 'offset_a');
-          const roadRouteSegs = link.fiberPathSegments?.filter(s => s.type === 'road_route') || [];
-          const roadRouteDist = roadRouteSegs.reduce((sum,s) => sum + s.distanceMeters, 0);
-          const offsetBSeg = link.fiberPathSegments?.find(s => s.type === 'offset_b');
+        
+        link.fiberPathSegments.forEach(segment => {
+          let segmentName = "";
+          let styleUrl = "";
+          let coordinatesKml = "";
+          let segmentDescription = `Segment Type: ${segment.type}, Distance: ${segment.distanceMeters.toFixed(1)} m`;
 
-          extendedDataContent += `
-          <Data name="Fiber Offset A (m)"><value>${offsetASeg?.distanceMeters.toFixed(0) ?? 'N/A'}</value></Data>
-          <Data name="Fiber Road Route (m)"><value>${roadRouteDist > 0 ? roadRouteDist.toFixed(0) : 'N/A'}</value></Data>
-          <Data name="Fiber Offset B (m)"><value>${offsetBSeg?.distanceMeters.toFixed(0) ?? 'N/A'}</value></Data>
-          <Data name="Encoded Road Polyline"><snippet maxLines="0">${xmlEscape(getRoadRouteEncodedPolyline(link.fiberPathSegments))}</snippet></Data>`;
-          // Note: <snippet maxLines="0"> might be needed for long polylines in GE.
-
-          // Add KML for Fiber Path Segments
-          if (offsetASeg && link.pointA) { // Snapped point A is endPoint of offset_a
-             kmlFiberPathGeometries += `
-          <Placemark>
-            <name>${xmlEscape(link.pointAName)} to Road (Offset A)</name>
-            <styleUrl>#fiberOffsetStyle</styleUrl>
-            <LineString><tessellate>1</tessellate><coordinates>${link.pointA.lng},${link.pointA.lat},0 ${offsetASeg.endPoint.lng},${offsetASeg.endPoint.lat},0</coordinates></LineString>
-          </Placemark>`;
+          switch (segment.type) {
+            case 'offset_a':
+              segmentName = `${xmlEscape(link.pointAName)} to Road (Offset A)`;
+              styleUrl = "#fiberOffsetStyle";
+              coordinatesKml = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+              break;
+            case 'offset_b':
+              segmentName = `Road to ${xmlEscape(link.pointBName)} (Offset B)`;
+              styleUrl = "#fiberOffsetStyle";
+              coordinatesKml = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+              break;
+            case 'road_route':
+              segmentName = `Road Route Segment (${xmlEscape(link.pointAName)} to ${xmlEscape(link.pointBName)})`;
+              styleUrl = "#fiberRoadStyle";
+              if (segment.pathPolyline) {
+                const decoded = decodePolyline(segment.pathPolyline);
+                coordinatesKml = formatCoordinatesForKml(decoded);
+                segmentDescription += ` | Encoded Polyline: ${xmlEscape(segment.pathPolyline)}`;
+              } else {
+                coordinatesKml = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`; // Fallback
+                segmentDescription += ` | Note: Encoded polyline missing, showing straight line.`;
+              }
+              break;
           }
-          if (offsetBSeg && link.pointB) { // Snapped point B is startPoint of offset_b
+          if (segmentName && styleUrl && coordinatesKml) {
             kmlFiberPathGeometries += `
           <Placemark>
-            <name>Road to ${xmlEscape(link.pointBName)} (Offset B)</name>
-            <styleUrl>#fiberOffsetStyle</styleUrl>
-            <LineString><tessellate>1</tessellate><coordinates>${offsetBSeg.startPoint.lng},${offsetBSeg.startPoint.lat},0 ${link.pointB.lng},${link.pointB.lat},0</coordinates></LineString>
+            <name>${segmentName}</name>
+            <styleUrl>${styleUrl}</styleUrl>
+            <description>${xmlEscape(segmentDescription)}</description>
+            <LineString><tessellate>1</tessellate><coordinates>${coordinatesKml}</coordinates></LineString>
           </Placemark>`;
           }
-          // Road Route (simplified straight line between snapped points)
-          const snappedPointA = offsetASeg?.endPoint;
-          const snappedPointB = offsetBSeg?.startPoint;
-          if (snappedPointA && snappedPointB) {
-            kmlFiberPathGeometries += `
-          <Placemark>
-            <name>Road Route (${xmlEscape(link.pointAName)} to ${xmlEscape(link.pointBName)}) - Simplified</name>
-            <description>Actual road route polyline: ${xmlEscape(getRoadRouteEncodedPolyline(link.fiberPathSegments))}. Total road distance: ${roadRouteDist.toFixed(0)}m</description>
-            <styleUrl>#fiberRoadStyle</styleUrl>
-            <LineString><tessellate>1</tessellate><coordinates>${snappedPointA.lng},${snappedPointA.lat},0 ${snappedPointB.lng},${snappedPointB.lat},0</coordinates></LineString>
-          </Placemark>`;
-          }
-
-        } else if (link.fiberPathErrorMessage) { // Fiber attempted but not successful
-          extendedDataContent += `
-          <Data name="Fiber Error/Remarks"><value>${xmlEscape(link.fiberPathErrorMessage)}</value></Data>`;
-        }
-      } else { // Fiber not calculated for this LOS link
+        });
+      } else if (link.fiberPathStatus) { // Fiber attempted but not successful
+        extendedDataContent += `
+          <Data name="Fiber Path Status"><value>${xmlEscape(formatFiberStatusForExport(link.fiberPathStatus))}</value></Data>
+          <Data name="Fiber Error/Remarks"><value>${xmlEscape(link.fiberPathErrorMessage || 'N/A')}</value></Data>`;
+      } else { // Fiber not calculated
          extendedDataContent += `
           <Data name="Fiber Path Status"><value>Not Calculated</value></Data>`;
       }
@@ -228,10 +212,10 @@ function generateKmlContent(
       <LineStyle><color>ff00ff00</color><width>3</width></LineStyle> <!-- Green for LOS -->
     </Style>
     <Style id="fiberOffsetStyle">
-      <LineStyle><color>a000aaff</color><width>2.5</width></LineStyle> <!-- Orange/Yellow for Offset (A0 RRGGBB - a0 for some transparency) -->
+      <LineStyle><color>a000aaff</color><width>2.5</width></LineStyle> <!-- Orange/Yellow for Offset -->
     </Style>
     <Style id="fiberRoadStyle">
-      <LineStyle><color>a0ffaa00</color><width>3.5</width></LineStyle> <!-- Cyan/Light Blue for Road Route (a0 for some transparency) -->
+      <LineStyle><color>a0ffaa00</color><width>3.5</width></LineStyle> <!-- Cyan/Light Blue for Road Route -->
     </Style>
     <Style id="placemarkIcon">
       <IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href></Icon><scale>1.0</scale></IconStyle>
@@ -244,24 +228,11 @@ function generateKmlContent(
       ${kmlFeasibleLosLinks}
     </Folder>
     
-    ${kmlFiberPathGeometries ? `<Folder><name>Fiber Path Geometries</name>${kmlFiberPathGeometries}</Folder>` : ''}
+    ${kmlFiberPathGeometries ? `<Folder><name>Fiber Path Geometries (Full Detail)</name>${kmlFiberPathGeometries}</Folder>` : ''}
   </Document>
 </kml>`;
 }
 
-function xmlEscape(str: string | undefined | null): string {
-    if (str === undefined || str === null) return '';
-    return String(str).replace(/[<>&"']/g, (match) => {
-        switch (match) {
-            case '<': return '&lt;';
-            case '>': return '&gt;';
-            case '&': return '&amp;';
-            case '"': return '&quot;';
-            case "'": return '&apos;';
-            default: return match;
-        }
-    });
-}
 
 export async function generateKmzBlob(
   originalPlacemarks: KmzPlacemark[],
@@ -272,7 +243,6 @@ export async function generateKmzBlob(
     const kmlString = generateKmlContent(originalPlacemarks, analysisResults, analysisParams);
     const zip = new JSZip();
     zip.file("doc.kml", kmlString);
-    // Ensure mimeType is correctly set for KMZ
     return await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz+xml" });
   } catch (error) {
     console.error("Error generating KMZ blob:", error);
@@ -304,13 +274,11 @@ export async function generateAndDownloadZipPackage(
     const excelBlob = new Blob([excelBuffer], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
     zip.file(`${baseFileName}_results.xlsx`, excelBlob);
 
-    // Check if there are any LOS feasible links or original placemarks before attempting KMZ generation
     const hasFeasibleLosLinks = bulkResults.some(r => r.losPossible);
     if (originalPlacemarks.length > 0 || hasFeasibleLosLinks) {
         const kmzBlob = await generateKmzBlob(originalPlacemarks, bulkResults, analysisParams);
         zip.file(`${baseFileName}_analysis.kmz`, kmzBlob);
     } else {
-       // Add a note if no KMZ is generated due to lack of data
        zip.file('notes.txt', 'No original placemarks were provided and/or no LOS-feasible links were found, so no KMZ file was generated for visualization.');
     }
     

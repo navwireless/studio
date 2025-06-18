@@ -10,6 +10,7 @@ import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalcula
 import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport';
 import JSZip from 'jszip';
 import { xmlEscape } from '@/lib/xml-escape';
+import { decodePolyline, formatCoordinatesForKml } from '@/lib/polyline-decoder';
 
 // --- Google Elevation API Configuration ---
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
@@ -285,7 +286,6 @@ const SingleFiberPathKmzParamsSchema = z.object({
     if (val === null || typeof val !== 'object' || !('status' in (val as any))) {
       return false;
     }
-    // Only allow KMZ generation if status is 'success'
     return (val as FiberPathResult).status === 'success';
   }, {
     message: "Successful FiberPathResult object is required for KMZ generation."
@@ -294,11 +294,6 @@ const SingleFiberPathKmzParamsSchema = z.object({
   pointB_name: z.string().min(1, "Point B name is required."),
 });
 
-// Helper to get encoded polyline strings for road_route segments
-function getRoadRouteEncodedPolylines(segments?: FiberPathSegment[]): string {
-    if (!segments) return "";
-    return segments.filter(s => s.type === 'road_route' && s.pathPolyline).map(s => s.pathPolyline).join('; ');
-}
 
 export async function generateSingleFiberPathKmzAction(
   params: z.infer<typeof SingleFiberPathKmzParamsSchema>
@@ -312,6 +307,7 @@ export async function generateSingleFiberPathKmzAction(
 
     const { fiberPathResult, pointA_name, pointB_name } = validation.data;
 
+    // KML Styles
     let kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
@@ -346,50 +342,70 @@ export async function generateSingleFiberPathKmzAction(
 
     <Folder><name>Fiber Path Segments</name>`;
 
-    const offsetASeg = fiberPathResult.segments?.find(s => s.type === 'offset_a');
-    const offsetBSeg = fiberPathResult.segments?.find(s => s.type === 'offset_b');
-    const roadSegments = fiberPathResult.segments?.filter(s => s.type === 'road_route') || [];
-    const totalRoadDist = roadSegments.reduce((sum, s) => sum + s.distanceMeters, 0);
-
-    if (offsetASeg && fiberPathResult.pointA_snappedToRoad) {
+    // Add original points and snapped points if they exist
+    if (fiberPathResult.pointA_snappedToRoad) {
       kmlContent += `
-      <Placemark>
-        <name>Offset A: ${xmlEscape(pointA_name)} to Road</name>
-        <styleUrl>#offsetLineStyle</styleUrl>
-        <description>Distance: ${offsetASeg.distanceMeters.toFixed(1)} m</description>
-        <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointA_original.lng},${fiberPathResult.pointA_original.lat},0 ${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0</coordinates></LineString>
-      </Placemark>
       <Placemark>
         <name>${xmlEscape(pointA_name)} (Snapped to Road)</name>
         <styleUrl>#snappedPointStyle</styleUrl>
         <Point><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0</coordinates></Point>
       </Placemark>`;
     }
-
-    if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad && roadSegments.length > 0) {
-      const encodedPolylines = getRoadRouteEncodedPolylines(roadSegments);
+    if (fiberPathResult.pointB_snappedToRoad) {
       kmlContent += `
-      <Placemark>
-        <name>Road Route (Simplified Line)</name>
-        <styleUrl>#roadRouteLineStyle</styleUrl>
-        <description>Total Road Distance: ${totalRoadDist.toFixed(1)} m. Note: This line is a direct path between snapped points. Actual road path encoded polyline(s): ${xmlEscape(encodedPolylines)}</description>
-        <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0 ${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></LineString>
-      </Placemark>`;
-    }
-
-    if (offsetBSeg && fiberPathResult.pointB_snappedToRoad) {
-      kmlContent += `
-      <Placemark>
-        <name>Offset B: Road to ${xmlEscape(pointB_name)}</name>
-        <styleUrl>#offsetLineStyle</styleUrl>
-        <description>Distance: ${offsetBSeg.distanceMeters.toFixed(1)} m</description>
-        <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0 ${fiberPathResult.pointB_original.lng},${fiberPathResult.pointB_original.lat},0</coordinates></LineString>
-      </Placemark>
       <Placemark>
         <name>${xmlEscape(pointB_name)} (Snapped to Road)</name>
         <styleUrl>#snappedPointStyle</styleUrl>
         <Point><coordinates>${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></Point>
       </Placemark>`;
+    }
+    
+    // Iterate through segments to draw lines
+    if (fiberPathResult.segments) {
+      for (const segment of fiberPathResult.segments) {
+        let segmentName = "";
+        let styleUrl = "";
+        let coordinatesString = "";
+        let description = `Distance: ${segment.distanceMeters.toFixed(1)} m`;
+
+        switch (segment.type) {
+          case 'offset_a':
+            segmentName = `Offset A: ${xmlEscape(pointA_name)} to Road`;
+            styleUrl = "#offsetLineStyle";
+            coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+            break;
+          case 'offset_b':
+            segmentName = `Offset B: Road to ${xmlEscape(pointB_name)}`;
+            styleUrl = "#offsetLineStyle";
+            coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+            break;
+          case 'road_route':
+            segmentName = `Road Segment (${xmlEscape(pointA_name)} to ${xmlEscape(pointB_name)})`;
+            styleUrl = "#roadRouteLineStyle";
+            if (segment.pathPolyline) {
+              // Decode polyline and format for KML
+              const decodedCoords = decodePolyline(segment.pathPolyline);
+              coordinatesString = formatCoordinatesForKml(decodedCoords);
+              description += ` | Encoded Polyline: ${xmlEscape(segment.pathPolyline)}`;
+            } else {
+              // Fallback to straight line if polyline is missing (should ideally not happen for road_route)
+              console.warn("KMZ Gen: Road_route segment missing pathPolyline. Drawing straight line.");
+              coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+              description += " | Note: Polyline missing, showing straight line.";
+            }
+            break;
+        }
+
+        if (segmentName && styleUrl && coordinatesString) {
+          kmlContent += `
+          <Placemark>
+            <name>${segmentName}</name>
+            <styleUrl>${styleUrl}</styleUrl>
+            <description>${xmlEscape(description)}</description>
+            <LineString><tessellate>1</tessellate><coordinates>${coordinatesString}</coordinates></LineString>
+          </Placemark>`;
+        }
+      }
     }
 
     kmlContent += `
@@ -400,10 +416,7 @@ export async function generateSingleFiberPathKmzAction(
     const zip = new JSZip();
     zip.file("doc.kml", kmlContent);
 
-    // Generate KMZ as a Node.js buffer
     const kmzBuffer = await zip.generateAsync({ type: "nodebuffer", mimeType: "application/vnd.google-earth.kmz" });
-
-    // Convert buffer to base64 string
     const base64Kmz = kmzBuffer.toString('base64');
 
     const safePointAName = (pointA_name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
