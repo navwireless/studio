@@ -32,7 +32,7 @@ export default function FiberCalculatorPage() {
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [isGeneratingKmz, setIsGeneratingKmz] = useState(false); // New state for KMZ
+  const [isGeneratingKmz, setIsGeneratingKmz] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
 
@@ -121,7 +121,7 @@ export default function FiberCalculatorPage() {
         pointB_lat_num,
         pointB_lng_num,
         data.fiberSnapRadius,
-        true
+        true // For dedicated fiber calculator, LOS is implicitly considered "feasible" for path finding
       );
 
       setFiberPathResult(result);
@@ -201,9 +201,8 @@ export default function FiberCalculatorPage() {
       const currentFormValues = getValues();
       const kmzParams = {
         fiberPathResult: fiberPathResult,
-        pointA_name: currentFormValues.pointA.name,
-        pointB_name: currentFormValues.pointB.name,
-        // Original point coordinates will be taken from fiberPathResult.pointA_original etc.
+        pointA_name: currentFormValues.pointA.name || "Site A",
+        pointB_name: currentFormValues.pointB.name || "Site B",
       };
 
       const response = await generateSingleFiberPathKmzAction(kmzParams);
@@ -216,7 +215,6 @@ export default function FiberCalculatorPage() {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        // KMZ MIME type: application/vnd.google-earth.kmz or application/vnd.google-earth.kmz+xml
         const blob = new Blob([byteArray], { type: 'application/vnd.google-earth.kmz' });
         saveAs(blob, fileName);
         toast({ title: "Success", description: "KMZ file downloaded." });
@@ -295,11 +293,11 @@ export default function FiberCalculatorPage() {
             onSubmit={handleCalculateSubmit}
             onClear={handleClearForm}
             onGeneratePdfReport={handleGeneratePdfReport}
-            onGenerateKmzReport={handleGenerateKmzReport} // Pass KMZ handler
+            onGenerateKmzReport={handleGenerateKmzReport}
             clientFormErrors={clientFormErrors}
             isCalculating={isCalculating}
             isGeneratingPdf={isGeneratingPdf}
-            isGeneratingKmz={isGeneratingKmz} // Pass KMZ loading state
+            isGeneratingKmz={isGeneratingKmz}
             fiberPathResult={fiberPathResult}
             calculationError={calculationError}
           />
@@ -311,8 +309,8 @@ export default function FiberCalculatorPage() {
             onMapClick={handleMapClick}
             onMarkerDrag={handleMarkerDrag}
             mapContainerClassName="w-full h-full"
-            analysisResult={null}
-            isStale={false}
+            analysisResult={null} // Not used for fiber calculator page
+            isStale={false} // Not applicable here, or always false
             fiberPathResult={fiberPathResult}
           />
         </div>

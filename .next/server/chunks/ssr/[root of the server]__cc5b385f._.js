@@ -947,8 +947,8 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$ge
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$generatePdfReport$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/tools/report-generator/generatePdfReport.ts [app-rsc] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$fiber$2d$calculator$2d$form$2d$schema$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/fiber-calculator-form-schema.ts [app-rsc] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$generateFiberPdfReport$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/tools/report-generator/generateFiberPdfReport.ts [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$jszip$2f$lib$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/jszip/lib/index.js [app-rsc] (ecmascript)"); // For KMZ generation
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/xml-escape.ts [app-rsc] (ecmascript)"); // Helper for KML content
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$jszip$2f$lib$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/jszip/lib/index.js [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/xml-escape.ts [app-rsc] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-validate.js [app-rsc] (ecmascript)");
 ;
 ;
@@ -1203,7 +1203,13 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
 }
 // Schema for KMZ generation parameters
 const SingleFiberPathKmzParamsSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
-    fiberPathResult: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].custom((val)=>val !== null && typeof val === 'object' && 'status' in val && val.status === 'success', {
+    fiberPathResult: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].custom((val)=>{
+        if (val === null || typeof val !== 'object' || !('status' in val)) {
+            return false;
+        }
+        // Only allow KMZ generation if status is 'success'
+        return val.status === 'success';
+    }, {
         message: "Successful FiberPathResult object is required for KMZ generation."
     }),
     pointA_name: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].string().min(1, "Point A name is required."),
@@ -1235,6 +1241,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
     </Style>
     <Style id="snappedPointStyle">
       <IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-blank.png</href></Icon><scale>0.8</scale></IconStyle>
+       <LabelStyle><scale>0.7</scale></LabelStyle>
     </Style>
     <Style id="offsetLineStyle">
       <LineStyle><color>a000aaff</color><width>3</width></LineStyle> <!-- Orange-ish, slightly transparent -->
@@ -1261,7 +1268,6 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
         const offsetBSeg = fiberPathResult.segments?.find((s)=>s.type === 'offset_b');
         const roadSegments = fiberPathResult.segments?.filter((s)=>s.type === 'road_route') || [];
         const totalRoadDist = roadSegments.reduce((sum, s)=>sum + s.distanceMeters, 0);
-        // Offset A Placemark
         if (offsetASeg && fiberPathResult.pointA_snappedToRoad) {
             kmlContent += `
       <Placemark>
@@ -1276,18 +1282,16 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
         <Point><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0</coordinates></Point>
       </Placemark>`;
         }
-        // Road Route Placemark (Simplified Line)
         if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad && roadSegments.length > 0) {
             const encodedPolylines = getRoadRouteEncodedPolylines(roadSegments);
             kmlContent += `
       <Placemark>
-        <name>Road Route (Simplified)</name>
+        <name>Road Route (Simplified Line)</name>
         <styleUrl>#roadRouteLineStyle</styleUrl>
-        <description>Total Road Distance: ${totalRoadDist.toFixed(1)} m. Encoded Polyline(s): ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["xmlEscape"])(encodedPolylines)}</description>
+        <description>Total Road Distance: ${totalRoadDist.toFixed(1)} m. Note: This line is a direct path between snapped points. Actual road path encoded polyline(s): ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["xmlEscape"])(encodedPolylines)}</description>
         <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0 ${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></LineString>
       </Placemark>`;
         }
-        // Offset B Placemark
         if (offsetBSeg && fiberPathResult.pointB_snappedToRoad) {
             kmlContent += `
       <Placemark>
@@ -1308,18 +1312,47 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
 </kml>`;
         const zip = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$jszip$2f$lib$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"]();
         zip.file("doc.kml", kmlContent);
+        // Using "application/octet-stream" for broader compatibility, though "application/vnd.google-earth.kmz" is more specific.
+        // Some systems might not recognize vnd.google-earth.kmz correctly as a default for ZIP archives.
+        // Forcing a specific KMZ mime type might be better for Google Earth, but octet-stream is safer for generic ZIP tools.
+        // Let's stick to specific KMZ mime for GE compatibility.
         const kmzBlob = await zip.generateAsync({
             type: "blob",
-            mimeType: "application/vnd.google-earth.kmz+xml"
+            mimeType: "application/vnd.google-earth.kmz"
         });
-        const reader = new FileReader();
+        // Convert Blob to base64 string for server action response
+        // This requires browser APIs (FileReader), so if this action needs to run purely server-side without browser context,
+        // this part would need adjustment (e.g., returning the Blob directly if the environment supports it, or buffer).
+        // For Next.js server actions called from client, returning base64 is common.
         const base64Kmz = await new Promise((resolve, reject)=>{
-            reader.onloadend = ()=>resolve(reader.result.split(',')[1]);
-            reader.onerror = reject;
+            if (typeof FileReader === "undefined") {
+                // Fallback for environments without FileReader (e.g., some pure Node.js test environments)
+                // This part is mainly for client-side consumption which will have FileReader.
+                // If run in a pure Node context without Blob/FileReader polyfills, this would fail.
+                // However, Next.js server actions are often called from client which then handles the base64.
+                // Let's assume this action's result is processed where FileReader is available.
+                // A more robust server-only solution might return a buffer and handle base64 conversion elsewhere if needed.
+                // For now, this is common for client-triggered server actions.
+                // If we want a buffer for true server-side (e.g. Node.js script):
+                // const buffer = await zip.generateAsync({ type: "nodebuffer" });
+                // resolve(buffer.toString('base64'));
+                // For client-side, FileReader on Blob is fine.
+                // The prompt implies client-side usage of the returned base64, so FileReader is appropriate.
+                return reject(new Error("FileReader API not available in this environment. Cannot convert KMZ blob to base64."));
+            }
+            const reader = new FileReader();
+            reader.onloadend = ()=>{
+                if (typeof reader.result === 'string') {
+                    resolve(reader.result.split(',')[1]); // Get the base64 part
+                } else {
+                    reject(new Error("Failed to read KMZ blob as data URL string."));
+                }
+            };
+            reader.onerror = (error)=>reject(error || new Error("FileReader error during KMZ conversion."));
             reader.readAsDataURL(kmzBlob);
         });
-        const safePointAName = pointA_name.replace(/[^a-zA-Z0-9]/g, '_');
-        const safePointBName = pointB_name.replace(/[^a-zA-Z0-9]/g, '_');
+        const safePointAName = (pointA_name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
+        const safePointBName = (pointB_name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
         const fileName = `Fiber_Path_KMZ_${safePointAName}_to_${safePointBName}.kmz`;
         return {
             success: true,

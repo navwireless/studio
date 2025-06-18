@@ -79,11 +79,11 @@ interface FiberInputPanelProps {
   onSubmit: (data: FiberCalculatorFormValues) => void;
   onClear: () => void;
   onGeneratePdfReport: () => void;
-  onGenerateKmzReport: () => void; // New prop for KMZ
+  onGenerateKmzReport: () => void;
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
   isCalculating: boolean;
   isGeneratingPdf: boolean;
-  isGeneratingKmz: boolean; // New prop for KMZ loading state
+  isGeneratingKmz: boolean;
   fiberPathResult: FiberPathResult | null;
   calculationError: string | null;
 }
@@ -95,11 +95,11 @@ export default function FiberInputPanel({
   onSubmit,
   onClear,
   onGeneratePdfReport,
-  onGenerateKmzReport, // New prop
+  onGenerateKmzReport,
   clientFormErrors,
   isCalculating,
   isGeneratingPdf,
-  isGeneratingKmz, // New prop
+  isGeneratingKmz,
   fiberPathResult,
   calculationError,
 }: FiberInputPanelProps) {
@@ -125,10 +125,10 @@ export default function FiberInputPanel({
 
   const getStatusIcon = (status?: FiberPathResult['status']) => {
     if (isCalculating) return <Loader2 className="h-5 w-5 mr-2 animate-spin text-primary" />;
-    if (!status && !calculationError) return null;
-    if (calculationError && !fiberPathResult) return <XCircle className="h-5 w-5 mr-2 text-red-500" />;
+    if (!status && !calculationError) return null; // No result, no error yet
+    if (calculationError && !fiberPathResult) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // Global error before result
 
-    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />;
+    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // Should not happen if fiberPathResult exists
     switch (status) {
       case 'success': return <CheckCircle className="h-5 w-5 mr-2 text-green-500" />;
       case 'no_road_for_a':

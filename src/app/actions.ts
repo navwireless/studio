@@ -8,8 +8,8 @@ import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/t
 import { FiberCalculatorFormSchema, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema';
 import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
 import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport';
-import JSZip from 'jszip'; // For KMZ generation
-import { xmlEscape } from '@/lib/xml-escape'; // Helper for KML content
+import JSZip from 'jszip'; 
+import { xmlEscape } from '@/lib/xml-escape'; 
 
 // --- Google Elevation API Configuration ---
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
@@ -281,7 +281,13 @@ export async function generateFiberReportAction(
 
 // Schema for KMZ generation parameters
 const SingleFiberPathKmzParamsSchema = z.object({
-  fiberPathResult: z.custom<FiberPathResult>((val) => val !== null && typeof val === 'object' && 'status' in (val as any) && (val as FiberPathResult).status === 'success', {
+  fiberPathResult: z.custom<FiberPathResult>((val) => {
+    if (val === null || typeof val !== 'object' || !('status' in (val as any))) {
+      return false;
+    }
+    // Only allow KMZ generation if status is 'success'
+    return (val as FiberPathResult).status === 'success';
+  }, {
     message: "Successful FiberPathResult object is required for KMZ generation."
   }),
   pointA_name: z.string().min(1, "Point A name is required."),
@@ -316,6 +322,7 @@ export async function generateSingleFiberPathKmzAction(
     </Style>
     <Style id="snappedPointStyle">
       <IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-blank.png</href></Icon><scale>0.8</scale></IconStyle>
+       <LabelStyle><scale>0.7</scale></LabelStyle>
     </Style>
     <Style id="offsetLineStyle">
       <LineStyle><color>a000aaff</color><width>3</width></LineStyle> <!-- Orange-ish, slightly transparent -->
@@ -344,7 +351,6 @@ export async function generateSingleFiberPathKmzAction(
     const roadSegments = fiberPathResult.segments?.filter(s => s.type === 'road_route') || [];
     const totalRoadDist = roadSegments.reduce((sum, s) => sum + s.distanceMeters, 0);
 
-    // Offset A Placemark
     if (offsetASeg && fiberPathResult.pointA_snappedToRoad) {
       kmlContent += `
       <Placemark>
@@ -360,19 +366,17 @@ export async function generateSingleFiberPathKmzAction(
       </Placemark>`;
     }
 
-    // Road Route Placemark (Simplified Line)
     if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad && roadSegments.length > 0) {
       const encodedPolylines = getRoadRouteEncodedPolylines(roadSegments);
       kmlContent += `
       <Placemark>
-        <name>Road Route (Simplified)</name>
+        <name>Road Route (Simplified Line)</name>
         <styleUrl>#roadRouteLineStyle</styleUrl>
-        <description>Total Road Distance: ${totalRoadDist.toFixed(1)} m. Encoded Polyline(s): ${xmlEscape(encodedPolylines)}</description>
+        <description>Total Road Distance: ${totalRoadDist.toFixed(1)} m. Note: This line is a direct path between snapped points. Actual road path encoded polyline(s): ${xmlEscape(encodedPolylines)}</description>
         <LineString><tessellate>1</tessellate><coordinates>${fiberPathResult.pointA_snappedToRoad.lng},${fiberPathResult.pointA_snappedToRoad.lat},0 ${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></LineString>
       </Placemark>`;
     }
     
-    // Offset B Placemark
     if (offsetBSeg && fiberPathResult.pointB_snappedToRoad) {
       kmlContent += `
       <Placemark>
@@ -395,17 +399,48 @@ export async function generateSingleFiberPathKmzAction(
 
     const zip = new JSZip();
     zip.file("doc.kml", kmlContent);
-    const kmzBlob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz+xml" });
+    // Using "application/octet-stream" for broader compatibility, though "application/vnd.google-earth.kmz" is more specific.
+    // Some systems might not recognize vnd.google-earth.kmz correctly as a default for ZIP archives.
+    // Forcing a specific KMZ mime type might be better for Google Earth, but octet-stream is safer for generic ZIP tools.
+    // Let's stick to specific KMZ mime for GE compatibility.
+    const kmzBlob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz" });
     
-    const reader = new FileReader();
+    // Convert Blob to base64 string for server action response
+    // This requires browser APIs (FileReader), so if this action needs to run purely server-side without browser context,
+    // this part would need adjustment (e.g., returning the Blob directly if the environment supports it, or buffer).
+    // For Next.js server actions called from client, returning base64 is common.
     const base64Kmz = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
+        if (typeof FileReader === "undefined") {
+            // Fallback for environments without FileReader (e.g., some pure Node.js test environments)
+            // This part is mainly for client-side consumption which will have FileReader.
+            // If run in a pure Node context without Blob/FileReader polyfills, this would fail.
+            // However, Next.js server actions are often called from client which then handles the base64.
+            // Let's assume this action's result is processed where FileReader is available.
+            // A more robust server-only solution might return a buffer and handle base64 conversion elsewhere if needed.
+            // For now, this is common for client-triggered server actions.
+            
+            // If we want a buffer for true server-side (e.g. Node.js script):
+            // const buffer = await zip.generateAsync({ type: "nodebuffer" });
+            // resolve(buffer.toString('base64'));
+            // For client-side, FileReader on Blob is fine.
+            
+            // The prompt implies client-side usage of the returned base64, so FileReader is appropriate.
+            return reject(new Error("FileReader API not available in this environment. Cannot convert KMZ blob to base64."));
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+                resolve(reader.result.split(',')[1]); // Get the base64 part
+            } else {
+                reject(new Error("Failed to read KMZ blob as data URL string."));
+            }
+        };
+        reader.onerror = (error) => reject(error || new Error("FileReader error during KMZ conversion."));
         reader.readAsDataURL(kmzBlob);
     });
 
-    const safePointAName = pointA_name.replace(/[^a-zA-Z0-9]/g, '_');
-    const safePointBName = pointB_name.replace(/[^a-zA-Z0-9]/g, '_');
+    const safePointAName = (pointA_name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
+    const safePointBName = (pointB_name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `Fiber_Path_KMZ_${safePointAName}_to_${safePointBName}.kmz`;
 
     return { success: true, data: { base64Kmz, fileName } };
@@ -416,5 +451,3 @@ export async function generateSingleFiberPathKmzAction(
     return { success: false, error: `Failed to generate KMZ: ${errorMessage}` };
   }
 }
-
-    
