@@ -467,6 +467,10 @@ body {
   visibility: hidden;
 }
 
+.static {
+  position: static;
+}
+
 .fixed {
   position: fixed;
 }
@@ -924,6 +928,10 @@ body {
   min-height: 100svh;
 }
 
+.min-h-\[200px\] {
+  min-height: 200px;
+}
+
 .w-0 {
   width: 0;
 }
@@ -1018,6 +1026,10 @@ body {
 
 .w-max {
   width: max-content;
+}
+
+.w-8 {
+  width: 2rem;
 }
 
 .min-w-0 {

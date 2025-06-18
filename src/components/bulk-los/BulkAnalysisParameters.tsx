@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Target, Cable, HelpCircle } from 'lucide-react';
 import type { BulkAnalysisFormValues } from '@/app/bulk-los-analyzer/page';
 import { Separator } from '@/components/ui/separator';
-import { Button } from "@/components/ui/button"; // Added missing Button import
+import { Button } from "@/components/ui/button";
 
 interface BulkAnalysisParametersProps {
   control: Control<BulkAnalysisFormValues>;

@@ -34,5 +34,6 @@ export function formatCoordinatesForKml(coordinates: Array<[number, number]>): s
   if (!coordinates || coordinates.length === 0) {
     return "";
   }
-  return coordinates.map(coord => `${coord[1]},${coord[0]},0`).join(' '); // lng,lat,alt
+  // KML format is longitude,latitude,altitude (optional)
+  return coordinates.map(coord => `${coord[1]},${coord[0]},0`).join(' ');
 }
