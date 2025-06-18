@@ -108,7 +108,8 @@ const BulkAnalysisParameters: React.FC<BulkAnalysisParametersProps> = ({
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
                         <p>If enabled, calculates estimated fiber optic cable path length using road networks for links where Line-of-Sight is feasible.</p>
-                        <p className="mt-1">Requires the "Google Directions API" key to be configured.</p>
+                        <p className="mt-1">Requires the "Google Directions API" key to be configured on the server.</p>
+                        <p className="mt-1">The Snap Radius determines how far from a site the tool will search for a road.</p>
                     </TooltipContent>
                 </Tooltip>
             </div>
@@ -126,7 +127,7 @@ const BulkAnalysisParameters: React.FC<BulkAnalysisParametersProps> = ({
                         className="mt-1 bg-input/70"
                         placeholder="e.g., 500"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Max distance from a site to snap to a road.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Max distance from a site to snap to a road. (e.g., 500 for 500m)</p>
                 </div>
             )}
           </div>
