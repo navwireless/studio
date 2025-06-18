@@ -78,10 +78,10 @@ interface FiberInputPanelProps {
   handleSubmit: UseFormHandleSubmit<FiberCalculatorFormValues>;
   onSubmit: (data: FiberCalculatorFormValues) => void;
   onClear: () => void;
-  onGeneratePdfReport: () => void; // New prop for PDF report
+  onGeneratePdfReport: () => void;
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
   isCalculating: boolean;
-  isGeneratingPdf: boolean; // New prop for PDF loading state
+  isGeneratingPdf: boolean;
   fiberPathResult: FiberPathResult | null;
   calculationError: string | null;
 }
@@ -92,10 +92,10 @@ export default function FiberInputPanel({
   handleSubmit,
   onSubmit,
   onClear,
-  onGeneratePdfReport, // New prop
+  onGeneratePdfReport,
   clientFormErrors,
   isCalculating,
-  isGeneratingPdf, // New prop
+  isGeneratingPdf,
   fiberPathResult,
   calculationError,
 }: FiberInputPanelProps) {
@@ -120,7 +120,11 @@ export default function FiberInputPanel({
   };
 
   const getStatusIcon = (status?: FiberPathResult['status']) => {
-    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />;
+    if (isCalculating) return <Loader2 className="h-5 w-5 mr-2 animate-spin text-primary" />;
+    if (!status && !calculationError) return null; // No icon if no result/error yet and not loading
+    if (calculationError && !fiberPathResult) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // General error before any result object
+
+    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // Fallback for status if error but no explicit status
     switch (status) {
       case 'success': return <CheckCircle className="h-5 w-5 mr-2 text-green-500" />;
       case 'no_road_for_a':
@@ -132,7 +136,7 @@ export default function FiberInputPanel({
   };
 
   const getStatusColorClass = (status?: FiberPathResult['status']): string => {
-     if (!status) return 'text-red-400';
+     if (!status) return 'text-red-400'; // Default to error color if no status
      switch (status) {
       case 'success': return 'text-green-400';
       case 'no_road_for_a':
@@ -216,7 +220,7 @@ export default function FiberInputPanel({
               </Button>
             </div>
 
-            {(fiberPathResult || calculationError) && !isCalculating && (
+            {(fiberPathResult || calculationError || isCalculating) && (
               <div className="mt-4 p-3 border rounded-md bg-muted/30 space-y-1.5 text-xs">
                 <div className="flex justify-between items-center mb-2">
                     <h4 className="font-semibold text-sm flex items-center">
@@ -229,7 +233,7 @@ export default function FiberInputPanel({
                             variant="outline"
                             size="sm"
                             onClick={onGeneratePdfReport}
-                            disabled={isGeneratingPdf || !fiberPathResult || fiberPathResult.status !== 'success'}
+                            disabled={isCalculating || isGeneratingPdf || !fiberPathResult || fiberPathResult.status !== 'success'}
                             className="h-7 text-xs px-2 py-1"
                         >
                             {isGeneratingPdf ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
@@ -238,7 +242,11 @@ export default function FiberInputPanel({
                     )}
                 </div>
 
-                {fiberPathResult && (
+                {isCalculating && !fiberPathResult && (
+                    <p className="text-primary text-sm">Calculating, please wait...</p>
+                )}
+
+                {fiberPathResult && !isCalculating && (
                   <>
                     <p>
                       <span className="font-medium">Status:</span>{' '}
@@ -261,20 +269,20 @@ export default function FiberInputPanel({
                     {fiberPathResult.errorMessage && (
                       <p className={cn(
                          "italic mt-1.5 text-sm",
-                         getStatusColorClass(fiberPathResult.status)
+                         getStatusColorClass(fiberPathResult.status) // Use status color for its own error message
                        )}>
                         {fiberPathResult.errorMessage}
                         {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') &&
-                         <span className="block text-xs text-amber-300/80"> Consider increasing the Snap Radius or verifying site coordinates.</span>
+                         <span className="block text-xs text-amber-300/80 mt-0.5"> Consider increasing the Snap Radius or verifying site coordinates.</span>
                         }
                          {fiberPathResult.status === 'no_route_between_roads' &&
-                             <span className="block text-xs text-amber-300/80"> The snapped road points for Site A and Site B may be on disconnected road networks.</span>
+                             <span className="block text-xs text-amber-300/80 mt-0.5"> The snapped road points for Site A and Site B may be on disconnected road networks.</span>
                          }
                       </p>
                     )}
                   </>
                 )}
-                {calculationError && !fiberPathResult && (
+                {calculationError && !fiberPathResult && !isCalculating && ( // General error if no fiberPathResult object
                      <p className="text-red-400 text-sm"><span className="font-semibold">Error:</span> {calculationError}</p>
                 )}
               </div>
@@ -285,5 +293,3 @@ export default function FiberInputPanel({
     </TooltipProvider>
   );
 }
-
-    
