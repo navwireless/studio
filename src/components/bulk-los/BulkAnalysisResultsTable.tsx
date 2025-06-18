@@ -6,13 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from '@/components/ui/table';
 import type { BulkAnalysisResultItem, BulkAnalysisFormValues } from '@/app/bulk-los-analyzer/page';
 import { cn } from '@/lib/utils';
+import type { FiberPathResult } from '@/tools/fiberPathCalculator'; // For FiberPathStatus type
 
-interface BulkAnalysisResultsTableProps {
-  results: BulkAnalysisResultItem[];
-  analysisParams: BulkAnalysisFormValues;
-}
-
-const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ results, analysisParams }) => {
+const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; analysisParams: BulkAnalysisFormValues; }> = ({ results, analysisParams }) => {
   if (results.length === 0) {
     return null; 
   }
@@ -22,6 +18,22 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
     item.fiberPathTotalDistanceMeters !== undefined ||
     item.fiberPathErrorMessage !== undefined
   );
+
+  // Helper to format fiber status for display
+  const formatFiberStatus = (status?: FiberPathResult['status']): string => {
+    if (!status) return 'N/A';
+    switch (status) {
+      case 'success': return 'Success';
+      case 'los_not_feasible': return 'LOS Not Feasible';
+      case 'no_road_for_a': return 'No Road Near Site A';
+      case 'no_road_for_b': return 'No Road Near Site B';
+      case 'no_route_between_roads': return 'No Road Route';
+      case 'radius_too_small': return 'Snap Radius Too Small';
+      case 'api_error': return 'API Error';
+      case 'input_error': return 'Input Error';
+      default: return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+  };
 
   return (
     <Card className="shadow-md">
@@ -67,27 +79,27 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
                         className={cn(
                             "text-xs sm:text-sm",
                             item.fiberPathStatus === 'success' ? 'text-los-success' :
-                            item.fiberPathStatus === 'los_not_feasible' || item.fiberPathStatus === 'no_road_for_a' || item.fiberPathStatus === 'no_road_for_b' || item.fiberPathStatus === 'no_route_between_roads' || item.fiberPathStatus === 'radius_too_small' ? 'text-amber-500' :
+                            item.fiberPathStatus === 'los_not_feasible' || item.fiberPathStatus === 'no_road_for_a' || item.fiberPathStatus === 'no_road_for_b' || item.fiberPathStatus === 'no_route_between_roads' || item.fiberPathStatus === 'radius_too_small' ? 'text-amber-500 dark:text-amber-400' : // Warning color
                             item.fiberPathStatus ? 'text-los-failure' : 'text-muted-foreground'
                         )}
                     >
                       {item.fiberPathStatus ? 
-                        item.fiberPathStatus.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 
+                        formatFiberStatus(item.fiberPathStatus) : 
                         (item.losPossible ? 'Not Calculated' : 'N/A (LOS Blocked)')
                       }
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm">
-                        {item.fiberPathTotalDistanceMeters !== undefined && item.fiberPathTotalDistanceMeters !== null 
+                        {item.fiberPathTotalDistanceMeters !== undefined && item.fiberPathTotalDistanceMeters !== null && item.fiberPathStatus === 'success'
                             ? item.fiberPathTotalDistanceMeters.toFixed(0) 
-                            : (item.losPossible && item.fiberPathStatus ? 'N/A' : '')}
+                            : 'N/A'}
                     </TableCell>
                   </>
                 )}
                 <TableCell className="text-xs whitespace-pre-wrap">
                     {item.remarks}
-                    {item.fiberPathErrorMessage && hasFiberData && (
+                    {hasFiberData && item.fiberPathErrorMessage && (
                         <span className={cn("block mt-1 text-destructive/90 text-[0.7rem]", item.remarks ? "pt-1 border-t border-dashed border-border mt-1" : "")}>
-                           Fiber: {item.fiberPathErrorMessage}
+                           Fiber Error: {item.fiberPathErrorMessage}
                         </span>
                     )}
                 </TableCell>
@@ -97,7 +109,7 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
           <TableCaption>
             Showing {results.length} processed pairs. 
             LOS Params - Tower: {analysisParams.globalTowerHeight}m, Fresnel: {analysisParams.globalFresnelHeight}m.
-            {hasFiberData && ` Fiber Snap Radius: ${results.find(r => r.pointA && r.pointB)?.pointA.name && results.find(r => r.pointA && r.pointB)?.pointB.name ? (results.find(r => r.fiberPathStatus === 'success' || r.fiberPathStatus === 'los_not_feasible' || r.fiberPathStatus === 'no_road_for_a' || r.fiberPathStatus === 'no_road_for_b' || r.fiberPathStatus === 'no_route_between_roads' || r.fiberPathStatus === 'radius_too_small') ? (results.find(r => r.fiberPathStatus === 'success' || r.fiberPathStatus === 'los_not_feasible' || r.fiberPathStatus === 'no_road_for_a' || r.fiberPathStatus === 'no_road_for_b' || r.fiberPathStatus === 'no_route_between_roads' || r.fiberPathStatus === 'radius_too_small') as BulkAnalysisResultItem & { fiberPathSegments: any[] })?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters === undefined ? analysisParams.losCheckRadiusKm.toString() /* fallback if not in result */ : (results.find(r => r.fiberPathStatus === 'success' || r.fiberPathStatus === 'los_not_feasible' || r.fiberPathStatus === 'no_road_for_a' || r.fiberPathStatus === 'no_road_for_b' || r.fiberPathStatus === 'no_route_between_roads' || r.fiberPathStatus === 'radius_too_small') as BulkAnalysisResultItem & { fiberPathSegments: any[] })?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters ? analysisParams.losCheckRadiusKm.toString() : analysisParams.losCheckRadiusKm.toString() /* a bit complex to get the radius from the item if it was overriden, use params for now */ : analysisParams.losCheckRadiusKm.toString()) : 'N/A'}m.`}
+            {hasFiberData && ` Fiber Snap Radius: ${results.find(r => r.pointA && r.pointB)?.pointA.name && results.find(r => r.pointA && r.pointB)?.pointB.name ? (results.find(r => r.fiberPathStatus !== undefined)?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters !== undefined ? (results.find(r => r.fiberPathStatus !== undefined) as BulkAnalysisResultItem & { fiberPathSegments: any[] })?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters : analysisParams.losCheckRadiusKm.toString()) : 'N/A'}m.`}
           </TableCaption>
         </Table>
       </CardContent>
@@ -106,3 +118,4 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
 };
 
 export default BulkAnalysisResultsTable;
+
