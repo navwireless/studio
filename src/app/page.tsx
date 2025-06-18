@@ -16,8 +16,8 @@ import AppHeader from '@/components/layout/app-header';
 import HistoryPanel from '@/components/layout/history-panel';
 import { calculateDistanceKm } from '@/lib/los-calculator';
 import BottomPanel from '@/components/fso/bottom-panel';
-import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator'; // Import the action
-import type { FiberPathResult } from '@/tools/fiberPathCalculator'; // Import the type
+import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator'; 
+import type { FiberPathResult } from '@/tools/fiberPathCalculator'; 
 
 export default function Home() {
   const { toast } = useToast();
@@ -59,7 +59,7 @@ export default function Home() {
 
   const processSubmit = useCallback((data: AnalysisFormValues) => {
     setDisplayedError(null);
-    setFiberPathResult(null); // Clear previous fiber results on new LOS analysis
+    setFiberPathResult(null); 
     setFiberPathError(null);
 
     const formData = new FormData();
@@ -92,7 +92,7 @@ export default function Home() {
         variant: "destructive",
         duration: 7000,
       });
-      setFiberPathResult(null); // Clear fiber result on LOS error
+      setFiberPathResult(null); 
     } else if ('losPossible' in rawServerState) {
       const successfulLosResult = rawServerState as AnalysisResult;
       setAnalysisResult(successfulLosResult);
@@ -141,7 +141,7 @@ export default function Home() {
           successfulLosResult.pointB.lat,
           successfulLosResult.pointB.lng,
           fiberRadiusMeters,
-          true // LOS is feasible
+          true 
         ).then(fiberResult => {
           setFiberPathResult(fiberResult);
           if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
@@ -158,7 +158,6 @@ export default function Home() {
           setIsFiberCalculating(false);
         });
       } else if (calculateFiberPathEnabled && !successfulLosResult.losPossible) {
-        // LOS not feasible, but fiber toggle was on.
         setFiberPathResult({
             status: 'los_not_feasible',
             errorMessage: 'Fiber path not calculated: LOS is not feasible.',
@@ -168,9 +167,8 @@ export default function Home() {
             radiusMetersUsed: fiberRadiusMeters,
         });
         setFiberPathError('Fiber path not calculated: LOS is not feasible.');
-        setIsFiberCalculating(false); // Ensure loading is stopped
+        setIsFiberCalculating(false); 
       } else {
-        // Fiber toggle is off, or LOS not feasible (and toggle was off)
         setFiberPathResult(null);
         setIsFiberCalculating(false);
       }
@@ -223,7 +221,7 @@ export default function Home() {
         }
     }
     setIsStale(newIsStale);
-    if (newIsStale) { // If form changes, previous fiber result is no longer relevant
+    if (newIsStale) { 
         setFiberPathResult(null);
         setFiberPathError(null);
     }
@@ -302,9 +300,9 @@ export default function Home() {
     setLiveDistanceKm(null);
     setIsStale(false);
     setDisplayedError(null);
-    setFiberPathResult(null); // Clear fiber results
+    setFiberPathResult(null); 
     setFiberPathError(null);
-    setCalculateFiberPathEnabled(false); // Reset toggle
+    setCalculateFiberPathEnabled(false); 
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     if (isAnalysisPanelGloballyOpen) {
         setIsAnalysisPanelGloballyOpen(false);
@@ -334,10 +332,9 @@ export default function Home() {
       setLiveDistanceKm(itemToLoad.distanceKm);
       setIsStale(false);
       setDisplayedError(null);
-      setFiberPathResult(null); // Clear fiber result when loading from history (it wasn't saved)
+      setFiberPathResult(null); 
       setFiberPathError(null);
-      // Optionally, decide if fiber toggle should be reset or preserved
-      // setCalculateFiberPathEnabled(false);
+      
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
@@ -351,11 +348,10 @@ export default function Home() {
 
   const handleToggleFiberPath = (checked: boolean) => {
     setCalculateFiberPathEnabled(checked);
-    if (!checked) { // If turning off, clear existing fiber results
+    if (!checked) { 
         setFiberPathResult(null);
         setFiberPathError(null);
     } else if (analysisResult && analysisResult.losPossible && !isStale) {
-        // If turning ON and there's a valid, current LOS result, trigger fiber calculation
         setIsFiberCalculating(true);
         setFiberPathError(null);
         performFiberPathAnalysisAction(
@@ -397,7 +393,6 @@ export default function Home() {
     const newRadius = parseInt(value, 10);
     if (!isNaN(newRadius) && newRadius >= 0) {
       setFiberRadiusMeters(newRadius);
-      // If fiber is enabled and there's a valid LOS result, re-calculate fiber path on radius change
       if (calculateFiberPathEnabled && analysisResult && analysisResult.losPossible && !isStale) {
         setIsFiberCalculating(true);
         setFiberPathError(null);
@@ -406,7 +401,7 @@ export default function Home() {
           analysisResult.pointA.lng,
           analysisResult.pointB.lat,
           analysisResult.pointB.lng,
-          newRadius, // use new radius
+          newRadius, 
           true
         ).then(fiberResult => {
           setFiberPathResult(fiberResult);
@@ -447,7 +442,7 @@ export default function Home() {
             analysisResult={analysisResult}
             isStale={isStale}
             currentDistanceKm={liveDistanceKm}
-            // TODO: Pass fiberPathResult to map for visualization in a later step
+            fiberPathResult={fiberPathResult}
           />
         </div>
 

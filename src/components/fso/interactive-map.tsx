@@ -5,6 +5,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, Marker, Polyline, OverlayView } from '@react-google-maps/api';
 import { Loader2 } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult } from '@/types';
+import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
 
@@ -22,6 +23,7 @@ interface InteractiveMapProps {
   analysisResult: AnalysisResult | null;
   isStale?: boolean;
   currentDistanceKm?: number | null;
+  fiberPathResult?: FiberPathResult | null;
 }
 
 const defaultCenter = {
@@ -57,6 +59,30 @@ const getCustomMarkerIcon = (label: string, isMapApiLoaded: boolean) => {
   return undefined;
 };
 
+// Polyline Styles
+const LOS_POLYLINE_COLORS = {
+  stale: '#60A5FA', // Blueish
+  feasible: '#4CAF50', // Green
+  notFeasible: '#F44336', // Red
+  default: '#A9A9A9', // Gray
+};
+
+const FIBER_POLYLINE_STYLES = {
+  offset: {
+    strokeColor: '#FFEB3B', // Yellow
+    strokeOpacity: 0.9,
+    strokeWeight: 3,
+    zIndex: 2, 
+  },
+  roadRoute: {
+    strokeColor: '#00BCD4', // Cyan
+    strokeOpacity: 0.8,
+    strokeWeight: 4,
+    zIndex: 2,
+  },
+};
+
+
 function InteractiveMapInner({
   pointA: formPointA,
   pointB: formPointB,
@@ -65,10 +91,11 @@ function InteractiveMapInner({
   analysisResult,
   isStale,
   currentDistanceKm,
+  fiberPathResult,
 }: Omit<InteractiveMapProps, 'mapContainerClassName'>) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
-  const { isLoaded: isMapApiLoaded } = useGoogleMapsLoader(); // Get loading state from context
+  const { isLoaded: isMapApiLoaded } = useGoogleMapsLoader();
 
   const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapApiLoaded), [isMapApiLoaded]);
   const markerIconB = React.useMemo(() => getCustomMarkerIcon("B", isMapApiLoaded), [isMapApiLoaded]);
@@ -108,6 +135,20 @@ function InteractiveMapInner({
       const bounds = new window.google.maps.LatLngBounds();
       bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
       bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
+      
+      // If fiber path exists, extend bounds to include its points
+      if (fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments) {
+        fiberPathResult.segments.forEach(segment => {
+          if (segment.pathPolyline && google.maps.geometry?.encoding) {
+            const decodedPath = google.maps.geometry.encoding.decodePath(segment.pathPolyline);
+            decodedPath.forEach(p => bounds.extend(p));
+          } else {
+            bounds.extend(new window.google.maps.LatLng(segment.startPoint.lat, segment.startPoint.lng));
+            bounds.extend(new window.google.maps.LatLng(segment.endPoint.lat, segment.endPoint.lng));
+          }
+        });
+      }
+
       if (!bounds.isEmpty()) {
         mapRef.current.fitBounds(bounds, 75); 
         const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
@@ -127,12 +168,12 @@ function InteractiveMapInner({
         mapRef.current.setCenter(defaultCenter);
         mapRef.current.setZoom(defaultZoom);
     }
-  }, [formPointA, formPointB, isMapApiLoaded]);
+  }, [formPointA, formPointB, isMapApiLoaded, fiberPathResult]);
 
-  const polylineColor = () => {
-    if (isStale) return '#60A5FA'; 
-    if (!analysisResult) return '#A9A9A9'; 
-    return analysisResult.losPossible ? '#4CAF50' : '#F44336'; 
+  const losPolylineColor = () => {
+    if (isStale) return LOS_POLYLINE_COLORS.stale; 
+    if (!analysisResult) return LOS_POLYLINE_COLORS.default; 
+    return analysisResult.losPossible ? LOS_POLYLINE_COLORS.feasible : LOS_POLYLINE_COLORS.notFeasible; 
   };
 
   const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
@@ -200,6 +241,7 @@ function InteractiveMapInner({
         </>
       )}
 
+      {/* LOS Path Polyline */}
       {pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined && (
         <Polyline
           path={[
@@ -207,14 +249,44 @@ function InteractiveMapInner({
             { lat: pBLat, lng: pBLng },
           ]}
           options={{
-            strokeColor: polylineColor(),
+            strokeColor: losPolylineColor(),
             strokeOpacity: isStale ? 0.8 : 0.9,
             strokeWeight: isStale ? 3.5 : 4,
             geodesic: true,
-            zIndex: 1,
+            zIndex: 1, // LOS path below fiber path
           }}
         />
       )}
+
+      {/* Fiber Path Polylines */}
+      {isMapApiLoaded && fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0 && (
+        fiberPathResult.segments.map((segment, index) => {
+          let path: google.maps.LatLngLiteral[] = [];
+          let options = {};
+
+          if (segment.type === 'offset_a' || segment.type === 'offset_b') {
+            path = [
+              { lat: segment.startPoint.lat, lng: segment.startPoint.lng },
+              { lat: segment.endPoint.lat, lng: segment.endPoint.lng },
+            ];
+            options = FIBER_POLYLINE_STYLES.offset;
+          } else if (segment.type === 'road_route' && segment.pathPolyline) {
+            if (google.maps.geometry && google.maps.geometry.encoding) {
+              path = google.maps.geometry.encoding.decodePath(segment.pathPolyline).map(p => ({ lat: p.lat(), lng: p.lng() }));
+            } else {
+              console.warn("Google Maps geometry library not loaded, cannot decode road_route polyline.");
+              return null;
+            }
+            options = FIBER_POLYLINE_STYLES.roadRoute;
+          } else {
+            return null; // Skip if segment type is unknown or data missing
+          }
+          
+          return <Polyline key={`fiber-segment-${index}`} path={path} options={options} />;
+        })
+      )}
+
+
       {midPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && (
         <OverlayView
           position={midPoint}
@@ -231,8 +303,6 @@ function InteractiveMapInner({
 }
 
 export default function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }: InteractiveMapProps) {
-  // The GoogleMapsLoaderProvider at the root layout will handle API key checks.
-  // Individual map components now only need to use the GoogleMapsScriptGuard for loading/error states.
   return (
     <div className={cn(mapContainerClassName)}>
       <GoogleMapsScriptGuard 
