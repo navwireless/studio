@@ -5,13 +5,13 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { History, Trash2, ListChecks, Home } from 'lucide-react'; // Added ListChecks for Bulk Analysis
+import { History, Trash2, ListChecks, Home, Cable } from 'lucide-react'; // Added Cable for Fiber Calculator
 
 interface AppHeaderProps {
   onToggleHistory?: () => void;
   onClearMap?: () => void;
   isHistoryPanelSupported?: boolean;
-  currentPage?: 'home' | 'bulk'; // To highlight active page or adjust actions
+  currentPage?: 'home' | 'bulk' | 'fiber'; // Added 'fiber'
 }
 
 export default function AppHeader({ 
@@ -42,7 +42,7 @@ export default function AppHeader({
           <Link href="/" passHref legacyBehavior>
             <Button variant="ghost" size="sm" aria-label="Go to Single Link Analysis">
               <Home className="h-5 w-5 sm:mr-1 text-muted-foreground hover:text-foreground" />
-              <span className="hidden sm:inline">Single</span>
+              <span className="hidden sm:inline">Single LOS</span>
             </Button>
           </Link>
         )}
@@ -50,7 +50,15 @@ export default function AppHeader({
           <Link href="/bulk-los-analyzer" passHref legacyBehavior>
             <Button variant="ghost" size="sm" aria-label="Go to Bulk LOS Analyzer">
               <ListChecks className="h-5 w-5 sm:mr-1 text-muted-foreground hover:text-foreground" />
-               <span className="hidden sm:inline">Bulk</span>
+               <span className="hidden sm:inline">Bulk LOS</span>
+            </Button>
+          </Link>
+        )}
+        {currentPage !== 'fiber' && (
+          <Link href="/fiber-calculator" passHref legacyBehavior>
+            <Button variant="ghost" size="sm" aria-label="Go to Fiber Path Calculator">
+              <Cable className="h-5 w-5 sm:mr-1 text-muted-foreground hover:text-foreground" />
+               <span className="hidden sm:inline">Fiber Calc</span>
             </Button>
           </Link>
         )}
