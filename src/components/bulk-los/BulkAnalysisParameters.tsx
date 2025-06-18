@@ -16,7 +16,6 @@ interface BulkAnalysisParametersProps {
   control: Control<BulkAnalysisFormValues>;
   register: UseFormRegister<BulkAnalysisFormValues>;
   errors: FieldErrors<BulkAnalysisFormValues>;
-  // Fiber Path Props for Bulk
   calculateFiberPathBulkEnabled: boolean;
   onToggleFiberPathBulk: (checked: boolean) => void;
   fiberRadiusMetersBulk: number;
@@ -102,7 +101,7 @@ const BulkAnalysisParameters: React.FC<BulkAnalysisParametersProps> = ({
                 </div>
                 <Tooltip delayDuration={100}>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info">
+                        <Button variant="ghost" size="icon" className="h-5 w-5 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info for bulk analysis">
                             <HelpCircle className="h-4 w-4 text-muted-foreground/70 cursor-help" />
                         </Button>
                     </TooltipTrigger>
@@ -138,4 +137,3 @@ const BulkAnalysisParameters: React.FC<BulkAnalysisParametersProps> = ({
 };
 
 export default BulkAnalysisParameters;
-

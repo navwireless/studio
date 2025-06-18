@@ -17,8 +17,11 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
     return null; 
   }
 
-  // Check if any result item has fiber path data to determine if fiber columns should be shown
-  const hasFiberData = results.some(item => item.fiberPathStatus !== undefined);
+  const hasFiberData = results.some(item => 
+    item.fiberPathStatus !== undefined || 
+    item.fiberPathTotalDistanceMeters !== undefined ||
+    item.fiberPathErrorMessage !== undefined
+  );
 
   return (
     <Card className="shadow-md">
@@ -65,7 +68,7 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
                             "text-xs sm:text-sm",
                             item.fiberPathStatus === 'success' ? 'text-los-success' :
                             item.fiberPathStatus === 'los_not_feasible' || item.fiberPathStatus === 'no_road_for_a' || item.fiberPathStatus === 'no_road_for_b' || item.fiberPathStatus === 'no_route_between_roads' || item.fiberPathStatus === 'radius_too_small' ? 'text-amber-500' :
-                            item.fiberPathStatus ? 'text-los-failure' : 'text-muted-foreground' // Default for other errors or if undefined
+                            item.fiberPathStatus ? 'text-los-failure' : 'text-muted-foreground'
                         )}
                     >
                       {item.fiberPathStatus ? 
@@ -94,7 +97,7 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
           <TableCaption>
             Showing {results.length} processed pairs. 
             LOS Params - Tower: {analysisParams.globalTowerHeight}m, Fresnel: {analysisParams.globalFresnelHeight}m.
-            {hasFiberData && ` Fiber Snap Radius: ${results.find(r=>r.pointA.name === '')?.pointA.name || analysisParams.losCheckRadiusKm /* fallback, need better way to get radius used if page available */}m.`}
+            {hasFiberData && ` Fiber Snap Radius: ${results.find(r => r.pointA && r.pointB)?.pointA.name && results.find(r => r.pointA && r.pointB)?.pointB.name ? (results.find(r => r.fiberPathStatus === 'success' || r.fiberPathStatus === 'los_not_feasible' || r.fiberPathStatus === 'no_road_for_a' || r.fiberPathStatus === 'no_road_for_b' || r.fiberPathStatus === 'no_route_between_roads' || r.fiberPathStatus === 'radius_too_small') ? (results.find(r => r.fiberPathStatus === 'success' || r.fiberPathStatus === 'los_not_feasible' || r.fiberPathStatus === 'no_road_for_a' || r.fiberPathStatus === 'no_road_for_b' || r.fiberPathStatus === 'no_route_between_roads' || r.fiberPathStatus === 'radius_too_small') as BulkAnalysisResultItem & { fiberPathSegments: any[] })?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters === undefined ? analysisParams.losCheckRadiusKm.toString() /* fallback if not in result */ : (results.find(r => r.fiberPathStatus === 'success' || r.fiberPathStatus === 'los_not_feasible' || r.fiberPathStatus === 'no_road_for_a' || r.fiberPathStatus === 'no_road_for_b' || r.fiberPathStatus === 'no_route_between_roads' || r.fiberPathStatus === 'radius_too_small') as BulkAnalysisResultItem & { fiberPathSegments: any[] })?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters ? analysisParams.losCheckRadiusKm.toString() : analysisParams.losCheckRadiusKm.toString() /* a bit complex to get the radius from the item if it was overriden, use params for now */ : analysisParams.losCheckRadiusKm.toString()) : 'N/A'}m.`}
           </TableCaption>
         </Table>
       </CardContent>
@@ -103,4 +106,3 @@ const BulkAnalysisResultsTable: React.FC<BulkAnalysisResultsTableProps> = ({ res
 };
 
 export default BulkAnalysisResultsTable;
-
