@@ -3983,36 +3983,15 @@ function Home() {
     const [liveDistanceKm, setLiveDistanceKm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isClient, setIsClient] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     // State for Fiber Path Calculation
-    const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [fiberRadiusMeters, setFiberRadiusMeters] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(500); // Default radius 500m
+    const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false); // Initial static default
+    const [fiberRadiusMeters, setFiberRadiusMeters] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(500); // Initial static default
     const [fiberPathResult, setFiberPathResult] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isFiberCalculating, setIsFiberCalculating] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [fiberPathError, setFiberPathError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
-    // Initialize form with persisted values or defaults
+    // Initialize form with static default values
     const form = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"])({
         resolver: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$hookform$2f$resolvers$2f$zod$2f$dist$2f$zod$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["zodResolver"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AnalysisFormSchema"]),
-        defaultValues: {
-            "Home.useForm[form]": ()=>{
-                if (isClient) {
-                    return {
-                        pointA: {
-                            name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_NAME) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
-                            lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LAT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.lat,
-                            lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LNG) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.lng,
-                            height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.height.toString(), 10)
-                        },
-                        pointB: {
-                            name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_NAME) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
-                            lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LAT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.lat,
-                            lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LNG) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.lng,
-                            height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.height.toString(), 10)
-                        },
-                        clearanceThreshold: localStorage.getItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
-                    };
-                }
-                return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"];
-            }
-        }["Home.useForm[form]"],
+        defaultValues: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"],
         mode: 'onBlur'
     });
     const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
@@ -4021,11 +4000,12 @@ function Home() {
         "Home.useEffect": ()=>{
             setIsClient(true);
         }
-    }["Home.useEffect"], []);
-    // Effect to load Fiber settings from localStorage after client mount
+    }["Home.useEffect"], []); // Runs once after mount
+    // Effect to load settings AND FORM VALUES from localStorage after client mount
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Home.useEffect": ()=>{
             if (isClient) {
+                // Load fiber settings
                 const storedToggle = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE);
                 if (storedToggle) {
                     setCalculateFiberPathEnabled(JSON.parse(storedToggle));
@@ -4034,14 +4014,30 @@ function Home() {
                 if (storedRadius) {
                     setFiberRadiusMeters(parseInt(storedRadius, 10));
                 }
-                // Reset form with localStorage values if isClient changes (which ensures it runs after mount)
-                form.reset(form.formState.defaultValues);
+                // Load and set form values using form.reset()
+                const initialFormValues = {
+                    pointA: {
+                        name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_NAME) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
+                        lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LAT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.lat,
+                        lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LNG) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.lng,
+                        height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.height.toString(), 10)
+                    },
+                    pointB: {
+                        name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_NAME) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
+                        lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LAT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.lat,
+                        lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LNG) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.lng,
+                        height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.height.toString(), 10)
+                    },
+                    clearanceThreshold: localStorage.getItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
+                };
+                reset(initialFormValues); // Reset the form with values from localStorage
             }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         }
     }["Home.useEffect"], [
         isClient,
-        form
-    ]); // form.reset depends on form instance
+        reset
+    ]); // Add reset to dependency array
     // Persist form inputs to localStorage whenever they change
     const watchedPointA = watch('pointA');
     const watchedPointB = watch('pointB');
@@ -4110,7 +4106,7 @@ function Home() {
     // Unified Fiber Path Calculation Logic
     const triggerFiberCalculation = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[triggerFiberCalculation]": async ()=>{
-            if (!analysisResult || !analysisResult.losPossible || !calculateFiberPathEnabled) {
+            if (!analysisResult || !analysisResult.losPossible || !calculateFiberPathEnabled || isStale) {
                 if (calculateFiberPathEnabled && analysisResult && !analysisResult.losPossible) {
                     setFiberPathResult({
                         status: 'los_not_feasible',
@@ -4120,11 +4116,12 @@ function Home() {
                         losFeasible: false,
                         radiusMetersUsed: fiberRadiusMeters
                     });
-                    setFiberPathError(null); // Not an API error, but an info message
-                } else {
-                    setFiberPathResult(null); // Clear if toggle is off or no LOS result
-                    setFiberPathError(null);
+                } else if (calculateFiberPathEnabled && isStale) {
+                    setFiberPathResult(null); // Clear fiber results if LOS data is stale
+                } else if (!calculateFiberPathEnabled) {
+                    setFiberPathResult(null); // Clear if toggle is off
                 }
+                setFiberPathError(null);
                 setIsFiberCalculating(false);
                 return;
             }
@@ -4132,27 +4129,35 @@ function Home() {
             setFiberPathError(null);
             setFiberPathResult(null);
             try {
-                const fiberResult = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, fiberRadiusMeters, true // LOS is feasible here
+                const fiberResultData = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, fiberRadiusMeters, true // LOS is feasible here
                 );
-                setFiberPathResult(fiberResult);
-                if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-                    setFiberPathError(fiberResult.errorMessage);
+                setFiberPathResult(fiberResultData);
+                if (fiberResultData.status !== 'success' && fiberResultData.errorMessage) {
+                    setFiberPathError(fiberResultData.errorMessage);
                     toast({
                         title: "Fiber Path Info",
-                        description: fiberResult.errorMessage,
+                        description: fiberResultData.errorMessage,
                         variant: "default",
                         duration: 6000
                     });
-                } else if (fiberResult.status === 'success') {
+                } else if (fiberResultData.status === 'success') {
                     toast({
                         title: "Fiber Path Calculated",
-                        description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
+                        description: `Total fiber distance: ${fiberResultData.totalDistanceMeters?.toFixed(0)}m.`,
                         duration: 5000
                     });
                 }
             } catch (err) {
                 const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
                 setFiberPathError(fiberErrorMessage);
+                setFiberPathResult({
+                    status: 'api_error',
+                    errorMessage: fiberErrorMessage,
+                    pointA_original: analysisResult.pointA,
+                    pointB_original: analysisResult.pointB,
+                    losFeasible: true,
+                    radiusMetersUsed: fiberRadiusMeters
+                });
                 toast({
                     title: "Fiber Path Error",
                     description: fiberErrorMessage,
@@ -4167,7 +4172,8 @@ function Home() {
         analysisResult,
         calculateFiberPathEnabled,
         fiberRadiusMeters,
-        toast
+        toast,
+        isStale
     ]);
     // Effect to handle LOS Analysis results and trigger Fiber Path calculation
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
@@ -4191,7 +4197,7 @@ function Home() {
                 setIsFiberCalculating(false);
             } else if (typeof rawServerState === 'object' && rawServerState !== null && 'losPossible' in rawServerState) {
                 const successfulLosResult = rawServerState;
-                setAnalysisResult(successfulLosResult);
+                setAnalysisResult(successfulLosResult); // Set analysisResult first
                 setHistoryList({
                     "Home.useEffect": (prev)=>[
                             successfulLosResult,
@@ -4217,8 +4223,8 @@ function Home() {
                     },
                     clearanceThreshold: successfulLosResult.clearanceThresholdUsed.toString()
                 };
-                reset(formValuesForResult);
-                setIsStale(false);
+                reset(formValuesForResult); // Reset form *after* analysisResult is set
+                setIsStale(false); // Mark as not stale
                 if (!isAnalysisPanelGloballyOpen) {
                     setIsAnalysisPanelGloballyOpen(true);
                     setIsBottomPanelContentExpanded(true);
@@ -4227,27 +4233,9 @@ function Home() {
                     title: "LOS Analysis Complete",
                     description: successfulLosResult.message || "LOS analysis performed."
                 });
-                // After successful LOS analysis, trigger fiber calculation if enabled and LOS is feasible
-                if (calculateFiberPathEnabled && successfulLosResult.losPossible) {
-                    triggerFiberCalculation(); // Call the unified function
-                } else if (calculateFiberPathEnabled && !successfulLosResult.losPossible) {
-                    // If toggle is on but LOS not possible, set specific fiber status
-                    setFiberPathResult({
-                        status: 'los_not_feasible',
-                        errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
-                        pointA_original: successfulLosResult.pointA,
-                        pointB_original: successfulLosResult.pointB,
-                        losFeasible: false,
-                        radiusMetersUsed: fiberRadiusMeters
-                    });
-                    setFiberPathError(null);
-                    setIsFiberCalculating(false);
-                } else {
-                    // If toggle is off, ensure fiber results are cleared
-                    setFiberPathResult(null);
-                    setFiberPathError(null);
-                    setIsFiberCalculating(false);
-                }
+            // Trigger fiber calculation AFTER analysisResult state is updated
+            // This needs to happen in a separate effect that watches analysisResult or be called carefully
+            // For now, triggerFiberCalculation will be called by useEffect watching analysisResult.
             }
         }
     }["Home.useEffect"], [
@@ -4255,11 +4243,33 @@ function Home() {
         toast,
         reset,
         getValues,
-        isAnalysisPanelGloballyOpen,
+        isAnalysisPanelGloballyOpen
+    ]);
+    // New useEffect to trigger fiber calculation when analysisResult changes and conditions are met
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            if (analysisResult && !isStale && calculateFiberPathEnabled && analysisResult.losPossible) {
+                triggerFiberCalculation();
+            } else if (analysisResult && !isStale && calculateFiberPathEnabled && !analysisResult.losPossible) {
+                setFiberPathResult({
+                    status: 'los_not_feasible',
+                    errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
+                    pointA_original: analysisResult.pointA,
+                    pointB_original: analysisResult.pointB,
+                    losFeasible: false,
+                    radiusMetersUsed: fiberRadiusMeters
+                });
+                setFiberPathError(null);
+                setIsFiberCalculating(false);
+            }
+        }
+    }["Home.useEffect"], [
+        analysisResult,
+        isStale,
         calculateFiberPathEnabled,
-        fiberRadiusMeters,
-        triggerFiberCalculation
-    ]); // Added triggerFiberCalculation
+        triggerFiberCalculation,
+        fiberRadiusMeters
+    ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Home.useEffect": ()=>{
             const formValues = getValues();
@@ -4379,12 +4389,27 @@ function Home() {
                 shouldDirty: true,
                 shouldValidate: true
             });
-            handleSubmit(processSubmit)();
+            // Only submit if the form is valid according to client-side schema
+            form.trigger().then({
+                "Home.useCallback[handleTowerHeightChangeFromGraph]": (isValid)=>{
+                    if (isValid) {
+                        handleSubmit(processSubmit)();
+                    } else {
+                        toast({
+                            title: "Input Error",
+                            description: "Please correct form errors before re-analyzing.",
+                            variant: "destructive"
+                        });
+                    }
+                }
+            }["Home.useCallback[handleTowerHeightChangeFromGraph]"]);
         }
     }["Home.useCallback[handleTowerHeightChangeFromGraph]"], [
         setValue,
         handleSubmit,
-        processSubmit
+        processSubmit,
+        form,
+        toast
     ]);
     const toggleGlobalPanelVisibility = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[toggleGlobalPanelVisibility]": ()=>{
@@ -4403,7 +4428,18 @@ function Home() {
     const handleStartAnalysisClick = ()=>{
         setIsAnalysisPanelGloballyOpen(true);
         setIsBottomPanelContentExpanded(true);
-        handleSubmit(processSubmit)();
+        // Only submit if the form is valid according to client-side schema
+        form.trigger().then((isValid)=>{
+            if (isValid) {
+                handleSubmit(processSubmit)();
+            } else {
+                toast({
+                    title: "Input Error",
+                    description: "Please correct form errors before analyzing.",
+                    variant: "destructive"
+                });
+            }
+        });
     };
     const dismissErrorModal = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[dismissErrorModal]": ()=>{
@@ -4415,18 +4451,13 @@ function Home() {
         setIsHistoryPanelOpen((prev)=>!prev);
     };
     const handleClearMap = ()=>{
-        reset(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"]); // Reset form to compiled-in defaults
+        reset(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"]);
         if (isClient) {
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_NAME);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_LAT);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_LNG);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_NAME);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_LAT);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_LNG);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT);
-            localStorage.removeItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD);
-        // Note: Fiber toggle and radius localStorage are managed separately
+            Object.values(LOCAL_STORAGE_KEYS).forEach((key)=>{
+                if (key !== LOCAL_STORAGE_KEYS.FIBER_TOGGLE && key !== LOCAL_STORAGE_KEYS.FIBER_RADIUS) {
+                    localStorage.removeItem(key);
+                }
+            });
         }
         setAnalysisResult(null);
         setLiveDistanceKm(null);
@@ -4446,7 +4477,8 @@ function Home() {
     const handleLoadHistoryItem = (id)=>{
         const itemToLoad = historyList.find((item)=>item.id === id);
         if (itemToLoad) {
-            setAnalysisResult(itemToLoad); // This will set analysisResult for triggerFiberCalculation
+            // Set analysisResult first to allow fiber calculation effect to pick it up
+            setAnalysisResult(itemToLoad);
             const formValuesFromHistory = {
                 pointA: {
                     name: itemToLoad.pointA.name || 'Site A',
@@ -4462,27 +4494,25 @@ function Home() {
                 },
                 clearanceThreshold: itemToLoad.clearanceThresholdUsed.toString()
             };
-            reset(formValuesFromHistory); // This updates form state, which triggerFiberCalculation uses via analysisResult
+            reset(formValuesFromHistory);
             setLiveDistanceKm(itemToLoad.distanceKm);
             setIsStale(false);
             setDisplayedError(null);
             setFieldErrors(null);
-            // Fiber calculation will be triggered by the useEffect watching analysisResult if toggle is on
             setIsAnalysisPanelGloballyOpen(true);
             setIsBottomPanelContentExpanded(true);
             toast({
                 title: "History Loaded",
                 description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.`
             });
-            // Trigger fiber calculation if needed after history load and state update
-            // The useEffect watching analysisResult and calculateFiberPathEnabled handles this
-            if (calculateFiberPathEnabled && itemToLoad.losPossible) {
-            // The triggerFiberCalculation will be called by the useEffect if analysisResult changes
-            // and calculateFiberPathEnabled is true and itemToLoad.losPossible is true.
-            // We may need to manually call it here if the useEffect won't fire due to reference stability of itemToLoad
-            // Let's ensure triggerFiberCalculation is called:
-            // Setting analysisResult should be enough for the useEffect to pick it up.
+            // Fiber calculation is now handled by the useEffect watching analysisResult, isStale, and calculateFiberPathEnabled
+            // No explicit call to triggerFiberCalculation needed here, as setting analysisResult will trigger that effect.
+            if (!calculateFiberPathEnabled) {
+                setFiberPathResult(null);
+                setFiberPathError(null);
+                setIsFiberCalculating(false);
             } else if (calculateFiberPathEnabled && !itemToLoad.losPossible) {
+                // If toggle is on but loaded history item has LOS not possible
                 setFiberPathResult({
                     status: 'los_not_feasible',
                     errorMessage: 'Fiber path not calculated: LOS is not feasible for this historical link.',
@@ -4491,10 +4521,6 @@ function Home() {
                     losFeasible: false,
                     radiusMetersUsed: fiberRadiusMeters
                 });
-                setFiberPathError(null);
-                setIsFiberCalculating(false);
-            } else {
-                setFiberPathResult(null);
                 setFiberPathError(null);
                 setIsFiberCalculating(false);
             }
@@ -4506,45 +4532,44 @@ function Home() {
             title: "History Cleared"
         });
     };
+    // Called when "Fiber" toggle is switched
     const handleToggleFiberPath = (checked)=>{
         setCalculateFiberPathEnabled(checked);
         if (isClient) {
             localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE, JSON.stringify(checked));
         }
-        // If toggled ON, and there's a current, non-stale LOS result that is feasible, trigger calculation.
-        // If toggled OFF, clear fiber results.
-        if (checked && analysisResult && !isStale && analysisResult.losPossible) {
-            triggerFiberCalculation();
-        } else if (!checked) {
+        // Let the useEffect watching calculateFiberPathEnabled and analysisResult handle triggering calculation.
+        if (!checked) {
             setFiberPathResult(null);
             setFiberPathError(null);
             setIsFiberCalculating(false);
-        } else if (checked && analysisResult && !isStale && !analysisResult.losPossible) {
-            // If toggled ON, but current LOS is not feasible
-            setFiberPathResult({
-                status: 'los_not_feasible',
-                errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
-                pointA_original: analysisResult.pointA,
-                pointB_original: analysisResult.pointB,
-                losFeasible: false,
-                radiusMetersUsed: fiberRadiusMeters
-            });
-            setFiberPathError(null);
-            setIsFiberCalculating(false);
+        } else {
+            // If toggled on, and we have a valid, non-stale, feasible LOS result, trigger calc
+            if (analysisResult && !isStale && analysisResult.losPossible) {
+                triggerFiberCalculation();
+            } else if (analysisResult && !isStale && !analysisResult.losPossible) {
+                setFiberPathResult({
+                    status: 'los_not_feasible',
+                    errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
+                    pointA_original: analysisResult.pointA,
+                    pointB_original: analysisResult.pointB,
+                    losFeasible: false,
+                    radiusMetersUsed: fiberRadiusMeters
+                });
+                setFiberPathError(null);
+            }
         }
     };
+    // Called when "Apply" for Snap Radius is clicked in BottomPanel
     const handleFiberRadiusChange = (newRadius)=>{
-        // This function is called from BottomPanel when the "Apply" button for snap radius is clicked
-        // It receives the validated new radius number
         setFiberRadiusMeters(newRadius);
         if (isClient) {
             localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
         }
-        // If toggle is enabled and there's a valid, non-stale, feasible LOS result, re-calculate
+        // Let the useEffect watching fiberRadiusMeters and analysisResult handle triggering calculation.
         if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
-            triggerFiberCalculation(); // triggerFiberCalculation will use the updated fiberRadiusMeters
+            triggerFiberCalculation();
         } else if (calculateFiberPathEnabled && analysisResult && !isStale && !analysisResult.losPossible) {
-            // Update status if toggle is on but LOS not feasible
             setFiberPathResult({
                 status: 'los_not_feasible',
                 errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link with new radius.',
@@ -4554,7 +4579,6 @@ function Home() {
                 radiusMetersUsed: newRadius
             });
             setFiberPathError(null);
-            setIsFiberCalculating(false);
         }
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -4566,7 +4590,7 @@ function Home() {
                 currentPage: "home"
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 557,
+                lineNumber: 569,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4594,12 +4618,12 @@ function Home() {
                             fiberPathResult: fiberPathResult
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 565,
+                            lineNumber: 577,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 564,
+                        lineNumber: 576,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4614,19 +4638,19 @@ function Home() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 586,
+                                    lineNumber: 598,
                                     columnNumber: 15
                                 }, this),
                                 "Start Link Analysis"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 580,
+                            lineNumber: 592,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 579,
+                        lineNumber: 591,
                         columnNumber: 11
                     }, this),
                     (isActionPending || isFiberCalculating) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4640,7 +4664,7 @@ function Home() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 596,
+                                        lineNumber: 608,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4648,7 +4672,7 @@ function Home() {
                                         children: isActionPending ? "Analyzing Link..." : "Calculating Fiber Path..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 597,
+                                        lineNumber: 609,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4656,23 +4680,23 @@ function Home() {
                                         children: isActionPending ? "Please wait while we process elevation data." : "Accessing road network data..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 600,
+                                        lineNumber: 612,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 595,
+                                lineNumber: 607,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 594,
+                            lineNumber: 606,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 593,
+                        lineNumber: 605,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4689,19 +4713,19 @@ function Home() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 613,
+                                                lineNumber: 625,
                                                 columnNumber: 21
                                             }, this),
                                             " LOS Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 612,
+                                        lineNumber: 624,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 611,
+                                    lineNumber: 623,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -4711,7 +4735,7 @@ function Home() {
                                             children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 617,
+                                            lineNumber: 629,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -4724,24 +4748,24 @@ function Home() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 618,
+                                            lineNumber: 630,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 616,
+                                    lineNumber: 628,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 610,
+                            lineNumber: 622,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 609,
+                        lineNumber: 621,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$bottom$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -4771,7 +4795,7 @@ function Home() {
                         fiberPathError: fiberPathError
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 630,
+                        lineNumber: 642,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -4782,19 +4806,19 @@ function Home() {
                         onToggle: handleToggleHistoryPanel
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 656,
+                        lineNumber: 668,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 563,
+                lineNumber: 575,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true);
 }
-_s(Home, "TmAHxqpWEFD5Z4bwKXWYgl8dvfs=", false, function() {
+_s(Home, "lhRuhQk8zgwrc2jFMg/xqPM6pNE=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"]

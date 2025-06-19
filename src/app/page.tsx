@@ -54,36 +54,17 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
 
   // State for Fiber Path Calculation
-  const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = useState<boolean>(false);
-  const [fiberRadiusMeters, setFiberRadiusMeters] = useState<number>(500); // Default radius 500m
+  const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = useState<boolean>(false); // Initial static default
+  const [fiberRadiusMeters, setFiberRadiusMeters] = useState<number>(500); // Initial static default
   
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
   const [isFiberCalculating, setIsFiberCalculating] = useState(false);
   const [fiberPathError, setFiberPathError] = useState<string | null>(null);
 
-  // Initialize form with persisted values or defaults
+  // Initialize form with static default values
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
-    defaultValues: () => {
-      if (isClient) { // Only access localStorage on client after mount
-        return {
-          pointA: {
-            name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_NAME) || defaultFormStateValues.pointA.name,
-            lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LAT) || defaultFormStateValues.pointA.lat,
-            lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LNG) || defaultFormStateValues.pointA.lng,
-            height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT) || defaultFormStateValues.pointA.height.toString(), 10),
-          },
-          pointB: {
-            name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_NAME) || defaultFormStateValues.pointB.name,
-            lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LAT) || defaultFormStateValues.pointB.lat,
-            lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LNG) || defaultFormStateValues.pointB.lng,
-            height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT) || defaultFormStateValues.pointB.height.toString(), 10),
-          },
-          clearanceThreshold: localStorage.getItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD) || defaultFormStateValues.clearanceThreshold,
-        };
-      }
-      return defaultFormStateValues;
-    },
+    defaultValues: defaultFormStateValues, // Use static defaults for initial render
     mode: 'onBlur',
   });
 
@@ -92,11 +73,12 @@ export default function Home() {
   // Effect to set isClient to true after mount
   useEffect(() => {
     setIsClient(true);
-  }, []);
+  }, []); // Runs once after mount
 
-  // Effect to load Fiber settings from localStorage after client mount
+  // Effect to load settings AND FORM VALUES from localStorage after client mount
   useEffect(() => {
     if (isClient) {
+      // Load fiber settings
       const storedToggle = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE);
       if (storedToggle) {
         setCalculateFiberPathEnabled(JSON.parse(storedToggle));
@@ -105,10 +87,27 @@ export default function Home() {
       if (storedRadius) {
         setFiberRadiusMeters(parseInt(storedRadius, 10));
       }
-      // Reset form with localStorage values if isClient changes (which ensures it runs after mount)
-      form.reset(form.formState.defaultValues); 
+
+      // Load and set form values using form.reset()
+      const initialFormValues: AnalysisFormValues = {
+        pointA: {
+          name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_NAME) || defaultFormStateValues.pointA.name,
+          lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LAT) || defaultFormStateValues.pointA.lat,
+          lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LNG) || defaultFormStateValues.pointA.lng,
+          height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT) || defaultFormStateValues.pointA.height.toString(), 10),
+        },
+        pointB: {
+          name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_NAME) || defaultFormStateValues.pointB.name,
+          lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LAT) || defaultFormStateValues.pointB.lat,
+          lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LNG) || defaultFormStateValues.pointB.lng,
+          height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT) || defaultFormStateValues.pointB.height.toString(), 10),
+        },
+        clearanceThreshold: localStorage.getItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD) || defaultFormStateValues.clearanceThreshold,
+      };
+      reset(initialFormValues); // Reset the form with values from localStorage
     }
-  }, [isClient, form]); // form.reset depends on form instance
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClient, reset]); // Add reset to dependency array
 
 
   // Persist form inputs to localStorage whenever they change
@@ -166,7 +165,7 @@ export default function Home() {
 
   // Unified Fiber Path Calculation Logic
   const triggerFiberCalculation = useCallback(async () => {
-    if (!analysisResult || !analysisResult.losPossible || !calculateFiberPathEnabled) {
+    if (!analysisResult || !analysisResult.losPossible || !calculateFiberPathEnabled || isStale) {
       if (calculateFiberPathEnabled && analysisResult && !analysisResult.losPossible) {
         setFiberPathResult({
           status: 'los_not_feasible',
@@ -176,11 +175,12 @@ export default function Home() {
           losFeasible: false,
           radiusMetersUsed: fiberRadiusMeters,
         });
-        setFiberPathError(null); // Not an API error, but an info message
-      } else {
-        setFiberPathResult(null); // Clear if toggle is off or no LOS result
-        setFiberPathError(null);
+      } else if (calculateFiberPathEnabled && isStale) {
+         setFiberPathResult(null); // Clear fiber results if LOS data is stale
+      } else if (!calculateFiberPathEnabled) {
+        setFiberPathResult(null); // Clear if toggle is off
       }
+      setFiberPathError(null);
       setIsFiberCalculating(false);
       return;
     }
@@ -190,7 +190,7 @@ export default function Home() {
     setFiberPathResult(null);
 
     try {
-      const fiberResult = await performFiberPathAnalysisAction(
+      const fiberResultData = await performFiberPathAnalysisAction(
         analysisResult.pointA.lat,
         analysisResult.pointA.lng,
         analysisResult.pointB.lat,
@@ -198,21 +198,29 @@ export default function Home() {
         fiberRadiusMeters,
         true // LOS is feasible here
       );
-      setFiberPathResult(fiberResult);
-      if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-        setFiberPathError(fiberResult.errorMessage);
-        toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
-      } else if (fiberResult.status === 'success') {
-        toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
+      setFiberPathResult(fiberResultData);
+      if (fiberResultData.status !== 'success' && fiberResultData.errorMessage) {
+        setFiberPathError(fiberResultData.errorMessage);
+        toast({ title: "Fiber Path Info", description: fiberResultData.errorMessage, variant: "default", duration: 6000 });
+      } else if (fiberResultData.status === 'success') {
+        toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResultData.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
       }
     } catch (err) {
       const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
       setFiberPathError(fiberErrorMessage);
+      setFiberPathResult({
+        status: 'api_error',
+        errorMessage: fiberErrorMessage,
+        pointA_original: analysisResult.pointA,
+        pointB_original: analysisResult.pointB,
+        losFeasible: true, // Assumed true if we got this far
+        radiusMetersUsed: fiberRadiusMeters,
+      });
       toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
     } finally {
       setIsFiberCalculating(false);
     }
-  }, [analysisResult, calculateFiberPathEnabled, fiberRadiusMeters, toast]);
+  }, [analysisResult, calculateFiberPathEnabled, fiberRadiusMeters, toast, isStale]);
 
 
   // Effect to handle LOS Analysis results and trigger Fiber Path calculation
@@ -234,7 +242,7 @@ export default function Home() {
 
     } else if (typeof rawServerState === 'object' && rawServerState !== null && 'losPossible' in rawServerState) {
       const successfulLosResult = rawServerState as AnalysisResult;
-      setAnalysisResult(successfulLosResult);
+      setAnalysisResult(successfulLosResult); // Set analysisResult first
       setHistoryList(prev => [successfulLosResult, ...prev.slice(0, 19)]);
       setLiveDistanceKm(successfulLosResult.distanceKm);
       setDisplayedError(null);
@@ -256,8 +264,8 @@ export default function Home() {
         },
         clearanceThreshold: successfulLosResult.clearanceThresholdUsed.toString(),
       };
-      reset(formValuesForResult);
-      setIsStale(false);
+      reset(formValuesForResult); // Reset form *after* analysisResult is set
+      setIsStale(false); // Mark as not stale
       
       if (!isAnalysisPanelGloballyOpen) {
           setIsAnalysisPanelGloballyOpen(true);
@@ -265,29 +273,30 @@ export default function Home() {
       }
       toast({ title: "LOS Analysis Complete", description: successfulLosResult.message || "LOS analysis performed.", });
       
-      // After successful LOS analysis, trigger fiber calculation if enabled and LOS is feasible
-      if (calculateFiberPathEnabled && successfulLosResult.losPossible) {
-         triggerFiberCalculation(); // Call the unified function
-      } else if (calculateFiberPathEnabled && !successfulLosResult.losPossible) {
-          // If toggle is on but LOS not possible, set specific fiber status
-          setFiberPathResult({
-              status: 'los_not_feasible',
-              errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
-              pointA_original: successfulLosResult.pointA,
-              pointB_original: successfulLosResult.pointB,
-              losFeasible: false,
-              radiusMetersUsed: fiberRadiusMeters,
-          });
-          setFiberPathError(null);
-          setIsFiberCalculating(false);
-      } else {
-          // If toggle is off, ensure fiber results are cleared
-          setFiberPathResult(null);
-          setFiberPathError(null);
-          setIsFiberCalculating(false);
-      }
+      // Trigger fiber calculation AFTER analysisResult state is updated
+      // This needs to happen in a separate effect that watches analysisResult or be called carefully
+      // For now, triggerFiberCalculation will be called by useEffect watching analysisResult.
     }
-  }, [rawServerState, toast, reset, getValues, isAnalysisPanelGloballyOpen, calculateFiberPathEnabled, fiberRadiusMeters, triggerFiberCalculation]); // Added triggerFiberCalculation
+  }, [rawServerState, toast, reset, getValues, isAnalysisPanelGloballyOpen]); 
+
+  // New useEffect to trigger fiber calculation when analysisResult changes and conditions are met
+  useEffect(() => {
+    if (analysisResult && !isStale && calculateFiberPathEnabled && analysisResult.losPossible) {
+      triggerFiberCalculation();
+    } else if (analysisResult && !isStale && calculateFiberPathEnabled && !analysisResult.losPossible) {
+        setFiberPathResult({
+            status: 'los_not_feasible',
+            errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
+            pointA_original: analysisResult.pointA,
+            pointB_original: analysisResult.pointB,
+            losFeasible: false,
+            radiusMetersUsed: fiberRadiusMeters,
+        });
+        setFiberPathError(null);
+        setIsFiberCalculating(false);
+    }
+  }, [analysisResult, isStale, calculateFiberPathEnabled, triggerFiberCalculation, fiberRadiusMeters]);
+
 
   useEffect(() => {
     const formValues = getValues();
@@ -382,8 +391,15 @@ export default function Home() {
 
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
-    handleSubmit(processSubmit)();
-  }, [setValue, handleSubmit, processSubmit]);
+    // Only submit if the form is valid according to client-side schema
+    form.trigger().then(isValid => {
+        if (isValid) {
+            handleSubmit(processSubmit)();
+        } else {
+            toast({ title: "Input Error", description: "Please correct form errors before re-analyzing.", variant: "destructive" });
+        }
+    });
+  }, [setValue, handleSubmit, processSubmit, form, toast]);
 
 
   const toggleGlobalPanelVisibility = useCallback(() => {
@@ -397,7 +413,14 @@ export default function Home() {
   const handleStartAnalysisClick = () => {
     setIsAnalysisPanelGloballyOpen(true);
     setIsBottomPanelContentExpanded(true);
-    handleSubmit(processSubmit)();
+    // Only submit if the form is valid according to client-side schema
+     form.trigger().then(isValid => {
+        if (isValid) {
+            handleSubmit(processSubmit)();
+        } else {
+            toast({ title: "Input Error", description: "Please correct form errors before analyzing.", variant: "destructive" });
+        }
+    });
   };
 
   const dismissErrorModal = useCallback(() => {
@@ -410,18 +433,13 @@ export default function Home() {
   };
 
   const handleClearMap = () => {
-    reset(defaultFormStateValues); // Reset form to compiled-in defaults
-     if (isClient) { // Clear relevant localStorage items
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_NAME);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_LAT);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_LNG);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_NAME);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_LAT);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_LNG);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT);
-        localStorage.removeItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD);
-        // Note: Fiber toggle and radius localStorage are managed separately
+    reset(defaultFormStateValues); 
+     if (isClient) { 
+        Object.values(LOCAL_STORAGE_KEYS).forEach(key => {
+            if (key !== LOCAL_STORAGE_KEYS.FIBER_TOGGLE && key !== LOCAL_STORAGE_KEYS.FIBER_RADIUS) {
+                 localStorage.removeItem(key);
+            }
+        });
     }
     setAnalysisResult(null);
     setLiveDistanceKm(null);
@@ -439,7 +457,9 @@ export default function Home() {
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      setAnalysisResult(itemToLoad); // This will set analysisResult for triggerFiberCalculation
+      // Set analysisResult first to allow fiber calculation effect to pick it up
+      setAnalysisResult(itemToLoad); 
+      
       const formValuesFromHistory: AnalysisFormValues = {
         pointA: {
           name: itemToLoad.pointA.name || 'Site A',
@@ -455,41 +475,35 @@ export default function Home() {
         },
         clearanceThreshold: itemToLoad.clearanceThresholdUsed.toString(),
       };
-      reset(formValuesFromHistory); // This updates form state, which triggerFiberCalculation uses via analysisResult
+      reset(formValuesFromHistory); 
       setLiveDistanceKm(itemToLoad.distanceKm);
-      setIsStale(false);
+      setIsStale(false); 
       setDisplayedError(null);
       setFieldErrors(null);
-      // Fiber calculation will be triggered by the useEffect watching analysisResult if toggle is on
-      
+            
       setIsAnalysisPanelGloballyOpen(true);
       setIsBottomPanelContentExpanded(true);
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
       
-      // Trigger fiber calculation if needed after history load and state update
-      // The useEffect watching analysisResult and calculateFiberPathEnabled handles this
-      if (calculateFiberPathEnabled && itemToLoad.losPossible) {
-          // The triggerFiberCalculation will be called by the useEffect if analysisResult changes
-          // and calculateFiberPathEnabled is true and itemToLoad.losPossible is true.
-          // We may need to manually call it here if the useEffect won't fire due to reference stability of itemToLoad
-          // Let's ensure triggerFiberCalculation is called:
-          // Setting analysisResult should be enough for the useEffect to pick it up.
-      } else if (calculateFiberPathEnabled && !itemToLoad.losPossible) {
-         setFiberPathResult({
-            status: 'los_not_feasible',
-            errorMessage: 'Fiber path not calculated: LOS is not feasible for this historical link.',
-            pointA_original: itemToLoad.pointA,
-            pointB_original: itemToLoad.pointB,
-            losFeasible: false,
-            radiusMetersUsed: fiberRadiusMeters,
-        });
-        setFiberPathError(null);
-        setIsFiberCalculating(false);
-      } else {
-        setFiberPathResult(null);
-        setFiberPathError(null);
-        setIsFiberCalculating(false);
-      }
+      // Fiber calculation is now handled by the useEffect watching analysisResult, isStale, and calculateFiberPathEnabled
+      // No explicit call to triggerFiberCalculation needed here, as setting analysisResult will trigger that effect.
+       if (!calculateFiberPathEnabled) { // If toggle is off, ensure fiber results are cleared
+            setFiberPathResult(null);
+            setFiberPathError(null);
+            setIsFiberCalculating(false);
+       } else if (calculateFiberPathEnabled && !itemToLoad.losPossible) {
+            // If toggle is on but loaded history item has LOS not possible
+            setFiberPathResult({
+                status: 'los_not_feasible',
+                errorMessage: 'Fiber path not calculated: LOS is not feasible for this historical link.',
+                pointA_original: itemToLoad.pointA,
+                pointB_original: itemToLoad.pointB,
+                losFeasible: false,
+                radiusMetersUsed: fiberRadiusMeters,
+            });
+            setFiberPathError(null);
+            setIsFiberCalculating(false);
+       }
     }
   };
 
@@ -498,46 +512,45 @@ export default function Home() {
     toast({ title: "History Cleared" });
   };
 
+  // Called when "Fiber" toggle is switched
   const handleToggleFiberPath = (checked: boolean) => {
     setCalculateFiberPathEnabled(checked);
     if (isClient) {
         localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE, JSON.stringify(checked));
     }
-    // If toggled ON, and there's a current, non-stale LOS result that is feasible, trigger calculation.
-    // If toggled OFF, clear fiber results.
-    if (checked && analysisResult && !isStale && analysisResult.losPossible) {
-        triggerFiberCalculation();
-    } else if (!checked) { 
+    // Let the useEffect watching calculateFiberPathEnabled and analysisResult handle triggering calculation.
+    if (!checked) { 
         setFiberPathResult(null);
         setFiberPathError(null);
         setIsFiberCalculating(false);
-    } else if (checked && analysisResult && !isStale && !analysisResult.losPossible) {
-        // If toggled ON, but current LOS is not feasible
-        setFiberPathResult({
-            status: 'los_not_feasible',
-            errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
-            pointA_original: analysisResult.pointA,
-            pointB_original: analysisResult.pointB,
-            losFeasible: false,
-            radiusMetersUsed: fiberRadiusMeters,
-        });
-        setFiberPathError(null);
-        setIsFiberCalculating(false);
+    } else {
+        // If toggled on, and we have a valid, non-stale, feasible LOS result, trigger calc
+        if (analysisResult && !isStale && analysisResult.losPossible) {
+            triggerFiberCalculation();
+        } else if (analysisResult && !isStale && !analysisResult.losPossible) {
+            setFiberPathResult({
+                status: 'los_not_feasible',
+                errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
+                pointA_original: analysisResult.pointA,
+                pointB_original: analysisResult.pointB,
+                losFeasible: false,
+                radiusMetersUsed: fiberRadiusMeters,
+            });
+            setFiberPathError(null);
+        }
     }
   };
 
+  // Called when "Apply" for Snap Radius is clicked in BottomPanel
   const handleFiberRadiusChange = (newRadius: number) => {
-    // This function is called from BottomPanel when the "Apply" button for snap radius is clicked
-    // It receives the validated new radius number
     setFiberRadiusMeters(newRadius);
     if (isClient) {
       localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
     }
-    // If toggle is enabled and there's a valid, non-stale, feasible LOS result, re-calculate
-    if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
-        triggerFiberCalculation(); // triggerFiberCalculation will use the updated fiberRadiusMeters
+    // Let the useEffect watching fiberRadiusMeters and analysisResult handle triggering calculation.
+     if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
+        triggerFiberCalculation();
     } else if (calculateFiberPathEnabled && analysisResult && !isStale && !analysisResult.losPossible) {
-         // Update status if toggle is on but LOS not feasible
         setFiberPathResult({
             status: 'los_not_feasible',
             errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link with new radius.',
@@ -547,7 +560,6 @@ export default function Home() {
             radiusMetersUsed: newRadius,
         });
         setFiberPathError(null);
-        setIsFiberCalculating(false);
     }
   };
 
@@ -646,9 +658,9 @@ export default function Home() {
           onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
           // Fiber Path Props
           calculateFiberPathEnabled={calculateFiberPathEnabled}
-          onToggleFiberPath={handleToggleFiberPath} // Pass the updated handler
+          onToggleFiberPath={handleToggleFiberPath} 
           fiberRadiusMeters={fiberRadiusMeters}
-          onFiberRadiusChange={handleFiberRadiusChange} // Pass the updated handler
+          onFiberRadiusChange={handleFiberRadiusChange} 
           fiberPathResult={fiberPathResult}
           isFiberCalculating={isFiberCalculating}
           fiberPathError={fiberPathError}
@@ -665,3 +677,4 @@ export default function Home() {
   );
 }
 
+    
