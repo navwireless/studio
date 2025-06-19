@@ -1164,12 +1164,32 @@ body {
   min-width: 1.25rem;
 }
 
+.min-w-\[100px\] {
+  min-width: 100px;
+}
+
+.min-w-\[110px\] {
+  min-width: 110px;
+}
+
 .min-w-\[120px\] {
   min-width: 120px;
 }
 
 .min-w-\[12rem\] {
   min-width: 12rem;
+}
+
+.min-w-\[130px\] {
+  min-width: 130px;
+}
+
+.min-w-\[150px\] {
+  min-width: 150px;
+}
+
+.min-w-\[160px\] {
+  min-width: 160px;
 }
 
 .min-w-\[200px\] {
@@ -1182,34 +1202,6 @@ body {
 
 .min-w-\[var\(--radix-select-trigger-width\)\] {
   min-width: var(--radix-select-trigger-width);
-}
-
-.min-w-\[100px\] {
-  min-width: 100px;
-}
-
-.min-w-\[130px\] {
-  min-width: 130px;
-}
-
-.min-w-\[150px\] {
-  min-width: 150px;
-}
-
-.min-w-\[180px\] {
-  min-width: 180px;
-}
-
-.min-w-\[80px\] {
-  min-width: 80px;
-}
-
-.min-w-\[110px\] {
-  min-width: 110px;
-}
-
-.min-w-\[160px\] {
-  min-width: 160px;
 }
 
 .max-w-4xl {
@@ -1638,6 +1630,10 @@ body {
   border-color: var(--color-border);
 }
 
+.border-black\/20 {
+  border-color: #0003;
+}
+
 .border-border {
   border-color: hsl(var(--border));
 }
@@ -1682,10 +1678,6 @@ body {
   border-color: #fff3;
 }
 
-.border-black\/20 {
-  border-color: #0003;
-}
-
 .border-l-transparent {
   border-left-color: #0000;
 }
@@ -1714,8 +1706,8 @@ body {
   background-color: #000c;
 }
 
-.bg-blue-600\/80 {
-  background-color: #2563ebcc;
+.bg-blue-600\/90 {
+  background-color: #2563ebe6;
 }
 
 .bg-border {
@@ -1750,8 +1742,8 @@ body {
   background-color: hsl(var(--destructive) / .9);
 }
 
-.bg-green-600\/80 {
-  background-color: #16a34acc;
+.bg-green-600\/90 {
+  background-color: #16a34ae6;
 }
 
 .bg-input {
@@ -1816,14 +1808,6 @@ body {
 
 .bg-yellow-500\/80 {
   background-color: #eab308cc;
-}
-
-.bg-blue-600\/90 {
-  background-color: #2563ebe6;
-}
-
-.bg-green-600\/90 {
-  background-color: #16a34ae6;
 }
 
 .fill-current {
@@ -2182,6 +2166,10 @@ body {
   color: hsl(var(--muted-foreground));
 }
 
+.text-muted-foreground\/50 {
+  color: hsl(var(--muted-foreground) / .5);
+}
+
 .text-muted-foreground\/70 {
   color: hsl(var(--muted-foreground) / .7);
 }
@@ -2258,10 +2246,6 @@ body {
 .text-yellow-900 {
   --tw-text-opacity: 1;
   color: rgb(113 63 18 / var(--tw-text-opacity, 1));
-}
-
-.text-muted-foreground\/50 {
-  color: hsl(var(--muted-foreground) / .5);
 }
 
 .underline {
