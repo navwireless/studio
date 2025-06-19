@@ -8,10 +8,14 @@ import type { PointCoordinates, AnalysisResult } from '@/types';
 import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
+import { decodePolyline } from '@/lib/polyline-decoder'; // For finding midpoint of fiber path
 
 const STYLES = {
   mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
-  distanceOverlayLabel: "p-1.5 text-sm font-bold text-white bg-primary/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap",
+  // Adjusted distance overlay for better centering and distinct look
+  distanceOverlayLabelLOS: "p-1.5 text-xs font-bold text-white bg-green-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2",
+  distanceOverlayLabelFiber: "p-1.5 text-xs font-bold text-white bg-blue-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2",
+
 };
 
 interface InteractiveMapProps {
@@ -22,7 +26,7 @@ interface InteractiveMapProps {
   mapContainerClassName?: string;
   analysisResult: AnalysisResult | null;
   isStale?: boolean;
-  currentDistanceKm?: number | null;
+  currentDistanceKm?: number | null; // This is LOS distance
   fiberPathResult?: FiberPathResult | null;
 }
 
@@ -32,15 +36,18 @@ const defaultCenter = {
 };
 const defaultZoom = 5;
 
-const getPixelPositionOffset = (width: number, height: number) => ({
+// getPixelPositionOffset for site name labels (above marker)
+const getSiteNameLabelOffset = (width: number, height: number) => ({
   x: -(width / 2),
   y: -(height + 10), 
 });
 
-const getDistanceOverlayPositionOffset = (width: number, height: number) => ({
-  x: -(width / 2),
-  y: -(height / 2) -15, 
+// getPixelPositionOffset for distance labels (centered on path)
+const getPathDistanceLabelOffset = (width: number, height: number) => ({
+    x: -(width / 2),
+    y: -(height / 2),
 });
+
 
 const getCustomMarkerIcon = (label: string, isMapApiLoaded: boolean) => {
   if (isMapApiLoaded && typeof window !== 'undefined' && window.google && window.google.maps) {
@@ -69,13 +76,13 @@ const LOS_POLYLINE_COLORS = {
 
 const FIBER_POLYLINE_STYLES = {
   offset: {
-    strokeColor: '#FFEB3B', // Yellow
+    strokeColor: '#FF9800', // Orange for offset
     strokeOpacity: 0.9,
     strokeWeight: 3,
     zIndex: 2, 
   },
   roadRoute: {
-    strokeColor: '#00BCD4', // Cyan
+    strokeColor: '#2196F3', // Blue for road route
     strokeOpacity: 0.8,
     strokeWeight: 4,
     zIndex: 2,
@@ -90,7 +97,7 @@ function InteractiveMapInner({
   onMarkerDrag,
   analysisResult,
   isStale,
-  currentDistanceKm,
+  currentDistanceKm, // This is LOS distance
   fiberPathResult,
 }: Omit<InteractiveMapProps, 'mapContainerClassName'>) {
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -136,13 +143,12 @@ function InteractiveMapInner({
       bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
       bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
       
-      // If fiber path exists, extend bounds to include its points
       if (fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments) {
         fiberPathResult.segments.forEach(segment => {
           if (segment.pathPolyline && google.maps.geometry?.encoding) {
             const decodedPath = google.maps.geometry.encoding.decodePath(segment.pathPolyline);
             decodedPath.forEach(p => bounds.extend(p));
-          } else {
+          } else { // For offset segments or if polyline is missing
             bounds.extend(new window.google.maps.LatLng(segment.startPoint.lat, segment.startPoint.lng));
             bounds.extend(new window.google.maps.LatLng(segment.endPoint.lat, segment.endPoint.lng));
           }
@@ -181,10 +187,44 @@ function InteractiveMapInner({
   const pBLat = typeof formPointB?.lat === 'number' ? formPointB.lat : undefined;
   const pBLng = typeof formPointB?.lng === 'number' ? formPointB.lng : undefined;
 
-  const midPoint = pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined ? {
+  const losMidPoint = pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined ? {
     lat: (pALat + pBLat) / 2,
     lng: (pALng + pBLng) / 2,
   } : null;
+
+  // Calculate midpoint for Fiber Path Label
+  let fiberPathMidPoint: PointCoordinates | null = null;
+  if (fiberPathResult?.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0) {
+    // Find the road_route segment, preferably the longest one if multiple exist
+    const roadRouteSegments = fiberPathResult.segments.filter(s => s.type === 'road_route' && s.pathPolyline);
+    let targetSegmentPolyline: string | undefined;
+
+    if (roadRouteSegments.length > 0) {
+      targetSegmentPolyline = roadRouteSegments.sort((a, b) => b.distanceMeters - a.distanceMeters)[0].pathPolyline;
+    }
+    
+    if (targetSegmentPolyline) {
+      const decoded = decodePolyline(targetSegmentPolyline);
+      if (decoded.length > 0) {
+        const midIndex = Math.floor(decoded.length / 2);
+        fiberPathMidPoint = { lat: decoded[midIndex][0], lng: decoded[midIndex][1] };
+      }
+    } else {
+      // Fallback: if no road_route or polyline, use midpoint of the LOS path for fiber label too, or midpoint of snapped points.
+      // For now, if no road route, we can place it near the LOS midpoint but distinguish it.
+      // Or, more robustly, calculate midpoint of the overall bounding box of all fiber segments.
+      // Simplified fallback for now: use LOS midpoint if fiber path is just offsets or missing road polyline.
+      if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
+          fiberPathMidPoint = {
+              lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
+              lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2,
+          }
+      } else if (losMidPoint) {
+          fiberPathMidPoint = losMidPoint; // Approximate, could be improved
+      }
+    }
+  }
+
 
   return (
     <GoogleMap
@@ -211,7 +251,7 @@ function InteractiveMapInner({
           <OverlayView
             position={{ lat: pALat, lng: pALng }}
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-            getPixelPositionOffset={getPixelPositionOffset}
+            getPixelPositionOffset={getSiteNameLabelOffset}
           >
             <div className={STYLES.mapMarkerLabel}>
               {formPointA.name || "Site A"}
@@ -232,7 +272,7 @@ function InteractiveMapInner({
           <OverlayView
             position={{ lat: pBLat, lng: pBLng }}
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-            getPixelPositionOffset={getPixelPositionOffset}
+            getPixelPositionOffset={getSiteNameLabelOffset}
           >
             <div className={STYLES.mapMarkerLabel}>
               {formPointB.name || "Site B"}
@@ -274,27 +314,40 @@ function InteractiveMapInner({
             if (google.maps.geometry && google.maps.geometry.encoding) {
               path = google.maps.geometry.encoding.decodePath(segment.pathPolyline).map(p => ({ lat: p.lat(), lng: p.lng() }));
             } else {
-              console.warn("Google Maps geometry library not loaded, cannot decode road_route polyline.");
-              return null;
+              // Fallback if geometry library not loaded, though it should be.
+              path = [ { lat: segment.startPoint.lat, lng: segment.startPoint.lng }, { lat: segment.endPoint.lat, lng: segment.endPoint.lng }];
             }
             options = FIBER_POLYLINE_STYLES.roadRoute;
           } else {
-            return null; // Skip if segment type is unknown or data missing
+            return null; 
           }
           
           return <Polyline key={`fiber-segment-${index}`} path={path} options={options} />;
         })
       )}
 
-
-      {midPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && (
+      {/* LOS Distance Label */}
+      {losMidPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && (
         <OverlayView
-          position={midPoint}
+          position={losMidPoint}
           mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-          getPixelPositionOffset={getDistanceOverlayPositionOffset}
+          getPixelPositionOffset={getPathDistanceLabelOffset}
         >
-          <div className={STYLES.distanceOverlayLabel}>
-            {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`}
+          <div className={STYLES.distanceOverlayLabelLOS}>
+            LOS: {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`}
+          </div>
+        </OverlayView>
+      )}
+
+      {/* Fiber Path Distance Label */}
+      {fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathMidPoint && (
+         <OverlayView
+          position={fiberPathMidPoint}
+          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+          getPixelPositionOffset={getPathDistanceLabelOffset}
+        >
+          <div className={STYLES.distanceOverlayLabelFiber}>
+            Fiber: {fiberPathResult.totalDistanceMeters < 1000 ? `${(fiberPathResult.totalDistanceMeters).toFixed(0)}m` : `${(fiberPathResult.totalDistanceMeters / 1000).toFixed(1)}km`}
           </div>
         </OverlayView>
       )}
@@ -314,3 +367,5 @@ export default function InteractiveMap({ mapContainerClassName = "w-full h-full"
     </div>
   );
 }
+
+    
