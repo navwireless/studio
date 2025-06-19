@@ -3413,6 +3413,10 @@ body {
     margin-top: 0;
   }
 
+  .sm\:mr-1\.5 {
+    margin-right: .375rem;
+  }
+
   .sm\:block {
     display: block;
   }

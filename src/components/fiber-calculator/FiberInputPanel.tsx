@@ -1,7 +1,8 @@
 
 "use client";
 
-import type { Control, UseFormRegister, UseFormHandleSubmit, FieldErrors } from 'react-hook-form';
+import React, { useState, useEffect } from 'react'; // Added useState, useEffect
+import type { Control, UseFormRegister, UseFormHandleSubmit, FieldErrors, UseFormSetValue } from 'react-hook-form';
 import type { FiberCalculatorFormValues } from '@/lib/fiber-calculator-form-schema';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Cable, Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin, Download, Loader2, FileArchive } from 'lucide-react';
+import { Cable, Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin, Download, Loader2, FileArchive, Check } from 'lucide-react'; // Added Check
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast'; // Added useToast
 
 interface SiteInputGroupFCProps {
   id: 'pointA' | 'pointB';
@@ -74,9 +76,11 @@ const SiteInputGroupFC: React.FC<SiteInputGroupFCProps> = ({
 
 interface FiberInputPanelProps {
   control: Control<FiberCalculatorFormValues>;
-  register: UseFormRegister<FiberCalculatorFormValues>;
+  register: UseFormRegister<FiberCalculatorFormValues>; // Still used for Point A/B
   handleSubmit: UseFormHandleSubmit<FiberCalculatorFormValues>;
-  onSubmit: (data: FiberCalculatorFormValues) => void;
+  onSubmit: (data: FiberCalculatorFormValues) => void; // Main calculation trigger
+  setValue: UseFormSetValue<FiberCalculatorFormValues>; // For updating RHF state
+  formSnapRadius: number; // Current snap radius from RHF state
   onClear: () => void;
   onGeneratePdfReport: () => void;
   onGenerateKmzReport: () => void;
@@ -93,6 +97,8 @@ export default function FiberInputPanel({
   register,
   handleSubmit,
   onSubmit,
+  setValue, // New prop
+  formSnapRadius, // New prop
   onClear,
   onGeneratePdfReport,
   onGenerateKmzReport,
@@ -103,10 +109,43 @@ export default function FiberInputPanel({
   fiberPathResult,
   calculationError,
 }: FiberInputPanelProps) {
+  const { toast } = useToast();
+  // Local state for the snap radius input field
+  const [localSnapRadiusInput, setLocalSnapRadiusInput] = useState<string>(() => formSnapRadius.toString());
+
+  // Effect to sync local input state if the formSnapRadius prop changes from parent
+  useEffect(() => {
+    // Only update if the string representation is different, to avoid loops
+    // and to handle cases where formSnapRadius might be NaN initially if not properly defaulted
+    if (formSnapRadius !== undefined && localSnapRadiusInput !== formSnapRadius.toString()) {
+      setLocalSnapRadiusInput(formSnapRadius.toString());
+    }
+  }, [formSnapRadius, localSnapRadiusInput]);
+
 
   const getCombinedError = (clientFieldError?: { message?: string }) => {
     return clientFieldError?.message;
   };
+
+  // Handler for the "Apply" button next to the snap radius input
+  const handleApplySnapRadiusAndRecalculate = () => {
+    const newRadiusNum = parseInt(localSnapRadiusInput, 10);
+    // Validate the locally entered radius
+    if (!isNaN(newRadiusNum) && newRadiusNum >= 1 && newRadiusNum <= 10000) { // Basic validation matching schema
+      setValue('fiberSnapRadius', newRadiusNum, { shouldValidate: true, shouldDirty: true });
+      // Programmatically trigger the main form submission to recalculate
+      handleSubmit(onSubmit)();
+    } else {
+      toast({ 
+        title: "Invalid Snap Radius", 
+        description: "Please enter a whole number between 1 and 10000 for the snap radius.", 
+        variant: "destructive" 
+      });
+      // Optionally, revert local input to last valid RHF value or show error near input
+      // For now, toast is the primary feedback. RHF validation will also catch it on submit.
+    }
+  };
+
 
   const formatFiberStatus = (status?: FiberPathResult['status']): string => {
     if (!status) return 'N/A';
@@ -125,10 +164,9 @@ export default function FiberInputPanel({
 
   const getStatusIcon = (status?: FiberPathResult['status']) => {
     if (isCalculating) return <Loader2 className="h-5 w-5 mr-2 animate-spin text-primary" />;
-    if (!status && !calculationError) return null; // No result, no error yet
-    if (calculationError && !fiberPathResult) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // Global error before result
-
-    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; // Should not happen if fiberPathResult exists
+    if (!status && !calculationError) return null; 
+    if (calculationError && !fiberPathResult) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; 
+    if (!status) return <XCircle className="h-5 w-5 mr-2 text-red-500" />; 
     switch (status) {
       case 'success': return <CheckCircle className="h-5 w-5 mr-2 text-green-500" />;
       case 'no_road_for_a':
@@ -156,7 +194,9 @@ export default function FiberInputPanel({
 
   return (
     <TooltipProvider>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="h-full flex flex-col">
+      {/* The main form submission is handled by the parent page via handleSubmit(onSubmit) */}
+      {/* This form tag is primarily for structure and accessibility if needed, but not strictly for submission here */}
+      <div className="h-full flex flex-col">
         <Card className="flex-1 flex flex-col border-0 shadow-none bg-transparent rounded-none p-0">
           <CardHeader className="p-3 md:p-4">
             <CardTitle className="text-lg md:text-xl flex items-center">
@@ -187,8 +227,8 @@ export default function FiberInputPanel({
             />
             <Separator />
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="fiberSnapRadius" className="text-sm font-medium text-muted-foreground">
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="fiberSnapRadiusInput" className="text-sm font-medium text-muted-foreground">
                   Snap to Road Radius (meters)
                 </Label>
                 <Tooltip delayDuration={100}>
@@ -197,27 +237,42 @@ export default function FiberInputPanel({
                             <HelpCircle className="h-4 w-4 text-muted-foreground/70 cursor-help" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border-border shadow-lg">
+                    <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
                         Max distance from each site (A or B) to search for a road.
                         If a road is found further than this radius, calculation for that point might fail.
-                        (e.g., 500 for 500m)
+                        (e.g., 500 for 500m). Click "Apply" to use the new radius for calculation.
                     </TooltipContent>
                 </Tooltip>
               </div>
-              <Input
-                id="fiberSnapRadius"
-                type="number"
-                {...register("fiberSnapRadius")}
-                placeholder="e.g., 500"
-                min={1}
-                className="mt-1 bg-input/70 h-9"
-              />
+              <div className="flex items-start gap-2"> {/* Use items-start for error message alignment */}
+                <Input
+                  id="fiberSnapRadiusInput" // Changed ID to avoid conflict if RHF still holds old one internally
+                  type="number"
+                  value={localSnapRadiusInput}
+                  onChange={(e) => setLocalSnapRadiusInput(e.target.value)}
+                  placeholder="e.g., 500"
+                  min={1}
+                  className="bg-input/70 h-9 flex-grow"
+                  disabled={anyOperationPending}
+                />
+                <Button
+                  type="button"
+                  onClick={handleApplySnapRadiusAndRecalculate}
+                  disabled={anyOperationPending || localSnapRadiusInput === formSnapRadius.toString()} // Disable if no change or processing
+                  size="sm"
+                  className="h-9 px-3" // Adjusted padding for "Apply"
+                  variant="outline"
+                >
+                  <Check className="h-4 w-4 sm:mr-1.5" /> <span className="hidden sm:inline">Apply</span>
+                </Button>
+              </div>
+              {/* Display validation error for fiberSnapRadius from RHF state */}
               {clientFormErrors.fiberSnapRadius &&
                 <p className="text-xs text-destructive mt-1">{getCombinedError(clientFormErrors.fiberSnapRadius)}</p>}
             </div>
 
             <div className="pt-2 space-y-2">
-               <Button type="submit" className="w-full" disabled={anyOperationPending}>
+               <Button type="button" onClick={handleSubmit(onSubmit)} className="w-full" disabled={anyOperationPending}>
                 {isCalculating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Route className="mr-2 h-4 w-4" />}
                 {isCalculating ? 'Calculating...' : 'Calculate Fiber Path'}
               </Button>
@@ -293,7 +348,7 @@ export default function FiberInputPanel({
                        )}>
                         {fiberPathResult.errorMessage}
                         {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') &&
-                         <span className="block text-xs text-amber-300/80 mt-0.5"> Consider increasing the Snap Radius or verifying site coordinates.</span>
+                         <span className="block text-xs text-amber-300/80 mt-0.5"> Consider increasing the Snap Radius and clicking "Apply".</span>
                         }
                          {fiberPathResult.status === 'no_route_between_roads' &&
                              <span className="block text-xs text-amber-300/80 mt-0.5"> The snapped road points for Site A and Site B may be on disconnected road networks.</span>
@@ -309,7 +364,8 @@ export default function FiberInputPanel({
             )}
           </CardContent>
         </Card>
-      </form>
+      </div>
     </TooltipProvider>
   );
 }
+
