@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useId } from 'react';
 import InteractiveMap from '@/components/fso/interactive-map';
 import { useForm, useWatch, Controller as FormController } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, Waypoints, MapPin, Cable } from 'lucide-react';
+import { Loader2, AlertTriangle, MapPin, Cable, Layers, X } from 'lucide-react'; // Removed Waypoints, Added Layers, X
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
@@ -313,11 +313,7 @@ export default function Home() {
     setIsBottomPanelContentExpanded(prev => !prev);
   }, []);
 
-  const handleStartAnalysisClick = () => {
-    setIsAnalysisPanelGloballyOpen(true);
-    setIsBottomPanelContentExpanded(true);
-    handleSubmit(processSubmit)();
-  };
+  // Removed handleStartAnalysisClick as it's replaced by the FAB's toggleGlobalPanelVisibility and BottomPanel's internal submit
 
   const dismissErrorModal = useCallback(() => {
     setDisplayedError(null);
@@ -533,19 +529,18 @@ export default function Home() {
           />
         </div>
 
-        {!isAnalysisPanelGloballyOpen && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 print:hidden">
-            <Button
-              onClick={handleStartAnalysisClick}
-              size="lg"
-              className="bg-primary/90 hover:bg-primary text-primary-foreground shadow-lg rounded-full px-8 py-6 text-base font-semibold backdrop-blur-sm"
-              aria-label="Start Link Analysis"
-            >
-              <Waypoints className="mr-2 h-5 w-5" />
-              Start Link Analysis
-            </Button>
-          </div>
-        )}
+        {/* FAB to toggle Analysis Panel Visibility */}
+        <div className="fixed bottom-6 right-6 z-50 print:hidden">
+          <Button
+            onClick={toggleGlobalPanelVisibility}
+            size="lg"
+            variant="default"
+            className="rounded-full shadow-lg w-14 h-14 p-0 flex items-center justify-center bg-primary hover:bg-primary/90"
+            aria-label={isAnalysisPanelGloballyOpen ? "Close Analysis Panel" : "Open Analysis Panel"}
+          >
+            {isAnalysisPanelGloballyOpen ? <X className="h-6 w-6" /> : <Layers className="h-6 w-6" />}
+          </Button>
+        </div>
 
         {(isActionPending || isFiberCalculating) && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
