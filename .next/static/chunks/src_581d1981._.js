@@ -61,10 +61,10 @@ var _s = __turbopack_context__.k.signature();
 ;
 const STYLES = {
     mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
-    // Distance overlay labels with precise centering and tight background
-    distanceOverlayLabelBase: "text-xs font-bold text-white rounded-md shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2 text-center px-2 py-1 w-max",
-    distanceOverlayLabelLOS: "bg-green-600/80",
-    distanceOverlayLabelFiber: "bg-blue-600/80"
+    // Base style for distance overlay labels
+    distanceOverlayLabelBase: "text-xs font-bold text-white rounded-md shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2 text-center px-2 py-1 w-max border border-black/20",
+    distanceOverlayLabelLOS: "bg-green-600/90",
+    distanceOverlayLabelFiber: "bg-blue-600/90"
 };
 const defaultCenter = {
     lat: 20.5937,
@@ -75,9 +75,10 @@ const getSiteNameLabelOffset = (width, height)=>({
         x: -(width / 2),
         y: -(height + 10)
     });
+// For distance labels, centering is handled by CSS transform
 const getPathDistanceLabelOffset = (width, height)=>({
         x: 0,
-        y: 0
+        y: -(height / 2) - 5
     });
 const getCustomMarkerIcon = (label, isMapApiLoaded)=>{
     if (isMapApiLoaded && "object" !== 'undefined' && window.google && window.google.maps) {
@@ -93,7 +94,7 @@ const getCustomMarkerIcon = (label, isMapApiLoaded)=>{
             labelOrigin: new window.google.maps.Point(0, 0.5)
         };
     }
-    return undefined;
+    return undefined; // Fallback or for SSR
 };
 const LOS_POLYLINE_COLORS = {
     stale: '#60A5FA',
@@ -174,6 +175,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                 const bounds = new window.google.maps.LatLngBounds();
                 bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
                 bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
+                // Extend bounds to include fiber path if available and successful
                 if (fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments) {
                     fiberPathResult.segments.forEach({
                         "InteractiveMapInner.useEffect": (segment)=>{
@@ -190,7 +192,8 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     }["InteractiveMapInner.useEffect"]);
                 }
                 if (!bounds.isEmpty()) {
-                    mapRef.current.fitBounds(bounds, 75);
+                    mapRef.current.fitBounds(bounds, 75); // Padding of 75px
+                    // Listener to prevent over-zooming after fitBounds
                     const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', {
                         "InteractiveMapInner.useEffect.listener": ()=>{
                             if (mapRef.current?.getZoom() && mapRef.current.getZoom() > 17) {
@@ -209,6 +212,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     })["InteractiveMapInner.useEffect"];
                 }
             } else if (isMapApiLoaded && mapRef.current && (!formPointA?.lat || !formPointB?.lat)) {
+                // Default view if points are not set
                 mapRef.current.setCenter(defaultCenter);
                 mapRef.current.setZoom(defaultZoom);
             }
@@ -224,6 +228,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
         if (!analysisResult) return LOS_POLYLINE_COLORS.default;
         return analysisResult.losPossible ? LOS_POLYLINE_COLORS.feasible : LOS_POLYLINE_COLORS.notFeasible;
     };
+    // Ensure lat/lng are numbers for map components
     const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
     const pALng = typeof formPointA?.lng === 'number' ? formPointA.lng : undefined;
     const pBLat = typeof formPointB?.lat === 'number' ? formPointB.lat : undefined;
@@ -232,10 +237,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
         lat: (pALat + pBLat) / 2,
         lng: (pALng + pBLng) / 2
     } : null;
+    // Calculate midpoint for the fiber path label
     let fiberPathLabelMidPoint = null;
-    if (fiberPathResult?.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0) {
+    if (isMapApiLoaded && fiberPathResult?.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0) {
         let longestRoadSegment = null;
         let maxDistance = 0;
+        // Find the longest road_route segment to place the label on
         fiberPathResult.segments.forEach((segment)=>{
             if (segment.type === 'road_route' && segment.pathPolyline && segment.distanceMeters > maxDistance) {
                 maxDistance = segment.distanceMeters;
@@ -252,11 +259,13 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                 };
             }
         } else if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
+            // Fallback: Midpoint of the straight line between snapped points if no polyline available
             fiberPathLabelMidPoint = {
                 lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
                 lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2
             };
         } else if (losMidPoint) {
+            // Further fallback to LOS midpoint if snapped points aren't available
             fiberPathLabelMidPoint = losMidPoint;
         }
     }
@@ -290,7 +299,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 237,
+                        lineNumber: 248,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -305,12 +314,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointA.name || "Site A"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 249,
+                            lineNumber: 260,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 244,
+                        lineNumber: 255,
                         columnNumber: 11
                     }, this)
                 ]
@@ -333,7 +342,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 258,
+                        lineNumber: 270,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -348,12 +357,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointB.name || "Site B"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 270,
+                            lineNumber: 282,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 265,
+                        lineNumber: 277,
                         columnNumber: 11
                     }, this)
                 ]
@@ -378,12 +387,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                 }
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 278,
+                lineNumber: 291,
                 columnNumber: 9
             }, this),
             isMapApiLoaded && fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0 && fiberPathResult.segments.map((segment, index)=>{
                 let pathCoords = [];
-                let options = {};
+                let segmentOptions = {};
                 if (segment.type === 'offset_a' || segment.type === 'offset_b') {
                     pathCoords = [
                         {
@@ -395,23 +404,38 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             lng: segment.endPoint.lng
                         }
                     ];
-                    options = FIBER_POLYLINE_STYLES.offset;
+                    segmentOptions = FIBER_POLYLINE_STYLES.offset;
                 } else if (segment.type === 'road_route' && segment.pathPolyline) {
                     const decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["decodePolyline"])(segment.pathPolyline);
                     pathCoords = decoded.map((p)=>({
                             lat: p[0],
                             lng: p[1]
                         }));
-                    options = FIBER_POLYLINE_STYLES.roadRoute;
+                    segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
                 } else {
-                    return null;
+                    // Fallback for road_route without polyline or unknown segment type - draw straight line
+                    console.warn(`Fiber segment type ${segment.type} at index ${index} missing polyline or is unknown. Drawing straight line.`);
+                    pathCoords = [
+                        {
+                            lat: segment.startPoint.lat,
+                            lng: segment.startPoint.lng
+                        },
+                        {
+                            lat: segment.endPoint.lat,
+                            lng: segment.endPoint.lng
+                        }
+                    ];
+                    segmentOptions = {
+                        ...FIBER_POLYLINE_STYLES.roadRoute,
+                        strokeColor: '#FF00FF'
+                    }; // Magenta for fallback
                 }
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Polyline"], {
                     path: pathCoords,
-                    options: options
+                    options: segmentOptions
                 }, `fiber-segment-${index}`, false, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 311,
+                    lineNumber: 331,
                     columnNumber: 18
                 }, this);
             }),
@@ -427,12 +451,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 321,
+                    lineNumber: 342,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 316,
+                lineNumber: 337,
                 columnNumber: 9
             }, this),
             fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathLabelMidPoint && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -447,18 +471,18 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 333,
+                    lineNumber: 355,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 328,
+                lineNumber: 350,
                 columnNumber: 10
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 223,
+        lineNumber: 233,
         columnNumber: 5
     }, this);
 }
@@ -478,17 +502,17 @@ function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }) {
                 ...props
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 349,
+                lineNumber: 373,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/interactive-map.tsx",
-            lineNumber: 345,
+            lineNumber: 369,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 344,
+        lineNumber: 368,
         columnNumber: 5
     }, this);
 }
@@ -2758,7 +2782,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$i
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/label.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$tower$2d$height$2d$control$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/fso/tower-height-control.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$custom$2d$profile$2d$chart$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/fso/custom-profile-chart.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-down.js [app-client] (ecmascript) <export default as ChevronDown>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-down.js [app-client] (ecmascript) <export default as ChevronDown>"); // Added ArrowRightLeft
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/chevron-up.js [app-client] (ecmascript) <export default as ChevronUp>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$target$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Target$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/target.js [app-client] (ecmascript) <export default as Target>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/loader-circle.js [app-client] (ecmascript) <export default as Loader2>");
@@ -2767,8 +2791,9 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$cable$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Cable$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/cable.js [app-client] (ecmascript) <export default as Cable>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$help$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__HelpCircle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-help.js [app-client] (ecmascript) <export default as HelpCircle>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Check$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/check.js [app-client] (ecmascript) <export default as Check>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2d$left$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowRightLeft$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-right-left.js [app-client] (ecmascript) <export default as ArrowRightLeft>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/utils.ts [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)"); // Added useEffect and useCallback
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/file-saver/dist/FileSaver.min.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-client] (ecmascript)");
@@ -2995,11 +3020,10 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
         defaultValue: "10"
     });
     const minRequiredClearance = parseFloat(watchedClearanceThresholdString);
-    // Local state for the snap radius input field within this component
     const [localSnapRadiusInput, setLocalSnapRadiusInput] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(fiberRadiusMeters.toString());
-    // Sync local input with prop from parent (RHF state)
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "ProfilePanelMiddleColumn.useEffect": ()=>{
+            // Sync local input if prop changes from parent (e.g. initial load, reset)
             if (fiberRadiusMeters.toString() !== localSnapRadiusInput) {
                 setLocalSnapRadiusInput(fiberRadiusMeters.toString());
             }
@@ -3008,18 +3032,17 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
         fiberRadiusMeters,
         localSnapRadiusInput
     ]);
-    const handleApplySnapRadius = ()=>{
+    const handleApplySnapRadiusForProfilePanel = ()=>{
         const newRadiusNum = parseInt(localSnapRadiusInput, 10);
         if (!isNaN(newRadiusNum) && newRadiusNum >= 1 && newRadiusNum <= 10000) {
-            onFiberRadiusChange(newRadiusNum); // Call parent's handler to update RHF state & trigger recalculation
+            onFiberRadiusChange(newRadiusNum); // This will trigger recalculation in page.tsx if toggle is ON
         } else {
             toast({
                 title: "Invalid Snap Radius",
                 description: "Radius must be a whole number between 1 and 10000.",
                 variant: "destructive"
             });
-            // Optionally revert local input to current RHF state value
-            setLocalSnapRadiusInput(fiberRadiusMeters.toString());
+            setLocalSnapRadiusInput(fiberRadiusMeters.toString()); // Revert to last valid value
         }
     };
     let isClearBasedOnAnalysis = false;
@@ -3046,122 +3069,118 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
             className: "flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0",
             children: [
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1",
+                    className: "flex flex-nowrap items-center justify-start gap-x-3 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1 overflow-x-auto custom-scrollbar",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex-shrink-0 order-1 min-w-[120px]",
+                            className: "flex-shrink-0 order-1 min-w-[130px] text-center",
                             children: isStale ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                className: "px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow",
+                                className: "px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow whitespace-nowrap",
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$triangle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertTriangle$3e$__["AlertTriangle"], {
                                         className: "mr-1 h-3 w-3"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 219,
+                                        lineNumber: 218,
                                         columnNumber: 15
                                     }, this),
                                     " NEEDS RE-ANALYZE"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 218,
+                                lineNumber: 217,
                                 columnNumber: 13
                             }, this) : analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("px-3 py-1.5 rounded-md text-xs font-bold shadow-md", isClearBasedOnAnalysis ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground"),
+                                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("px-3 py-1.5 rounded-md text-xs font-bold shadow-md whitespace-nowrap", isClearBasedOnAnalysis ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground"),
                                 children: isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 222,
+                                lineNumber: 221,
                                 columnNumber: 13
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                className: "px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic",
+                                className: "px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic whitespace-nowrap",
                                 children: "Perform analysis"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 233,
+                                lineNumber: 232,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 216,
+                            lineNumber: 215,
                             columnNumber: 9
                         }, this),
-                        analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex-shrink-0 flex flex-col items-center order-2 min-w-[100px] text-center",
                             children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex flex-col items-center order-2 min-w-[80px]",
-                                    children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            className: "uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium",
-                                            children: "Aerial Dist."
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 243,
-                                            columnNumber: 15
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            className: "font-bold text-foreground text-xs md:text-sm",
-                                            children: analysisResult.distanceKm < 1 ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m` : `${analysisResult.distanceKm.toFixed(1)}km`
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 244,
-                                            columnNumber: 15
-                                        }, this)
-                                    ]
-                                }, void 0, true, {
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap",
+                                    children: "Aerial Dist."
+                                }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 242,
-                                    columnNumber: 13
+                                    lineNumber: 240,
+                                    columnNumber: 11
                                 }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex flex-col items-center order-3 min-w-[80px]",
-                                    children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            className: "uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium",
-                                            children: "Min. Clear."
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 252,
-                                            columnNumber: 15
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                            className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("font-bold text-xs md:text-sm", isStale ? "text-muted-foreground" : actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure"),
-                                            children: actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 253,
-                                            columnNumber: 15
-                                        }, this)
-                                    ]
-                                }, void 0, true, {
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "font-bold text-foreground text-xs md:text-sm whitespace-nowrap",
+                                    children: analysisResult && !isStale ? analysisResult.distanceKm < 1 ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m` : `${analysisResult.distanceKm.toFixed(1)}km` : "N/A"
+                                }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 251,
-                                    columnNumber: 13
+                                    lineNumber: 241,
+                                    columnNumber: 11
                                 }, this)
                             ]
-                        }, void 0, true),
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 239,
+                            columnNumber: 9
+                        }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "order-4 flex items-center gap-2 min-w-[150px]",
+                            className: "flex-shrink-0 flex flex-col items-center order-3 min-w-[100px] text-center",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap",
+                                    children: "Min. Clear."
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 252,
+                                    columnNumber: 11
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("font-bold text-xs md:text-sm whitespace-nowrap", isStale ? "text-muted-foreground" : actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure"),
+                                    children: analysisResult && !isStale && actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 253,
+                                    columnNumber: 11
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                            lineNumber: 251,
+                            columnNumber: 9
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "order-4 flex items-center gap-2 flex-shrink-0 min-w-[160px]",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                     type: "submit",
                                     onClick: handleSubmit(processSubmit),
                                     disabled: anyOperationPending,
                                     size: "sm",
-                                    className: "bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight flex-1",
+                                    className: "bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight flex-1",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
                                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 272,
+                                            lineNumber: 270,
                                             columnNumber: 17
                                         }, this),
                                         buttonText
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 265,
+                                    lineNumber: 263,
                                     columnNumber: 14
                                 }, this),
                                 analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -3170,37 +3189,37 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     disabled: anyOperationPending,
                                     size: "sm",
                                     variant: "outline",
-                                    className: "text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10 flex-shrink-0",
+                                    className: "text-xs font-semibold px-2 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10 flex-shrink-0",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
                                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin")
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 284,
+                                            lineNumber: 282,
                                             columnNumber: 21
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$download$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Download$3e$__["Download"], {
                                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", isGeneratingPdf && "hidden")
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 285,
+                                            lineNumber: 283,
                                             columnNumber: 21
                                         }, this),
                                         "PDF"
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 276,
+                                    lineNumber: 274,
                                     columnNumber: 18
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 264,
+                            lineNumber: 262,
                             columnNumber: 9
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex items-center space-x-1 order-5 min-w-[130px]",
+                            className: "flex-shrink-0 flex items-center space-x-1 order-5 min-w-[150px]",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
                                     htmlFor: "clearanceThresholdProfile",
@@ -3208,7 +3227,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     children: "Req. Fresnel (m):"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 293,
+                                    lineNumber: 291,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
@@ -3220,25 +3239,26 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                             step: "any",
                                             ...field,
                                             onChange: (e)=>field.onChange(e.target.value),
-                                            className: "bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
+                                            className: "bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center",
+                                            disabled: anyOperationPending
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 298,
+                                            lineNumber: 296,
                                             columnNumber: 19
                                         }, void 0)
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 294,
+                                    lineNumber: 292,
                                     columnNumber: 11
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 292,
+                            lineNumber: 290,
                             columnNumber: 9
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex items-center space-x-1 order-6 min-w-[100px]",
+                            className: "flex-shrink-0 flex items-center space-x-1 order-6 min-w-[110px]",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$switch$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Switch"], {
                                     id: "fiber-path-toggle",
@@ -3248,25 +3268,25 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     className: "data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 312,
+                                    lineNumber: 311,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
                                     htmlFor: "fiber-path-toggle",
-                                    className: "text-xs text-muted-foreground flex items-center cursor-pointer",
+                                    className: "text-xs text-muted-foreground flex items-center cursor-pointer whitespace-nowrap",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$cable$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Cable$3e$__["Cable"], {
                                             className: "mr-1 h-3.5 w-3.5"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 320,
+                                            lineNumber: 319,
                                             columnNumber: 13
                                         }, this),
                                         " Fiber"
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 319,
+                                    lineNumber: 318,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Tooltip"], {
@@ -3284,48 +3304,58 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                                     className: "h-3.5 w-3.5 text-muted-foreground/70 cursor-help"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                    lineNumber: 325,
+                                                    lineNumber: 324,
                                                     columnNumber: 24
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 324,
+                                                lineNumber: 323,
                                                 columnNumber: 19
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 323,
+                                            lineNumber: 322,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TooltipContent"], {
                                             side: "top",
                                             className: "max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg",
-                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                children: "Calculates estimated fiber optic cable path length using road networks. Requires Line-of-Sight (LOS) to be feasible."
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 329,
-                                                columnNumber: 19
-                                            }, this)
-                                        }, void 0, false, {
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                    children: "Calculates estimated fiber optic cable path length using road networks. Requires Line-of-Sight (LOS) to be feasible."
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                                    lineNumber: 328,
+                                                    columnNumber: 19
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                    className: "mt-1",
+                                                    children: "Automatically re-calculates if LOS is feasible and this toggle is switched ON, or if Snap Radius is Applied."
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                                    lineNumber: 329,
+                                                    columnNumber: 19
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 328,
+                                            lineNumber: 327,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 322,
+                                    lineNumber: 321,
                                     columnNumber: 11
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 311,
+                            lineNumber: 310,
                             columnNumber: 9
                         }, this),
                         calculateFiberPathEnabled && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex items-center space-x-1 order-7 min-w-[180px]",
+                            className: "flex-shrink-0 flex items-center space-x-1 order-7 min-w-[200px]",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
                                     htmlFor: "fiber-radius-input-bottom-panel",
@@ -3353,7 +3383,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                     type: "button",
-                                    onClick: handleApplySnapRadius,
+                                    onClick: handleApplySnapRadiusForProfilePanel,
                                     disabled: anyOperationPending || localSnapRadiusInput === fiberRadiusMeters.toString(),
                                     size: "sm",
                                     className: "h-6 px-2 text-[0.65rem] leading-tight",
@@ -3390,7 +3420,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 214,
+                    lineNumber: 212,
                     columnNumber: 7
                 }, this),
                 " ",
@@ -3434,14 +3464,14 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     className: "mr-1.5 h-3.5 w-3.5 animate-spin"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 382,
+                                    lineNumber: 383,
                                     columnNumber: 13
                                 }, this),
                                 " Calculating fiber path..."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 381,
+                            lineNumber: 382,
                             columnNumber: 11
                         }, this),
                         fiberPathResult && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3451,10 +3481,10 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "font-semibold",
-                                            children: "Fiber Path Status:"
+                                            children: "Fiber Route Status:"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 388,
+                                            lineNumber: 389,
                                             columnNumber: 15
                                         }, this),
                                         ' ',
@@ -3463,13 +3493,13 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                             children: fiberPathResult.status === 'success' ? 'Calculated' : fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' : fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' : fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' : fiberPathResult.status === 'no_route_between_roads' ? 'No Road Route' : fiberPathResult.status === 'radius_too_small' ? 'Snap Radius Too Small' : 'Error'
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 389,
+                                            lineNumber: 390,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 387,
+                                    lineNumber: 388,
                                     columnNumber: 13
                                 }, this),
                                 fiberPathResult.totalDistanceMeters !== undefined && fiberPathResult.status === 'success' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3479,7 +3509,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                             children: "Total Fiber Distance:"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 404,
+                                            lineNumber: 405,
                                             columnNumber: 18
                                         }, this),
                                         " ",
@@ -3488,7 +3518,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 404,
+                                    lineNumber: 405,
                                     columnNumber: 15
                                 }, this),
                                 fiberPathError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3496,7 +3526,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     children: fiberPathError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 406,
+                                    lineNumber: 407,
                                     columnNumber: 32
                                 }, this),
                                 fiberPathResult.errorMessage && fiberPathResult.status !== 'success' && !fiberPathError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3504,7 +3534,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     children: fiberPathResult.errorMessage
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 408,
+                                    lineNumber: 409,
                                     columnNumber: 17
                                 }, this),
                                 fiberPathResult.status === 'success' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3520,13 +3550,13 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 411,
+                                    lineNumber: 412,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 386,
+                            lineNumber: 387,
                             columnNumber: 11
                         }, this),
                         fiberPathResult && (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3536,7 +3566,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     className: "inline h-3 w-3 mr-1"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 421,
+                                    lineNumber: 422,
                                     columnNumber: 17
                                 }, this),
                                 fiberPathResult.status === 'radius_too_small' ? "Snap radius is too small. " : "No road found near one or both sites. ",
@@ -3544,7 +3574,7 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 420,
+                            lineNumber: 421,
                             columnNumber: 13
                         }, this),
                         fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3554,78 +3584,81 @@ const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, co
                                     className: "inline h-3 w-3 mr-1"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 428,
+                                    lineNumber: 429,
                                     columnNumber: 17
                                 }, this),
                                 "Could not find a road route between the snapped points for Site A and Site B. They might be on disconnected road networks."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 427,
+                            lineNumber: 428,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 379,
+                    lineNumber: 380,
                     columnNumber: 7
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("flex-1 min-h-0 p-0.5"),
-                    children: analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$custom$2d$profile$2d$chart$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                        data: analysisResult.profile,
-                        pointAName: pointAName,
-                        pointBName: pointBName,
+                    children: analysisResult || isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$custom$2d$profile$2d$chart$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                        data: analysisResult?.profile || [],
+                        pointAName: pointAName || "Site A",
+                        pointBName: pointBName || "Site B",
                         isStale: isStale,
-                        totalDistanceKm: analysisResult.distanceKm,
+                        totalDistanceKm: analysisResult?.distanceKm,
                         isActionPending: anyOperationPending,
                         onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph
                     }, chartKey, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 437,
+                        lineNumber: 438,
                         columnNumber: 11
-                    }, this) : isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                        className: "h-full flex items-center justify-center p-2 bg-muted/30 rounded-md",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                            className: "text-muted-foreground text-xs text-center",
-                            children: "Loading analysis data..."
-                        }, void 0, false, {
-                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 449,
-                            columnNumber: 17
-                        }, this)
-                    }, void 0, false, {
-                        fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 448,
-                        columnNumber: 13
                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                            children: "Perform analysis to see profile."
-                        }, void 0, false, {
-                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 453,
-                            columnNumber: 13
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2d$left$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowRightLeft$3e$__["ArrowRightLeft"], {
+                                className: "h-10 w-10 text-muted-foreground/50 mb-2"
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                lineNumber: 450,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                children: "Perform analysis to see link profile."
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                lineNumber: 451,
+                                columnNumber: 13
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: "mt-1 text-[0.7rem]",
+                                children: "Click on the map to set site locations or enter coordinates manually."
+                            }, void 0, false, {
+                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                lineNumber: 452,
+                                columnNumber: 13
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 452,
+                        lineNumber: 449,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 435,
+                    lineNumber: 436,
                     columnNumber: 7
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-            lineNumber: 211,
+            lineNumber: 208,
             columnNumber: 5
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 210,
+        lineNumber: 207,
         columnNumber: 5
     }, this);
 };
@@ -3705,7 +3738,8 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
         className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden", isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full", "z-[50]"),
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("w-full overflow-hidden transition-[height] duration-500 ease-in-out", isContentExpanded && isPanelGloballyVisible ? "h-[40vh] md:h-[35vh]" : "h-0"),
+                className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("w-full overflow-hidden transition-[height] duration-500 ease-in-out", isContentExpanded && isPanelGloballyVisible ? "h-[40vh] md:h-[35vh]" : "h-0" // Height is managed here
+                ),
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3723,12 +3757,12 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 579,
+                                    lineNumber: 581,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 578,
+                                lineNumber: 580,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ProfilePanelMiddleColumn, {
@@ -3755,7 +3789,7 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                 fiberPathError: fiberPathError
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 590,
+                                lineNumber: 594,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3770,18 +3804,18 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 615,
+                                    lineNumber: 620,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 614,
+                                lineNumber: 619,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 576,
+                        lineNumber: 577,
                         columnNumber: 12
                     }, this)
                 }, void 0, false, {
@@ -3791,7 +3825,7 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 569,
+                lineNumber: 568,
                 columnNumber: 7
             }, this),
             isPanelGloballyVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3802,24 +3836,24 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 635,
+                    lineNumber: 640,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 636,
+                    lineNumber: 641,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 629,
+                lineNumber: 634,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 560,
+        lineNumber: 559,
         columnNumber: 5
     }, this);
 }
@@ -3922,7 +3956,17 @@ var _s = __turbopack_context__.k.signature();
 ;
 const LOCAL_STORAGE_KEYS = {
     FIBER_TOGGLE: 'fiberPathEnabled',
-    FIBER_RADIUS: 'fiberPathRadiusMeters'
+    FIBER_RADIUS: 'fiberPathRadiusMeters',
+    // Keys for persisting form inputs for single LOS analysis
+    POINT_A_NAME: 'homePointAName',
+    POINT_A_LAT: 'homePointALat',
+    POINT_A_LNG: 'homePointALng',
+    POINT_A_HEIGHT: 'homePointAHeight',
+    POINT_B_NAME: 'homePointBName',
+    POINT_B_LAT: 'homePointBLat',
+    POINT_B_LNG: 'homePointBLng',
+    POINT_B_HEIGHT: 'homePointBHeight',
+    CLEARANCE_THRESHOLD: 'homeClearanceThreshold'
 };
 function Home() {
     _s();
@@ -3937,45 +3981,107 @@ function Home() {
     const [historyList, setHistoryList] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const [isHistoryPanelOpen, setIsHistoryPanelOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [liveDistanceKm, setLiveDistanceKm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [isClient, setIsClient] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     // State for Fiber Path Calculation
-    const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
-        "Home.useState": ()=>{
-            if ("TURBOPACK compile-time truthy", 1) {
-                const storedValue = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE);
-                return storedValue ? JSON.parse(storedValue) : false;
-            }
-            "TURBOPACK unreachable";
-        }
-    }["Home.useState"]);
-    const [fiberRadiusMeters, setFiberRadiusMeters] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
-        "Home.useState": ()=>{
-            if ("TURBOPACK compile-time truthy", 1) {
-                const storedValue = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS);
-                return storedValue ? parseInt(storedValue, 10) : 500; // Default radius 500m
-            }
-            "TURBOPACK unreachable";
-        }
-    }["Home.useState"]);
+    const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [fiberRadiusMeters, setFiberRadiusMeters] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(500); // Default radius 500m
     const [fiberPathResult, setFiberPathResult] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isFiberCalculating, setIsFiberCalculating] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [fiberPathError, setFiberPathError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    // Initialize form with persisted values or defaults
     const form = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"])({
         resolver: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$hookform$2f$resolvers$2f$zod$2f$dist$2f$zod$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["zodResolver"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AnalysisFormSchema"]),
-        defaultValues: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"],
+        defaultValues: {
+            "Home.useForm[form]": ()=>{
+                if (isClient) {
+                    return {
+                        pointA: {
+                            name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_NAME) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.name,
+                            lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LAT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.lat,
+                            lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LNG) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.lng,
+                            height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointA.height.toString(), 10)
+                        },
+                        pointB: {
+                            name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_NAME) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.name,
+                            lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LAT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.lat,
+                            lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LNG) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.lng,
+                            height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].pointB.height.toString(), 10)
+                        },
+                        clearanceThreshold: localStorage.getItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD) || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"].clearanceThreshold
+                    };
+                }
+                return __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"];
+            }
+        }["Home.useForm[form]"],
         mode: 'onBlur'
     });
     const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
+    // Effect to set isClient to true after mount
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            setIsClient(true);
+        }
+    }["Home.useEffect"], []);
+    // Effect to load Fiber settings from localStorage after client mount
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            if (isClient) {
+                const storedToggle = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE);
+                if (storedToggle) {
+                    setCalculateFiberPathEnabled(JSON.parse(storedToggle));
+                }
+                const storedRadius = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS);
+                if (storedRadius) {
+                    setFiberRadiusMeters(parseInt(storedRadius, 10));
+                }
+                // Reset form with localStorage values if isClient changes (which ensures it runs after mount)
+                form.reset(form.formState.defaultValues);
+            }
+        }
+    }["Home.useEffect"], [
+        isClient,
+        form
+    ]); // form.reset depends on form instance
+    // Persist form inputs to localStorage whenever they change
     const watchedPointA = watch('pointA');
     const watchedPointB = watch('pointB');
     const watchedClearanceThreshold = watch('clearanceThreshold');
-    const formPointAForMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
-        control,
-        name: 'pointA'
-    });
-    const formPointBForMap = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
-        control,
-        name: 'pointB'
-    });
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            if (isClient) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_NAME, watchedPointA.name);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_LAT, watchedPointA.lat);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_LNG, watchedPointA.lng);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT, watchedPointA.height.toString());
+            }
+        }
+    }["Home.useEffect"], [
+        isClient,
+        watchedPointA
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            if (isClient) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_NAME, watchedPointB.name);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_LAT, watchedPointB.lat);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_LNG, watchedPointB.lng);
+                localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT, watchedPointB.height.toString());
+            }
+        }
+    }["Home.useEffect"], [
+        isClient,
+        watchedPointB
+    ]);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "Home.useEffect": ()=>{
+            if (isClient) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD, watchedClearanceThreshold);
+            }
+        }
+    }["Home.useEffect"], [
+        isClient,
+        watchedClearanceThreshold
+    ]);
     const processSubmit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
         "Home.useCallback[processSubmit]": (data)=>{
             setDisplayedError(null);
@@ -4001,30 +4107,89 @@ function Home() {
     }["Home.useCallback[processSubmit]"], [
         formAction
     ]);
+    // Unified Fiber Path Calculation Logic
+    const triggerFiberCalculation = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useCallback"])({
+        "Home.useCallback[triggerFiberCalculation]": async ()=>{
+            if (!analysisResult || !analysisResult.losPossible || !calculateFiberPathEnabled) {
+                if (calculateFiberPathEnabled && analysisResult && !analysisResult.losPossible) {
+                    setFiberPathResult({
+                        status: 'los_not_feasible',
+                        errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
+                        pointA_original: analysisResult.pointA,
+                        pointB_original: analysisResult.pointB,
+                        losFeasible: false,
+                        radiusMetersUsed: fiberRadiusMeters
+                    });
+                    setFiberPathError(null); // Not an API error, but an info message
+                } else {
+                    setFiberPathResult(null); // Clear if toggle is off or no LOS result
+                    setFiberPathError(null);
+                }
+                setIsFiberCalculating(false);
+                return;
+            }
+            setIsFiberCalculating(true);
+            setFiberPathError(null);
+            setFiberPathResult(null);
+            try {
+                const fiberResult = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, fiberRadiusMeters, true // LOS is feasible here
+                );
+                setFiberPathResult(fiberResult);
+                if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
+                    setFiberPathError(fiberResult.errorMessage);
+                    toast({
+                        title: "Fiber Path Info",
+                        description: fiberResult.errorMessage,
+                        variant: "default",
+                        duration: 6000
+                    });
+                } else if (fiberResult.status === 'success') {
+                    toast({
+                        title: "Fiber Path Calculated",
+                        description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
+                        duration: 5000
+                    });
+                }
+            } catch (err) {
+                const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
+                setFiberPathError(fiberErrorMessage);
+                toast({
+                    title: "Fiber Path Error",
+                    description: fiberErrorMessage,
+                    variant: "destructive",
+                    duration: 7000
+                });
+            } finally{
+                setIsFiberCalculating(false);
+            }
+        }
+    }["Home.useCallback[triggerFiberCalculation]"], [
+        analysisResult,
+        calculateFiberPathEnabled,
+        fiberRadiusMeters,
+        toast
+    ]);
     // Effect to handle LOS Analysis results and trigger Fiber Path calculation
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Home.useEffect": ()=>{
             if (rawServerState === null) return;
-            // Check for a returned error object from the server action
             if (typeof rawServerState === 'object' && rawServerState !== null && 'error' in rawServerState && typeof rawServerState.error === 'string') {
-                setAnalysisResult(null);
+                const newAnalysisResult = null;
+                setAnalysisResult(newAnalysisResult);
                 const errorMessage = rawServerState.error || "An unexpected error occurred during LOS analysis.";
                 setDisplayedError(errorMessage);
-                if ('fieldErrors' in rawServerState && rawServerState.fieldErrors) {
-                    setFieldErrors(rawServerState.fieldErrors);
-                } else {
-                    setFieldErrors(null);
-                }
+                if ('fieldErrors' in rawServerState && rawServerState.fieldErrors) setFieldErrors(rawServerState.fieldErrors);
+                else setFieldErrors(null);
                 toast({
                     title: "LOS Analysis Error",
                     description: errorMessage,
                     variant: "destructive",
                     duration: 7000
                 });
-                setFiberPathResult(null); // Clear fiber result on LOS error
+                setFiberPathResult(null);
                 setFiberPathError(null);
+                setIsFiberCalculating(false);
             } else if (typeof rawServerState === 'object' && rawServerState !== null && 'losPossible' in rawServerState) {
-                // Successful LOS analysis result
                 const successfulLosResult = rawServerState;
                 setAnalysisResult(successfulLosResult);
                 setHistoryList({
@@ -4060,65 +4225,26 @@ function Home() {
                 }
                 toast({
                     title: "LOS Analysis Complete",
-                    description: successfulLosResult.message || "LOS analysis performed successfully."
+                    description: successfulLosResult.message || "LOS analysis performed."
                 });
-                // --- Trigger Fiber Path Calculation if enabled ---
-                if (calculateFiberPathEnabled) {
-                    setIsFiberCalculating(true);
+                // After successful LOS analysis, trigger fiber calculation if enabled and LOS is feasible
+                if (calculateFiberPathEnabled && successfulLosResult.losPossible) {
+                    triggerFiberCalculation(); // Call the unified function
+                } else if (calculateFiberPathEnabled && !successfulLosResult.losPossible) {
+                    // If toggle is on but LOS not possible, set specific fiber status
+                    setFiberPathResult({
+                        status: 'los_not_feasible',
+                        errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
+                        pointA_original: successfulLosResult.pointA,
+                        pointB_original: successfulLosResult.pointB,
+                        losFeasible: false,
+                        radiusMetersUsed: fiberRadiusMeters
+                    });
                     setFiberPathError(null);
-                    setFiberPathResult(null); // Clear previous fiber result
-                    if (successfulLosResult.losPossible) {
-                        (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(successfulLosResult.pointA.lat, successfulLosResult.pointA.lng, successfulLosResult.pointB.lat, successfulLosResult.pointB.lng, fiberRadiusMeters, true // isLosFeasible is true here
-                        ).then({
-                            "Home.useEffect": (fiberResult)=>{
-                                setFiberPathResult(fiberResult);
-                                if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-                                    setFiberPathError(fiberResult.errorMessage);
-                                    toast({
-                                        title: "Fiber Path Info",
-                                        description: fiberResult.errorMessage,
-                                        variant: "default",
-                                        duration: 6000
-                                    });
-                                } else if (fiberResult.status === 'success') {
-                                    toast({
-                                        title: "Fiber Path Calculated",
-                                        description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
-                                        duration: 5000
-                                    });
-                                }
-                            }
-                        }["Home.useEffect"]).catch({
-                            "Home.useEffect": (err)=>{
-                                const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-                                setFiberPathError(fiberErrorMessage);
-                                toast({
-                                    title: "Fiber Path Error",
-                                    description: fiberErrorMessage,
-                                    variant: "destructive",
-                                    duration: 7000
-                                });
-                            }
-                        }["Home.useEffect"]).finally({
-                            "Home.useEffect": ()=>{
-                                setIsFiberCalculating(false);
-                            }
-                        }["Home.useEffect"]);
-                    } else {
-                        // LOS is not feasible, but fiber calculation was enabled.
-                        setFiberPathResult({
-                            status: 'los_not_feasible',
-                            errorMessage: 'Fiber path not calculated: LOS is not feasible for this link.',
-                            pointA_original: successfulLosResult.pointA,
-                            pointB_original: successfulLosResult.pointB,
-                            losFeasible: false,
-                            radiusMetersUsed: fiberRadiusMeters
-                        });
-                        setFiberPathError('Fiber path not calculated: LOS is not feasible.');
-                        setIsFiberCalculating(false);
-                    }
+                    setIsFiberCalculating(false);
                 } else {
-                    setFiberPathResult(null); // Clear fiber result if toggle is off
+                    // If toggle is off, ensure fiber results are cleared
+                    setFiberPathResult(null);
                     setFiberPathError(null);
                     setIsFiberCalculating(false);
                 }
@@ -4131,8 +4257,9 @@ function Home() {
         getValues,
         isAnalysisPanelGloballyOpen,
         calculateFiberPathEnabled,
-        fiberRadiusMeters
-    ]);
+        fiberRadiusMeters,
+        triggerFiberCalculation
+    ]); // Added triggerFiberCalculation
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Home.useEffect": ()=>{
             const formValues = getValues();
@@ -4288,7 +4415,19 @@ function Home() {
         setIsHistoryPanelOpen((prev)=>!prev);
     };
     const handleClearMap = ()=>{
-        reset(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"]);
+        reset(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"]); // Reset form to compiled-in defaults
+        if (isClient) {
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_NAME);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_LAT);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_LNG);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_NAME);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_LAT);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_LNG);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT);
+            localStorage.removeItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD);
+        // Note: Fiber toggle and radius localStorage are managed separately
+        }
         setAnalysisResult(null);
         setLiveDistanceKm(null);
         setIsStale(false);
@@ -4296,8 +4435,6 @@ function Home() {
         setFieldErrors(null);
         setFiberPathResult(null);
         setFiberPathError(null);
-        // setCalculateFiberPathEnabled(false); // Keep persisted state or reset to default? For now, keep persisted.
-        // setFiberRadiusMeters(500); // Keep persisted state or reset? For now, keep persisted.
         toast({
             title: "Map Cleared",
             description: "Form reset to default values."
@@ -4309,7 +4446,7 @@ function Home() {
     const handleLoadHistoryItem = (id)=>{
         const itemToLoad = historyList.find((item)=>item.id === id);
         if (itemToLoad) {
-            setAnalysisResult(itemToLoad);
+            setAnalysisResult(itemToLoad); // This will set analysisResult for triggerFiberCalculation
             const formValuesFromHistory = {
                 pointA: {
                     name: itemToLoad.pointA.name || 'Site A',
@@ -4325,25 +4462,26 @@ function Home() {
                 },
                 clearanceThreshold: itemToLoad.clearanceThresholdUsed.toString()
             };
-            reset(formValuesFromHistory);
+            reset(formValuesFromHistory); // This updates form state, which triggerFiberCalculation uses via analysisResult
             setLiveDistanceKm(itemToLoad.distanceKm);
             setIsStale(false);
             setDisplayedError(null);
             setFieldErrors(null);
-            setFiberPathResult(null); // Clear fiber results when loading from history
-            setFiberPathError(null);
+            // Fiber calculation will be triggered by the useEffect watching analysisResult if toggle is on
             setIsAnalysisPanelGloballyOpen(true);
             setIsBottomPanelContentExpanded(true);
             toast({
                 title: "History Loaded",
                 description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.`
             });
-            // Optionally, re-run fiber calculation if toggle is ON and LOS is feasible for the loaded item
+            // Trigger fiber calculation if needed after history load and state update
+            // The useEffect watching analysisResult and calculateFiberPathEnabled handles this
             if (calculateFiberPathEnabled && itemToLoad.losPossible) {
-                setIsFiberCalculating(true);
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(itemToLoad.pointA.lat, itemToLoad.pointA.lng, itemToLoad.pointB.lat, itemToLoad.pointB.lng, fiberRadiusMeters, true).then(setFiberPathResult).catch((err)=>{
-                    setFiberPathError(err.message || "Error re-calculating fiber for history item.");
-                }).finally(()=>setIsFiberCalculating(false));
+            // The triggerFiberCalculation will be called by the useEffect if analysisResult changes
+            // and calculateFiberPathEnabled is true and itemToLoad.losPossible is true.
+            // We may need to manually call it here if the useEffect won't fire due to reference stability of itemToLoad
+            // Let's ensure triggerFiberCalculation is called:
+            // Setting analysisResult should be enough for the useEffect to pick it up.
             } else if (calculateFiberPathEnabled && !itemToLoad.losPossible) {
                 setFiberPathResult({
                     status: 'los_not_feasible',
@@ -4353,6 +4491,12 @@ function Home() {
                     losFeasible: false,
                     radiusMetersUsed: fiberRadiusMeters
                 });
+                setFiberPathError(null);
+                setIsFiberCalculating(false);
+            } else {
+                setFiberPathResult(null);
+                setFiberPathError(null);
+                setIsFiberCalculating(false);
             }
         }
     };
@@ -4364,117 +4508,53 @@ function Home() {
     };
     const handleToggleFiberPath = (checked)=>{
         setCalculateFiberPathEnabled(checked);
-        if ("TURBOPACK compile-time truthy", 1) {
+        if (isClient) {
             localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE, JSON.stringify(checked));
         }
-        if (!checked) {
+        // If toggled ON, and there's a current, non-stale LOS result that is feasible, trigger calculation.
+        // If toggled OFF, clear fiber results.
+        if (checked && analysisResult && !isStale && analysisResult.losPossible) {
+            triggerFiberCalculation();
+        } else if (!checked) {
             setFiberPathResult(null);
             setFiberPathError(null);
-        } else if (analysisResult && !isStale) {
-            setIsFiberCalculating(true);
+            setIsFiberCalculating(false);
+        } else if (checked && analysisResult && !isStale && !analysisResult.losPossible) {
+            // If toggled ON, but current LOS is not feasible
+            setFiberPathResult({
+                status: 'los_not_feasible',
+                errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
+                pointA_original: analysisResult.pointA,
+                pointB_original: analysisResult.pointB,
+                losFeasible: false,
+                radiusMetersUsed: fiberRadiusMeters
+            });
             setFiberPathError(null);
-            setFiberPathResult(null);
-            if (analysisResult.losPossible) {
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, fiberRadiusMeters, true).then((fiberResult)=>{
-                    setFiberPathResult(fiberResult);
-                    if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-                        setFiberPathError(fiberResult.errorMessage);
-                        toast({
-                            title: "Fiber Path Info",
-                            description: fiberResult.errorMessage,
-                            variant: "default",
-                            duration: 6000
-                        });
-                    } else if (fiberResult.status === 'success') {
-                        toast({
-                            title: "Fiber Path Calculated",
-                            description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
-                            duration: 5000
-                        });
-                    }
-                }).catch((err)=>{
-                    const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-                    setFiberPathError(fiberErrorMessage);
-                    toast({
-                        title: "Fiber Path Error",
-                        description: fiberErrorMessage,
-                        variant: "destructive",
-                        duration: 7000
-                    });
-                }).finally(()=>{
-                    setIsFiberCalculating(false);
-                });
-            } else {
-                // LOS is not feasible for the current analysisResult
-                setFiberPathResult({
-                    status: 'los_not_feasible',
-                    errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link.',
-                    pointA_original: analysisResult.pointA,
-                    pointB_original: analysisResult.pointB,
-                    losFeasible: false,
-                    radiusMetersUsed: fiberRadiusMeters
-                });
-                setFiberPathError('Fiber path not calculated: LOS is not feasible.');
-                setIsFiberCalculating(false);
-            }
+            setIsFiberCalculating(false);
         }
     };
-    const handleFiberRadiusChange = (value)=>{
-        const newRadius = parseInt(value, 10);
-        if (!isNaN(newRadius) && newRadius >= 0) {
-            setFiberRadiusMeters(newRadius);
-            if ("TURBOPACK compile-time truthy", 1) {
-                localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
-            }
-            // If toggle is enabled and there's a valid, non-stale LOS result, re-calculate
-            if (calculateFiberPathEnabled && analysisResult && !isStale) {
-                setIsFiberCalculating(true);
-                setFiberPathError(null);
-                setFiberPathResult(null);
-                if (analysisResult.losPossible) {
-                    (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])(analysisResult.pointA.lat, analysisResult.pointA.lng, analysisResult.pointB.lat, analysisResult.pointB.lng, newRadius, true).then((fiberResult)=>{
-                        setFiberPathResult(fiberResult);
-                        if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
-                            setFiberPathError(fiberResult.errorMessage);
-                            toast({
-                                title: "Fiber Path Info",
-                                description: fiberResult.errorMessage,
-                                variant: "default",
-                                duration: 6000
-                            });
-                        } else if (fiberResult.status === 'success') {
-                            toast({
-                                title: "Fiber Path Re-calculated",
-                                description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`,
-                                duration: 5000
-                            });
-                        }
-                    }).catch((err)=>{
-                        const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
-                        setFiberPathError(fiberErrorMessage);
-                        toast({
-                            title: "Fiber Path Error",
-                            description: fiberErrorMessage,
-                            variant: "destructive",
-                            duration: 7000
-                        });
-                    }).finally(()=>{
-                        setIsFiberCalculating(false);
-                    });
-                } else {
-                    // LOS is not feasible for the current analysisResult
-                    setFiberPathResult({
-                        status: 'los_not_feasible',
-                        errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link with new radius.',
-                        pointA_original: analysisResult.pointA,
-                        pointB_original: analysisResult.pointB,
-                        losFeasible: false,
-                        radiusMetersUsed: newRadius
-                    });
-                    setFiberPathError('Fiber path not calculated: LOS is not feasible.');
-                    setIsFiberCalculating(false);
-                }
-            }
+    const handleFiberRadiusChange = (newRadius)=>{
+        // This function is called from BottomPanel when the "Apply" button for snap radius is clicked
+        // It receives the validated new radius number
+        setFiberRadiusMeters(newRadius);
+        if (isClient) {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
+        }
+        // If toggle is enabled and there's a valid, non-stale, feasible LOS result, re-calculate
+        if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
+            triggerFiberCalculation(); // triggerFiberCalculation will use the updated fiberRadiusMeters
+        } else if (calculateFiberPathEnabled && analysisResult && !isStale && !analysisResult.losPossible) {
+            // Update status if toggle is on but LOS not feasible
+            setFiberPathResult({
+                status: 'los_not_feasible',
+                errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link with new radius.',
+                pointA_original: analysisResult.pointA,
+                pointB_original: analysisResult.pointB,
+                losFeasible: false,
+                radiusMetersUsed: newRadius
+            });
+            setFiberPathError(null);
+            setIsFiberCalculating(false);
         }
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -4486,7 +4566,7 @@ function Home() {
                 currentPage: "home"
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 515,
+                lineNumber: 557,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4495,15 +4575,15 @@ function Home() {
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex-1 w-full relative",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$interactive$2d$map$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                            pointA: formPointAForMap && formPointAForMap.lat && formPointAForMap.lng ? {
-                                lat: parseFloat(formPointAForMap.lat),
-                                lng: parseFloat(formPointAForMap.lng),
-                                name: formPointAForMap.name
+                            pointA: watchedPointA && isValidNumericString(watchedPointA.lat) && isValidNumericString(watchedPointA.lng) ? {
+                                lat: parseFloat(watchedPointA.lat),
+                                lng: parseFloat(watchedPointA.lng),
+                                name: watchedPointA.name
                             } : undefined,
-                            pointB: formPointBForMap && formPointBForMap.lat && formPointBForMap.lng ? {
-                                lat: parseFloat(formPointBForMap.lat),
-                                lng: parseFloat(formPointBForMap.lng),
-                                name: formPointBForMap.name
+                            pointB: watchedPointB && isValidNumericString(watchedPointB.lat) && isValidNumericString(watchedPointB.lng) ? {
+                                lat: parseFloat(watchedPointB.lat),
+                                lng: parseFloat(watchedPointB.lng),
+                                name: watchedPointB.name
                             } : undefined,
                             onMapClick: handleMapClick,
                             onMarkerDrag: handleMarkerDrag,
@@ -4514,12 +4594,12 @@ function Home() {
                             fiberPathResult: fiberPathResult
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 523,
+                            lineNumber: 565,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 522,
+                        lineNumber: 564,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4534,19 +4614,19 @@ function Home() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 544,
+                                    lineNumber: 586,
                                     columnNumber: 15
                                 }, this),
                                 "Start Link Analysis"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 538,
+                            lineNumber: 580,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 537,
+                        lineNumber: 579,
                         columnNumber: 11
                     }, this),
                     (isActionPending || isFiberCalculating) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4560,7 +4640,7 @@ function Home() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 554,
+                                        lineNumber: 596,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4568,7 +4648,7 @@ function Home() {
                                         children: isActionPending ? "Analyzing Link..." : "Calculating Fiber Path..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 555,
+                                        lineNumber: 597,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4576,23 +4656,23 @@ function Home() {
                                         children: isActionPending ? "Please wait while we process elevation data." : "Accessing road network data..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 558,
+                                        lineNumber: 600,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 553,
+                                lineNumber: 595,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 552,
+                            lineNumber: 594,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 551,
+                        lineNumber: 593,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4609,19 +4689,19 @@ function Home() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 571,
+                                                lineNumber: 613,
                                                 columnNumber: 21
                                             }, this),
                                             " LOS Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 570,
+                                        lineNumber: 612,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 569,
+                                    lineNumber: 611,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -4631,7 +4711,7 @@ function Home() {
                                             children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 575,
+                                            lineNumber: 617,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -4644,24 +4724,24 @@ function Home() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 576,
+                                            lineNumber: 618,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 574,
+                                    lineNumber: 616,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 568,
+                            lineNumber: 610,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 567,
+                        lineNumber: 609,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$bottom$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -4691,7 +4771,7 @@ function Home() {
                         fiberPathError: fiberPathError
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 588,
+                        lineNumber: 630,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -4702,24 +4782,22 @@ function Home() {
                         onToggle: handleToggleHistoryPanel
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 614,
+                        lineNumber: 656,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 521,
+                lineNumber: 563,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true);
 }
-_s(Home, "mQUKSTNTBtWB0qrTnHyqzLqnIyU=", false, function() {
+_s(Home, "TmAHxqpWEFD5Z4bwKXWYgl8dvfs=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"],
-        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"]
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"]
     ];
 });
 _c = Home;
