@@ -185,6 +185,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   return (
     <TooltipProvider>
     <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
+      {/* Main controls row for LOS */}
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
         <div className="flex-shrink-0 order-1">
           {isStale ? (
@@ -290,48 +291,51 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </div>
         )}
 
-      {/* Fiber Path Controls and Results Section */}
-      <div className="py-1 px-2 md:px-3 border-t border-border mt-1 space-y-1.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="fiber-path-toggle"
-              checked={calculateFiberPathEnabled}
-              onCheckedChange={onToggleFiberPath}
-              disabled={isActionPending}
-            />
-            <Label htmlFor="fiber-path-toggle" className="text-xs text-muted-foreground flex items-center">
-              <Cable className="mr-1.5 h-3.5 w-3.5" /> Calculate Fiber Path
-            </Label>
-            <Tooltip delayDuration={100}>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-4 w-4 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info">
-                         <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
-                    <p>Calculates estimated fiber optic cable path length using road networks within a specified radius from each site.</p>
-                    <p className="mt-1">Requires Line-of-Sight (LOS) to be feasible.</p>
-                    <p className="mt-1">Results include offsets from sites to roads and the road route distance.</p>
-                </TooltipContent>
-            </Tooltip>
-          </div>
-          {calculateFiberPathEnabled && (
-            <div className="flex items-center space-x-1">
-              <Label htmlFor="fiber-radius-input" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Snap Radius (m):</Label>
-              <Input
-                id="fiber-radius-input"
-                type="number"
-                value={fiberRadiusMeters.toString()}
-                onChange={handleFiberRadiusInputChange}
-                min={0}
-                step={50}
-                className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center"
-                disabled={isActionPending || isFiberCalculating}
-              />
-            </div>
-          )}
+      {/* Fiber Path Controls Section - Updated for inline layout */}
+      <div className="py-1.5 px-2 md:px-3 border-t border-border mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center space-x-2"> {/* Group for Switch, Label, Tooltip */}
+          <Switch
+            id="fiber-path-toggle"
+            checked={calculateFiberPathEnabled}
+            onCheckedChange={onToggleFiberPath}
+            disabled={isActionPending}
+          />
+          <Label htmlFor="fiber-path-toggle" className="text-xs text-muted-foreground flex items-center">
+            <Cable className="mr-1.5 h-3.5 w-3.5" /> Calculate Fiber Path
+          </Label>
+          <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-4 w-4 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info">
+                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
+                  </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
+                  <p>Calculates estimated fiber optic cable path length using road networks within a specified radius from each site.</p>
+                  <p className="mt-1">Requires Line-of-Sight (LOS) to be feasible.</p>
+                  <p className="mt-1">Results include offsets from sites to roads and the road route distance.</p>
+              </TooltipContent>
+          </Tooltip>
         </div>
+        
+        {calculateFiberPathEnabled && (
+          <div className="flex items-center space-x-1"> {/* Group for Snap Radius Label and Input */}
+            <Label htmlFor="fiber-radius-input" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Snap Radius (m):</Label>
+            <Input
+              id="fiber-radius-input"
+              type="number"
+              value={fiberRadiusMeters.toString()}
+              onChange={handleFiberRadiusInputChange}
+              min={0}
+              step={50}
+              className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center"
+              disabled={isActionPending || isFiberCalculating}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Fiber Path Status/Results - Rendered as block elements below the controls */}
+      <div className="px-2 md:px-3 mt-1"> {/* Container for status messages */}
         {isFiberCalculating && (
           <div className="text-xs text-primary flex items-center justify-center py-1">
             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Calculating fiber path...
@@ -371,7 +375,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             )}
           </div>
         )}
-        {/* Display suggestion if fiber calculation failed due to no road found or radius too small */}
         {fiberPathResult && (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && !isFiberCalculating && (
             <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
                 <AlertTriangle className="inline h-3 w-3 mr-1" />
@@ -379,7 +382,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                 Try increasing the Snap Radius.
             </p>
         )}
-         {/* Display suggestion if no route between snapped points */}
         {fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && (
             <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
                 <AlertTriangle className="inline h-3 w-3 mr-1" />
@@ -600,3 +602,4 @@ export default function BottomPanel({
   );
 }
 
+    
