@@ -10,9 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart';
-import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, Download, Cable, Router, HelpCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, Download, Cable, Router, HelpCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Added useEffect and useCallback
 import { useToast } from '@/hooks/use-toast';
 import { saveAs } from 'file-saver';
 import { generateSingleAnalysisPdfReportAction } from '@/app/actions';
@@ -108,7 +108,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
 interface ProfilePanelMiddleColumnProps {
   analysisResult: AnalysisResult | null;
   isStale?: boolean;
-  isActionPending: boolean; // LOS analysis pending
+  isActionPending: boolean;
   control: Control<AnalysisFormValues>;
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
@@ -120,11 +120,10 @@ interface ProfilePanelMiddleColumnProps {
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
   onDownloadPdf: () => void;
   isGeneratingPdf: boolean;
-  // Fiber Path Props
   calculateFiberPathEnabled: boolean;
   onToggleFiberPath: (checked: boolean) => void;
-  fiberRadiusMeters: number;
-  onFiberRadiusChange: (value: string) => void; // string due to input type
+  fiberRadiusMeters: number; // This is the RHF state value from parent
+  onFiberRadiusChange: (value: number) => void; // Prop to update RHF state in parent
   fiberPathResult: FiberPathResult | null;
   isFiberCalculating: boolean;
   fiberPathError: string | null;
@@ -145,17 +144,44 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   onTowerHeightChangeFromGraph,
   onDownloadPdf,
   isGeneratingPdf,
-  // Fiber Path Props
   calculateFiberPathEnabled,
   onToggleFiberPath,
-  fiberRadiusMeters,
-  onFiberRadiusChange,
+  fiberRadiusMeters, // RHF state from parent
+  onFiberRadiusChange, // Function to call to update RHF state in parent
   fiberPathResult,
   isFiberCalculating,
   fiberPathError,
 }) => {
+  const { toast } = useToast();
   const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
   const minRequiredClearance = parseFloat(watchedClearanceThresholdString);
+
+  // Local state for the snap radius input field within this component
+  const [localSnapRadiusInput, setLocalSnapRadiusInput] = useState<string>(fiberRadiusMeters.toString());
+
+  // Sync local input with prop from parent (RHF state)
+  useEffect(() => {
+    if (fiberRadiusMeters.toString() !== localSnapRadiusInput) {
+      setLocalSnapRadiusInput(fiberRadiusMeters.toString());
+    }
+  }, [fiberRadiusMeters, localSnapRadiusInput]);
+
+
+  const handleApplySnapRadius = () => {
+    const newRadiusNum = parseInt(localSnapRadiusInput, 10);
+    if (!isNaN(newRadiusNum) && newRadiusNum >= 1 && newRadiusNum <= 10000) { // Basic validation
+      onFiberRadiusChange(newRadiusNum); // Call parent's handler to update RHF state & trigger recalculation
+    } else {
+      toast({
+        title: "Invalid Snap Radius",
+        description: "Radius must be a whole number between 1 and 10000.",
+        variant: "destructive",
+      });
+      // Optionally revert local input to current RHF state value
+      setLocalSnapRadiusInput(fiberRadiusMeters.toString());
+    }
+  };
+
 
   let isClearBasedOnAnalysis = false;
   let deficit = 0;
@@ -178,17 +204,16 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
     ? "Analyzing..."
     : (isStale || !analysisResult ? "Analyze Link" : "Re-Analyze");
 
-  const handleFiberRadiusInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onFiberRadiusChange(event.target.value);
-  };
+  const anyOperationPending = isActionPending || isGeneratingPdf || isFiberCalculating;
 
   return (
     <TooltipProvider>
     <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
       {/* Main controls row: LOS Status, Distances, Buttons, Fresnel Input, AND Fiber Toggle/Radius */}
+      {/* This div will hold all primary interactive controls and key info display items. */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
-        {/* Order 1: LOS Status */}
-        <div className="flex-shrink-0 order-1">
+        {/* Group 1: LOS Status */}
+        <div className="flex-shrink-0 order-1 min-w-[120px]">
           {isStale ? (
             <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow">
               <AlertTriangle className="mr-1 h-3 w-3" /> NEEDS RE-ANALYZE
@@ -211,10 +236,10 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           )}
         </div>
 
-        {/* Order 2 & 3: Aerial Distance & Min Clearance (conditionally rendered) */}
+        {/* Group 2 & 3: Aerial Distance & Min Clearance (conditionally rendered) */}
         {analysisResult && !isStale && (
           <>
-            <div className="flex flex-col items-center order-2">
+            <div className="flex flex-col items-center order-2 min-w-[80px]">
               <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Aerial Dist.</span>
               <span className="font-bold text-foreground text-xs md:text-sm">
                 {analysisResult.distanceKm < 1
@@ -223,7 +248,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
               </span>
             </div>
 
-            <div className="flex flex-col items-center order-3">
+            <div className="flex flex-col items-center order-3 min-w-[80px]">
               <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Min. Clear.</span>
               <span className={cn(
                 "font-bold text-xs md:text-sm",
@@ -235,14 +260,14 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </>
         )}
 
-        {/* Order 4: Buttons: Analyze/Re-Analyze and PDF Download */}
-        <div className="order-4 flex items-center gap-2">
+        {/* Group 4: Buttons: Analyze/Re-Analyze and PDF Download */}
+        <div className="order-4 flex items-center gap-2 min-w-[150px]">
              <Button
-                type="submit" 
+                type="submit"
                 onClick={handleSubmit(processSubmit)}
-                disabled={isActionPending || isGeneratingPdf || isFiberCalculating}
+                disabled={anyOperationPending}
                 size="sm"
-                className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight"
+                className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight flex-1"
             >
                 <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
                 {buttonText}
@@ -251,10 +276,10 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                  <Button
                     type="button"
                     onClick={onDownloadPdf}
-                    disabled={isActionPending || isGeneratingPdf || !analysisResult || isStale || isFiberCalculating}
+                    disabled={anyOperationPending}
                     size="sm"
                     variant="outline"
-                    className="text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10"
+                    className="text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10 flex-shrink-0"
                 >
                     <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin" )} />
                     <Download className={cn("mr-1.5 h-3.5 w-3.5", isGeneratingPdf && "hidden")} />
@@ -263,8 +288,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             )}
         </div>
 
-        {/* Order 5: Required Fresnel Input */}
-        <div className="flex items-center space-x-1 order-5">
+        {/* Group 5: Required Fresnel Input */}
+        <div className="flex items-center space-x-1 order-5 min-w-[130px]">
           <Label htmlFor="clearanceThresholdProfile" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Req. Fresnel (m):</Label>
           <Controller
               name="clearanceThreshold"
@@ -281,15 +306,15 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
               )}
           />
         </div>
-        
-        {/* Order 6: Fiber Path Toggle and Tooltip */}
-        <div className="flex items-center space-x-1 order-6">
+
+        {/* Group 6: Fiber Path Toggle and Tooltip */}
+        <div className="flex items-center space-x-1 order-6 min-w-[100px]">
           <Switch
             id="fiber-path-toggle"
             checked={calculateFiberPathEnabled}
             onCheckedChange={onToggleFiberPath}
-            disabled={isActionPending || isGeneratingPdf || isFiberCalculating}
-            className="data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4" // Adjusted for smaller size
+            disabled={anyOperationPending}
+            className="data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
           />
           <Label htmlFor="fiber-path-toggle" className="text-xs text-muted-foreground flex items-center cursor-pointer">
             <Cable className="mr-1 h-3.5 w-3.5" /> Fiber
@@ -301,26 +326,36 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                   </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
-                  <p>Calculates estimated fiber optic cable path length using road networks within a specified radius from each site.</p>
-                  <p className="mt-1">Requires Line-of-Sight (LOS) to be feasible.</p>
+                  <p>Calculates estimated fiber optic cable path length using road networks. Requires Line-of-Sight (LOS) to be feasible.</p>
               </TooltipContent>
           </Tooltip>
         </div>
-        
-        {/* Order 7: Snap Radius Input (Conditional) */}
+
+        {/* Group 7: Snap Radius Input and Apply Button (Conditional) */}
         {calculateFiberPathEnabled && (
-          <div className="flex items-center space-x-1 order-7">
-            <Label htmlFor="fiber-radius-input" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Snap Radius (m):</Label>
+          <div className="flex items-center space-x-1 order-7 min-w-[180px]">
+            <Label htmlFor="fiber-radius-input-bottom-panel" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Snap Radius (m):</Label>
             <Input
-              id="fiber-radius-input"
+              id="fiber-radius-input-bottom-panel"
               type="number"
-              value={fiberRadiusMeters.toString()}
-              onChange={handleFiberRadiusInputChange}
-              min={0}
+              value={localSnapRadiusInput}
+              onChange={(e) => setLocalSnapRadiusInput(e.target.value)}
+              min={1}
+              max={10000}
               step={50}
               className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center"
-              disabled={isActionPending || isGeneratingPdf || isFiberCalculating}
+              disabled={anyOperationPending}
             />
+            <Button
+              type="button"
+              onClick={handleApplySnapRadius}
+              disabled={anyOperationPending || localSnapRadiusInput === fiberRadiusMeters.toString()}
+              size="sm"
+              className="h-6 px-2 text-[0.65rem] leading-tight"
+              variant="outline"
+            >
+              <Check className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Apply</span>
+            </Button>
           </div>
         )}
       </div> {/* End of main controls flex container */}
@@ -341,7 +376,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         )}
 
       {/* Fiber Path Status/Results - Rendered as block elements below the controls row */}
-      <div className="px-2 md:px-3 mt-1 text-xs"> {/* Container for fiber status messages */}
+      <div className="px-2 md:px-3 mt-1 text-xs">
         {isFiberCalculating && (
           <div className="text-primary flex items-center justify-center py-1">
             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Calculating fiber path...
@@ -352,11 +387,11 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             <p>
               <span className="font-semibold">Fiber Path Status:</span>{' '}
               <span className={cn(
-                fiberPathResult.status === 'success' ? 'text-los-success' : 
+                fiberPathResult.status === 'success' ? 'text-los-success' :
                 (fiberPathResult.status === 'los_not_feasible' || fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small') ? 'text-amber-500' :
                 'text-los-failure'
               )}>
-                {fiberPathResult.status === 'success' ? 'Calculated' : 
+                {fiberPathResult.status === 'success' ? 'Calculated' :
                  fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' :
                  fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' :
                  fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' :
@@ -385,7 +420,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
                 <AlertTriangle className="inline h-3 w-3 mr-1" />
                 {fiberPathResult.status === 'radius_too_small' ? "Snap radius is too small. " : "No road found near one or both sites. "}
-                Try increasing the Snap Radius.
+                Try increasing the Snap Radius and click Apply.
             </p>
         )}
         {fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && (
@@ -406,7 +441,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             pointBName={pointBName}
             isStale={isStale}
             totalDistanceKm={analysisResult.distanceKm}
-            isActionPending={isActionPending || isFiberCalculating} 
+            isActionPending={anyOperationPending}
             onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
           />
         ) : isActionPending ? (
@@ -444,11 +479,10 @@ interface BottomPanelProps {
   setValue: UseFormSetValue<AnalysisFormValues>;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
 
-  // Fiber Path Props
   calculateFiberPathEnabled: boolean;
   onToggleFiberPath: (checked: boolean) => void;
   fiberRadiusMeters: number;
-  onFiberRadiusChange: (value: string) => void; 
+  onFiberRadiusChange: (value: number) => void; // Changed to number as it's applied directly
   fiberPathResult: FiberPathResult | null;
   isFiberCalculating: boolean;
   fiberPathError: string | null;
@@ -471,11 +505,10 @@ export default function BottomPanel({
   getValues,
   setValue,
   onTowerHeightChangeFromGraph,
-  // Fiber Path Props
   calculateFiberPathEnabled,
   onToggleFiberPath,
   fiberRadiusMeters,
-  onFiberRadiusChange,
+  onFiberRadiusChange, // This prop is now used by ProfilePanelMiddleColumn
   fiberPathResult,
   isFiberCalculating,
   fiberPathError,
@@ -569,11 +602,10 @@ export default function BottomPanel({
               onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
               onDownloadPdf={handleDownloadPdf}
               isGeneratingPdf={isGeneratingPdf}
-              // Fiber Path Props
               calculateFiberPathEnabled={calculateFiberPathEnabled}
               onToggleFiberPath={onToggleFiberPath}
               fiberRadiusMeters={fiberRadiusMeters}
-              onFiberRadiusChange={onFiberRadiusChange}
+              onFiberRadiusChange={onFiberRadiusChange} // Pass this to middle column
               fiberPathResult={fiberPathResult}
               isFiberCalculating={isFiberCalculating}
               fiberPathError={fiberPathError}

@@ -50,7 +50,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@react-google-maps/api/dist/esm.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/utils.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$GoogleMapsLoaderProvider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/GoogleMapsLoaderProvider.tsx [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/polyline-decoder.ts [app-client] (ecmascript)"); // For finding midpoint of fiber path
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/polyline-decoder.ts [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 "use client";
@@ -61,24 +61,23 @@ var _s = __turbopack_context__.k.signature();
 ;
 const STYLES = {
     mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
-    // Adjusted distance overlay for better centering and distinct look
-    distanceOverlayLabelLOS: "p-1.5 text-xs font-bold text-white bg-green-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2",
-    distanceOverlayLabelFiber: "p-1.5 text-xs font-bold text-white bg-blue-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2"
+    // Distance overlay labels with precise centering and tight background
+    distanceOverlayLabelBase: "text-xs font-bold text-white rounded-md shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2 text-center px-2 py-1 w-max",
+    distanceOverlayLabelLOS: "bg-green-600/80",
+    distanceOverlayLabelFiber: "bg-blue-600/80"
 };
 const defaultCenter = {
     lat: 20.5937,
     lng: 78.9629
 };
 const defaultZoom = 5;
-// getPixelPositionOffset for site name labels (above marker)
 const getSiteNameLabelOffset = (width, height)=>({
         x: -(width / 2),
         y: -(height + 10)
     });
-// getPixelPositionOffset for distance labels (centered on path)
 const getPathDistanceLabelOffset = (width, height)=>({
-        x: -(width / 2),
-        y: -(height / 2)
+        x: 0,
+        y: 0
     });
 const getCustomMarkerIcon = (label, isMapApiLoaded)=>{
     if (isMapApiLoaded && "object" !== 'undefined' && window.google && window.google.maps) {
@@ -96,7 +95,6 @@ const getCustomMarkerIcon = (label, isMapApiLoaded)=>{
     }
     return undefined;
 };
-// Polyline Styles
 const LOS_POLYLINE_COLORS = {
     stale: '#60A5FA',
     feasible: '#4CAF50',
@@ -179,10 +177,10 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                 if (fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments) {
                     fiberPathResult.segments.forEach({
                         "InteractiveMapInner.useEffect": (segment)=>{
-                            if (segment.pathPolyline && google.maps.geometry?.encoding) {
-                                const decodedPath = google.maps.geometry.encoding.decodePath(segment.pathPolyline);
+                            if (segment.type === 'road_route' && segment.pathPolyline && google.maps.geometry?.encoding) {
+                                const decodedPath = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["decodePolyline"])(segment.pathPolyline); // Use utility
                                 decodedPath.forEach({
-                                    "InteractiveMapInner.useEffect": (p)=>bounds.extend(p)
+                                    "InteractiveMapInner.useEffect": (p)=>bounds.extend(new window.google.maps.LatLng(p[0], p[1]))
                                 }["InteractiveMapInner.useEffect"]);
                             } else {
                                 bounds.extend(new window.google.maps.LatLng(segment.startPoint.lat, segment.startPoint.lng));
@@ -234,37 +232,32 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
         lat: (pALat + pBLat) / 2,
         lng: (pALng + pBLng) / 2
     } : null;
-    // Calculate midpoint for Fiber Path Label
-    let fiberPathMidPoint = null;
+    let fiberPathLabelMidPoint = null;
     if (fiberPathResult?.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0) {
-        // Find the road_route segment, preferably the longest one if multiple exist
-        const roadRouteSegments = fiberPathResult.segments.filter((s)=>s.type === 'road_route' && s.pathPolyline);
-        let targetSegmentPolyline;
-        if (roadRouteSegments.length > 0) {
-            targetSegmentPolyline = roadRouteSegments.sort((a, b)=>b.distanceMeters - a.distanceMeters)[0].pathPolyline;
-        }
-        if (targetSegmentPolyline) {
-            const decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["decodePolyline"])(targetSegmentPolyline);
+        let longestRoadSegment = null;
+        let maxDistance = 0;
+        fiberPathResult.segments.forEach((segment)=>{
+            if (segment.type === 'road_route' && segment.pathPolyline && segment.distanceMeters > maxDistance) {
+                maxDistance = segment.distanceMeters;
+                longestRoadSegment = segment;
+            }
+        });
+        if (longestRoadSegment && longestRoadSegment.pathPolyline) {
+            const decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["decodePolyline"])(longestRoadSegment.pathPolyline);
             if (decoded.length > 0) {
                 const midIndex = Math.floor(decoded.length / 2);
-                fiberPathMidPoint = {
+                fiberPathLabelMidPoint = {
                     lat: decoded[midIndex][0],
                     lng: decoded[midIndex][1]
                 };
             }
-        } else {
-            // Fallback: if no road_route or polyline, use midpoint of the LOS path for fiber label too, or midpoint of snapped points.
-            // For now, if no road route, we can place it near the LOS midpoint but distinguish it.
-            // Or, more robustly, calculate midpoint of the overall bounding box of all fiber segments.
-            // Simplified fallback for now: use LOS midpoint if fiber path is just offsets or missing road polyline.
-            if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
-                fiberPathMidPoint = {
-                    lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
-                    lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2
-                };
-            } else if (losMidPoint) {
-                fiberPathMidPoint = losMidPoint; // Approximate, could be improved
-            }
+        } else if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
+            fiberPathLabelMidPoint = {
+                lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
+                lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2
+            };
+        } else if (losMidPoint) {
+            fiberPathLabelMidPoint = losMidPoint;
         }
     }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["GoogleMap"], {
@@ -297,7 +290,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 244,
+                        lineNumber: 237,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -312,12 +305,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointA.name || "Site A"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 256,
+                            lineNumber: 249,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 251,
+                        lineNumber: 244,
                         columnNumber: 11
                     }, this)
                 ]
@@ -340,7 +333,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 265,
+                        lineNumber: 258,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -355,12 +348,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointB.name || "Site B"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 277,
+                            lineNumber: 270,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 272,
+                        lineNumber: 265,
                         columnNumber: 11
                     }, this)
                 ]
@@ -385,14 +378,14 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                 }
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 286,
+                lineNumber: 278,
                 columnNumber: 9
             }, this),
             isMapApiLoaded && fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0 && fiberPathResult.segments.map((segment, index)=>{
-                let path = [];
+                let pathCoords = [];
                 let options = {};
                 if (segment.type === 'offset_a' || segment.type === 'offset_b') {
-                    path = [
+                    pathCoords = [
                         {
                             lat: segment.startPoint.lat,
                             lng: segment.startPoint.lng
@@ -404,34 +397,21 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     ];
                     options = FIBER_POLYLINE_STYLES.offset;
                 } else if (segment.type === 'road_route' && segment.pathPolyline) {
-                    if (google.maps.geometry && google.maps.geometry.encoding) {
-                        path = google.maps.geometry.encoding.decodePath(segment.pathPolyline).map((p)=>({
-                                lat: p.lat(),
-                                lng: p.lng()
-                            }));
-                    } else {
-                        // Fallback if geometry library not loaded, though it should be.
-                        path = [
-                            {
-                                lat: segment.startPoint.lat,
-                                lng: segment.startPoint.lng
-                            },
-                            {
-                                lat: segment.endPoint.lat,
-                                lng: segment.endPoint.lng
-                            }
-                        ];
-                    }
+                    const decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["decodePolyline"])(segment.pathPolyline);
+                    pathCoords = decoded.map((p)=>({
+                            lat: p[0],
+                            lng: p[1]
+                        }));
                     options = FIBER_POLYLINE_STYLES.roadRoute;
                 } else {
                     return null;
                 }
                 return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Polyline"], {
-                    path: path,
+                    path: pathCoords,
                     options: options
                 }, `fiber-segment-${index}`, false, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 325,
+                    lineNumber: 311,
                     columnNumber: 18
                 }, this);
             }),
@@ -440,45 +420,45 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                 mapPaneName: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"].OVERLAY_MOUSE_TARGET,
                 getPixelPositionOffset: getPathDistanceLabelOffset,
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: STYLES.distanceOverlayLabelLOS,
+                    className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])(STYLES.distanceOverlayLabelBase, STYLES.distanceOverlayLabelLOS),
                     children: [
-                        "LOS: ",
-                        currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`
+                        "Aerial Distance: ",
+                        currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)} m` : `${currentDistanceKm.toFixed(1)} km`
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 336,
+                    lineNumber: 321,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 331,
+                lineNumber: 316,
                 columnNumber: 9
             }, this),
-            fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathMidPoint && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
-                position: fiberPathMidPoint,
+            fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathLabelMidPoint && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
+                position: fiberPathLabelMidPoint,
                 mapPaneName: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"].OVERLAY_MOUSE_TARGET,
                 getPixelPositionOffset: getPathDistanceLabelOffset,
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: STYLES.distanceOverlayLabelFiber,
+                    className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])(STYLES.distanceOverlayLabelBase, STYLES.distanceOverlayLabelFiber),
                     children: [
-                        "Fiber: ",
-                        fiberPathResult.totalDistanceMeters < 1000 ? `${fiberPathResult.totalDistanceMeters.toFixed(0)}m` : `${(fiberPathResult.totalDistanceMeters / 1000).toFixed(1)}km`
+                        "Fiber Route: ",
+                        fiberPathResult.totalDistanceMeters < 1000 ? `${fiberPathResult.totalDistanceMeters.toFixed(0)} m` : `${(fiberPathResult.totalDistanceMeters / 1000).toFixed(1)} km`
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 349,
+                    lineNumber: 333,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 344,
+                lineNumber: 328,
                 columnNumber: 10
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 230,
+        lineNumber: 223,
         columnNumber: 5
     }, this);
 }
@@ -498,17 +478,17 @@ function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }) {
                 ...props
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 365,
+                lineNumber: 349,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/interactive-map.tsx",
-            lineNumber: 361,
+            lineNumber: 345,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 360,
+        lineNumber: 344,
         columnNumber: 5
     }, this);
 }
@@ -2786,8 +2766,9 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$download$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Download$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/download.js [app-client] (ecmascript) <export default as Download>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$cable$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Cable$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/cable.js [app-client] (ecmascript) <export default as Cable>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$help$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__HelpCircle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-help.js [app-client] (ecmascript) <export default as HelpCircle>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Check$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/check.js [app-client] (ecmascript) <export default as Check>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/utils.ts [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)"); // Added useEffect and useCallback
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/file-saver/dist/FileSaver.min.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-client] (ecmascript)");
@@ -3005,15 +2986,42 @@ const SiteInputGroup = ({ id, title, control, register, clientFormErrors, server
         columnNumber: 3
     }, this);
 _c = SiteInputGroup;
-const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, control, clientFormErrors, serverFormErrors, getCombinedError, handleSubmit, processSubmit, pointAName, pointBName, onTowerHeightChangeFromGraph, onDownloadPdf, isGeneratingPdf, // Fiber Path Props
-calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusChange, fiberPathResult, isFiberCalculating, fiberPathError })=>{
+const ProfilePanelMiddleColumn = ({ analysisResult, isStale, isActionPending, control, clientFormErrors, serverFormErrors, getCombinedError, handleSubmit, processSubmit, pointAName, pointBName, onTowerHeightChangeFromGraph, onDownloadPdf, isGeneratingPdf, calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusChange, fiberPathResult, isFiberCalculating, fiberPathError })=>{
     _s();
+    const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
     const watchedClearanceThresholdString = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"])({
         control,
         name: 'clearanceThreshold',
         defaultValue: "10"
     });
     const minRequiredClearance = parseFloat(watchedClearanceThresholdString);
+    // Local state for the snap radius input field within this component
+    const [localSnapRadiusInput, setLocalSnapRadiusInput] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(fiberRadiusMeters.toString());
+    // Sync local input with prop from parent (RHF state)
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "ProfilePanelMiddleColumn.useEffect": ()=>{
+            if (fiberRadiusMeters.toString() !== localSnapRadiusInput) {
+                setLocalSnapRadiusInput(fiberRadiusMeters.toString());
+            }
+        }
+    }["ProfilePanelMiddleColumn.useEffect"], [
+        fiberRadiusMeters,
+        localSnapRadiusInput
+    ]);
+    const handleApplySnapRadius = ()=>{
+        const newRadiusNum = parseInt(localSnapRadiusInput, 10);
+        if (!isNaN(newRadiusNum) && newRadiusNum >= 1 && newRadiusNum <= 10000) {
+            onFiberRadiusChange(newRadiusNum); // Call parent's handler to update RHF state & trigger recalculation
+        } else {
+            toast({
+                title: "Invalid Snap Radius",
+                description: "Radius must be a whole number between 1 and 10000.",
+                variant: "destructive"
+            });
+            // Optionally revert local input to current RHF state value
+            setLocalSnapRadiusInput(fiberRadiusMeters.toString());
+        }
+    };
     let isClearBasedOnAnalysis = false;
     let deficit = 0;
     let actualMinClearance = analysisResult?.minClearance ?? null;
@@ -3032,18 +3040,16 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
         minRequiredClearance
     ]);
     const buttonText = isActionPending ? "Analyzing..." : isStale || !analysisResult ? "Analyze Link" : "Re-Analyze";
-    const handleFiberRadiusInputChange = (event)=>{
-        onFiberRadiusChange(event.target.value);
-    };
+    const anyOperationPending = isActionPending || isGeneratingPdf || isFiberCalculating;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TooltipProvider"], {
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0",
             children: [
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    className: "flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1",
+                    className: "flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex-shrink-0 order-1",
+                            className: "flex-shrink-0 order-1 min-w-[120px]",
                             children: isStale ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                 className: "px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow",
                                 children: [
@@ -3051,46 +3057,46 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                         className: "mr-1 h-3 w-3"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                        lineNumber: 194,
+                                        lineNumber: 219,
                                         columnNumber: 15
                                     }, this),
                                     " NEEDS RE-ANALYZE"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 193,
+                                lineNumber: 218,
                                 columnNumber: 13
                             }, this) : analysisResult ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                 className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("px-3 py-1.5 rounded-md text-xs font-bold shadow-md", isClearBasedOnAnalysis ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground"),
                                 children: isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 197,
+                                lineNumber: 222,
                                 columnNumber: 13
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                 className: "px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic",
                                 children: "Perform analysis"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 208,
+                                lineNumber: 233,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 191,
+                            lineNumber: 216,
                             columnNumber: 9
                         }, this),
                         analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex flex-col items-center order-2",
+                                    className: "flex flex-col items-center order-2 min-w-[80px]",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium",
                                             children: "Aerial Dist."
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 218,
+                                            lineNumber: 243,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -3098,25 +3104,24 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: analysisResult.distanceKm < 1 ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m` : `${analysisResult.distanceKm.toFixed(1)}km`
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 219,
+                                            lineNumber: 244,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 217,
+                                    lineNumber: 242,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "flex flex-col items-center order-4 sm:order-3",
+                                    className: "flex flex-col items-center order-3 min-w-[80px]",
                                     children: [
-                                        " ",
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium",
                                             children: "Min. Clear."
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 227,
+                                            lineNumber: 252,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -3124,79 +3129,78 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 228,
+                                            lineNumber: 253,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 226,
+                                    lineNumber: 251,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "order-3 sm:order-4 flex items-center gap-2",
+                            className: "order-4 flex items-center gap-2 min-w-[150px]",
                             children: [
-                                " ",
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                     type: "submit",
                                     onClick: handleSubmit(processSubmit),
-                                    disabled: isActionPending || isGeneratingPdf || isFiberCalculating,
+                                    disabled: anyOperationPending,
                                     size: "sm",
-                                    className: "bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight",
+                                    className: "bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight flex-1",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
                                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 247,
+                                            lineNumber: 272,
                                             columnNumber: 17
                                         }, this),
                                         buttonText
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 240,
+                                    lineNumber: 265,
                                     columnNumber: 14
                                 }, this),
                                 analysisResult && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
                                     type: "button",
                                     onClick: onDownloadPdf,
-                                    disabled: isActionPending || isGeneratingPdf || !analysisResult || isStale || isFiberCalculating,
+                                    disabled: anyOperationPending,
                                     size: "sm",
                                     variant: "outline",
-                                    className: "text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10",
+                                    className: "text-xs font-semibold px-3 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10 flex-shrink-0",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$loader$2d$circle$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Loader2$3e$__["Loader2"], {
                                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin")
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 259,
+                                            lineNumber: 284,
                                             columnNumber: 21
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$download$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Download$3e$__["Download"], {
                                             className: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["cn"])("mr-1.5 h-3.5 w-3.5", isGeneratingPdf && "hidden")
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 260,
+                                            lineNumber: 285,
                                             columnNumber: 21
                                         }, this),
                                         "PDF"
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 251,
+                                    lineNumber: 276,
                                     columnNumber: 18
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 239,
+                            lineNumber: 264,
                             columnNumber: 9
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex items-center space-x-1 order-5",
+                            className: "flex items-center space-x-1 order-5 min-w-[130px]",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
                                     htmlFor: "clearanceThresholdProfile",
@@ -3204,7 +3208,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     children: "Req. Fresnel (m):"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 268,
+                                    lineNumber: 293,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Controller"], {
@@ -3219,35 +3223,32 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             className: "bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 273,
+                                            lineNumber: 298,
                                             columnNumber: 19
                                         }, void 0)
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 269,
+                                    lineNumber: 294,
                                     columnNumber: 11
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 267,
+                            lineNumber: 292,
                             columnNumber: 9
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex items-center space-x-2 order-6",
+                            className: "flex items-center space-x-1 order-6 min-w-[100px]",
                             children: [
-                                " ",
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$switch$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Switch"], {
                                     id: "fiber-path-toggle",
                                     checked: calculateFiberPathEnabled,
                                     onCheckedChange: onToggleFiberPath,
-                                    disabled: isActionPending || isGeneratingPdf || isFiberCalculating,
-                                    size: "sm" // Using a smaller switch if available or custom styled
-                                    ,
-                                    className: "data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input"
+                                    disabled: anyOperationPending,
+                                    className: "data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 287,
+                                    lineNumber: 312,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
@@ -3255,17 +3256,17 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     className: "text-xs text-muted-foreground flex items-center cursor-pointer",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$cable$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Cable$3e$__["Cable"], {
-                                            className: "mr-1.5 h-3.5 w-3.5"
+                                            className: "mr-1 h-3.5 w-3.5"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 296,
+                                            lineNumber: 320,
                                             columnNumber: 13
                                         }, this),
-                                        " Fiber Path"
+                                        " Fiber"
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 295,
+                                    lineNumber: 319,
                                     columnNumber: 11
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Tooltip"], {
@@ -3283,93 +3284,113 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                                     className: "h-3.5 w-3.5 text-muted-foreground/70 cursor-help"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                    lineNumber: 301,
+                                                    lineNumber: 325,
                                                     columnNumber: 24
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                lineNumber: 300,
+                                                lineNumber: 324,
                                                 columnNumber: 19
                                             }, this)
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 299,
+                                            lineNumber: 323,
                                             columnNumber: 15
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["TooltipContent"], {
                                             side: "top",
                                             className: "max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg",
-                                            children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                    children: "Calculates estimated fiber optic cable path length using road networks within a specified radius from each site."
-                                                }, void 0, false, {
-                                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                    lineNumber: 305,
-                                                    columnNumber: 19
-                                                }, this),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                    className: "mt-1",
-                                                    children: "Requires Line-of-Sight (LOS) to be feasible."
-                                                }, void 0, false, {
-                                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                                    lineNumber: 306,
-                                                    columnNumber: 19
-                                                }, this)
-                                            ]
-                                        }, void 0, true, {
+                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                children: "Calculates estimated fiber optic cable path length using road networks. Requires Line-of-Sight (LOS) to be feasible."
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                                lineNumber: 329,
+                                                columnNumber: 19
+                                            }, this)
+                                        }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 304,
+                                            lineNumber: 328,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 298,
+                                    lineNumber: 322,
                                     columnNumber: 11
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 286,
+                            lineNumber: 311,
                             columnNumber: 9
                         }, this),
                         calculateFiberPathEnabled && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "flex items-center space-x-1 order-7",
+                            className: "flex items-center space-x-1 order-7 min-w-[180px]",
                             children: [
-                                " ",
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$label$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Label"], {
-                                    htmlFor: "fiber-radius-input",
+                                    htmlFor: "fiber-radius-input-bottom-panel",
                                     className: "text-[0.65rem] text-muted-foreground whitespace-nowrap",
                                     children: "Snap Radius (m):"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 313,
+                                    lineNumber: 337,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$input$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Input"], {
-                                    id: "fiber-radius-input",
+                                    id: "fiber-radius-input-bottom-panel",
                                     type: "number",
-                                    value: fiberRadiusMeters.toString(),
-                                    onChange: handleFiberRadiusInputChange,
-                                    min: 0,
+                                    value: localSnapRadiusInput,
+                                    onChange: (e)=>setLocalSnapRadiusInput(e.target.value),
+                                    min: 1,
+                                    max: 10000,
                                     step: 50,
                                     className: "bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center",
-                                    disabled: isActionPending || isGeneratingPdf || isFiberCalculating
+                                    disabled: anyOperationPending
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 314,
+                                    lineNumber: 338,
+                                    columnNumber: 13
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
+                                    type: "button",
+                                    onClick: handleApplySnapRadius,
+                                    disabled: anyOperationPending || localSnapRadiusInput === fiberRadiusMeters.toString(),
+                                    size: "sm",
+                                    className: "h-6 px-2 text-[0.65rem] leading-tight",
+                                    variant: "outline",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$check$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Check$3e$__["Check"], {
+                                            className: "h-3 w-3 sm:mr-1"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 357,
+                                            columnNumber: 15
+                                        }, this),
+                                        " ",
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                            className: "hidden sm:inline",
+                                            children: "Apply"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                            lineNumber: 357,
+                                            columnNumber: 53
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/components/fso/bottom-panel.tsx",
+                                    lineNumber: 349,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 312,
+                            lineNumber: 336,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 189,
+                    lineNumber: 214,
                     columnNumber: 7
                 }, this),
                 " ",
@@ -3378,7 +3399,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                     children: getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 330,
+                    lineNumber: 365,
                     columnNumber: 9
                 }, this),
                 analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3393,20 +3414,19 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 338,
+                            lineNumber: 373,
                             columnNumber: 13
                         }, this),
                         " to tower(s) for clearance."
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 336,
+                    lineNumber: 371,
                     columnNumber: 11
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "px-2 md:px-3 mt-1 text-xs",
                     children: [
-                        " ",
                         isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "text-primary flex items-center justify-center py-1",
                             children: [
@@ -3414,14 +3434,14 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     className: "mr-1.5 h-3.5 w-3.5 animate-spin"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 347,
+                                    lineNumber: 382,
                                     columnNumber: 13
                                 }, this),
                                 " Calculating fiber path..."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 346,
+                            lineNumber: 381,
                             columnNumber: 11
                         }, this),
                         fiberPathResult && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3434,7 +3454,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: "Fiber Path Status:"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 353,
+                                            lineNumber: 388,
                                             columnNumber: 15
                                         }, this),
                                         ' ',
@@ -3443,13 +3463,13 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: fiberPathResult.status === 'success' ? 'Calculated' : fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' : fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' : fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' : fiberPathResult.status === 'no_route_between_roads' ? 'No Road Route' : fiberPathResult.status === 'radius_too_small' ? 'Snap Radius Too Small' : 'Error'
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 354,
+                                            lineNumber: 389,
                                             columnNumber: 15
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 352,
+                                    lineNumber: 387,
                                     columnNumber: 13
                                 }, this),
                                 fiberPathResult.totalDistanceMeters !== undefined && fiberPathResult.status === 'success' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3459,7 +3479,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                             children: "Total Fiber Distance:"
                                         }, void 0, false, {
                                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                            lineNumber: 369,
+                                            lineNumber: 404,
                                             columnNumber: 18
                                         }, this),
                                         " ",
@@ -3468,7 +3488,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 369,
+                                    lineNumber: 404,
                                     columnNumber: 15
                                 }, this),
                                 fiberPathError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3476,7 +3496,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     children: fiberPathError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 371,
+                                    lineNumber: 406,
                                     columnNumber: 32
                                 }, this),
                                 fiberPathResult.errorMessage && fiberPathResult.status !== 'success' && !fiberPathError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3484,7 +3504,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     children: fiberPathResult.errorMessage
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 373,
+                                    lineNumber: 408,
                                     columnNumber: 17
                                 }, this),
                                 fiberPathResult.status === 'success' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3500,13 +3520,13 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 376,
+                                    lineNumber: 411,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 351,
+                            lineNumber: 386,
                             columnNumber: 11
                         }, this),
                         fiberPathResult && (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3516,15 +3536,15 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     className: "inline h-3 w-3 mr-1"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 386,
+                                    lineNumber: 421,
                                     columnNumber: 17
                                 }, this),
                                 fiberPathResult.status === 'radius_too_small' ? "Snap radius is too small. " : "No road found near one or both sites. ",
-                                "Try increasing the Snap Radius."
+                                "Try increasing the Snap Radius and click Apply."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 385,
+                            lineNumber: 420,
                             columnNumber: 13
                         }, this),
                         fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -3534,20 +3554,20 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     className: "inline h-3 w-3 mr-1"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 393,
+                                    lineNumber: 428,
                                     columnNumber: 17
                                 }, this),
                                 "Could not find a road route between the snapped points for Site A and Site B. They might be on disconnected road networks."
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 392,
+                            lineNumber: 427,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 344,
+                    lineNumber: 379,
                     columnNumber: 7
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3558,11 +3578,11 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                         pointBName: pointBName,
                         isStale: isStale,
                         totalDistanceKm: analysisResult.distanceKm,
-                        isActionPending: isActionPending || isFiberCalculating,
+                        isActionPending: anyOperationPending,
                         onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph
                     }, chartKey, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 402,
+                        lineNumber: 437,
                         columnNumber: 11
                     }, this) : isActionPending ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "h-full flex items-center justify-center p-2 bg-muted/30 rounded-md",
@@ -3571,12 +3591,12 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                             children: "Loading analysis data..."
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 414,
+                            lineNumber: 449,
                             columnNumber: 17
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 413,
+                        lineNumber: 448,
                         columnNumber: 13
                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground",
@@ -3584,39 +3604,39 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                             children: "Perform analysis to see profile."
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                            lineNumber: 418,
+                            lineNumber: 453,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 417,
+                        lineNumber: 452,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 400,
+                    lineNumber: 435,
                     columnNumber: 7
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/components/fso/bottom-panel.tsx",
-            lineNumber: 187,
+            lineNumber: 211,
             columnNumber: 5
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 186,
+        lineNumber: 210,
         columnNumber: 5
     }, this);
 };
-_s(ProfilePanelMiddleColumn, "dl8HUQb6+zRQquiQNehxO2ZDhew=", false, function() {
+_s(ProfilePanelMiddleColumn, "q67XPVJk42eIvoWiAs6e7itYZok=", false, function() {
     return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"]
     ];
 });
 _c1 = ProfilePanelMiddleColumn;
-function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVisibility, isContentExpanded, onToggleContentExpansion, isStale, control, register, handleSubmit, processSubmit, clientFormErrors, serverFormErrors, isActionPending, getValues, setValue, onTowerHeightChangeFromGraph, // Fiber Path Props
-calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusChange, fiberPathResult, isFiberCalculating, fiberPathError }) {
+function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVisibility, isContentExpanded, onToggleContentExpansion, isStale, control, register, handleSubmit, processSubmit, clientFormErrors, serverFormErrors, isActionPending, getValues, setValue, onTowerHeightChangeFromGraph, calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusChange, fiberPathResult, isFiberCalculating, fiberPathError }) {
     _s1();
     const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
     const [isGeneratingPdf, setIsGeneratingPdf] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -3703,12 +3723,12 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 546,
+                                    lineNumber: 579,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 545,
+                                lineNumber: 578,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ProfilePanelMiddleColumn, {
@@ -3726,7 +3746,6 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                 onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph,
                                 onDownloadPdf: handleDownloadPdf,
                                 isGeneratingPdf: isGeneratingPdf,
-                                // Fiber Path Props
                                 calculateFiberPathEnabled: calculateFiberPathEnabled,
                                 onToggleFiberPath: onToggleFiberPath,
                                 fiberRadiusMeters: fiberRadiusMeters,
@@ -3736,7 +3755,7 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                 fiberPathError: fiberPathError
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 557,
+                                lineNumber: 590,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3751,28 +3770,28 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 583,
+                                    lineNumber: 615,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 582,
+                                lineNumber: 614,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 543,
+                        lineNumber: 576,
                         columnNumber: 12
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 542,
+                    lineNumber: 575,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 536,
+                lineNumber: 569,
                 columnNumber: 7
             }, this),
             isPanelGloballyVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3783,24 +3802,24 @@ calculateFiberPathEnabled, onToggleFiberPath, fiberRadiusMeters, onFiberRadiusCh
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 603,
+                    lineNumber: 635,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 604,
+                    lineNumber: 636,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 597,
+                lineNumber: 629,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 527,
+        lineNumber: 560,
         columnNumber: 5
     }, this);
 }

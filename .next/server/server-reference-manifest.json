@@ -1,32 +1,5 @@
 {
   "node": {
-    "6091a7f5eb670c7a62c05633ebf85658287acaec18": {
-      "workers": {
-        "app/bulk-los-analyzer/page": {
-          "moduleId": "[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/bulk-los-analyzer/page": "action-browser"
-      }
-    },
-    "7e9053ee96b2a8ff08a5535b919d94d4648359fba6": {
-      "workers": {
-        "app/bulk-los-analyzer/page": {
-          "moduleId": "[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false
-        },
-        "app/page": {
-          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/bulk-los-analyzer/page": "action-browser",
-        "app/page": "action-browser"
-      }
-    },
     "402d3049fed11f2d39fa3d58520db39f6249045915": {
       "workers": {
         "app/page": {
@@ -61,6 +34,17 @@
       }
     },
     "606e059f8f40dd4b377c51875d12e3221ca87a227e": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      }
+    },
+    "7e9053ee96b2a8ff08a5535b919d94d4648359fba6": {
       "workers": {
         "app/page": {
           "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",

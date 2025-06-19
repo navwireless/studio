@@ -8,13 +8,14 @@ import type { PointCoordinates, AnalysisResult } from '@/types';
 import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
-import { decodePolyline } from '@/lib/polyline-decoder'; // For finding midpoint of fiber path
+import { decodePolyline } from '@/lib/polyline-decoder';
 
 const STYLES = {
   mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
-  // Distance overlay labels with transforms for precise centering
-  distanceOverlayLabelLOS: "p-1.5 text-xs font-bold text-white bg-green-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2",
-  distanceOverlayLabelFiber: "p-1.5 text-xs font-bold text-white bg-blue-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2",
+  // Distance overlay labels with precise centering and tight background
+  distanceOverlayLabelBase: "text-xs font-bold text-white rounded-md shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2 text-center px-2 py-1 w-max",
+  distanceOverlayLabelLOS: "bg-green-600/80", // Specific color for LOS
+  distanceOverlayLabelFiber: "bg-blue-600/80", // Specific color for Fiber
 };
 
 interface InteractiveMapProps {
@@ -25,26 +26,24 @@ interface InteractiveMapProps {
   mapContainerClassName?: string;
   analysisResult: AnalysisResult | null;
   isStale?: boolean;
-  currentDistanceKm?: number | null; // This is LOS distance
+  currentDistanceKm?: number | null;
   fiberPathResult?: FiberPathResult | null;
 }
 
 const defaultCenter = {
-  lat: 20.5937, 
+  lat: 20.5937,
   lng: 78.9629,
 };
 const defaultZoom = 5;
 
-// getPixelPositionOffset for site name labels (above marker)
 const getSiteNameLabelOffset = (width: number, height: number) => ({
   x: -(width / 2),
-  y: -(height + 10), 
+  y: -(height + 10),
 });
 
-// getPixelPositionOffset for distance labels (centered on path)
 const getPathDistanceLabelOffset = (width: number, height: number) => ({
-    x: -(width / 2),
-    y: -(height / 2), // CSS transform will handle precise centering
+    x: 0, // Centering is handled by CSS transform
+    y: 0, // Centering is handled by CSS transform
 });
 
 
@@ -52,25 +51,24 @@ const getCustomMarkerIcon = (label: string, isMapApiLoaded: boolean) => {
   if (isMapApiLoaded && typeof window !== 'undefined' && window.google && window.google.maps) {
     return {
       path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-      fillColor: '#FFEE58', 
+      fillColor: '#FFEE58',
       fillOpacity: 1,
-      strokeColor: '#424242', 
+      strokeColor: '#424242',
       strokeWeight: 1.5,
       rotation: 0,
-      scale: 7, 
-      anchor: new window.google.maps.Point(0, 2.5), 
-      labelOrigin: new window.google.maps.Point(0, 0.5), 
+      scale: 7,
+      anchor: new window.google.maps.Point(0, 2.5),
+      labelOrigin: new window.google.maps.Point(0, 0.5),
     };
   }
   return undefined;
 };
 
-// Polyline Styles
 const LOS_POLYLINE_COLORS = {
-  stale: '#60A5FA', // Blueish-gray for stale
-  feasible: '#4CAF50', // Green for feasible LOS
-  notFeasible: '#F44336', // Red for blocked LOS
-  default: '#A9A9A9', // Default gray
+  stale: '#60A5FA',
+  feasible: '#4CAF50',
+  notFeasible: '#F44336',
+  default: '#A9A9A9',
 };
 
 const FIBER_POLYLINE_STYLES = {
@@ -78,13 +76,13 @@ const FIBER_POLYLINE_STYLES = {
     strokeColor: '#FF9800', // Orange for offset segments
     strokeOpacity: 0.9,
     strokeWeight: 3,
-    zIndex: 2, // Render above LOS polyline
+    zIndex: 2,
   },
   roadRoute: {
     strokeColor: '#2196F3', // Blue for road route segments
     strokeOpacity: 0.8,
     strokeWeight: 4,
-    zIndex: 2, // Render above LOS polyline
+    zIndex: 2,
   },
 };
 
@@ -96,7 +94,7 @@ function InteractiveMapInner({
   onMarkerDrag,
   analysisResult,
   isStale,
-  currentDistanceKm, // This is LOS distance
+  currentDistanceKm,
   fiberPathResult,
 }: Omit<InteractiveMapProps, 'mapContainerClassName'>) {
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -141,13 +139,13 @@ function InteractiveMapInner({
       const bounds = new window.google.maps.LatLngBounds();
       bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
       bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
-      
+
       if (fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments) {
         fiberPathResult.segments.forEach(segment => {
-          if (segment.pathPolyline && google.maps.geometry?.encoding) {
-            const decodedPath = google.maps.geometry.encoding.decodePath(segment.pathPolyline);
-            decodedPath.forEach(p => bounds.extend(p));
-          } else { 
+          if (segment.type === 'road_route' && segment.pathPolyline && google.maps.geometry?.encoding) {
+            const decodedPath = decodePolyline(segment.pathPolyline); // Use utility
+            decodedPath.forEach(p => bounds.extend(new window.google.maps.LatLng(p[0], p[1])));
+          } else {
             bounds.extend(new window.google.maps.LatLng(segment.startPoint.lat, segment.startPoint.lng));
             bounds.extend(new window.google.maps.LatLng(segment.endPoint.lat, segment.endPoint.lng));
           }
@@ -155,7 +153,7 @@ function InteractiveMapInner({
       }
 
       if (!bounds.isEmpty()) {
-        mapRef.current.fitBounds(bounds, 75); 
+        mapRef.current.fitBounds(bounds, 75);
         const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
           if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
             mapRef.current.setZoom(17);
@@ -164,7 +162,7 @@ function InteractiveMapInner({
           }
         });
          return () => {
-           if (listener && window.google && window.google.maps) { 
+           if (listener && window.google && window.google.maps) {
               window.google.maps.event.removeListener(listener);
            }
          };
@@ -176,9 +174,9 @@ function InteractiveMapInner({
   }, [formPointA, formPointB, isMapApiLoaded, fiberPathResult]);
 
   const losPolylineColor = () => {
-    if (isStale) return LOS_POLYLINE_COLORS.stale; 
-    if (!analysisResult) return LOS_POLYLINE_COLORS.default; 
-    return analysisResult.losPossible ? LOS_POLYLINE_COLORS.feasible : LOS_POLYLINE_COLORS.notFeasible; 
+    if (isStale) return LOS_POLYLINE_COLORS.stale;
+    if (!analysisResult) return LOS_POLYLINE_COLORS.default;
+    return analysisResult.losPossible ? LOS_POLYLINE_COLORS.feasible : LOS_POLYLINE_COLORS.notFeasible;
   };
 
   const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
@@ -191,39 +189,32 @@ function InteractiveMapInner({
     lng: (pALng + pBLng) / 2,
   } : null;
 
-  // Calculate midpoint for Fiber Path Label
+
   let fiberPathLabelMidPoint: PointCoordinates | null = null;
   if (fiberPathResult?.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0) {
-    const roadRouteSegments = fiberPathResult.segments.filter(s => s.type === 'road_route' && s.pathPolyline);
-    let targetSegmentPolyline: string | undefined;
-    let longestDistance = 0;
+    let longestRoadSegment: FiberPathSegment | null = null;
+    let maxDistance = 0;
 
-    if (roadRouteSegments.length > 0) {
-      // Find the longest road route segment
-      roadRouteSegments.forEach(s => {
-        if (s.distanceMeters > longestDistance) {
-          longestDistance = s.distanceMeters;
-          targetSegmentPolyline = s.pathPolyline;
-        }
-      });
-    }
-    
-    if (targetSegmentPolyline) {
-      const decoded = decodePolyline(targetSegmentPolyline); // Uses the utility from src/lib/polyline-decoder
+    fiberPathResult.segments.forEach(segment => {
+      if (segment.type === 'road_route' && segment.pathPolyline && segment.distanceMeters > maxDistance) {
+        maxDistance = segment.distanceMeters;
+        longestRoadSegment = segment;
+      }
+    });
+
+    if (longestRoadSegment && longestRoadSegment.pathPolyline) {
+      const decoded = decodePolyline(longestRoadSegment.pathPolyline);
       if (decoded.length > 0) {
         const midIndex = Math.floor(decoded.length / 2);
         fiberPathLabelMidPoint = { lat: decoded[midIndex][0], lng: decoded[midIndex][1] };
       }
-    } else {
-      // Fallback: if no road_route or polyline, use midpoint of the snapped points if available
-      if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
-          fiberPathLabelMidPoint = {
-              lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
-              lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2,
-          }
-      } else if (losMidPoint) { // Further fallback to LOS midpoint
-          fiberPathLabelMidPoint = losMidPoint; 
-      }
+    } else if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
+        fiberPathLabelMidPoint = {
+            lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
+            lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2,
+        };
+    } else if (losMidPoint) {
+        fiberPathLabelMidPoint = losMidPoint;
     }
   }
 
@@ -283,7 +274,6 @@ function InteractiveMapInner({
         </>
       )}
 
-      {/* LOS Path Polyline */}
       {pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined && (
         <Polyline
           path={[
@@ -295,58 +285,53 @@ function InteractiveMapInner({
             strokeOpacity: isStale ? 0.8 : 0.9,
             strokeWeight: isStale ? 3.5 : 4,
             geodesic: true,
-            zIndex: 1, // LOS path below fiber path
+            zIndex: 1,
           }}
         />
       )}
 
-      {/* Fiber Path Polylines */}
       {isMapApiLoaded && fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0 && (
         fiberPathResult.segments.map((segment, index) => {
-          let path: google.maps.LatLngLiteral[] = [];
+          let pathCoords: google.maps.LatLngLiteral[] = [];
           let options = {};
 
           if (segment.type === 'offset_a' || segment.type === 'offset_b') {
-            path = [
+            pathCoords = [
               { lat: segment.startPoint.lat, lng: segment.startPoint.lng },
               { lat: segment.endPoint.lat, lng: segment.endPoint.lng },
             ];
             options = FIBER_POLYLINE_STYLES.offset;
           } else if (segment.type === 'road_route' && segment.pathPolyline) {
-            // Use the polyline-decoder utility
-            const decodedCoords = decodePolyline(segment.pathPolyline);
-            path = decodedCoords.map(p => ({ lat: p[0], lng: p[1] })); // decodePolyline returns [lat, lng]
+            const decoded = decodePolyline(segment.pathPolyline);
+            pathCoords = decoded.map(p => ({ lat: p[0], lng: p[1] }));
             options = FIBER_POLYLINE_STYLES.roadRoute;
           } else {
-            return null; 
+            return null;
           }
-          
-          return <Polyline key={`fiber-segment-${index}`} path={path} options={options} />;
+          return <Polyline key={`fiber-segment-${index}`} path={pathCoords} options={options} />;
         })
       )}
 
-      {/* LOS Distance Label */}
       {losMidPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && (
         <OverlayView
           position={losMidPoint}
           mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           getPixelPositionOffset={getPathDistanceLabelOffset}
         >
-          <div className={STYLES.distanceOverlayLabelLOS}>
-            LOS: {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`}
+          <div className={cn(STYLES.distanceOverlayLabelBase, STYLES.distanceOverlayLabelLOS)}>
+            Aerial Distance: {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)} m` : `${currentDistanceKm.toFixed(1)} km`}
           </div>
         </OverlayView>
       )}
 
-      {/* Fiber Path Distance Label */}
       {fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathLabelMidPoint && (
          <OverlayView
           position={fiberPathLabelMidPoint}
           mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           getPixelPositionOffset={getPathDistanceLabelOffset}
         >
-          <div className={STYLES.distanceOverlayLabelFiber}>
-            Fiber: {fiberPathResult.totalDistanceMeters < 1000 ? `${(fiberPathResult.totalDistanceMeters).toFixed(0)}m` : `${(fiberPathResult.totalDistanceMeters / 1000).toFixed(1)}km`}
+          <div className={cn(STYLES.distanceOverlayLabelBase, STYLES.distanceOverlayLabelFiber)}>
+            Fiber Route: {fiberPathResult.totalDistanceMeters < 1000 ? `${(fiberPathResult.totalDistanceMeters).toFixed(0)} m` : `${(fiberPathResult.totalDistanceMeters / 1000).toFixed(1)} km`}
           </div>
         </OverlayView>
       )}
@@ -357,7 +342,7 @@ function InteractiveMapInner({
 export default function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }: InteractiveMapProps) {
   return (
     <div className={cn(mapContainerClassName)}>
-      <GoogleMapsScriptGuard 
+      <GoogleMapsScriptGuard
         loadingMessage="Initializing Main Map..."
         errorMessage="Error loading Main Map."
       >
