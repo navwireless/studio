@@ -184,65 +184,75 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
   return (
     <TooltipProvider>
-    {/* Root div: vertical scroll, space-y, padding */}
-    <div className="w-full flex flex-col h-full overflow-y-auto space-y-2 md:space-y-3 p-1 bg-transparent backdrop-blur-2px rounded-lg">
+    {/* Root div: REMOVED overflow-y-auto, space-y-*, and p-1 */}
+    <div className="w-full flex flex-col h-full bg-transparent backdrop-blur-2px rounded-lg">
 
-      {/* Group 1: Analysis Summary & Actions */}
-      <Card className="p-0 bg-card/60">
-        <CardHeader className="p-2 pt-1.5 pb-1">
-          <CardTitle className="text-sm font-semibold text-foreground">Summary & Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 p-2 pt-1">
-          {/* LOS Status Display */}
-          <div className="w-full text-center p-2 rounded-md text-sm font-semibold">
-            {isStale ? (
-              <div className="bg-yellow-500/80 text-yellow-900 p-2 rounded-md flex items-center justify-center">
-                <AlertTriangle className="mr-2 h-4 w-4" /> NEEDS RE-ANALYZE
-              </div>
-            ) : analysisResult ? (
-              <div className={cn("p-2 rounded-md", isClearBasedOnAnalysis ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground")}>
-                {isClearBasedOnAnalysis ? "LINE OF SIGHT POSSIBLE" : "LINE OF SIGHT BLOCKED"}
-              </div>
-            ) : (
-              <div className="bg-muted text-muted-foreground p-2 rounded-md italic">
-                Perform analysis to see status
-              </div>
-            )}
-          </div>
+      {/* Top Controls Section (will take ~20% height based on its content, or we can be more explicit if needed) */}
+      <div className="flex-none p-2 space-y-2 overflow-y-auto custom-scrollbar"> {/* Added custom-scrollbar for just-in-case scrolling in top section */}
+        {/* Section 1: Main Status & Actions */}
+        <div className="space-y-1.5">
+          {/* LOS Status Display - Copied and adapted from previous card structure */}
+          {isStale ? (
+            <div className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center justify-center shadow">
+              <AlertTriangle className="mr-1.5 h-3.5 w-3.5" /> NEEDS RE-ANALYZE
+            </div>
+          ) : analysisResult ? (
+            <div
+              className={cn(
+                "px-3 py-1.5 rounded-md text-xs font-bold shadow-md text-center",
+                isClearBasedOnAnalysis
+                  ? "bg-los-success text-los-success-foreground"
+                  : "bg-los-failure text-los-failure-foreground"
+              )}
+            >
+              {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
+            </div>
+          ) : (
+            <div className="px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic text-center">
+              Perform analysis
+            </div>
+          )}
 
-          {/* Key Metrics */}
+          {/* Key Metrics - more compact */}
           {analysisResult && !isStale && (
-            <div className="flex justify-around items-center text-center">
-              <div>
-                <Label className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Aerial Dist.</Label>
-                <p className="font-semibold text-sm text-foreground">
+            <div className="flex justify-around items-center text-xs pt-0.5">
+              <div className="text-center">
+                <span className="block uppercase tracking-wider text-muted-foreground text-[0.6rem] font-medium">Aerial Dist.</span>
+                <span className="block font-bold text-foreground text-[0.7rem]">
                   {analysisResult.distanceKm < 1
                     ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m`
                     : `${analysisResult.distanceKm.toFixed(1)}km`}
-                </p>
+                </span>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground font-normal uppercase tracking-wider">Min. Clearance</Label>
-                <p className={cn(
-                  "font-semibold text-sm",
-                  isStale ? "text-muted-foreground" : (actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure")
+              <div className="text-center">
+                <span className="block uppercase tracking-wider text-muted-foreground text-[0.6rem] font-medium">Min. Clear.</span>
+                <span className={cn(
+                  "block font-bold text-[0.7rem]",
+                  actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure"
                 )}>
                   {actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"}
-                </p>
+                </span>
               </div>
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          {/* Deficit Message (if applicable) */}
+          {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
+            <div className="text-center text-los-failure text-[0.65rem] py-0.5">
+              Add&nbsp;<span className="font-semibold">{deficit.toFixed(0)}m</span>&nbsp;to tower(s) for clearance.
+            </div>
+          )}
+
+          {/* Action Buttons - more compact */}
+          <div className="flex items-center justify-center gap-2 pt-0.5">
             <Button
               type="submit"
               onClick={handleSubmit(processSubmit)}
               disabled={isActionPending || isGeneratingPdf || isFiberCalculating}
-              size="sm"
-              className="flex-grow bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 h-auto min-h-8 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight"
+              size="sm" // Keep sm, but it will be tight. Consider "xs" if available and appropriate.
+              className="bg-primary/90 hover:bg-primary text-primary-foreground text-[0.7rem] font-semibold px-2.5 py-1 h-auto min-h-7 rounded shadow-none transition-all duration-200 whitespace-nowrap leading-tight flex-grow sm:flex-grow-0"
             >
-              <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin")} />
+              <Loader2 className={cn("mr-1 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
               {buttonText}
             </Button>
             {analysisResult && !isStale && (
@@ -250,162 +260,149 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                 type="button"
                 onClick={onDownloadPdf}
                 disabled={isActionPending || isGeneratingPdf || !analysisResult || isStale || isFiberCalculating}
-                size="sm"
+                size="sm" // Keep sm
                 variant="outline"
-                className="flex-grow text-xs font-semibold px-3 py-1 h-auto min-h-8 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10"
+                className="text-[0.7rem] font-semibold px-2.5 py-1 h-auto min-h-7 rounded shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10 flex-grow sm:flex-grow-0"
               >
-                <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin")} />
-                <Download className={cn("mr-1.5 h-3.5 w-3.5", isGeneratingPdf && "hidden")} />
-                PDF Report
+                <Loader2 className={cn("mr-1 h-3 w-3", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin" )} />
+                <Download className={cn("mr-1 h-3 w-3", isGeneratingPdf && "hidden")} />
+                PDF
               </Button>
             )}
           </div>
+        </div>
 
-          {/* Deficit Message */}
-          {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
-            <div className="text-center text-los-failure text-xs p-1 bg-destructive/10 rounded-md">
-              Add&nbsp;
-              <span className="font-semibold">{deficit.toFixed(0)}m</span>
-              &nbsp;to tower(s) for clearance.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Divider (optional, for visual separation) */}
+        <hr className="border-border/50 my-1" />
 
-      {/* Group 2: Link Parameters */}
-      <Card className="p-0 bg-card/60">
-        <CardHeader className="p-2 pt-1.5 pb-1">
-          <CardTitle className="text-sm font-semibold text-foreground">Link Parameters</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1 p-2 pt-1">
-          <div className="flex items-center space-x-2 justify-between">
-            <Label htmlFor="clearanceThresholdProfile" className="text-xs text-muted-foreground whitespace-nowrap">Required Fresnel Clearance (m):</Label>
+        {/* Section 2: Link Parameters */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between space-x-1">
+            <Label htmlFor="clearanceThresholdProfileCompact" className="text-[0.65rem] text-muted-foreground whitespace-nowrap shrink-0">Req. Fresnel (m):</Label>
             <Controller
-                name="clearanceThreshold"
-                control={control}
-                render={({ field }) => (
-                    <Input
-                    id="clearanceThresholdProfile"
-                    type="number"
-                    step="any"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="bg-input border-border focus:border-primary/70 text-foreground h-7 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-20 text-center"
-                    />
-                )}
+              name="clearanceThreshold"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="clearanceThresholdProfileCompact"
+                  type="number"
+                  step="any"
+                  {...field}
+                  className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center" // w-16 from before
+                />
+              )}
             />
           </div>
           {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
-            <p className="text-xs text-destructive text-right px-1">
+            <p className="text-xs text-destructive/90 mt-0.5 text-right"> {/* Adjusted to text-right for better alignment with input */}
               {getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}
             </p>
           }
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Group 3: Fiber Optic Analysis */}
-      <Card className="p-0 bg-card/60">
-        <CardHeader className="p-2 pt-1.5 pb-1">
-          <CardTitle className="text-sm font-semibold text-foreground">Fiber Optic Path</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 p-2 pt-1">
+        {/* Divider (optional) */}
+        <hr className="border-border/50 my-1" />
+
+        {/* Section 3: Fiber Optic Path */}
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5"> {/* Reduced space-x-2 to space-x-1.5 */}
               <Switch
-                id="fiber-path-toggle"
+                id="fiber-path-toggle-compact" // New ID for compact version
                 checked={calculateFiberPathEnabled}
                 onCheckedChange={onToggleFiberPath}
                 disabled={isActionPending}
+                className="h-4 w-7 [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-3.5" // Custom scale for Switch
               />
-              <Label htmlFor="fiber-path-toggle" className="text-xs text-muted-foreground flex items-center">
-                <Cable className="mr-1.5 h-3.5 w-3.5" /> Calculate Fiber Path
+              <Label htmlFor="fiber-path-toggle-compact" className="text-xs text-muted-foreground flex items-center">
+                <Cable className="mr-1 h-3.5 w-3.5" /> Fiber Path
               </Label>
-              <Tooltip delayDuration={100}>
-                  <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-4 w-4 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info">
-                           <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
-                      </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
-                      <p>Calculates estimated fiber optic cable path length using road networks within a specified radius from each site.</p>
-                      <p className="mt-1">Requires Line-of-Sight (LOS) to be feasible.</p>
-                      <p className="mt-1">Results include offsets from sites to roads and the road route distance.</p>
-                  </TooltipContent>
-              </Tooltip>
             </div>
-            {calculateFiberPathEnabled && (
-              <div className="flex items-center space-x-1">
-                <Label htmlFor="fiber-radius-input" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Snap Radius (m):</Label>
-                <Input
-                  id="fiber-radius-input"
-                  type="number"
-                  value={fiberRadiusMeters.toString()}
-                  onChange={handleFiberRadiusInputChange}
-                  min={0}
-                  step={50}
-                  className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center"
-                  disabled={isActionPending || isFiberCalculating}
-                />
-              </div>
-            )}
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-4 w-4 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info">
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
+                <p>Calculates estimated fiber optic cable path length using road networks within a specified radius from each site. Requires Line-of-Sight (LOS) to be feasible. Results include offsets from sites to roads and the road route distance.</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
+
+          {calculateFiberPathEnabled && (
+            <div className="flex items-center justify-between space-x-1 pl-1"> {/* Added pl-1 to align with switch indent */}
+              <Label htmlFor="fiber-radius-input-compact" className="text-[0.65rem] text-muted-foreground whitespace-nowrap shrink-0">Snap Radius (m):</Label>
+              <Input
+                id="fiber-radius-input-compact"
+                type="number"
+                value={fiberRadiusMeters.toString()}
+                onChange={handleFiberRadiusInputChange} // Ensure this prop is passed correctly
+                min={0}
+                step={50}
+                className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center" // w-16 from before
+                disabled={isActionPending || isFiberCalculating}
+              />
+            </div>
+          )}
+
+          {/* Fiber Path Results/Status/Error - Copied and adapted */}
           {isFiberCalculating && (
-            <div className="text-xs text-primary flex items-center justify-center py-1">
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Calculating fiber path...
+            <div className="text-xs text-primary flex items-center justify-center py-0.5">
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> Calculating...
             </div>
           )}
           {fiberPathResult && !isFiberCalculating && (
-            <div className="text-xs p-1.5 rounded-sm bg-muted/50 space-y-0.5">
+            <div className="text-[0.7rem] p-1 rounded-sm bg-muted/30 space-y-0.5"> {/* Reduced padding, font size */}
               <p>
-                <span className="font-semibold">Fiber Path Status:</span>{' '}
+                <span className="font-semibold">Fiber Status:</span>{' '}
                 <span className={cn(
                   fiberPathResult.status === 'success' ? 'text-los-success' :
                   (fiberPathResult.status === 'los_not_feasible' || fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small') ? 'text-amber-500' :
                   'text-los-failure'
                 )}>
                   {fiberPathResult.status === 'success' ? 'Calculated' :
-                   fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' :
-                   fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' :
-                   fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' :
-                   fiberPathResult.status === 'no_route_between_roads' ? 'No Road Route' :
-                   fiberPathResult.status === 'radius_too_small' ? 'Snap Radius Too Small' :
+                   fiberPathResult.status === 'los_not_feasible' ? 'LOS N/A' : // Shorter text
+                   fiberPathResult.status === 'no_road_for_a' ? 'No Road (A)' :
+                   fiberPathResult.status === 'no_road_for_b' ? 'No Road (B)' :
+                   fiberPathResult.status === 'no_route_between_roads' ? 'No Route' :
+                   fiberPathResult.status === 'radius_too_small' ? 'Small Radius' :
                    'Error'}
                 </span>
               </p>
               {fiberPathResult.totalDistanceMeters !== undefined && fiberPathResult.status === 'success' && (
-                <p><span className="font-semibold">Total Fiber Distance:</span> {fiberPathResult.totalDistanceMeters.toFixed(0)} m</p>
+                <p><span className="font-semibold">Total Fiber Dist:</span> {fiberPathResult.totalDistanceMeters.toFixed(0)} m</p>
               )}
-              {fiberPathError && <p className="text-destructive">{fiberPathError}</p>}
+              {fiberPathError && <p className="text-destructive/90">{fiberPathError}</p>}
               {fiberPathResult.errorMessage && fiberPathResult.status !== 'success' && !fiberPathError && (
-                  <p className="text-muted-foreground italic">{fiberPathResult.errorMessage}</p>
+                  <p className="text-muted-foreground/80 italic">{fiberPathResult.errorMessage}</p>
               )}
               {fiberPathResult.status === 'success' && (
-                  <div className="text-[0.65rem] text-muted-foreground/80">
-                     (Offset A: {fiberPathResult.offsetDistanceA_meters?.toFixed(0)}m
-                     + Road: {fiberPathResult.roadRouteDistanceMeters?.toFixed(0)}m
-                     + Offset B: {fiberPathResult.offsetDistanceB_meters?.toFixed(0)}m)
+                  <div className="text-[0.6rem] text-muted-foreground/70">
+                     (A: {fiberPathResult.offsetDistanceA_meters?.toFixed(0)}m
+                     + R: {fiberPathResult.roadRouteDistanceMeters?.toFixed(0)}m
+                     + B: {fiberPathResult.offsetDistanceB_meters?.toFixed(0)}m)
                   </div>
               )}
             </div>
           )}
           {fiberPathResult && (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && !isFiberCalculating && (
-              <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
-                  <AlertTriangle className="inline h-3 w-3 mr-1" />
-                  {fiberPathResult.status === 'radius_too_small' ? "Snap radius is too small. " : "No road found near one or both sites. "}
-                  Try increasing the Snap Radius.
+              <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5 text-center">
+                  <AlertTriangle className="inline h-3 w-3 mr-0.5" />
+                  {fiberPathResult.status === 'radius_too_small' ? "Radius too small. " : "No road found. "} Try increasing radius.
               </p>
           )}
           {fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && (
-              <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
-                  <AlertTriangle className="inline h-3 w-3 mr-1" />
-                  Could not find a road route between the snapped points for Site A and Site B. They might be on disconnected road networks.
+              <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5 text-center">
+                  <AlertTriangle className="inline h-3 w-3 mr-0.5" />
+                  Cannot route between sites. Disconnected road networks?
               </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Elevation Profile Chart */}
-      <div className={cn("flex-1 min-h-0 p-0.5")}> {/* mt-2 or mt-3 could be added here if space-y is not enough */}
+      {/* Bottom Chart Section (will take ~80% height) */}
+      <div className="flex-1 p-0.5 min-h-0">
         {analysisResult ? (
           <CustomProfileChart
             key={chartKey}
