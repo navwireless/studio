@@ -283,11 +283,9 @@ export async function generateFiberReportAction(
 // Schema for KMZ generation parameters for a single fiber path
 const SingleFiberPathKmzParamsSchema = z.object({
   fiberPathResult: z.custom<FiberPathResult>((val) => {
-    // Check if val is an object and has a status property
     if (val === null || typeof val !== 'object' || !('status' in (val as any))) {
       return false;
     }
-    // For KMZ, we only generate if the fiber path calculation was a success
     return (val as FiberPathResult).status === 'success';
   }, {
     message: "Successful FiberPathResult object is required for KMZ generation."
@@ -344,7 +342,7 @@ export async function generateSingleFiberPathKmzAction(
 
     <Folder><name>Fiber Path Segments</name>`;
 
-    // Add snapped points if they exist (they should if status is success)
+    // Add snapped points if they exist
     if (fiberPathResult.pointA_snappedToRoad) {
       kmlContent += `
       <Placemark>
@@ -385,12 +383,10 @@ export async function generateSingleFiberPathKmzAction(
             segmentName = `Road Segment (${xmlEscape(pointA_name)} to ${xmlEscape(pointB_name)})`;
             styleUrl = "#roadRouteLineStyle";
             if (segment.pathPolyline) {
-              // Decode polyline and format for KML
               const decodedCoords = decodePolyline(segment.pathPolyline);
               coordinatesString = formatCoordinatesForKml(decodedCoords);
-              description += `\nEncoded Polyline: ${xmlEscape(segment.pathPolyline)}`;
+              description += `\nEncoded Polyline (for reference): ${xmlEscape(segment.pathPolyline)}`;
             } else {
-              // Fallback to straight line if polyline is missing (should ideally not happen for road_route if status is success)
               console.warn("KMZ Gen: Road_route segment missing pathPolyline. Drawing straight line.");
               coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
               description += "\nNote: Polyline missing, showing straight line.";
@@ -418,9 +414,8 @@ export async function generateSingleFiberPathKmzAction(
     const zip = new JSZip();
     zip.file("doc.kml", kmlContent);
 
-    // Generate KMZ as Node.js buffer for server-side base64 conversion
     const kmzBuffer = await zip.generateAsync({ type: "nodebuffer", mimeType: "application/vnd.google-earth.kmz" });
-    const base64Kmz = kmzBuffer.toString('base64'); // Server-side base64 conversion
+    const base64Kmz = kmzBuffer.toString('base64');
 
     const safePointAName = (pointA_name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
     const safePointBName = (pointB_name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');

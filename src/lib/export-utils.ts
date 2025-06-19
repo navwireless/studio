@@ -141,46 +141,48 @@ function generateKmlContent(
           <Data name="Fiber Total Distance (m)"><value>${link.fiberPathTotalDistanceMeters?.toFixed(0) ?? 'N/A'}</value></Data>`;
         
         // Create placemarks for each fiber segment (offset_a, road_route, offset_b)
-        // Offset A
-        kmlFiberPathGeometries += `
-        <Placemark>
-          <name>Offset A: ${xmlEscape(link.pointAName)} to Road</name>
-          <styleUrl>#fiberOffsetStyle</styleUrl>
-          <description>Distance: ${link.fiberPathSegments.find(s=>s.type==='offset_a')?.distanceMeters.toFixed(1)} m</description>
-          <LineString><tessellate>1</tessellate><coordinates>${link.pointA.lng},${link.pointA.lat},0 ${link.pointA_snappedToRoad.lng},${link.pointA_snappedToRoad.lat},0</coordinates></LineString>
-        </Placemark>`;
+        link.fiberPathSegments.forEach((segment, index) => {
+          let segmentName = `Fiber Segment ${index + 1} (${segment.type})`;
+          let styleUrl = '';
+          let coordinatesString = '';
+          let segmentDescription = `Type: ${xmlEscape(segment.type)}\nDistance: ${segment.distanceMeters.toFixed(1)} m`;
 
-        // Road Route (using decoded polyline)
-        const roadRouteSegment = link.fiberPathSegments.find(s => s.type === 'road_route');
-        if (roadRouteSegment && roadRouteSegment.pathPolyline) {
-          const decodedCoords = decodePolyline(roadRouteSegment.pathPolyline);
-          const kmlCoords = formatCoordinatesForKml(decodedCoords);
-          kmlFiberPathGeometries += `
-          <Placemark>
-            <name>Road Route: ${xmlEscape(link.pointAName)} to ${xmlEscape(link.pointBName)}</name>
-            <styleUrl>#fiberRoadStyle</styleUrl>
-            <description>Distance: ${roadRouteSegment.distanceMeters.toFixed(1)} m\nEncoded Polyline: ${xmlEscape(roadRouteSegment.pathPolyline)}</description>
-            <LineString><tessellate>1</tessellate><coordinates>${kmlCoords}</coordinates></LineString>
-          </Placemark>`;
-        } else {
-          // Fallback: straight line for road route if polyline is missing
-           kmlFiberPathGeometries += `
-          <Placemark>
-            <name>Road Route (Straight): ${xmlEscape(link.pointAName)} to ${xmlEscape(link.pointBName)}</name>
-            <styleUrl>#fiberRoadStyle</styleUrl>
-            <description>Distance: ${roadRouteSegment?.distanceMeters.toFixed(1) ?? 'N/A'} m (Polyline missing, showing straight line)</description>
-            <LineString><tessellate>1</tessellate><coordinates>${link.pointA_snappedToRoad.lng},${link.pointA_snappedToRoad.lat},0 ${link.pointB_snappedToRoad.lng},${link.pointB_snappedToRoad.lat},0</coordinates></LineString>
-          </Placemark>`;
-        }
-        
-        // Offset B
-        kmlFiberPathGeometries += `
-        <Placemark>
-          <name>Offset B: Road to ${xmlEscape(link.pointBName)}</name>
-          <styleUrl>#fiberOffsetStyle</styleUrl>
-          <description>Distance: ${link.fiberPathSegments.find(s=>s.type==='offset_b')?.distanceMeters.toFixed(1)} m</description>
-          <LineString><tessellate>1</tessellate><coordinates>${link.pointB_snappedToRoad.lng},${link.pointB_snappedToRoad.lat},0 ${link.pointB.lng},${link.pointB.lat},0</coordinates></LineString>
-        </Placemark>`;
+          switch(segment.type) {
+            case 'offset_a':
+              segmentName = `Offset A: ${xmlEscape(link.pointAName)} to Road`;
+              styleUrl = '#fiberOffsetStyle';
+              coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+              break;
+            case 'offset_b':
+              segmentName = `Offset B: Road to ${xmlEscape(link.pointBName)}`;
+              styleUrl = '#fiberOffsetStyle';
+              coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+              break;
+            case 'road_route':
+              segmentName = `Road Route: ${xmlEscape(link.pointAName)} to ${xmlEscape(link.pointBName)} (Segment ${index})`;
+              styleUrl = '#fiberRoadStyle';
+              if (segment.pathPolyline) {
+                const decodedCoords = decodePolyline(segment.pathPolyline);
+                coordinatesString = formatCoordinatesForKml(decodedCoords);
+                segmentDescription += `\nEncoded Polyline (for reference): ${xmlEscape(segment.pathPolyline)}`;
+              } else {
+                // Fallback: straight line for road route if polyline is missing
+                console.warn("KMZ Gen (Bulk): Road_route segment missing pathPolyline. Drawing straight line.");
+                coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+                segmentDescription += "\nNote: Polyline missing, showing straight line.";
+              }
+              break;
+          }
+          if (coordinatesString) {
+             kmlFiberPathGeometries += `
+            <Placemark>
+              <name>${xmlEscape(segmentName)}</name>
+              <styleUrl>${styleUrl}</styleUrl>
+              <description>${xmlEscape(segmentDescription)}</description>
+              <LineString><tessellate>1</tessellate><coordinates>${coordinatesString}</coordinates></LineString>
+            </Placemark>`;
+          }
+        });
 
       } else if (link.fiberPathStatus) { // Fiber attempted but not successful
         extendedDataContent += `
@@ -247,9 +249,6 @@ export async function generateKmzBlob(
     const kmlString = generateKmlContent(originalPlacemarks, analysisResults, analysisParams);
     const zip = new JSZip();
     zip.file("doc.kml", kmlString);
-    // Use 'blob' for client-side generation or if saveAs expects it directly.
-    // For server actions, 'nodebuffer' might be preferred for base64 conversion.
-    // Given saveAs is client-side, 'blob' is fine here.
     return await zip.generateAsync({ type: "blob", mimeType: "application/vnd.google-earth.kmz+xml" });
   } catch (error) {
     console.error("Error generating KMZ blob:", error);
@@ -282,11 +281,12 @@ export async function generateAndDownloadZipPackage(
     zip.file(`${baseFileName}_results.xlsx`, excelBlob);
 
     const hasFeasibleLosLinks = bulkResults.some(r => r.losPossible);
-    if (originalPlacemarks.length > 0 || hasFeasibleLosLinks) {
+    // Ensure there are results or placemarks to justify KMZ generation
+    if (bulkResults.length > 0 || originalPlacemarks.length > 0) {
         const kmzBlob = await generateKmzBlob(originalPlacemarks, bulkResults, analysisParams);
         zip.file(`${baseFileName}_analysis.kmz`, kmzBlob);
     } else {
-       zip.file('notes.txt', 'No original placemarks were provided and/or no LOS-feasible links were found, so no KMZ file was generated for visualization.');
+       zip.file('notes.txt', 'No original placemarks were provided and/or no analysis results were generated, so no KMZ file was created for visualization.');
     }
     
     const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -297,3 +297,4 @@ export async function generateAndDownloadZipPackage(
     throw new Error(`Failed to generate ZIP package: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+

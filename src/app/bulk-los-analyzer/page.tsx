@@ -80,8 +80,8 @@ export default function BulkLosAnalyzerPage() {
   const [isClient, setIsClient] = useState(false); // To gate client-side effects
 
   // Initialize with static defaults for SSR and initial client render
-  const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = useState<boolean>(false);
-  const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = useState<number>(500); // Default 500m
+  const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = useState<boolean>(false); // Static default
+  const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = useState<number>(500); // Static default
 
   // Effect to sync with localStorage after client-side mount
   useEffect(() => {
@@ -406,5 +406,3 @@ export default function BulkLosAnalyzerPage() {
     </>
   );
 }
-
-    
