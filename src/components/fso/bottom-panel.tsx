@@ -546,7 +546,7 @@ export default function BottomPanel({
       <div
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-auto max-h-[60vh] md:max-h-[35vh] md:h-[35vh]" : "h-0"
+          isContentExpanded && isPanelGloballyVisible ? "h-[45vh]" : "h-0"
         )}
       >
         {/* Main content div - now always allows y-scroll */}

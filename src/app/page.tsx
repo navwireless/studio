@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useId } from 'react';
 import InteractiveMap from '@/components/fso/interactive-map';
 import { useForm, useWatch, Controller as FormController } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, MapPin, Cable, Layers, X } from 'lucide-react'; // Removed Waypoints, Added Layers, X
+import { Loader2, AlertTriangle, MapPin, Cable, Plus, X, Trash2, History } from 'lucide-react'; // Added Trash2, History
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { performLosAnalysis } from '@/app/actions';
@@ -306,12 +306,21 @@ export default function Home() {
 
 
   const toggleGlobalPanelVisibility = useCallback(() => {
-    setIsAnalysisPanelGloballyOpen(prev => !prev);
-  }, []);
+    setIsAnalysisPanelGloballyOpen(prevIsOpen => {
+      const newIsOpen = !prevIsOpen;
+      if (newIsOpen) {
+        setIsBottomPanelContentExpanded(true); // Ensure panel content is expanded when panel becomes visible
+      }
+      // No need to explicitly set setIsBottomPanelContentExpanded(false) when closing,
+      // as BottomPanel's h-0 class takes precedence when isPanelGloballyOpen is false.
+      return newIsOpen;
+    });
+  }, [setIsAnalysisPanelGloballyOpen, setIsBottomPanelContentExpanded]); // Added setIsBottomPanelContentExpanded
 
-  const toggleBottomPanelContentExpansion = useCallback(() => {
-    setIsBottomPanelContentExpanded(prev => !prev);
-  }, []);
+  // const toggleBottomPanelContentExpansion = useCallback(() => {
+  //   setIsBottomPanelContentExpanded(prev => !prev);
+  // }, []);
+  // This function is no longer needed as the chevron is removed and expansion is tied to visibility.
 
   // Removed handleStartAnalysisClick as it's replaced by the FAB's toggleGlobalPanelVisibility and BottomPanel's internal submit
 
@@ -527,6 +536,36 @@ export default function Home() {
             currentDistanceKm={liveDistanceKm}
             fiberPathResult={fiberPathResult}
           />
+          {/* Map Overlay Buttons */}
+          <div className="absolute top-4 right-4 z-30 print:hidden flex flex-col space-y-2">
+            <Button
+              variant="outline" // Consistent with other overlay buttons
+              size="icon"
+              onClick={toggleGlobalPanelVisibility} // Same function as the bottom-right FAB
+              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md" // Consistent styling
+              aria-label={isAnalysisPanelGloballyOpen ? "Close Analysis Panel" : "Open Analysis Panel"}
+            >
+              {isAnalysisPanelGloballyOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleClearMap}
+              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md"
+              aria-label="Clear Map and Form"
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleToggleHistoryPanel}
+              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md"
+              aria-label="Toggle History Panel"
+            >
+              <History className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         {/* FAB to toggle Analysis Panel Visibility */}
@@ -538,7 +577,7 @@ export default function Home() {
             className="rounded-full shadow-lg w-14 h-14 p-0 flex items-center justify-center bg-primary hover:bg-primary/90"
             aria-label={isAnalysisPanelGloballyOpen ? "Close Analysis Panel" : "Open Analysis Panel"}
           >
-            {isAnalysisPanelGloballyOpen ? <X className="h-6 w-6" /> : <Layers className="h-6 w-6" />}
+            {isAnalysisPanelGloballyOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
           </Button>
         </div>
 
@@ -585,7 +624,7 @@ export default function Home() {
           isPanelGloballyVisible={isAnalysisPanelGloballyOpen}
           onToggleGlobalVisibility={toggleGlobalPanelVisibility}
           isContentExpanded={isBottomPanelContentExpanded}
-          onToggleContentExpansion={toggleBottomPanelContentExpansion}
+          // onToggleContentExpansion={toggleBottomPanelContentExpansion} // Prop removed
           isStale={isStale}
           control={control}
           register={register}

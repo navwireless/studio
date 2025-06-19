@@ -5,19 +5,15 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { History, Trash2, ListChecks, Home, Cable } from 'lucide-react'; // Added Cable for Fiber Calculator
+import { ListChecks, Home, Cable } from 'lucide-react'; // Removed History, Trash2. Added Cable for Fiber Calculator
 
 interface AppHeaderProps {
-  onToggleHistory?: () => void;
-  onClearMap?: () => void;
-  isHistoryPanelSupported?: boolean;
+  // Removed onToggleHistory, onClearMap, isHistoryPanelSupported
   currentPage?: 'home' | 'bulk' | 'fiber'; // Added 'fiber'
 }
 
 export default function AppHeader({ 
-  onToggleHistory, 
-  onClearMap, 
-  isHistoryPanelSupported = false,
+  // Removed onToggleHistory, onClearMap, isHistoryPanelSupported
   currentPage 
 }: AppHeaderProps) {
   return (
@@ -62,16 +58,7 @@ export default function AppHeader({
             </Button>
           </Link>
         )}
-        {onClearMap && (
-          <Button variant="ghost" size="icon" onClick={onClearMap} aria-label="Clear Map and Form">
-            <Trash2 className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-          </Button>
-        )}
-        {isHistoryPanelSupported && onToggleHistory && (
-          <Button variant="ghost" size="icon" onClick={onToggleHistory} aria-label="Toggle History Panel">
-            <History className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-          </Button>
-        )}
+        {/* Clear Map and Toggle History buttons removed */}
       </nav>
     </header>
   );
