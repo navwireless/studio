@@ -185,9 +185,9 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   return (
     <TooltipProvider>
     <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
-      {/* Main controls row for LOS and Fiber Toggle/Radius */}
-      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
-        {/* LOS Status */}
+      {/* Main controls row: LOS Status, Distances, Buttons, Fresnel Input, AND Fiber Toggle/Radius */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
+        {/* Order 1: LOS Status */}
         <div className="flex-shrink-0 order-1">
           {isStale ? (
             <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow">
@@ -211,7 +211,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           )}
         </div>
 
-        {/* Aerial Distance & Min Clearance (conditionally rendered) */}
+        {/* Order 2 & 3: Aerial Distance & Min Clearance (conditionally rendered) */}
         {analysisResult && !isStale && (
           <>
             <div className="flex flex-col items-center order-2">
@@ -223,7 +223,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
               </span>
             </div>
 
-            <div className="flex flex-col items-center order-4 sm:order-3"> {/* Adjusted order for med screens */}
+            <div className="flex flex-col items-center order-3">
               <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium">Min. Clear.</span>
               <span className={cn(
                 "font-bold text-xs md:text-sm",
@@ -235,8 +235,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </>
         )}
 
-        {/* Buttons: Analyze/Re-Analyze and PDF Download */}
-        <div className="order-3 sm:order-4 flex items-center gap-2"> {/* Adjusted order */}
+        {/* Order 4: Buttons: Analyze/Re-Analyze and PDF Download */}
+        <div className="order-4 flex items-center gap-2">
              <Button
                 type="submit" 
                 onClick={handleSubmit(processSubmit)}
@@ -263,7 +263,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             )}
         </div>
 
-        {/* Required Fresnel Input */}
+        {/* Order 5: Required Fresnel Input */}
         <div className="flex items-center space-x-1 order-5">
           <Label htmlFor="clearanceThresholdProfile" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Req. Fresnel (m):</Label>
           <Controller
@@ -282,18 +282,17 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           />
         </div>
         
-        {/* Fiber Path Toggle and Radius - Integrated into the main controls row */}
-        <div className="flex items-center space-x-2 order-6"> {/* Group for Switch, Label, Tooltip */}
+        {/* Order 6: Fiber Path Toggle and Tooltip */}
+        <div className="flex items-center space-x-1 order-6">
           <Switch
             id="fiber-path-toggle"
             checked={calculateFiberPathEnabled}
             onCheckedChange={onToggleFiberPath}
             disabled={isActionPending || isGeneratingPdf || isFiberCalculating}
-            size="sm" // Using a smaller switch if available or custom styled
-            className="data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input"
+            className="data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4" // Adjusted for smaller size
           />
           <Label htmlFor="fiber-path-toggle" className="text-xs text-muted-foreground flex items-center cursor-pointer">
-            <Cable className="mr-1.5 h-3.5 w-3.5" /> Fiber Path
+            <Cable className="mr-1 h-3.5 w-3.5" /> Fiber
           </Label>
           <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
@@ -308,8 +307,9 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </Tooltip>
         </div>
         
+        {/* Order 7: Snap Radius Input (Conditional) */}
         {calculateFiberPathEnabled && (
-          <div className="flex items-center space-x-1 order-7"> {/* Group for Snap Radius Label and Input */}
+          <div className="flex items-center space-x-1 order-7">
             <Label htmlFor="fiber-radius-input" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Snap Radius (m):</Label>
             <Input
               id="fiber-radius-input"
@@ -325,13 +325,13 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         )}
       </div> {/* End of main controls flex container */}
 
-      {/* Error for Clearance Threshold */}
+      {/* Error for Clearance Threshold (remains below controls row) */}
       {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
         <p className="text-xs text-destructive mt-0.5 text-center px-2">
           {getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}
         </p>
       }
-      {/* Message for additional height needed */}
+      {/* Message for additional height needed (remains below controls row) */}
        {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
           <div className="text-center text-los-failure text-[0.7rem] py-0.5">
             Add&nbsp;
@@ -340,8 +340,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </div>
         )}
 
-      {/* Fiber Path Status/Results - Rendered as block elements below the controls */}
-      <div className="px-2 md:px-3 mt-1 text-xs"> {/* Container for status messages */}
+      {/* Fiber Path Status/Results - Rendered as block elements below the controls row */}
+      <div className="px-2 md:px-3 mt-1 text-xs"> {/* Container for fiber status messages */}
         {isFiberCalculating && (
           <div className="text-primary flex items-center justify-center py-1">
             <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Calculating fiber path...
@@ -607,6 +607,3 @@ export default function BottomPanel({
     </form>
   );
 }
-
-    
-    

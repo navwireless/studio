@@ -12,10 +12,9 @@ import { decodePolyline } from '@/lib/polyline-decoder'; // For finding midpoint
 
 const STYLES = {
   mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
-  // Adjusted distance overlay for better centering and distinct look
+  // Distance overlay labels with transforms for precise centering
   distanceOverlayLabelLOS: "p-1.5 text-xs font-bold text-white bg-green-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2",
   distanceOverlayLabelFiber: "p-1.5 text-xs font-bold text-white bg-blue-600/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2",
-
 };
 
 interface InteractiveMapProps {
@@ -45,7 +44,7 @@ const getSiteNameLabelOffset = (width: number, height: number) => ({
 // getPixelPositionOffset for distance labels (centered on path)
 const getPathDistanceLabelOffset = (width: number, height: number) => ({
     x: -(width / 2),
-    y: -(height / 2),
+    y: -(height / 2), // CSS transform will handle precise centering
 });
 
 
@@ -68,24 +67,24 @@ const getCustomMarkerIcon = (label: string, isMapApiLoaded: boolean) => {
 
 // Polyline Styles
 const LOS_POLYLINE_COLORS = {
-  stale: '#60A5FA', // Blueish
-  feasible: '#4CAF50', // Green
-  notFeasible: '#F44336', // Red
-  default: '#A9A9A9', // Gray
+  stale: '#60A5FA', // Blueish-gray for stale
+  feasible: '#4CAF50', // Green for feasible LOS
+  notFeasible: '#F44336', // Red for blocked LOS
+  default: '#A9A9A9', // Default gray
 };
 
 const FIBER_POLYLINE_STYLES = {
   offset: {
-    strokeColor: '#FF9800', // Orange for offset
+    strokeColor: '#FF9800', // Orange for offset segments
     strokeOpacity: 0.9,
     strokeWeight: 3,
-    zIndex: 2, 
+    zIndex: 2, // Render above LOS polyline
   },
   roadRoute: {
-    strokeColor: '#2196F3', // Blue for road route
+    strokeColor: '#2196F3', // Blue for road route segments
     strokeOpacity: 0.8,
     strokeWeight: 4,
-    zIndex: 2,
+    zIndex: 2, // Render above LOS polyline
   },
 };
 
@@ -148,7 +147,7 @@ function InteractiveMapInner({
           if (segment.pathPolyline && google.maps.geometry?.encoding) {
             const decodedPath = google.maps.geometry.encoding.decodePath(segment.pathPolyline);
             decodedPath.forEach(p => bounds.extend(p));
-          } else { // For offset segments or if polyline is missing
+          } else { 
             bounds.extend(new window.google.maps.LatLng(segment.startPoint.lat, segment.startPoint.lng));
             bounds.extend(new window.google.maps.LatLng(segment.endPoint.lat, segment.endPoint.lng));
           }
@@ -193,34 +192,37 @@ function InteractiveMapInner({
   } : null;
 
   // Calculate midpoint for Fiber Path Label
-  let fiberPathMidPoint: PointCoordinates | null = null;
+  let fiberPathLabelMidPoint: PointCoordinates | null = null;
   if (fiberPathResult?.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0) {
-    // Find the road_route segment, preferably the longest one if multiple exist
     const roadRouteSegments = fiberPathResult.segments.filter(s => s.type === 'road_route' && s.pathPolyline);
     let targetSegmentPolyline: string | undefined;
+    let longestDistance = 0;
 
     if (roadRouteSegments.length > 0) {
-      targetSegmentPolyline = roadRouteSegments.sort((a, b) => b.distanceMeters - a.distanceMeters)[0].pathPolyline;
+      // Find the longest road route segment
+      roadRouteSegments.forEach(s => {
+        if (s.distanceMeters > longestDistance) {
+          longestDistance = s.distanceMeters;
+          targetSegmentPolyline = s.pathPolyline;
+        }
+      });
     }
     
     if (targetSegmentPolyline) {
-      const decoded = decodePolyline(targetSegmentPolyline);
+      const decoded = decodePolyline(targetSegmentPolyline); // Uses the utility from src/lib/polyline-decoder
       if (decoded.length > 0) {
         const midIndex = Math.floor(decoded.length / 2);
-        fiberPathMidPoint = { lat: decoded[midIndex][0], lng: decoded[midIndex][1] };
+        fiberPathLabelMidPoint = { lat: decoded[midIndex][0], lng: decoded[midIndex][1] };
       }
     } else {
-      // Fallback: if no road_route or polyline, use midpoint of the LOS path for fiber label too, or midpoint of snapped points.
-      // For now, if no road route, we can place it near the LOS midpoint but distinguish it.
-      // Or, more robustly, calculate midpoint of the overall bounding box of all fiber segments.
-      // Simplified fallback for now: use LOS midpoint if fiber path is just offsets or missing road polyline.
+      // Fallback: if no road_route or polyline, use midpoint of the snapped points if available
       if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
-          fiberPathMidPoint = {
+          fiberPathLabelMidPoint = {
               lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
               lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2,
           }
-      } else if (losMidPoint) {
-          fiberPathMidPoint = losMidPoint; // Approximate, could be improved
+      } else if (losMidPoint) { // Further fallback to LOS midpoint
+          fiberPathLabelMidPoint = losMidPoint; 
       }
     }
   }
@@ -311,12 +313,9 @@ function InteractiveMapInner({
             ];
             options = FIBER_POLYLINE_STYLES.offset;
           } else if (segment.type === 'road_route' && segment.pathPolyline) {
-            if (google.maps.geometry && google.maps.geometry.encoding) {
-              path = google.maps.geometry.encoding.decodePath(segment.pathPolyline).map(p => ({ lat: p.lat(), lng: p.lng() }));
-            } else {
-              // Fallback if geometry library not loaded, though it should be.
-              path = [ { lat: segment.startPoint.lat, lng: segment.startPoint.lng }, { lat: segment.endPoint.lat, lng: segment.endPoint.lng }];
-            }
+            // Use the polyline-decoder utility
+            const decodedCoords = decodePolyline(segment.pathPolyline);
+            path = decodedCoords.map(p => ({ lat: p[0], lng: p[1] })); // decodePolyline returns [lat, lng]
             options = FIBER_POLYLINE_STYLES.roadRoute;
           } else {
             return null; 
@@ -340,9 +339,9 @@ function InteractiveMapInner({
       )}
 
       {/* Fiber Path Distance Label */}
-      {fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathMidPoint && (
+      {fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathLabelMidPoint && (
          <OverlayView
-          position={fiberPathMidPoint}
+          position={fiberPathLabelMidPoint}
           mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           getPixelPositionOffset={getPathDistanceLabelOffset}
         >
@@ -367,5 +366,3 @@ export default function InteractiveMap({ mapContainerClassName = "w-full h-full"
     </div>
   );
 }
-
-    
