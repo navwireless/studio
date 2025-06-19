@@ -1240,11 +1240,9 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
 // Schema for KMZ generation parameters for a single fiber path
 const SingleFiberPathKmzParamsSchema = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].object({
     fiberPathResult: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$zod$2f$lib$2f$index$2e$mjs__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["z"].custom((val)=>{
-        // Check if val is an object and has a status property
         if (val === null || typeof val !== 'object' || !('status' in val)) {
             return false;
         }
-        // For KMZ, we only generate if the fiber path calculation was a success
         return val.status === 'success';
     }, {
         message: "Successful FiberPathResult object is required for KMZ generation."
@@ -1297,7 +1295,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
     </Folder>
 
     <Folder><name>Fiber Path Segments</name>`;
-        // Add snapped points if they exist (they should if status is success)
+        // Add snapped points if they exist
         if (fiberPathResult.pointA_snappedToRoad) {
             kmlContent += `
       <Placemark>
@@ -1336,12 +1334,10 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
                         segmentName = `Road Segment (${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["xmlEscape"])(pointA_name)} to ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["xmlEscape"])(pointB_name)})`;
                         styleUrl = "#roadRouteLineStyle";
                         if (segment.pathPolyline) {
-                            // Decode polyline and format for KML
                             const decodedCoords = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["decodePolyline"])(segment.pathPolyline);
                             coordinatesString = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["formatCoordinatesForKml"])(decodedCoords);
-                            description += `\nEncoded Polyline: ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["xmlEscape"])(segment.pathPolyline)}`;
+                            description += `\nEncoded Polyline (for reference): ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["xmlEscape"])(segment.pathPolyline)}`;
                         } else {
-                            // Fallback to straight line if polyline is missing (should ideally not happen for road_route if status is success)
                             console.warn("KMZ Gen: Road_route segment missing pathPolyline. Drawing straight line.");
                             coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
                             description += "\nNote: Polyline missing, showing straight line.";
@@ -1365,12 +1361,11 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
 </kml>`;
         const zip = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$jszip$2f$lib$2f$index$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["default"]();
         zip.file("doc.kml", kmlContent);
-        // Generate KMZ as Node.js buffer for server-side base64 conversion
         const kmzBuffer = await zip.generateAsync({
             type: "nodebuffer",
             mimeType: "application/vnd.google-earth.kmz"
         });
-        const base64Kmz = kmzBuffer.toString('base64'); // Server-side base64 conversion
+        const base64Kmz = kmzBuffer.toString('base64');
         const safePointAName = (pointA_name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
         const safePointBName = (pointB_name || "SiteB").replace(/[^a-zA-Z0-9]/g, '_');
         const fileName = `Fiber_Path_KMZ_${safePointAName}_to_${safePointBName}.kmz`;

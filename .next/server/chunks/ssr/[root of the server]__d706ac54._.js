@@ -1326,7 +1326,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$cable$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Cable$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/cable.js [app-ssr] (ecmascript) <export default as Cable>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$help$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__HelpCircle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-help.js [app-ssr] (ecmascript) <export default as HelpCircle>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$separator$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/separator.tsx [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/button.tsx [app-ssr] (ecmascript)"); // Import Button component
 "use client";
 ;
 ;
@@ -2485,44 +2485,47 @@ function generateKmlContent(originalPlacemarks, analysisResults, analysisParams)
           <Data name="Fiber Path Status"><value>${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(formatFiberStatusForExport(link.fiberPathStatus))}</value></Data>
           <Data name="Fiber Total Distance (m)"><value>${link.fiberPathTotalDistanceMeters?.toFixed(0) ?? 'N/A'}</value></Data>`;
                 // Create placemarks for each fiber segment (offset_a, road_route, offset_b)
-                // Offset A
-                kmlFiberPathGeometries += `
-        <Placemark>
-          <name>Offset A: ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointAName)} to Road</name>
-          <styleUrl>#fiberOffsetStyle</styleUrl>
-          <description>Distance: ${link.fiberPathSegments.find((s)=>s.type === 'offset_a')?.distanceMeters.toFixed(1)} m</description>
-          <LineString><tessellate>1</tessellate><coordinates>${link.pointA.lng},${link.pointA.lat},0 ${link.pointA_snappedToRoad.lng},${link.pointA_snappedToRoad.lat},0</coordinates></LineString>
-        </Placemark>`;
-                // Road Route (using decoded polyline)
-                const roadRouteSegment = link.fiberPathSegments.find((s)=>s.type === 'road_route');
-                if (roadRouteSegment && roadRouteSegment.pathPolyline) {
-                    const decodedCoords = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["decodePolyline"])(roadRouteSegment.pathPolyline);
-                    const kmlCoords = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatCoordinatesForKml"])(decodedCoords);
-                    kmlFiberPathGeometries += `
-          <Placemark>
-            <name>Road Route: ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointAName)} to ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointBName)}</name>
-            <styleUrl>#fiberRoadStyle</styleUrl>
-            <description>Distance: ${roadRouteSegment.distanceMeters.toFixed(1)} m\nEncoded Polyline: ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(roadRouteSegment.pathPolyline)}</description>
-            <LineString><tessellate>1</tessellate><coordinates>${kmlCoords}</coordinates></LineString>
-          </Placemark>`;
-                } else {
-                    // Fallback: straight line for road route if polyline is missing
-                    kmlFiberPathGeometries += `
-          <Placemark>
-            <name>Road Route (Straight): ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointAName)} to ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointBName)}</name>
-            <styleUrl>#fiberRoadStyle</styleUrl>
-            <description>Distance: ${roadRouteSegment?.distanceMeters.toFixed(1) ?? 'N/A'} m (Polyline missing, showing straight line)</description>
-            <LineString><tessellate>1</tessellate><coordinates>${link.pointA_snappedToRoad.lng},${link.pointA_snappedToRoad.lat},0 ${link.pointB_snappedToRoad.lng},${link.pointB_snappedToRoad.lat},0</coordinates></LineString>
-          </Placemark>`;
-                }
-                // Offset B
-                kmlFiberPathGeometries += `
-        <Placemark>
-          <name>Offset B: Road to ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointBName)}</name>
-          <styleUrl>#fiberOffsetStyle</styleUrl>
-          <description>Distance: ${link.fiberPathSegments.find((s)=>s.type === 'offset_b')?.distanceMeters.toFixed(1)} m</description>
-          <LineString><tessellate>1</tessellate><coordinates>${link.pointB_snappedToRoad.lng},${link.pointB_snappedToRoad.lat},0 ${link.pointB.lng},${link.pointB.lat},0</coordinates></LineString>
-        </Placemark>`;
+                link.fiberPathSegments.forEach((segment, index)=>{
+                    let segmentName = `Fiber Segment ${index + 1} (${segment.type})`;
+                    let styleUrl = '';
+                    let coordinatesString = '';
+                    let segmentDescription = `Type: ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(segment.type)}\nDistance: ${segment.distanceMeters.toFixed(1)} m`;
+                    switch(segment.type){
+                        case 'offset_a':
+                            segmentName = `Offset A: ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointAName)} to Road`;
+                            styleUrl = '#fiberOffsetStyle';
+                            coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+                            break;
+                        case 'offset_b':
+                            segmentName = `Offset B: Road to ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointBName)}`;
+                            styleUrl = '#fiberOffsetStyle';
+                            coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+                            break;
+                        case 'road_route':
+                            segmentName = `Road Route: ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointAName)} to ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(link.pointBName)} (Segment ${index})`;
+                            styleUrl = '#fiberRoadStyle';
+                            if (segment.pathPolyline) {
+                                const decodedCoords = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["decodePolyline"])(segment.pathPolyline);
+                                coordinatesString = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["formatCoordinatesForKml"])(decodedCoords);
+                                segmentDescription += `\nEncoded Polyline (for reference): ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(segment.pathPolyline)}`;
+                            } else {
+                                // Fallback: straight line for road route if polyline is missing
+                                console.warn("KMZ Gen (Bulk): Road_route segment missing pathPolyline. Drawing straight line.");
+                                coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
+                                segmentDescription += "\nNote: Polyline missing, showing straight line.";
+                            }
+                            break;
+                    }
+                    if (coordinatesString) {
+                        kmlFiberPathGeometries += `
+            <Placemark>
+              <name>${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(segmentName)}</name>
+              <styleUrl>${styleUrl}</styleUrl>
+              <description>${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(segmentDescription)}</description>
+              <LineString><tessellate>1</tessellate><coordinates>${coordinatesString}</coordinates></LineString>
+            </Placemark>`;
+                    }
+                });
             } else if (link.fiberPathStatus) {
                 extendedDataContent += `
           <Data name="Fiber Path Status"><value>${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["xmlEscape"])(formatFiberStatusForExport(link.fiberPathStatus))}</value></Data>
@@ -2579,9 +2582,6 @@ async function generateKmzBlob(originalPlacemarks, analysisResults, analysisPara
         const kmlString = generateKmlContent(originalPlacemarks, analysisResults, analysisParams);
         const zip = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$jszip$2f$lib$2f$index$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"]();
         zip.file("doc.kml", kmlString);
-        // Use 'blob' for client-side generation or if saveAs expects it directly.
-        // For server actions, 'nodebuffer' might be preferred for base64 conversion.
-        // Given saveAs is client-side, 'blob' is fine here.
         return await zip.generateAsync({
             type: "blob",
             mimeType: "application/vnd.google-earth.kmz+xml"
@@ -2610,11 +2610,12 @@ async function generateAndDownloadZipPackage(originalPlacemarks, bulkResults, an
         });
         zip.file(`${baseFileName}_results.xlsx`, excelBlob);
         const hasFeasibleLosLinks = bulkResults.some((r)=>r.losPossible);
-        if (originalPlacemarks.length > 0 || hasFeasibleLosLinks) {
+        // Ensure there are results or placemarks to justify KMZ generation
+        if (bulkResults.length > 0 || originalPlacemarks.length > 0) {
             const kmzBlob = await generateKmzBlob(originalPlacemarks, bulkResults, analysisParams);
             zip.file(`${baseFileName}_analysis.kmz`, kmzBlob);
         } else {
-            zip.file('notes.txt', 'No original placemarks were provided and/or no LOS-feasible links were found, so no KMZ file was generated for visualization.');
+            zip.file('notes.txt', 'No original placemarks were provided and/or no analysis results were generated, so no KMZ file was created for visualization.');
         }
         const zipBlob = await zip.generateAsync({
             type: "blob"
@@ -3273,8 +3274,8 @@ function BulkLosAnalyzerPage() {
     const [bulkResults, setBulkResults] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
     const [isClient, setIsClient] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false); // To gate client-side effects
     // Initialize with static defaults for SSR and initial client render
-    const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
-    const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(500); // Default 500m
+    const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false); // Static default
+    const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(500); // Static default
     // Effect to sync with localStorage after client-side mount
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         setIsClient(true); // Component has mounted on the client
