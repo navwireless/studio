@@ -184,9 +184,10 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
   return (
     <TooltipProvider>
-    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
+    {/* Removed flex-shrink-0, md:w-auto, snap-start. Kept w-full. */}
+    <div className="w-full flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1">
-        <div className="flex-shrink-0 order-1">
+        <div className="flex-shrink-0 order-1"> {/* This flex-shrink-0 is fine, it's for internal elements */}
           {isStale ? (
             <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow">
               <AlertTriangle className="mr-1 h-3 w-3" /> NEEDS RE-ANALYZE
@@ -474,6 +475,7 @@ export default function BottomPanel({
 }: BottomPanelProps) {
   const { toast } = useToast();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [activeTab, setActiveTab] = useState<'Site A' | 'Analysis' | 'Site B'>('Analysis');
 
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
     if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
@@ -525,16 +527,38 @@ export default function BottomPanel({
         "z-[50]"
       )}
     >
+      {/* Content Area with adjusted height and overflow for mobile */}
       <div
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[40vh] md:h-[35vh]" : "h-0"
+          isContentExpanded && isPanelGloballyVisible ? "h-auto max-h-[60vh] md:max-h-[35vh] md:h-[35vh]" : "h-0"
         )}
       >
-        <div className="p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto">
-           <div className="flex md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
+        {/* Main content div - now always allows y-scroll */}
+        <div className="p-1.5 md:p-2 h-full overflow-y-auto">
+          {/* Tab Navigation for Mobile - visible only on <md screens */}
+          <div className="md:hidden flex justify-around mb-2 border-b border-border sticky top-0 bg-slate-800/90 z-10 py-1">
+            {(['Site A', 'Analysis', 'Site B'] as const).map((tab) => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setActiveTab(tab)}
+                className={cn(
+                  "text-xs px-3 py-1 h-auto",
+                  activeTab === tab ? "font-semibold" : "font-normal text-muted-foreground"
+                )}
+              >
+                {tab}
+              </Button>
+            ))}
+          </div>
 
-            <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">
+          {/* Container for the three sections - adjusted classes for new layout */}
+          <div className="h-full md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] md:gap-1.5">
+
+            {/* Site A Input Group - Conditional Rendering */}
+            <div className={cn("w-full", activeTab === 'Site A' ? 'block' : 'hidden', 'md:block')}>
               <SiteInputGroup
                 id="pointA"
                 title={pointAName || "Site A"}
@@ -546,9 +570,11 @@ export default function BottomPanel({
               />
             </div>
 
-            <ProfilePanelMiddleColumn
-              analysisResult={analysisResult}
-              isStale={isStale}
+            {/* Profile Panel Middle Column - Conditional Rendering */}
+            <div className={cn("w-full", activeTab === 'Analysis' ? 'block' : 'hidden', 'md:block')}>
+              <ProfilePanelMiddleColumn
+                analysisResult={analysisResult}
+                isStale={isStale}
               isActionPending={isActionPending}
               control={control}
               clientFormErrors={clientFormErrors}
@@ -570,8 +596,10 @@ export default function BottomPanel({
               isFiberCalculating={isFiberCalculating}
               fiberPathError={fiberPathError}
             />
+            </div>
 
-            <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">
+            {/* Site B Input Group - Conditional Rendering */}
+            <div className={cn("w-full", activeTab === 'Site B' ? 'block' : 'hidden', 'md:block')}>
               <SiteInputGroup
                 id="pointB"
                 title={pointBName || "Site B"}
@@ -585,9 +613,10 @@ export default function BottomPanel({
           </div>
         </div>
       </div>
+      {/* Chevron for expanding/collapsing panel - original logic, but might need adjustment for mobile */}
       {isPanelGloballyVisible && (
         <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 p-1.5 bg-card rounded-t-lg border-t border-x border-border shadow-lg cursor-pointer hover:bg-muted group"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 p-1.5 bg-card rounded-t-lg border-t border-x border-border shadow-lg cursor-pointer hover:bg-muted group" // md:flex hidden - if we want separate chevrons
           onClick={onToggleContentExpansion}
           aria-label={isContentExpanded ? "Collapse Panel Content" : "Expand Panel Content"}
         >

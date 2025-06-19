@@ -9,11 +9,6 @@ import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalcula
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
 
-const STYLES = {
-  mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
-  distanceOverlayLabel: "p-1.5 text-sm font-bold text-white bg-primary/80 rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap",
-};
-
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { name?: string });
   pointB?: (PointCoordinates & { name?: string });
@@ -213,7 +208,7 @@ function InteractiveMapInner({
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
             getPixelPositionOffset={getPixelPositionOffset}
           >
-            <div className={STYLES.mapMarkerLabel}>
+            <div className={"p-1 text-[0.6rem] sm:text-xs font-semibold text-white bg-slate-800/70 rounded shadow-md backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+8px)] sm:-translate-y-[calc(100%+10px)] whitespace-nowrap w-max"}>
               {formPointA.name || "Site A"}
             </div>
           </OverlayView>
@@ -234,7 +229,7 @@ function InteractiveMapInner({
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
             getPixelPositionOffset={getPixelPositionOffset}
           >
-            <div className={STYLES.mapMarkerLabel}>
+            <div className={"p-1 text-[0.6rem] sm:text-xs font-semibold text-white bg-slate-800/70 rounded shadow-md backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+8px)] sm:-translate-y-[calc(100%+10px)] whitespace-nowrap w-max"}>
               {formPointB.name || "Site B"}
             </div>
           </OverlayView>
@@ -293,7 +288,7 @@ function InteractiveMapInner({
           mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           getPixelPositionOffset={getDistanceOverlayPositionOffset}
         >
-          <div className={STYLES.distanceOverlayLabel}>
+          <div className={"p-1 text-[0.7rem] sm:text-sm font-semibold text-white bg-primary/80 rounded shadow-lg backdrop-blur-sm whitespace-nowrap"}>
             {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`}
           </div>
         </OverlayView>
