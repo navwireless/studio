@@ -34,7 +34,7 @@ export default function Home() {
 
 
   const [isAnalysisPanelGloballyOpen, setIsAnalysisPanelGloballyOpen] = useState(false);
-  const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true);
+  // const [isBottomPanelContentExpanded, setIsBottomPanelContentExpanded] = useState(true); // State removed
   const [isStale, setIsStale] = useState(false);
 
   const [historyList, setHistoryList] = useState<AnalysisResult[]>([]);
@@ -150,7 +150,7 @@ export default function Home() {
       
       if (!isAnalysisPanelGloballyOpen) {
           setIsAnalysisPanelGloballyOpen(true);
-          setIsBottomPanelContentExpanded(true);
+          // setIsBottomPanelContentExpanded(true); // Call removed
       }
 
       toast({
@@ -306,16 +306,8 @@ export default function Home() {
 
 
   const toggleGlobalPanelVisibility = useCallback(() => {
-    setIsAnalysisPanelGloballyOpen(prevIsOpen => {
-      const newIsOpen = !prevIsOpen;
-      if (newIsOpen) {
-        setIsBottomPanelContentExpanded(true); // Ensure panel content is expanded when panel becomes visible
-      }
-      // No need to explicitly set setIsBottomPanelContentExpanded(false) when closing,
-      // as BottomPanel's h-0 class takes precedence when isPanelGloballyOpen is false.
-      return newIsOpen;
-    });
-  }, [setIsAnalysisPanelGloballyOpen, setIsBottomPanelContentExpanded]); // Added setIsBottomPanelContentExpanded
+    setIsAnalysisPanelGloballyOpen(prevIsOpen => !prevIsOpen);
+  }, [setIsAnalysisPanelGloballyOpen]); // setIsBottomPanelContentExpanded removed from dependencies
 
   // const toggleBottomPanelContentExpansion = useCallback(() => {
   //   setIsBottomPanelContentExpanded(prev => !prev);
@@ -537,7 +529,7 @@ export default function Home() {
             fiberPathResult={fiberPathResult}
           />
           {/* Map Overlay Buttons */}
-          <div className="absolute top-4 right-4 z-30 print:hidden flex flex-col space-y-2">
+          <div className="absolute top-4 right-4 z-30 print:hidden flex flex-col space-y-2 bg-background/50 backdrop-blur-sm p-1 rounded-lg shadow-md">
             <Button
               variant="outline" // Consistent with other overlay buttons
               size="icon"
@@ -623,8 +615,7 @@ export default function Home() {
           analysisResult={analysisResult}
           isPanelGloballyVisible={isAnalysisPanelGloballyOpen}
           onToggleGlobalVisibility={toggleGlobalPanelVisibility}
-          isContentExpanded={isBottomPanelContentExpanded}
-          // onToggleContentExpansion={toggleBottomPanelContentExpansion} // Prop removed
+          // isContentExpanded={isBottomPanelContentExpanded} // Prop removed
           isStale={isStale}
           control={control}
           register={register}

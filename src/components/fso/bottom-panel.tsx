@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
 import CustomProfileChart from './custom-profile-chart';
-import { Target, Settings, Loader2, AlertTriangle, X, Download, Cable, Router, HelpCircle } from 'lucide-react'; // Removed ChevronDown, ChevronUp
+import { Target, Settings, Loader2, AlertTriangle, X, Download, Cable, Router, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react'; // Added ChevronDown, ChevronUp
 import { cn } from '@/lib/utils';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -188,7 +188,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
     <div className="w-full flex flex-col h-full bg-transparent backdrop-blur-2px rounded-lg">
 
       {/* Top Controls Section (will take ~20% height based on its content, or we can be more explicit if needed) */}
-      <div className="flex-none p-2 space-y-2 overflow-y-auto custom-scrollbar"> {/* Added custom-scrollbar for just-in-case scrolling in top section */}
+      <div className="flex-none p-2 space-y-1"> {/* MODIFIED: Removed overflow, custom-scrollbar, changed space-y-2 to space-y-1 */}
         {/* Section 1: Main Status & Actions */}
         <div className="space-y-1.5">
           {/* LOS Status Display - Copied and adapted from previous card structure */}
@@ -353,7 +353,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             </div>
           )}
           {fiberPathResult && !isFiberCalculating && (
-            <div className="text-[0.7rem] p-1 rounded-sm bg-muted/30 space-y-0.5"> {/* Reduced padding, font size */}
+            <div className="text-[0.7rem] p-1 rounded-md bg-muted/30 space-y-0.5"> {/* MODIFIED: rounded-sm to rounded-md */}
               <p>
                 <span className="font-semibold">Fiber Status:</span>{' '}
                 <span className={cn(
@@ -402,7 +402,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
       </div>
 
       {/* Bottom Chart Section (will take ~80% height) */}
-      <div className="flex-1 p-0.5 min-h-0">
+      <div className="relative flex-1 p-0.5 min-h-0"> {/* Added relative positioning */}
         {analysisResult ? (
           <CustomProfileChart
             key={chartKey}
@@ -423,6 +423,46 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             <p>Perform analysis to see profile.</p>
           </div>
         )}
+
+        {/* NEW Fiber Data Overlay Div */}
+        {(calculateFiberPathEnabled || isFiberCalculating) && (fiberPathResult || isFiberCalculating) && (
+          <div className="absolute bottom-1 left-1 right-1 z-10">
+            {(() => {
+              if (isFiberCalculating) {
+                return <div className="text-center p-1 rounded bg-slate-900/70 backdrop-blur-sm"><p className="text-xs text-primary animate-pulse">Calculating Fiber...</p></div>;
+              }
+              if (!fiberPathResult) return null;
+
+              let statusText = fiberPathResult.status;
+              let statusColorClass = "text-white"; // Default
+              if (fiberPathResult.status === 'success') { statusText = "Calculated"; statusColorClass = "text-green-400"; }
+              else if (fiberPathResult.status === 'los_not_feasible') { statusText = "LOS Not Feasible"; statusColorClass = "text-yellow-400"; }
+              else if (fiberPathResult.status === 'no_road_for_a') { statusText = "No Road Near Site A"; statusColorClass = "text-yellow-400"; }
+              else if (fiberPathResult.status === 'no_road_for_b') { statusText = "No Road Near Site B"; statusColorClass = "text-yellow-400"; }
+              else if (fiberPathResult.status === 'no_route_between_roads') { statusText = "No Route Between Roads"; statusColorClass = "text-yellow-400"; }
+              else if (fiberPathResult.status === 'radius_too_small') { statusText = "Snap Radius Too Small"; statusColorClass = "text-yellow-400"; }
+              else if (fiberPathResult.status !== 'success') { statusText = fiberPathResult.errorMessage || "Error"; statusColorClass = "text-red-400"; }
+
+              return (
+                <div className="p-1.5 rounded bg-slate-900/80 backdrop-blur-sm text-xs space-y-0.5 shadow-lg">
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-slate-300">Fiber Path:</p>
+                    <p className={cn("font-semibold", statusColorClass)}>{statusText}</p>
+                  </div>
+                  {fiberPathResult.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && (
+                    <p className="text-slate-300">
+                      <span className="font-bold text-white">{fiberPathResult.totalDistanceMeters.toFixed(0)}m</span> total
+                      <span className="text-slate-400 text-[0.65rem]"> (A: {fiberPathResult.offsetDistanceA_meters?.toFixed(0)}m, R: {fiberPathResult.roadRouteDistanceMeters?.toFixed(0)}m, B: {fiberPathResult.offsetDistanceB_meters?.toFixed(0)}m)</span>
+                    </p>
+                  )}
+                  {(fiberPathError && fiberPathResult.status !== 'success') && ( // Show general error if specific error message for status is not already shown
+                     <p className={cn("text-xs", statusColorClass)}>{fiberPathError}</p>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
       </div>
     </div>
     </TooltipProvider>
@@ -434,8 +474,8 @@ interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
   isPanelGloballyVisible: boolean;
   onToggleGlobalVisibility: () => void;
-  isContentExpanded: boolean;
-  onToggleContentExpansion: () => void;
+  // isContentExpanded prop is removed as it's no longer used for height logic here
+  // onToggleContentExpansion prop is removed
   isStale?: boolean;
 
   control: Control<AnalysisFormValues>;
@@ -463,8 +503,8 @@ export default function BottomPanel({
   analysisResult,
   isPanelGloballyVisible,
   onToggleGlobalVisibility,
-  isContentExpanded,
-  onToggleContentExpansion,
+  // isContentExpanded, // Prop removed
+  // onToggleContentExpansion, // Prop removed
   isStale,
   control,
   register,
@@ -488,6 +528,7 @@ export default function BottomPanel({
   const { toast } = useToast();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState<'Site A' | 'Analysis' | 'Site B'>('Analysis');
+  const [isInternallyCollapsed, setIsInternallyCollapsed] = useState(false);
 
   const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
     if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
@@ -539,19 +580,35 @@ export default function BottomPanel({
         "z-[50]"
       )}
     >
-      {/* Content Area with adjusted height and overflow for mobile */}
+      {/* Content Area with new height logic and internal structure */}
       <div
         className={cn(
-          "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[45vh]" : "h-0"
+          "w-full overflow-hidden transition-all duration-300 ease-in-out",
+          isPanelGloballyVisible
+            ? (isInternallyCollapsed ? "h-12" : "h-[40vh]")
+            : "h-0"
         )}
       >
-        {/* Main content div - now always allows y-scroll */}
-        <div className="p-1.5 md:p-2 h-full overflow-y-auto">
-          {/* Tab Navigation for Mobile - visible only on <md screens */}
-          <div className="md:hidden flex justify-around mb-2 border-b border-border sticky top-0 bg-slate-800/90 z-10 py-1">
-            {(['Site A', 'Analysis', 'Site B'] as const).map((tab) => (
-              <Button
+        {/* Header for the collapse button, always visible if panel is globally visible */}
+        <div className="h-12 flex justify-end items-center p-2 border-b border-border bg-slate-800/90 rounded-t-2xl"> {/* MODIFIED: Added rounded-t-2xl */}
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsInternallyCollapsed(!isInternallyCollapsed)}
+                aria-label={isInternallyCollapsed ? "Expand Panel Content" : "Collapse Panel Content"}
+                className="text-muted-foreground hover:text-foreground"
+             >
+                 {isInternallyCollapsed ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+             </Button>
+        </div>
+
+        {/* Conditionally rendered actual content (tabs, grid, etc.) */}
+        {!isInternallyCollapsed && (
+            <div className="p-1.5 md:p-2 h-[calc(100%-3rem)] overflow-y-auto"> {/* calc(100% - h-12) */}
+                {/* Tab Navigation for Mobile - visible only on <md screens */}
+                <div className="md:hidden flex justify-around mb-2 border-b border-border sticky top-0 bg-slate-800/90 z-10 py-1">
+                    {(['Site A', 'Analysis', 'Site B'] as const).map((tab) => (
+                    <Button
                 key={tab}
                 variant={activeTab === tab ? "secondary" : "ghost"}
                 size="sm"
