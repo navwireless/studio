@@ -183,8 +183,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
     onFiberRadiusChange(event.target.value);
   };
 
-  // Comment out the original return block:
-  /*
   return (
     <TooltipProvider>
     <div className="w-full flex flex-col h-full bg-transparent backdrop-blur-2px rounded-lg">
@@ -463,11 +461,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
     </div>
     </TooltipProvider>
   );
-  */
-  {/* --- End of original return block to be commented out --- */ }
-
-  // New simplified return statement for testing:
-  return (<div>Profile Panel Middle Column Placeholder</div>);
 };
 
 
