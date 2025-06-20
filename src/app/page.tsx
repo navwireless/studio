@@ -566,7 +566,7 @@ export default function Home() {
               variant="outline" // Consistent with other overlay buttons
               size="icon"
               onClick={toggleGlobalPanelVisibility} // Same function as the bottom-right FAB
-              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md" // Consistent styling
+              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md transition-colors duration-150" // Consistent styling
               aria-label={isAnalysisPanelGloballyOpen ? "Close Analysis Panel" : "Open Analysis Panel"}
             >
               {isAnalysisPanelGloballyOpen ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
@@ -575,7 +575,7 @@ export default function Home() {
               variant="outline"
               size="icon"
               onClick={handleClearMap}
-              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md"
+              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md transition-colors duration-150"
               aria-label="Clear Map and Form"
             >
               <Trash2 className="h-5 w-5" />
@@ -584,7 +584,7 @@ export default function Home() {
               variant="outline"
               size="icon"
               onClick={handleToggleHistoryPanel}
-              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md"
+              className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-lg rounded-md transition-colors duration-150"
               aria-label="Toggle History Panel"
             >
               <History className="h-5 w-5" />

@@ -50,7 +50,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
     <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
       <div className="space-y-1.5">
         <div>
-          <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Name</Label>
+          <Label htmlFor={`${id}.name`} className="text-xs uppercase tracking-wider text-muted-foreground font-normal">Name</Label> {/* MODIFIED */}
           <Input
             id={`${id}.name`}
             {...register(`${id}.name`)}
@@ -62,7 +62,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
         </div>
         <div className="grid grid-cols-2 gap-1">
           <div>
-            <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Latitude</Label>
+            <Label htmlFor={`${id}.lat`} className="text-xs uppercase tracking-wider text-muted-foreground font-normal">Latitude</Label> {/* MODIFIED */}
             <Input
               id={`${id}.lat`}
               {...register(`${id}.lat`)}
@@ -73,7 +73,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
               <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
           </div>
           <div>
-            <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Longitude</Label>
+            <Label htmlFor={`${id}.lng`} className="text-xs uppercase tracking-wider text-muted-foreground font-normal">Longitude</Label> {/* MODIFIED */}
             <Input
               id={`${id}.lng`}
               {...register(`${id}.lng`)}
@@ -183,15 +183,16 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
     onFiberRadiusChange(event.target.value);
   };
 
+  // Comment out the original return block:
+  /*
   return (
     <TooltipProvider>
-    {/* Root div: REMOVED overflow-y-auto, space-y-*, and p-1 */}
     <div className="w-full flex flex-col h-full bg-transparent backdrop-blur-2px rounded-lg">
 
       {/* Top Controls Section (will take ~20% height based on its content, or we can be more explicit if needed) */}
       <div className="flex-none p-2 space-y-1"> {/* MODIFIED: Removed overflow, custom-scrollbar, changed space-y-2 to space-y-1 */}
         {/* Section 1: Main Status & Actions */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 bg-muted/20 p-1.5 rounded-md"> {/* MODIFIED: Added bg, padding, rounding */}
           {/* LOS Status Display - Copied and adapted from previous card structure */}
           {isStale ? (
             <div className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center justify-center shadow">
@@ -218,17 +219,17 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           {analysisResult && !isStale && (
             <div className="flex justify-around items-center text-xs pt-0.5">
               <div className="text-center">
-                <span className="block uppercase tracking-wider text-muted-foreground text-[0.6rem] font-medium">Aerial Dist.</span>
-                <span className="block font-bold text-foreground text-[0.7rem]">
+                <span className="block uppercase tracking-wider text-muted-foreground text-[0.7rem] font-medium">Aerial Dist.</span> {/* MODIFIED */}
+                <span className="block font-bold text-foreground text-xs"> {/* MODIFIED */}
                   {analysisResult.distanceKm < 1
                     ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m`
                     : `${analysisResult.distanceKm.toFixed(1)}km`}
                 </span>
               </div>
               <div className="text-center">
-                <span className="block uppercase tracking-wider text-muted-foreground text-[0.6rem] font-medium">Min. Clear.</span>
+                <span className="block uppercase tracking-wider text-muted-foreground text-[0.7rem] font-medium">Min. Clear.</span> {/* MODIFIED */}
                 <span className={cn(
-                  "block font-bold text-[0.7rem]",
+                  "block font-bold text-xs", // MODIFIED
                   actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure"
                 )}>
                   {actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"}
@@ -239,7 +240,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
           {/* Deficit Message (if applicable) */}
           {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
-            <div className="text-center text-los-failure text-[0.65rem] py-0.5">
+            <div className="text-center text-los-failure text-[0.7rem] py-0.5"> {/* MODIFIED */}
               Add&nbsp;<span className="font-semibold">{deficit.toFixed(0)}m</span>&nbsp;to tower(s) for clearance.
             </div>
           )}
@@ -253,7 +254,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
               size="sm" // Keep sm, but it will be tight. Consider "xs" if available and appropriate.
               className="bg-primary/90 hover:bg-primary text-primary-foreground text-[0.7rem] font-semibold px-2.5 py-1 h-auto min-h-7 rounded shadow-none transition-all duration-200 whitespace-nowrap leading-tight flex-grow sm:flex-grow-0"
             >
-              <Loader2 className={cn("mr-1 h-3 w-3", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
+              <Loader2 className={cn("mr-1 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
               {buttonText}
             </Button>
             {analysisResult && !isStale && (
@@ -265,21 +266,18 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                 variant="outline"
                 className="text-[0.7rem] font-semibold px-2.5 py-1 h-auto min-h-7 rounded shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10 flex-grow sm:flex-grow-0"
               >
-                <Loader2 className={cn("mr-1 h-3 w-3", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin" )} />
-                <Download className={cn("mr-1 h-3 w-3", isGeneratingPdf && "hidden")} />
+                <Loader2 className={cn("mr-1 h-3.5 w-3.5", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin" )} />
+                <Download className={cn("mr-1 h-3.5 w-3.5", isGeneratingPdf && "hidden")} />
                 PDF
               </Button>
             )}
           </div>
         </div>
 
-        {/* Divider (optional, for visual separation) */}
-        <hr className="border-border/50 my-1" />
-
         {/* Section 2: Link Parameters */}
-        <div className="space-y-1">
+        <div className="space-y-1 bg-muted/20 p-1.5 rounded-md"> {/* MODIFIED: Added bg, padding, rounding */}
           <div className="flex items-center justify-between space-x-1">
-            <Label htmlFor="clearanceThresholdProfileCompact" className="text-[0.65rem] text-muted-foreground whitespace-nowrap shrink-0">Req. Fresnel (m):</Label>
+            <Label htmlFor="clearanceThresholdProfileCompact" className="text-[0.7rem] text-muted-foreground whitespace-nowrap shrink-0">Req. Fresnel (m):</Label> {/* MODIFIED */}
             <Controller
               name="clearanceThreshold"
               control={control}
@@ -301,11 +299,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           }
         </div>
 
-        {/* Divider (optional) */}
-        <hr className="border-border/50 my-1" />
-
         {/* Section 3: Fiber Optic Path */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 bg-muted/20 p-1.5 rounded-md"> {/* MODIFIED: Added bg, padding, rounding */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5"> {/* Reduced space-x-2 to space-x-1.5 */}
               <Switch
@@ -333,7 +328,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
           {calculateFiberPathEnabled && (
             <div className="flex items-center justify-between space-x-1 pl-1"> {/* Added pl-1 to align with switch indent */}
-              <Label htmlFor="fiber-radius-input-compact" className="text-[0.65rem] text-muted-foreground whitespace-nowrap shrink-0">Snap Radius (m):</Label>
+              <Label htmlFor="fiber-radius-input-compact" className="text-[0.7rem] text-muted-foreground whitespace-nowrap shrink-0">Snap Radius (m):</Label> {/* MODIFIED */}
               <Input
                 id="fiber-radius-input-compact"
                 type="number"
@@ -350,7 +345,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           {/* Fiber Path Results/Status/Error - Copied and adapted */}
           {isFiberCalculating && (
             <div className="text-xs text-primary flex items-center justify-center py-0.5">
-              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> Calculating...
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Calculating...
             </div>
           )}
           {fiberPathResult && !isFiberCalculating && (
@@ -379,7 +374,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                   <p className="text-muted-foreground/80 italic">{fiberPathResult.errorMessage}</p>
               )}
               {fiberPathResult.status === 'success' && (
-                  <div className="text-[0.6rem] text-muted-foreground/70">
+                  <div className="text-[0.65rem] text-muted-foreground/70"> {/* MODIFIED */}
                      (A: {fiberPathResult.offsetDistanceA_meters?.toFixed(0)}m
                      + R: {fiberPathResult.roadRouteDistanceMeters?.toFixed(0)}m
                      + B: {fiberPathResult.offsetDistanceB_meters?.toFixed(0)}m)
@@ -468,6 +463,11 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
     </div>
     </TooltipProvider>
   );
+  */
+  {/* --- End of original return block to be commented out --- */ }
+
+  // New simplified return statement for testing:
+  return (<div>Profile Panel Middle Column Placeholder</div>);
 };
 
 

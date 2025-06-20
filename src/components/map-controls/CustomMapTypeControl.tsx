@@ -26,30 +26,30 @@ const CustomMapTypeControl: React.FC<CustomMapTypeControlProps> = ({ map, curren
   };
 
   return (
-    <div className="flex bg-background/70 backdrop-blur-sm shadow-md rounded-md p-0.5 space-x-0.5">
+    <div className="flex bg-background/75 backdrop-blur-md shadow rounded-lg p-1 space-x-1"> {/* MODIFIED */}
       <Button
-        variant={currentMapTypeId === MAP_TYPE_IDS.ROADMAP ? "secondary" : "ghost"}
-        size="sm" // Using sm for slightly more text space than icon
+        variant="ghost" // Base variant is ghost, active state applies stronger styling
+        size="sm"
         onClick={() => handleSetMapType(MAP_TYPE_IDS.ROADMAP)}
         className={cn(
-          "text-foreground hover:bg-background/80 h-7 text-xs px-2 sm:px-2.5", // Compact styling
+          "h-8 text-xs px-3 rounded-md transition-colors duration-150", // Common styles including base rounding
           currentMapTypeId === MAP_TYPE_IDS.ROADMAP
-            ? "bg-primary/80 hover:bg-primary/90 text-primary-foreground"
-            : "hover:bg-muted/50"
+            ? "bg-primary/90 hover:bg-primary text-primary-foreground"
+            : "text-foreground hover:bg-muted/60"
         )}
         aria-label="Show Map View"
       >
         Map
       </Button>
       <Button
-        variant={currentMapTypeId === MAP_TYPE_IDS.SATELLITE ? "secondary" : "ghost"}
+        variant="ghost" // Base variant is ghost
         size="sm"
         onClick={() => handleSetMapType(MAP_TYPE_IDS.SATELLITE)}
         className={cn(
-          "text-foreground hover:bg-background/80 h-7 text-xs px-2 sm:px-2.5", // Compact styling
+          "h-8 text-xs px-3 rounded-md transition-colors duration-150", // Common styles including base rounding
           currentMapTypeId === MAP_TYPE_IDS.SATELLITE
-            ? "bg-primary/80 hover:bg-primary/90 text-primary-foreground"
-            : "hover:bg-muted/50"
+            ? "bg-primary/90 hover:bg-primary text-primary-foreground"
+            : "text-foreground hover:bg-muted/60"
         )}
         aria-label="Show Satellite View"
       >

@@ -37,19 +37,19 @@ const CustomZoomControl: React.FC<CustomZoomControlProps> = ({ map }) => {
         variant="outline" // Using outline as a base for semi-transparent effect
         size="icon"
         onClick={handleZoomIn}
-        className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-md rounded-md w-8 h-8 sm:w-9 sm:h-9" // Custom small size
+        className="bg-background/75 hover:bg-background/90 backdrop-blur-md text-foreground p-0 shadow rounded-lg w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-colors duration-150"
         aria-label="Zoom In"
       >
-        <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Plus className="h-5 w-5" />
       </Button>
       <Button
         variant="outline"
         size="icon"
         onClick={handleZoomOut}
-        className="bg-background/70 hover:bg-background/80 backdrop-blur-sm text-foreground p-2 shadow-md rounded-md w-8 h-8 sm:w-9 sm:h-9" // Custom small size
+        className="bg-background/75 hover:bg-background/90 backdrop-blur-md text-foreground p-0 shadow rounded-lg w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center transition-colors duration-150"
         aria-label="Zoom Out"
       >
-        <Minus className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Minus className="h-5 w-5" />
       </Button>
     </div>
   );

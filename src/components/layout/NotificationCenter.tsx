@@ -52,7 +52,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
               className="text-xs text-muted-foreground hover:text-destructive px-2"
               aria-label="Clear all notifications"
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              <Trash2 className="h-4 w-4 mr-1" /> {/* MODIFIED */}
               Clear All
             </Button>
           )}
@@ -99,7 +99,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         {notification.description}
                       </p>
                     )}
-                    <p className="text-[0.65rem] text-muted-foreground/80 mt-1">
+                  <p className="text-xs text-muted-foreground/80 mt-1"> {/* MODIFIED */}
                       {new Date(notification.timestamp).toLocaleString()}
                     </p>
                   </div>
@@ -110,7 +110,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                     className="ml-2 text-muted-foreground hover:text-destructive h-6 w-6 shrink-0"
                     aria-label="Dismiss notification"
                   >
-                    <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" /> {/* MODIFIED */}
                   </Button>
                 </div>
               </div>
