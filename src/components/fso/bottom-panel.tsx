@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { saveAs } from 'file-saver';
+import { useNotifications } from '@/context/NotificationContext'; // Import useNotifications
 import { generateSingleAnalysisPdfReportAction } from '@/app/actions';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { Switch } from '@/components/ui/switch';
@@ -526,6 +527,7 @@ export default function BottomPanel({
   fiberPathError,
 }: BottomPanelProps) {
   const { toast } = useToast();
+  const { addNotification } = useNotifications(); // Initialize useNotifications
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [activeTab, setActiveTab] = useState<'Site A' | 'Analysis' | 'Site B'>('Analysis');
   const [isInternallyCollapsed, setIsInternallyCollapsed] = useState(false);
@@ -540,7 +542,10 @@ export default function BottomPanel({
 
   const handleDownloadPdf = async () => {
     if (!analysisResult) {
-      toast({ title: "Error", description: "No analysis data available to generate PDF.", variant: "destructive" });
+      const toastTitle = "Error";
+      const toastDescription = "No analysis data available to generate PDF.";
+      toast({ title: toastTitle, description: toastDescription, variant: "destructive" });
+      addNotification({ title: toastTitle, description: toastDescription });
       return;
     }
     setIsGeneratingPdf(true);
@@ -557,14 +562,19 @@ export default function BottomPanel({
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'application/pdf' });
         saveAs(blob, fileName);
-        toast({ title: "Success", description: "PDF report downloaded." });
+        const toastTitleSuccess = "Success";
+        const toastDescriptionSuccess = "PDF report downloaded.";
+        toast({ title: toastTitleSuccess, description: toastDescriptionSuccess });
+        addNotification({ title: toastTitleSuccess, description: toastDescriptionSuccess });
       } else {
         throw new Error(response.error);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error generating PDF.";
       console.error("PDF Generation Error:", error);
-      toast({ title: "PDF Generation Failed", description: errorMessage, variant: "destructive" });
+      const toastTitleError = "PDF Generation Failed";
+      toast({ title: toastTitleError, description: errorMessage, variant: "destructive" });
+      addNotification({ title: toastTitleError, description: errorMessage });
     } finally {
       setIsGeneratingPdf(false);
     }

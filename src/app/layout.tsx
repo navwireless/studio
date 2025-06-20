@@ -5,6 +5,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Footer from '@/components/layout/footer';
 import { GoogleMapsLoaderProvider } from '@/components/GoogleMapsLoaderProvider'; // Import the provider
+import { NotificationsProvider } from '@/context/NotificationContext'; // Import NotificationsProvider
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,13 +34,15 @@ export default function RootLayout({
                    bg-background text-foreground 
                    flex flex-col h-screen overflow-hidden`}
       >
-        <GoogleMapsLoaderProvider> {/* Wrap with the provider */}
-          <main className="flex-1 overflow-hidden relative flex flex-col">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
-        </GoogleMapsLoaderProvider>
+        <NotificationsProvider> {/* Wrap here */}
+          <GoogleMapsLoaderProvider>
+            <main className="flex-1 overflow-hidden relative flex flex-col">
+              {children}
+            </main>
+            <Footer />
+            <Toaster /> {/* Toaster can remain outside or inside, usually fine outside */}
+          </GoogleMapsLoaderProvider>
+        </NotificationsProvider>
       </body>
     </html>
   );

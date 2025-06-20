@@ -8,6 +8,8 @@ import type { PointCoordinates, AnalysisResult } from '@/types';
 import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
+import CustomZoomControl from '@/components/map-controls/CustomZoomControl';
+import CustomMapTypeControl from '@/components/map-controls/CustomMapTypeControl';
 
 const darkMapStyle = [
   { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
@@ -171,6 +173,7 @@ function InteractiveMapInner({
 }: Omit<InteractiveMapProps, 'mapContainerClassName'>) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
+  const [currentMapTypeId, setCurrentMapTypeId] = useState<string | undefined>('satellite');
   const { isLoaded: isMapApiLoaded } = useGoogleMapsLoader();
 
   const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapApiLoaded), [isMapApiLoaded]);
@@ -179,31 +182,36 @@ function InteractiveMapInner({
   const handleActualMapLoad = useCallback((mapInstance: google.maps.Map) => {
     mapRef.current = mapInstance;
     if (window.google && window.google.maps) {
-      mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      const initialMapTypeId = google.maps.MapTypeId.SATELLITE;
+      mapInstance.setMapTypeId(initialMapTypeId);
+      setCurrentMapTypeId(initialMapTypeId); // Set initial state
       mapInstance.setOptions({
-        streetViewControl: true,
-        streetViewControlOptions: {
-          position: google.maps.ControlPosition.TOP_RIGHT,
-        },
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-          position: google.maps.ControlPosition.TOP_RIGHT,
-        },
-        fullscreenControl: true,
-        fullscreenControlOptions: {
-          position: google.maps.ControlPosition.TOP_RIGHT,
-        },
-        zoomControl: true,
-        zoomControlOptions: {
-          position: google.maps.ControlPosition.TOP_RIGHT,
-        },
+        // Controls to hide:
+        zoomControl: false,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+
+        // Existing important options to keep:
         gestureHandling: 'cooperative',
         clickableIcons: false,
         styles: darkMapStyle,
+
+        // Removed options related to disabled controls:
+        // mapTypeControlOptions, streetViewControlOptions,
+        // fullscreenControlOptions, zoomControlOptions
       });
     }
-  }, []);
+  }, [setCurrentMapTypeId]); // Added setCurrentMapTypeId to dependencies
+
+  const handleMapTypeIdChange = useCallback(() => {
+    if (mapRef.current) {
+      const newMapTypeId = mapRef.current.getMapTypeId();
+      if (newMapTypeId) {
+        setCurrentMapTypeId(newMapTypeId);
+      }
+    }
+  }, []); // Empty dependency array is fine as it relies on mapRef
 
   const handleMapUnmount = useCallback(() => {
     mapRef.current = null;
@@ -283,6 +291,7 @@ function InteractiveMapInner({
       onLoad={handleActualMapLoad}
       onUnmount={handleMapUnmount}
       onClick={handleInternalMapClick}
+      onMapTypeIdChanged={handleMapTypeIdChange}
       options={{}}
     >
       {formPointA && pALat !== undefined && pALng !== undefined && markerIconA && (
@@ -383,6 +392,14 @@ function InteractiveMapInner({
             {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)}m` : `${currentDistanceKm.toFixed(1)}km`}
           </div>
         </OverlayView>
+      )}
+
+      {/* Custom Map Controls Container */}
+      {isMapApiLoaded && mapRef.current && (
+        <div className="absolute top-4 left-4 z-20 print:hidden flex flex-col space-y-2 items-start">
+          <CustomZoomControl map={mapRef.current} />
+          <CustomMapTypeControl map={mapRef.current} currentMapTypeId={currentMapTypeId} />
+        </div>
       )}
     </GoogleMap>
   );

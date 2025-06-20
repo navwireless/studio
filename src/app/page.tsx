@@ -14,6 +14,7 @@ import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
 import AppHeader from '@/components/layout/app-header';
 import HistoryPanel from '@/components/layout/history-panel';
+import { useNotifications } from '@/context/NotificationContext'; // Import useNotifications
 import { calculateDistanceKm } from '@/lib/los-calculator';
 import BottomPanel from '@/components/fso/bottom-panel';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator'; 
@@ -26,6 +27,7 @@ const LOCAL_STORAGE_KEYS = {
 
 export default function Home() {
   const { toast } = useToast();
+  const { addNotification } = useNotifications(); // Initialize useNotifications
   const [rawServerState, formAction, isActionPending] = React.useActionState(performLosAnalysis, null);
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -112,12 +114,10 @@ export default function Home() {
       } else {
         setFieldErrors(null);
       }
-      toast({
-        title: "LOS Analysis Error",
-        description: errorMessage,
-        variant: "destructive",
-        duration: 7000,
-      });
+      const toastTitleError = "LOS Analysis Error";
+      const toastDescriptionError = errorMessage;
+      toast({ title: toastTitleError, description: toastDescriptionError, variant: "destructive", duration: 7000 });
+      addNotification({ title: toastTitleError, description: toastDescriptionError });
       setFiberPathResult(null); // Clear fiber result on LOS error
       setFiberPathError(null);
     } else if (typeof rawServerState === 'object' && rawServerState !== null && 'losPossible' in rawServerState) {
@@ -153,10 +153,10 @@ export default function Home() {
           // setIsBottomPanelContentExpanded(true); // Call removed
       }
 
-      toast({
-        title: "LOS Analysis Complete",
-        description: successfulLosResult.message || "LOS analysis performed successfully.",
-      });
+      const toastTitleSuccess = "LOS Analysis Complete";
+      const toastDescriptionSuccess = successfulLosResult.message || "LOS analysis performed successfully.";
+      toast({ title: toastTitleSuccess, description: toastDescriptionSuccess });
+      addNotification({ title: toastTitleSuccess, description: toastDescriptionSuccess });
 
       // --- Trigger Fiber Path Calculation if enabled ---
       if (calculateFiberPathEnabled) {
@@ -176,14 +176,22 @@ export default function Home() {
             setFiberPathResult(fiberResult);
             if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
               setFiberPathError(fiberResult.errorMessage);
-              toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
+              const toastTitleFiberInfo = "Fiber Path Info";
+              const toastDescriptionFiberInfo = fiberResult.errorMessage;
+              toast({ title: toastTitleFiberInfo, description: toastDescriptionFiberInfo, variant: "default", duration: 6000 });
+              addNotification({ title: toastTitleFiberInfo, description: toastDescriptionFiberInfo });
             } else if (fiberResult.status === 'success') {
-              toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
+              const toastTitleFiberSuccess = "Fiber Path Calculated";
+              const toastDescriptionFiberSuccess = `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`;
+              toast({ title: toastTitleFiberSuccess, description: toastDescriptionFiberSuccess, duration: 5000 });
+              addNotification({ title: toastTitleFiberSuccess, description: toastDescriptionFiberSuccess });
             }
           }).catch(err => {
             const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
             setFiberPathError(fiberErrorMessage);
-            toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+            const toastTitleFiberError = "Fiber Path Error";
+            toast({ title: toastTitleFiberError, description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+            addNotification({ title: toastTitleFiberError, description: fiberErrorMessage });
           }).finally(() => {
             setIsFiberCalculating(false);
           });
@@ -336,7 +344,10 @@ export default function Home() {
     setFiberPathError(null);
     // setCalculateFiberPathEnabled(false); // Keep persisted state or reset to default? For now, keep persisted.
     // setFiberRadiusMeters(500); // Keep persisted state or reset? For now, keep persisted.
-    toast({ title: "Map Cleared", description: "Form reset to default values." });
+    const toastTitleMapCleared = "Map Cleared";
+    const toastDescriptionMapCleared = "Form reset to default values.";
+    toast({ title: toastTitleMapCleared, description: toastDescriptionMapCleared });
+    addNotification({ title: toastTitleMapCleared, description: toastDescriptionMapCleared });
     if (isAnalysisPanelGloballyOpen) {
         setIsAnalysisPanelGloballyOpen(false);
     }
@@ -370,8 +381,11 @@ export default function Home() {
       setFiberPathError(null);
       
       setIsAnalysisPanelGloballyOpen(true);
-      setIsBottomPanelContentExpanded(true);
-      toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
+      // setIsBottomPanelContentExpanded(true); // Already removed, but ensure it's not re-added
+      const toastTitleHistory = "History Loaded";
+      const toastDescriptionHistory = `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.`;
+      toast({ title: toastTitleHistory, description: toastDescriptionHistory });
+      addNotification({ title: toastTitleHistory, description: toastDescriptionHistory });
 
       // Optionally, re-run fiber calculation if toggle is ON and LOS is feasible for the loaded item
       if (calculateFiberPathEnabled && itemToLoad.losPossible) {
@@ -398,7 +412,9 @@ export default function Home() {
 
   const handleClearHistory = () => {
     setHistoryList([]);
-    toast({ title: "History Cleared" });
+    const toastTitleHistoryCleared = "History Cleared";
+    toast({ title: toastTitleHistoryCleared });
+    addNotification({ title: toastTitleHistoryCleared });
   };
 
   const handleToggleFiberPath = (checked: boolean) => {
@@ -426,14 +442,22 @@ export default function Home() {
               setFiberPathResult(fiberResult);
               if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
                 setFiberPathError(fiberResult.errorMessage);
-                toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
+                const toastTitleFiberInfo = "Fiber Path Info";
+                const toastDescriptionFiberInfo = fiberResult.errorMessage;
+                toast({ title: toastTitleFiberInfo, description: toastDescriptionFiberInfo, variant: "default", duration: 6000 });
+                addNotification({ title: toastTitleFiberInfo, description: toastDescriptionFiberInfo });
               } else if (fiberResult.status === 'success') {
-                 toast({ title: "Fiber Path Calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
+                 const toastTitleFiberSuccess = "Fiber Path Calculated";
+                 const toastDescriptionFiberSuccess = `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`;
+                 toast({ title: toastTitleFiberSuccess, description: toastDescriptionFiberSuccess, duration: 5000 });
+                 addNotification({ title: toastTitleFiberSuccess, description: toastDescriptionFiberSuccess });
               }
             }).catch(err => {
               const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
               setFiberPathError(fiberErrorMessage);
-              toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+              const toastTitleFiberError = "Fiber Path Error";
+              toast({ title: toastTitleFiberError, description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+              addNotification({ title: toastTitleFiberError, description: fiberErrorMessage });
             }).finally(() => {
               setIsFiberCalculating(false);
             });
@@ -478,14 +502,22 @@ export default function Home() {
               setFiberPathResult(fiberResult);
               if (fiberResult.status !== 'success' && fiberResult.errorMessage) {
                 setFiberPathError(fiberResult.errorMessage);
-                 toast({ title: "Fiber Path Info", description: fiberResult.errorMessage, variant: "default", duration: 6000 });
+                const toastTitleFiberInfo = "Fiber Path Info";
+                const toastDescriptionFiberInfo = fiberResult.errorMessage;
+                toast({ title: toastTitleFiberInfo, description: toastDescriptionFiberInfo, variant: "default", duration: 6000 });
+                addNotification({ title: toastTitleFiberInfo, description: toastDescriptionFiberInfo });
               } else if (fiberResult.status === 'success') {
-                 toast({ title: "Fiber Path Re-calculated", description: `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`, duration: 5000 });
+                 const toastTitleFiberRecalculated = "Fiber Path Re-calculated";
+                 const toastDescriptionFiberRecalculated = `Total fiber distance: ${fiberResult.totalDistanceMeters?.toFixed(0)}m.`;
+                 toast({ title: toastTitleFiberRecalculated, description: toastDescriptionFiberRecalculated, duration: 5000 });
+                 addNotification({ title: toastTitleFiberRecalculated, description: toastDescriptionFiberRecalculated });
               }
             }).catch(err => {
                const fiberErrorMessage = err instanceof Error ? err.message : "Fiber path calculation failed.";
               setFiberPathError(fiberErrorMessage);
-              toast({ title: "Fiber Path Error", description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+              const toastTitleFiberError = "Fiber Path Error";
+              toast({ title: toastTitleFiberError, description: fiberErrorMessage, variant: "destructive", duration: 7000 });
+              addNotification({ title: toastTitleFiberError, description: fiberErrorMessage });
             }).finally(() => {
               setIsFiberCalculating(false);
             });
@@ -513,7 +545,7 @@ export default function Home() {
         onToggleHistory={handleToggleHistoryPanel}
         onClearMap={handleClearMap}
         isHistoryPanelSupported={true}
-        currentPage="home"
+        // currentPage="home" // Prop removed
       />
       <div className="flex-1 flex flex-col overflow-hidden relative h-full">
         <div className="flex-1 w-full relative">
