@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,7 @@ const BulkAnalysisUploader: React.FC<BulkAnalysisUploaderProps> = ({ onKmzUpload
   const [fileName, setFileName] = useState<string | null>(null);
   const [parsedPlacemarkCount, setParsedPlacemarkCount] = useState<number>(0);
   const [isParsing, setIsParsing] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -73,9 +73,9 @@ const BulkAnalysisUploader: React.FC<BulkAnalysisUploaderProps> = ({ onKmzUpload
     if (fileInputRef.current && resetFileInput) {
       fileInputRef.current.value = ""; // Reset the file input
     }
-    // Notify parent that file is cleared or failed (with empty placemarks)
-    // This part depends on how you want to handle clearing vs. initial state in parent.
-    // For now, let's assume onKmzUploaded is called with empty data by the caller if needed.
+    if (selectedFile) {
+        onKmzUploaded(selectedFile, [], selectedFile.name);
+    }
   };
 
   return (

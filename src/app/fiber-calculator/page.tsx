@@ -20,12 +20,6 @@ import { saveAs } from 'file-saver';
 
 const FC_LOCAL_STORAGE_KEYS = {
   SNAP_RADIUS: 'fiberCalculatorSnapRadius',
-  POINT_A_LAT: 'fcPointALat',
-  POINT_A_LNG: 'fcPointALng',
-  POINT_A_NAME: 'fcPointAName',
-  POINT_B_LAT: 'fcPointBLat',
-  POINT_B_LNG: 'fcPointBLng',
-  POINT_B_NAME: 'fcPointBName',
 };
 
 export default function FiberCalculatorPage() {
@@ -44,56 +38,18 @@ export default function FiberCalculatorPage() {
 
   const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
 
-  // Effect to load initial values from localStorage
+  // Effect to load SNAP RADIUS ONLY from localStorage
   useEffect(() => {
     const storedRadius = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS);
     if (storedRadius) {
       setValue('fiberSnapRadius', parseInt(storedRadius, 10), { shouldValidate: true });
     }
-
-    const storedPointALat = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT);
-    const storedPointALng = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG);
-    const storedPointAName = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME);
-    if (storedPointALat && storedPointALng) {
-        setValue('pointA.lat', storedPointALat);
-        setValue('pointA.lng', storedPointALng);
-        setValue('pointA.name', storedPointAName || defaultFiberCalculatorFormValues.pointA.name);
-    }
-
-    const storedPointBLat = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
-    const storedPointBLng = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
-    const storedPointBName = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
-     if (storedPointBLat && storedPointBLng) {
-        setValue('pointB.lat', storedPointBLat);
-        setValue('pointB.lng', storedPointBLng);
-        setValue('pointB.name', storedPointBName || defaultFiberCalculatorFormValues.pointB.name);
-    }
   }, [setValue]);
 
-  // Effect to persist form values to localStorage
-  const watchedPointA = watch('pointA');
-  const watchedPointB = watch('pointB');
-  const watchedSnapRadius = watch('fiberSnapRadius'); // This is the RHF controlled snap radius
+  // Effect to persist SNAP RADIUS ONLY to localStorage
+  const watchedSnapRadius = watch('fiberSnapRadius');
 
   useEffect(() => {
-    if (watchedPointA.lat && watchedPointA.lng) {
-        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT, watchedPointA.lat);
-        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG, watchedPointA.lng);
-        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME, watchedPointA.name);
-    }
-  }, [watchedPointA]);
-
-   useEffect(() => {
-    if (watchedPointB.lat && watchedPointB.lng) {
-        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT, watchedPointB.lat);
-        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG, watchedPointB.lng);
-        localStorage.setItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME, watchedPointB.name);
-    }
-  }, [watchedPointB]);
-
-  useEffect(() => {
-    // This effect now only persists the RHF value to localStorage when it changes.
-    // The re-calculation logic is removed from here.
     if (typeof watchedSnapRadius === 'number' && !isNaN(watchedSnapRadius)) {
       localStorage.setItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS, watchedSnapRadius.toString());
     }
@@ -117,7 +73,6 @@ export default function FiberCalculatorPage() {
         setIsCalculating(false);
         return;
       }
-      // data.fiberSnapRadius is now guaranteed to be the applied value from RHF
       const result = await performFiberPathAnalysisAction(
         pointA_lat_num,
         pointA_lng_num,
@@ -156,12 +111,12 @@ export default function FiberCalculatorPage() {
     }
     setIsGeneratingPdf(true);
     try {
-      const currentFormValues = getValues(); // Gets current values from RHF
-      const snapRadius = currentFormValues.fiberSnapRadius; // Already a number from RHF
+      const currentFormValues = getValues();
+      const snapRadius = currentFormValues.fiberSnapRadius;
       
       const reportParams = {
         fiberPathResult: fiberPathResult,
-        pointA_form: { // Ensure lat/lng are numbers if schema expects them
+        pointA_form: {
             name: currentFormValues.pointA.name,
             lat: parseFloat(currentFormValues.pointA.lat),
             lng: parseFloat(currentFormValues.pointA.lng),
@@ -262,16 +217,7 @@ export default function FiberCalculatorPage() {
   }, [setValue]);
 
   const handleClearForm = () => {
-    reset(defaultFiberCalculatorFormValues); // Resets RHF state
-    // localStorage for points is cleared via watch effects on pointA/B being empty
-    localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LAT);
-    localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_LNG);
-    localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_A_NAME);
-    localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LAT);
-    localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_LNG);
-    localStorage.removeItem(FC_LOCAL_STORAGE_KEYS.POINT_B_NAME);
-    
-    // Keep persisted snap radius or reset to default if not found
+    reset(defaultFiberCalculatorFormValues);
     const storedRadius = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS);
     setValue('fiberSnapRadius', storedRadius ? parseInt(storedRadius, 10) : defaultFiberCalculatorFormValues.fiberSnapRadius);
 
@@ -291,7 +237,7 @@ export default function FiberCalculatorPage() {
     : undefined;
   
   const anyOperationPending = isCalculating || isGeneratingPdf || isGeneratingKmz;
-  const currentFormSnapRadius = watch('fiberSnapRadius'); // For passing to FiberInputPanel's initial local state
+  const currentFormSnapRadius = watch('fiberSnapRadius');
 
   return (
     <>
@@ -300,11 +246,11 @@ export default function FiberCalculatorPage() {
         <div className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-auto md:h-full overflow-y-auto custom-scrollbar bg-card/80 backdrop-blur-sm shadow-lg border-t md:border-t-0 md:border-r border-border p-1 print:hidden">
           <FiberInputPanel
             control={control}
-            register={register} // Still needed for Point A/B inputs
+            register={register}
             handleSubmit={handleSubmit}
-            onSubmit={handleCalculateSubmit} // Main calculation trigger
-            setValue={setValue as UseFormSetValue<FiberCalculatorFormValues>} // Pass setValue
-            formSnapRadius={currentFormSnapRadius} // Pass current RHF snap radius
+            onSubmit={handleCalculateSubmit}
+            setValue={setValue as UseFormSetValue<FiberCalculatorFormValues>}
+            formSnapRadius={currentFormSnapRadius}
             onClear={handleClearForm}
             onGeneratePdfReport={handleGeneratePdfReport}
             onGenerateKmzReport={handleGenerateKmzReport}
