@@ -64,17 +64,27 @@ NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_APP_ID
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-YOUR_MEASUREMENT_ID # Optional, for Analytics
 
 # --- Application Specific ---
+
 # Email for the default admin user (used in auth logic if needed)
 ADMIN_EMAIL=your_admin_email@example.com
 
 # Secret token for securing CRON job endpoints (if any)
 CRON_SECRET_TOKEN=YOUR_SECURE_RANDOM_CRON_TOKEN
 
+# --- Manual Authentication for Bulk Analyzer ---
+# Comma-separated list of emails and passwords for accessing the Bulk Analyzer page.
+# The number of emails must match the number of passwords.
+# Example: AUTHORIZED_EMAILS=user1@example.com,user2@example.com
+#          AUTHORIZED_PASSWORDS=pass1,pass2
+AUTHORIZED_EMAILS=admin@example.com,user@lifi.com
+AUTHORIZED_PASSWORDS=password123,securepassword
+
 ```
 
 ### Important Notes on Environment Variables:
 
 *   Replace all `YOUR_..._HERE` placeholders with your actual credentials and values.
+*   **`AUTHORIZED_EMAILS` & `AUTHORIZED_PASSWORDS`**: Ensure that the list of emails and passwords match in order. The first password corresponds to the first email, the second to the second, and so on.
 *   **`GOOGLE_..._API_KEY`s**: Ensure the respective APIs (Elevation, Maps JavaScript, Directions) are enabled in your Google Cloud Console for the project associated with these keys. Apply appropriate restrictions (e.g., API restrictions, HTTP referrers for client-side keys like `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`).
 *   **`NEXTAUTH_URL`**: Critical for NextAuth.js. It must exactly match how you access the app. For local development, if `npm run dev` runs on port 9002, it should be `http://localhost:9002`. For production, it's your production URL (e.g., `https://your-app.com`).
 *   **`FIREBASE_PRIVATE_KEY`**: The private key should be the full multi-line string. When placing it in `.env.local`, ensure that actual newline characters within the key are represented as `\\n`.
@@ -104,5 +114,3 @@ CRON_SECRET_TOKEN=YOUR_SECURE_RANDOM_CRON_TOKEN
     *   The `next.config.ts` attempts to provide fallbacks for these modules, but the root cause is an incorrect import.
 
 You can obtain API keys and configure services from the [Google Cloud Console](https://console.cloud.google.com/) and [Firebase Console](https://console.firebase.google.com/).
-
-```
