@@ -3635,6 +3635,10 @@ body {
 }
 
 @media (width >= 1280px) {
+  .xl\:col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+
   .xl\:w-\[450px\] {
     width: 450px;
   }

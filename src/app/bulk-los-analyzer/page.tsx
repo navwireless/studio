@@ -440,17 +440,17 @@ export default function BulkLosAnalyzerPage() {
   return (
     <>
       <AppHeader currentPage="bulk" />
-      <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 min-h-0">
-        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-0">
-            <Card className="shadow-xl bg-card/90 backdrop-blur-sm flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
+        <div className="max-w-7xl mx-auto w-full">
+            <Card className="shadow-xl bg-card/90 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
                     <CardDescription>
                     Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 grid-rows-[auto_1fr_auto] min-h-0">
-                    <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <CardContent className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-1 space-y-6">
                             <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
                             <BulkAnalysisParameters 
@@ -482,16 +482,16 @@ export default function BulkLosAnalyzerPage() {
                     </div>
                     
                     {kmzPlacemarks.length > 0 && (
-                        <div className="lg:col-span-3 mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6 min-h-0">
-                            <Separator className="my-4 lg:col-span-3" />
-                            <h3 className="text-lg font-semibold mb-2 lg:col-span-3">Visualizations & Analytics</h3>
+                        <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            <Separator className="my-4 xl:col-span-2" />
+                            <h3 className="text-lg font-semibold mb-2 xl:col-span-2">Visualizations & Analytics</h3>
                             <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
                             <BulkAnalysisAnalytics results={bulkResults} />
                         </div>
                     )}
 
                     {bulkResults.length > 0 && !isProcessing && (
-                    <div className="lg:col-span-3 mt-6 min-h-0">
+                    <div className="mt-6">
                         <Separator className="my-4"/>
                         <BulkAnalysisResultsTable results={bulkResults} analysisParams={form.getValues()} />
                     </div>
