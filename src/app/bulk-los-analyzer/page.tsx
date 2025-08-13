@@ -26,10 +26,14 @@ import { Loader2 } from 'lucide-react';
 
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
 import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const LOCAL_STORAGE_KEYS_BULK = {
   FIBER_TOGGLE_BULK: 'fiberPathEnabledBulk',
   FIBER_RADIUS_BULK: 'fiberPathRadiusMetersBulk',
+  AUTH_TOKEN_BULK: 'bulk-analyzer-auth-token',
 };
 
 const BulkAnalysisFormSchema = z.object({
@@ -66,6 +70,12 @@ export interface BulkAnalysisResultItem {
   pointB_snappedToRoad?: PointCoordinates;
 }
 
+const LoginSchema = z.object({
+    email: z.string().email({ message: "Invalid email address." }),
+    password: z.string().min(1, { message: "Password is required." }),
+});
+type LoginFormValues = z.infer<typeof LoginSchema>;
+
 
 export default function BulkLosAnalyzerPage() {
   const { toast } = useToast();
@@ -77,19 +87,24 @@ export default function BulkLosAnalyzerPage() {
   const [processingMessage, setProcessingMessage] = useState('');
   const [bulkResults, setBulkResults] = useState<BulkAnalysisResultItem[]>([]);
   
-  const [isClient, setIsClient] = useState(false); // To gate client-side effects
+  const [isClient, setIsClient] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Initialize with static defaults for SSR and initial client render
-  const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = useState<boolean>(false); // Static default
-  const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = useState<number>(500); // Static default
+  const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = useState<boolean>(false);
+  const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = useState<number>(500);
 
   // Effect to sync with localStorage after client-side mount
   useEffect(() => {
-    setIsClient(true); // Component has mounted on the client
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (isClient) { // Only run on client after mount
+    if (isClient) {
+      if (localStorage.getItem(LOCAL_STORAGE_KEYS_BULK.AUTH_TOKEN_BULK) === 'true') {
+          setIsAuthenticated(true);
+      }
       const storedToggle = localStorage.getItem(LOCAL_STORAGE_KEYS_BULK.FIBER_TOGGLE_BULK);
       if (storedToggle) {
         setCalculateFiberPathBulkEnabled(JSON.parse(storedToggle));
@@ -99,8 +114,7 @@ export default function BulkLosAnalyzerPage() {
         setFiberRadiusMetersBulk(parseInt(storedRadius, 10));
       }
     }
-  }, [isClient]); // Re-run if isClient changes (which is once on mount)
-
+  }, [isClient]); 
 
   const form = useForm<BulkAnalysisFormValues>({
     resolver: zodResolver(BulkAnalysisFormSchema),
@@ -111,6 +125,41 @@ export default function BulkLosAnalyzerPage() {
     },
     mode: 'onBlur',
   });
+
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: {
+        email: '',
+        password: '',
+    },
+  });
+
+
+  const handleLoginSubmit = async (data: LoginFormValues) => {
+    setIsLoggingIn(true);
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+            toast({ title: "Login Successful", description: "Access granted." });
+            localStorage.setItem(LOCAL_STORAGE_KEYS_BULK.AUTH_TOKEN_BULK, 'true');
+            setIsAuthenticated(true);
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Invalid credentials.");
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown login error occurred.";
+        toast({ title: "Login Failed", description: errorMessage, variant: "destructive" });
+    } finally {
+        setIsLoggingIn(false);
+    }
+  };
+
 
   const generateRemarks = (
     result: Omit<BulkAnalysisResultItem, 'remarks' | 'id' | 'pointACoords' | 'pointBCoords' | 'fiberPathStatus' | 'fiberPathTotalDistanceMeters' | 'fiberPathErrorMessage' | 'fiberPathSegments' | 'pointA_snappedToRoad' | 'pointB_snappedToRoad'>,
@@ -332,6 +381,61 @@ export default function BulkLosAnalyzerPage() {
     }
   };
 
+  if (!isClient) {
+    return (
+        <div className="w-full h-screen flex items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+        <>
+            <AppHeader currentPage="bulk" />
+            <div className="container mx-auto p-4 flex items-center justify-center h-[calc(100vh-theme(spacing.12)-theme(spacing.12))]">
+                <Card className="max-w-md w-full shadow-2xl">
+                    <CardHeader>
+                        <CardTitle>Bulk Analyzer Access</CardTitle>
+                        <CardDescription>Please log in to use the bulk analysis tool.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4">
+                            <div className="space-y-1">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="user@example.com"
+                                    {...loginForm.register('email')}
+                                />
+                                {loginForm.formState.errors.email && (
+                                    <p className="text-sm text-destructive">{loginForm.formState.errors.email.message}</p>
+                                )}
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="password">Password</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    {...loginForm.register('password')}
+                                />
+                                {loginForm.formState.errors.password && (
+                                    <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
+                                )}
+                            </div>
+                            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                                {isLoggingIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Login
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        </>
+    );
+  }
+
 
   return (
     <>
@@ -348,22 +452,15 @@ export default function BulkLosAnalyzerPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1 space-y-6">
                 <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
-                {isClient && ( // Conditionally render parameters panel once client state is confirmed
-                    <BulkAnalysisParameters 
-                        control={form.control} 
-                        register={form.register} 
-                        errors={form.formState.errors}
-                        calculateFiberPathBulkEnabled={calculateFiberPathBulkEnabled}
-                        onToggleFiberPathBulk={handleToggleFiberPathBulk}
-                        fiberRadiusMetersBulk={fiberRadiusMetersBulk}
-                        onFiberRadiusMetersBulkChange={handleFiberRadiusMetersBulkChange}
-                    />
-                )}
-                {!isClient && ( // Show a placeholder or loader for parameters
-                    <Card className="shadow-md min-h-[200px] flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </Card>
-                )}
+                <BulkAnalysisParameters 
+                    control={form.control} 
+                    register={form.register} 
+                    errors={form.formState.errors}
+                    calculateFiberPathBulkEnabled={calculateFiberPathBulkEnabled}
+                    onToggleFiberPathBulk={handleToggleFiberPathBulk}
+                    fiberRadiusMetersBulk={fiberRadiusMetersBulk}
+                    onFiberRadiusMetersBulkChange={handleFiberRadiusMetersBulkChange}
+                />
               </div>
               <div className="lg:col-span-2 space-y-6">
                 <BulkAnalysisActions
@@ -406,3 +503,5 @@ export default function BulkLosAnalyzerPage() {
     </>
   );
 }
+
+    
