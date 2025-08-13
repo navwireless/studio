@@ -36,12 +36,12 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
   };
 
   return (
-    <Card className="shadow-md">
+    <Card className="shadow-md h-full flex flex-col">
       <CardHeader>
         <CardTitle>Analysis Results</CardTitle>
         <CardDescription>Detailed Line-of-Sight {hasFiberData ? "and Fiber Path " : ""}analysis for each processed pair.</CardDescription>
       </CardHeader>
-      <CardContent className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+      <CardContent className="flex-1 overflow-y-auto custom-scrollbar">
         <Table>
           <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow>
@@ -55,7 +55,7 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
                   <TableHead>Fiber Dist (m)</TableHead>
                 </>
               )}
-              <TableHead className="min-w-[200px]">Remarks / Fiber Error</TableHead>
+              <TableHead>Remarks / Fiber Error</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,3 +118,5 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
 };
 
 export default BulkAnalysisResultsTable;
+
+    

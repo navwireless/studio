@@ -42,14 +42,14 @@ const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }
 
   if (!isClient) {
     return (
-      <Card className="shadow-md min-h-[300px]">
+      <Card className="shadow-md h-full flex flex-col">
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <BarChartIcon className="mr-2 h-5 w-5 text-primary" />
             Analysis Summary
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-full">
+        <CardContent className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground text-sm">Loading analytics...</p>
         </CardContent>
       </Card>
@@ -58,14 +58,14 @@ const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }
   
   if (results.length === 0) {
     return (
-      <Card className="shadow-md min-h-[300px]">
+      <Card className="shadow-md h-full flex flex-col">
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <BarChartIcon className="mr-2 h-5 w-5 text-primary" />
             Analysis Summary
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center h-full text-center">
+        <CardContent className="flex-1 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-amber-500 mb-3" />
           <p className="text-muted-foreground text-sm">No analysis results yet.</p>
           <p className="text-xs text-muted-foreground">Run an analysis to see the summary.</p>
@@ -90,7 +90,7 @@ const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }
 
 
   return (
-    <Card className="shadow-md min-h-[300px]">
+    <Card className="shadow-md h-full flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center">
           <BarChartIcon className="mr-2 h-5 w-5 text-primary" />
@@ -98,7 +98,7 @@ const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }
         </CardTitle>
         <CardDescription>{totalAnalyzed} pairs analyzed.</CardDescription>
       </CardHeader>
-      <CardContent className="h-[calc(100%-6rem)]"> {/* Adjust height based on header */}
+      <CardContent className="flex-1 h-full w-full">
         {totalAnalyzed > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -145,3 +145,4 @@ const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }
 
 export default BulkAnalysisAnalytics;
 
+    

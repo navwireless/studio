@@ -64,7 +64,7 @@ function BulkAnalysisMapInner({ placemarks, results }: BulkAnalysisMapProps) {
 
   if (placemarks.length === 0) {
      return (
-        <Card className="h-[400px] md:h-[500px] shadow-md">
+        <Card className="h-full shadow-md">
          <CardHeader><CardTitle className="text-lg">Site Map</CardTitle></CardHeader>
          <CardContent className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <MapPin className="w-16 h-16 mb-4 text-gray-400 dark:text-gray-500" />
@@ -75,9 +75,9 @@ function BulkAnalysisMapInner({ placemarks, results }: BulkAnalysisMapProps) {
   }
 
   return (
-    <Card className="h-[400px] md:h-[500px] shadow-md">
+    <Card className="h-full shadow-md flex flex-col">
       <CardHeader><CardTitle className="text-lg">Site Map</CardTitle></CardHeader>
-      <CardContent className="h-[calc(100%-4rem)] p-0">
+      <CardContent className="flex-1 p-0">
         <GoogleMap
           mapContainerStyle={{ width: '100%', height: '100%' }}
           center={defaultCenter}
@@ -143,3 +143,5 @@ const BulkAnalysisMap: React.FC<BulkAnalysisMapProps> = (props) => {
 };
 
 export default BulkAnalysisMap;
+
+    
