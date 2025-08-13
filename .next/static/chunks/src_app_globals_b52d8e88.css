@@ -944,6 +944,10 @@ body {
   min-height: 100svh;
 }
 
+.min-h-\[calc\(100vh-theme\(spacing\.24\)\)\] {
+  min-height: calc(100vh - 6rem);
+}
+
 .w-0 {
   width: 0;
 }

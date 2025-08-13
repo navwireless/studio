@@ -45,7 +45,7 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
         <Table>
           <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow>
-              <TableHead className="min-w-[120px] md:min-w-[180px]">Pair</TableHead>
+              <TableHead>Pair</TableHead>
               <TableHead>LOS Dist (km)</TableHead>
               <TableHead>LOS Possible</TableHead>
               <TableHead>Min. Clear. (m)</TableHead>
@@ -55,7 +55,7 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
                   <TableHead>Fiber Dist (m)</TableHead>
                 </>
               )}
-              <TableHead className="min-w-[200px] md:min-w-[300px]">Remarks / Fiber Error</TableHead>
+              <TableHead className="min-w-[200px]">Remarks / Fiber Error</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,4 +118,3 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
 };
 
 export default BulkAnalysisResultsTable;
-

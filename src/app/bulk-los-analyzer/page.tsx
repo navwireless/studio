@@ -393,7 +393,7 @@ export default function BulkLosAnalyzerPage() {
     return (
         <>
             <AppHeader currentPage="bulk" />
-            <div className="container mx-auto p-4 flex items-center justify-center h-[calc(100vh-theme(spacing.12)-theme(spacing.12))]">
+            <div className="container mx-auto p-4 flex items-center justify-center min-h-[calc(100vh-theme(spacing.24))]">
                 <Card className="max-w-md w-full shadow-2xl">
                     <CardHeader>
                         <CardTitle>Bulk Analyzer Access</CardTitle>
@@ -440,68 +440,68 @@ export default function BulkLosAnalyzerPage() {
   return (
     <>
       <AppHeader currentPage="bulk" />
-      <div className="container mx-auto p-2 sm:p-4 md:p-6 lg:p-8 h-[calc(100vh-theme(spacing.12)-theme(spacing.12))] overflow-y-auto custom-scrollbar">
-        <Card className="max-w-7xl mx-auto shadow-xl bg-card/90 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
-            <CardDescription>
-              Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1 space-y-6">
-                <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
-                <BulkAnalysisParameters 
-                    control={form.control} 
-                    register={form.register} 
-                    errors={form.formState.errors}
-                    calculateFiberPathBulkEnabled={calculateFiberPathBulkEnabled}
-                    onToggleFiberPathBulk={handleToggleFiberPathBulk}
-                    fiberRadiusMetersBulk={fiberRadiusMetersBulk}
-                    onFiberRadiusMetersBulkChange={handleFiberRadiusMetersBulkChange}
-                />
-              </div>
-              <div className="lg:col-span-2 space-y-6">
-                <BulkAnalysisActions
-                  onAnalyze={form.handleSubmit(handleAnalysisSubmit)}
-                  isProcessing={isProcessing}
-                  processingMessage={processingMessage}
-                  progress={progress}
-                  canAnalyze={kmzPlacemarks.length >= 2 && !!kmzFile}
-                />
-                 <BulkAnalysisDownloads
-                  results={bulkResults}
-                  originalPlacemarks={kmzPlacemarks}
-                  analysisParams={form.getValues()}
-                  baseFileName={fileName ? fileName.replace(/\.[^/.]+$/, "") : 'bulk_analysis'}
-                  disabled={isProcessing || bulkResults.length === 0}
-                />
-              </div>
-            </div>
-            
-            {kmzPlacemarks.length > 0 && (
-                <div className="mt-6">
-                    <Separator className="my-4" />
-                    <h3 className="text-lg font-semibold mb-2">Visualizations & Analytics</h3>
-                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
-                        <BulkAnalysisAnalytics results={bulkResults} />
+      <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-y-auto custom-scrollbar">
+        <div className="max-w-7xl mx-auto w-full">
+            <Card className="shadow-xl bg-card/90 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
+                    <CardDescription>
+                    Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-1 space-y-6">
+                            <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
+                            <BulkAnalysisParameters 
+                                control={form.control} 
+                                register={form.register} 
+                                errors={form.formState.errors}
+                                calculateFiberPathBulkEnabled={calculateFiberPathBulkEnabled}
+                                onToggleFiberPathBulk={handleToggleFiberPathBulk}
+                                fiberRadiusMetersBulk={fiberRadiusMetersBulk}
+                                onFiberRadiusMetersBulkChange={handleFiberRadiusMetersBulkChange}
+                            />
+                        </div>
+                        <div className="lg:col-span-2 space-y-6">
+                            <BulkAnalysisActions
+                            onAnalyze={form.handleSubmit(handleAnalysisSubmit)}
+                            isProcessing={isProcessing}
+                            processingMessage={processingMessage}
+                            progress={progress}
+                            canAnalyze={kmzPlacemarks.length >= 2 && !!kmzFile}
+                            />
+                            <BulkAnalysisDownloads
+                            results={bulkResults}
+                            originalPlacemarks={kmzPlacemarks}
+                            analysisParams={form.getValues()}
+                            baseFileName={fileName ? fileName.replace(/\.[^/.]+$/, "") : 'bulk_analysis'}
+                            disabled={isProcessing || bulkResults.length === 0}
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
+                    
+                    {kmzPlacemarks.length > 0 && (
+                        <div className="mt-6">
+                            <Separator className="my-4" />
+                            <h3 className="text-lg font-semibold mb-2">Visualizations & Analytics</h3>
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                                <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
+                                <BulkAnalysisAnalytics results={bulkResults} />
+                            </div>
+                        </div>
+                    )}
 
-            {bulkResults.length > 0 && !isProcessing && (
-              <div className="mt-6">
-                <Separator className="my-4"/>
-                <BulkAnalysisResultsTable results={bulkResults} analysisParams={form.getValues()} />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    {bulkResults.length > 0 && !isProcessing && (
+                    <div className="mt-6">
+                        <Separator className="my-4"/>
+                        <BulkAnalysisResultsTable results={bulkResults} analysisParams={form.getValues()} />
+                    </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </>
   );
 }
-
-    
