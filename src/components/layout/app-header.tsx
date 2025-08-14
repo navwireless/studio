@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -6,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { History, Trash2, ListChecks, Home, Cable } from 'lucide-react'; // Added Cable for Fiber Calculator
+import appLogo from '@/app/Favicon/apple-touch-icon.png';
+
 
 interface AppHeaderProps {
   onToggleHistory?: () => void;
@@ -25,12 +26,11 @@ export default function AppHeader({
       <div className="flex items-center gap-2">
         <Link href="/" aria-label="Home">
           <Image
-              src="https://storage.googleapis.com/project-fabrica-chat-agent-test-assets/images/ZepPjV2n7N_nav_wireless_logo.png"
-              alt="Nav Wireless Technologies Pvt. Ltd. Logo"
-              width={100}
-              height={24}
+              src={appLogo}
+              alt="LiFi Link Pro Logo"
+              width={32}
+              height={32}
               className="object-contain cursor-pointer"
-              data-ai-hint="company logo"
           />
         </Link>
         <h1 className="text-base font-medium tracking-wider text-slate-100/90 hidden sm:block">
