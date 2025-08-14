@@ -1554,6 +1554,10 @@ body {
   border-color: #fff3;
 }
 
+.border-border\/40 {
+  border-color: hsl(var(--border) / .4);
+}
+
 .border-l-transparent {
   border-left-color: #0000;
 }
@@ -1689,6 +1693,10 @@ body {
 
 .bg-yellow-500\/80 {
   background-color: #eab308cc;
+}
+
+.bg-background\/95 {
+  background-color: hsl(var(--background) / .95);
 }
 
 .fill-current {
@@ -3529,6 +3537,11 @@ body {
   .md\:py-1\.5 {
     padding-top: .375rem;
     padding-bottom: .375rem;
+  }
+
+  .md\:px-6 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   .md\:text-2xl {
