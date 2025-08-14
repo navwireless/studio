@@ -19,11 +19,11 @@ const authorizedPasswords = (process.env.AUTHORIZED_PASSWORDS || '').split(',');
 export async function POST(request: Request) {
   // Basic validation to ensure environment variables are set up
   if (authorizedEmails.length === 0 || authorizedEmails[0] === '' || authorizedPasswords.length === 0 || authorizedPasswords[0] === '') {
-    console.error('AUTH_CONFIG_ERROR: No authorized users are configured in environment variables. Please set AUTHORIZED_EMAILS and AUTHORIZED_PASSWORDS.');
+    console.error('API_AUTH_ERROR: No authorized users are configured in environment variables. Please set AUTHORIZED_EMAILS and AUTHORIZED_PASSWORDS.');
     return NextResponse.json({ success: false, error: 'Authentication service is not configured.' }, { status: 500 });
   }
   if (authorizedEmails.length !== authorizedPasswords.length) {
-    console.error('AUTH_CONFIG_ERROR: The number of authorized emails does not match the number of passwords. Please check your environment variables.');
+    console.error('API_AUTH_ERROR: The number of authorized emails does not match the number of passwords. Please check your environment variables.');
     return NextResponse.json({ success: false, error: 'Authentication service has a configuration mismatch.' }, { status: 500 });
   }
 
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     const validation = LoginSchema.safeParse(body);
 
     if (!validation.success) {
+      console.warn("API_AUTH_WARNING: Invalid login input format received.", validation.error.flatten());
       return NextResponse.json({ success: false, error: 'Invalid input format.' }, { status: 400 });
     }
 
@@ -46,10 +47,11 @@ export async function POST(request: Request) {
       // For this simple case, we just confirm success.
       return NextResponse.json({ success: true, message: 'Login successful.' });
     } else {
+      console.warn(`API_AUTH_WARNING: Failed login attempt for email: ${email}`);
       return NextResponse.json({ success: false, error: 'Invalid credentials.' }, { status: 401 });
     }
   } catch (error) {
-    console.error('Login API error:', error);
+    console.error('API_AUTH_ERROR: Unhandled exception in login API route:', error);
     return NextResponse.json({ success: false, error: 'An internal server error occurred.' }, { status: 500 });
   }
 }

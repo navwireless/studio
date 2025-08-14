@@ -21,7 +21,7 @@ interface ElevationProfileResponse {
  */
 async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = GOOGLE_ELEVATION_API_SAMPLES): Promise<ElevationSampleAPI[]> {
   if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
-    console.error("Google Elevation API key is not configured or is a placeholder for bulk analysis.");
+    console.error("BULK_ACTION_ERROR: fetchElevationForPair - Google Elevation API key is not configured or is a placeholder.");
     throw new Error("Elevation service API key is not configured. Please check server environment variables.");
   }
 
@@ -33,7 +33,7 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
     response = await fetch(url);
   } catch (networkError: unknown) {
     const errorMessage = networkError instanceof Error ? networkError.message : String(networkError);
-    console.error("Network error fetching elevation data for bulk analysis:", errorMessage);
+    console.error(`BULK_ACTION_ERROR: fetchElevationForPair - Network error for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}:`, errorMessage);
     throw new Error(`Network error while trying to reach Google Elevation API for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}: ${errorMessage}`);
   }
 
@@ -42,9 +42,9 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
     try {
       errorBody = await response.text();
     } catch (textError) {
-      // Ignore if reading error body fails
+      console.warn("BULK_ACTION_WARNING: fetchElevationForPair - Failed to read error body from Google API response:", textError);
     }
-    console.error(`Google Elevation API request failed for bulk analysis (Pair: ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}): ${response.status}`, errorBody);
+    console.error(`BULK_ACTION_ERROR: fetchElevationForPair - Google Elevation API request failed for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng} with status ${response.status}:`, errorBody);
     throw new Error(`Google Elevation API request failed for pair with status ${response.status}. Details: ${errorBody.substring(0,200)}`);
   }
 
@@ -53,16 +53,17 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
     data = await response.json();
   } catch (jsonError: unknown) {
     const errorMessage = jsonError instanceof Error ? jsonError.message : String(jsonError);
-    console.error("Failed to parse JSON response from Google Elevation API for bulk analysis:", errorMessage);
+    console.error(`BULK_ACTION_ERROR: fetchElevationForPair - Failed to parse JSON response from Google Elevation API for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}:`, errorMessage);
     throw new Error(`Failed to parse response from Google Elevation API for pair: ${errorMessage}`);
   }
   
   if (data.status !== 'OK') {
-    console.error("Google Elevation API error for bulk analysis (Pair: ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}):", data.status, data.error_message);
+    console.error(`BULK_ACTION_ERROR: fetchElevationForPair - Google Elevation API error for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng} with status '${data.status}':`, data.error_message);
     throw new Error(`Google Elevation API error for pair: ${data.status} - ${data.error_message || 'Unknown API error'}`);
   }
 
   if (!data.results || data.results.length === 0) {
+    console.error(`BULK_ACTION_ERROR: fetchElevationForPair - Google Elevation API returned no results for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}.`);
     throw new Error("Google Elevation API returned no results for the given path in bulk analysis. Check coordinates.");
   }
     
@@ -86,7 +87,7 @@ export async function getElevationProfileForPairAction(
     return { profile: elevationProfile };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred fetching elevation profile for pair.";
-    console.error("Error in getElevationProfileForPairAction:", errorMessage);
+    console.error("BULK_ACTION_ERROR: Unhandled exception in getElevationProfileForPairAction:", error);
     return { error: errorMessage }; // Return error as part of the response object
   }
 }

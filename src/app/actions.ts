@@ -48,7 +48,7 @@ const ServerActionAnalysisSchema = z.object({
 
 async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
   if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
-    console.error("Google Elevation API key is not configured or is a placeholder.");
+    console.error("ACTION_ERROR: getGoogleElevationData - Google Elevation API key is not configured or is a placeholder.");
     throw new Error("Elevation service API key is not configured. Please check server environment variables.");
   }
 
@@ -60,7 +60,7 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
     response = await fetch(url);
   } catch (networkError: unknown) {
     const errorMessage = networkError instanceof Error ? networkError.message : String(networkError);
-    console.error("Network error fetching elevation data:", errorMessage);
+    console.error("ACTION_ERROR: getGoogleElevationData - Network error fetching elevation data:", errorMessage);
     throw new Error(`Network error reaching Google Elevation API: ${errorMessage}. Check connectivity & firewall.`);
   }
 
@@ -69,9 +69,9 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
     try {
       errorBody = await response.text();
     } catch (textError) {
-      console.warn("Failed to read error body from Google API response:", textError);
+      console.warn("ACTION_WARNING: getGoogleElevationData - Failed to read error body from Google API response:", textError);
     }
-    console.error("Google Elevation API request failed:", response.status, errorBody);
+    console.error(`ACTION_ERROR: getGoogleElevationData - Google Elevation API request failed with status ${response.status}:`, errorBody);
     throw new Error(`Google Elevation API request failed (Status: ${response.status}). Details: ${errorBody.substring(0, 200)}`);
   }
 
@@ -80,16 +80,17 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
     data = await response.json();
   } catch (jsonError: unknown) {
     const errorMessage = jsonError instanceof Error ? jsonError.message : String(jsonError);
-    console.error("Failed to parse JSON response from Google Elevation API:", errorMessage);
+    console.error("ACTION_ERROR: getGoogleElevationData - Failed to parse JSON response from Google Elevation API:", errorMessage);
     throw new Error(`Failed to parse response from Google Elevation API: ${errorMessage}`);
   }
 
   if (data.status !== 'OK') {
-    console.error("Google Elevation API error:", data.status, data.error_message);
+    console.error(`ACTION_ERROR: getGoogleElevationData - Google Elevation API error status '${data.status}':`, data.error_message);
     throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown API error'}`);
   }
 
   if (!data.results || data.results.length === 0) {
+    console.error("ACTION_ERROR: getGoogleElevationData - Google Elevation API returned no results for the given path.");
     throw new Error("Google Elevation API returned no results for the given path. Check coordinates.");
   }
 
@@ -129,25 +130,9 @@ export async function performLosAnalysis(
 
     if (!validationResult.success) {
       const flattenedErrors = validationResult.error.flatten();
-      let finalErrorMessage = "Input validation failed. Issues:\n";
-
-      if (flattenedErrors.formErrors.length > 0) {
-        finalErrorMessage += `Form Errors: ${flattenedErrors.formErrors.map(String).join(', ')}\n`;
-      }
-
-      const fieldErrorMessages = Object.entries(flattenedErrors.fieldErrors)
-        .map(([path, messages]) => {
-          const typedMessages = messages as string[];
-          return `${String(path)}: ${typedMessages.map(String).join(', ')}`;
-        })
-        .join('\n');
-
-      if (fieldErrorMessages) {
-        finalErrorMessage += `Field Errors:\n${fieldErrorMessages}`;
-      }
-
-      console.error("Server-side Zod validation errors:", finalErrorMessage, flattenedErrors);
-      return { error: finalErrorMessage.trim(), fieldErrors: flattenedErrors.fieldErrors };
+      let finalErrorMessage = "Input validation failed. Please check the fields.";
+      console.error("ACTION_ERROR: performLosAnalysis - Server-side Zod validation failed:", flattenedErrors);
+      return { error: finalErrorMessage, fieldErrors: flattenedErrors.fieldErrors };
     }
 
     const validatedData = validationResult.data;
@@ -179,15 +164,8 @@ export async function performLosAnalysis(
     };
 
   } catch (err: unknown) {
-    let clientErrorMessageString: string;
-
-    if (err instanceof Error) {
-      clientErrorMessageString = String(err.message);
-    } else {
-      clientErrorMessageString = "An unknown error occurred during analysis.";
-    }
-
-    console.error("Error in performLosAnalysis server action:", clientErrorMessageString, err);
+    const clientErrorMessageString = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
+    console.error("ACTION_ERROR: Unhandled exception in performLosAnalysis:", err);
     return { error: clientErrorMessageString };
   }
 }
@@ -199,6 +177,7 @@ export async function generateSingleAnalysisPdfReportAction(
 ): Promise<{ success: true; data: { base64Pdf: string; fileName: string } } | { success: false; error: string }> {
   try {
     if (!analysisResult) {
+      console.error("ACTION_ERROR: generateSingleAnalysisPdfReportAction - Analysis result data is missing.");
       return { success: false, error: "Analysis result data is missing." };
     }
 
@@ -212,7 +191,7 @@ export async function generateSingleAnalysisPdfReportAction(
     return { success: true, data: { base64Pdf, fileName } };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during PDF report generation.";
-    console.error("Error generating PDF report action:", errorMessage, error);
+    console.error("ACTION_ERROR: Unhandled exception in generateSingleAnalysisPdfReportAction:", error);
     return { success: false, error: `Failed to generate PDF report: ${errorMessage}` };
   }
 }
@@ -234,14 +213,15 @@ export async function generateFiberReportAction(
   try {
     const validation = FiberReportParamsSchema.safeParse(params);
     if (!validation.success) {
-      console.error("Invalid parameters for generateFiberReportAction:", validation.error.flatten());
       const errorMessages = validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+      console.error("ACTION_ERROR: generateFiberReportAction - Invalid input:", validation.error.flatten());
       return { success: false, error: `Invalid input: ${errorMessages}` };
     }
 
     const { fiberPathResult, pointA_form, pointB_form, snapRadiusUsed_form, reportOptions } = validation.data;
 
     if (!fiberPathResult || fiberPathResult.status !== 'success') {
+      console.warn("ACTION_WARNING: generateFiberReportAction - Cannot generate report: Fiber path calculation was not successful or data is missing.");
       return { success: false, error: "Cannot generate report: Fiber path calculation was not successful or data is missing." };
     }
 
@@ -255,6 +235,7 @@ export async function generateFiberReportAction(
     };
 
     if (isNaN(pointA_coords_report.lat) || isNaN(pointA_coords_report.lng) || isNaN(pointB_coords_report.lat) || isNaN(pointB_coords_report.lng)) {
+        console.error("ACTION_ERROR: generateFiberReportAction - Invalid coordinates provided in form data for report generation.");
         return { success: false, error: "Invalid coordinates provided in form data for report generation." };
     }
 
@@ -274,7 +255,7 @@ export async function generateFiberReportAction(
     return { success: true, data: { base64Pdf, fileName } };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during Fiber PDF report generation.";
-    console.error("Error generating Fiber PDF report action:", errorMessage, error);
+    console.error("ACTION_ERROR: Unhandled exception in generateFiberReportAction:", error);
     return { success: false, error: `Failed to generate Fiber PDF report: ${errorMessage}` };
   }
 }
@@ -302,6 +283,7 @@ export async function generateSingleFiberPathKmzAction(
     const validation = SingleFiberPathKmzParamsSchema.safeParse(params);
     if (!validation.success) {
       const errorMessages = validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+      console.error("ACTION_ERROR: generateSingleFiberPathKmzAction - Invalid input:", validation.error.flatten());
       return { success: false, error: `Invalid input for KMZ generation: ${errorMessages}` };
     }
 
@@ -387,7 +369,7 @@ export async function generateSingleFiberPathKmzAction(
               coordinatesString = formatCoordinatesForKml(decodedCoords);
               description += `\nEncoded Polyline (for reference): ${xmlEscape(segment.pathPolyline)}`;
             } else {
-              console.warn("KMZ Gen: Road_route segment missing pathPolyline. Drawing straight line.");
+              console.warn("ACTION_WARNING: KMZ Gen - Road_route segment missing pathPolyline. Drawing straight line.");
               coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
               description += "\nNote: Polyline missing, showing straight line.";
             }
@@ -425,7 +407,7 @@ export async function generateSingleFiberPathKmzAction(
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during KMZ generation.";
-    console.error("Error generating Single Fiber Path KMZ action:", errorMessage, error);
+    console.error("ACTION_ERROR: Unhandled exception in generateSingleFiberPathKmzAction:", error);
     return { success: false, error: `Failed to generate KMZ: ${errorMessage}` };
   }
 }
@@ -433,7 +415,7 @@ export async function generateSingleFiberPathKmzAction(
 export async function getGoogleMapsApiKey(): Promise<string | null> {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!apiKey || apiKey === "YOUR_GOOGLE_MAPS_JS_API_KEY_HERE") {
-    console.error("Google Maps API key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) is not configured.");
+    console.error("ACTION_ERROR: getGoogleMapsApiKey - Google Maps API key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) is not configured.");
     return null;
   }
   return apiKey;

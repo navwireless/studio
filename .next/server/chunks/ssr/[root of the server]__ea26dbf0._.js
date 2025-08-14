@@ -535,128 +535,142 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$ge
 ;
 ;
 async function generatePdfReportForSingleAnalysis(analysisResult, options) {
-    try {
-        const pdfDoc = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$PDFDocument$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$export__default__as__PDFDocument$3e$__["PDFDocument"].create();
-        const helveticaFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].Helvetica);
-        const helveticaBoldFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].HelveticaBold);
-        let page = pdfDoc.addPage();
-        const { width, height } = page.getSize();
-        const reportTitle = options?.reportTitle || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_REPORT_TITLE"];
-        const companyName = options?.companyName || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_COMPANY_NAME"];
-        let logoBytes = options?.logoImageBytes;
-        if (!logoBytes && options?.logoUrl !== null) {
-            logoBytes = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fetchLogoImageBytes"])(options?.logoUrl || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_LOGO_URL"]);
+    const pdfDoc = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$PDFDocument$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$export__default__as__PDFDocument$3e$__["PDFDocument"].create();
+    const helveticaFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].Helvetica);
+    const helveticaBoldFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].HelveticaBold);
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+    const reportTitle = options?.reportTitle || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_REPORT_TITLE"];
+    const companyName = options?.companyName || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_COMPANY_NAME"];
+    let logoBytes = options?.logoImageBytes;
+    if (!logoBytes && options?.logoUrl !== null) {
+        logoBytes = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fetchLogoImageBytes"])(options?.logoUrl || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_LOGO_URL"]);
+    }
+    let currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
+    currentY -= 20; // Space after header
+    // --- Report Details ---
+    const contentMargin = 50;
+    const contentWidth = width - 2 * contentMargin;
+    const regularFontSize = 10;
+    const smallFontSize = 8;
+    const lineHeight = 15;
+    const sectionSpacing = 20;
+    // Report Date
+    page.drawText(`Date: ${new Date().toLocaleDateString()}`, {
+        x: contentMargin,
+        y: currentY,
+        font: helveticaFont,
+        size: regularFontSize,
+        color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
+    });
+    currentY -= lineHeight * 1.5;
+    // --- Analysis Parameters Table ---
+    page.drawText("Link Analysis Summary", {
+        x: contentMargin,
+        y: currentY,
+        font: helveticaBoldFont,
+        size: 13,
+        color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
+    });
+    currentY -= lineHeight * 1.5;
+    const analysisData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["formatAnalysisDataForReportTable"])(analysisResult);
+    const tableStartY = currentY;
+    const keyColumnWidth = 180;
+    const valueColumnX = contentMargin + keyColumnWidth + 10;
+    analysisData.forEach((item, index)=>{
+        if (currentY < contentMargin + lineHeight * 2) {
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName); // Footer for current page
+            const newPage = pdfDoc.addPage();
+            currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(newPage, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
+            currentY -= 20; // Space after header on new page
+            // Redraw section title if it's a new page for the table
+            page.drawText("Link Analysis Summary (Continued)", {
+                x: contentMargin,
+                y: currentY,
+                font: helveticaBoldFont,
+                size: 13,
+                color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
+            });
+            currentY -= lineHeight * 1.5;
         }
-        let currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
-        currentY -= 20; // Space after header
-        // --- Report Details ---
-        const contentMargin = 50;
-        const contentWidth = width - 2 * contentMargin;
-        const regularFontSize = 10;
-        const smallFontSize = 8;
-        const lineHeight = 15;
-        const sectionSpacing = 20;
-        // Report Date
-        page.drawText(`Date: ${new Date().toLocaleDateString()}`, {
+        page.drawText(`${item.key}:`, {
             x: contentMargin,
             y: currentY,
             font: helveticaFont,
             size: regularFontSize,
-            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
+            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
         });
-        currentY -= lineHeight * 1.5;
-        // --- Analysis Parameters Table ---
-        page.drawText("Link Analysis Summary", {
+        page.drawText(item.value, {
+            x: valueColumnX,
+            y: currentY,
+            font: helveticaBoldFont,
+            size: regularFontSize,
+            color: item.key === "Line-of-Sight Possible" ? analysisResult.losPossible ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"] : (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.7, 0.2, 0.2) : __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"],
+            maxWidth: contentWidth - keyColumnWidth - 20
+        });
+        currentY -= lineHeight;
+    });
+    currentY -= sectionSpacing;
+    // Placeholder for Profile Chart (if includeProfileChart is true and chart generation is implemented)
+    if (options?.includeProfileChart) {
+        if (currentY < contentMargin + 150) {
+            (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName);
+            const newPage = pdfDoc.addPage();
+            currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(newPage, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
+            currentY -= 20;
+        }
+        page.drawText("Path Profile Chart (Placeholder)", {
             x: contentMargin,
             y: currentY,
             font: helveticaBoldFont,
-            size: 13,
-            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
+            size: 12,
+            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
         });
-        currentY -= lineHeight * 1.5;
-        const analysisData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["formatAnalysisDataForReportTable"])(analysisResult);
-        const tableStartY = currentY;
-        const keyColumnWidth = 180;
-        const valueColumnX = contentMargin + keyColumnWidth + 10;
-        for (const item of analysisData){
-            if (currentY < contentMargin + lineHeight * 2) {
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName); // Footer for current page
-                page = pdfDoc.addPage();
-                currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
-                currentY -= 20; // Space after header on new page
-                // Redraw section title if it's a new page for the table
-                page.drawText("Link Analysis Summary (Continued)", {
-                    x: contentMargin,
-                    y: currentY,
-                    font: helveticaBoldFont,
-                    size: 13,
-                    color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
-                });
-                currentY -= lineHeight * 1.5;
-            }
-            page.drawText(`${item.key}:`, {
-                x: contentMargin,
-                y: currentY,
-                font: helveticaFont,
-                size: regularFontSize,
-                color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
-            });
-            page.drawText(item.value, {
-                x: valueColumnX,
-                y: currentY,
-                font: helveticaBoldFont,
-                size: regularFontSize,
-                color: item.key === "Line-of-Sight Possible" ? analysisResult.losPossible ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"] : (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.7, 0.2, 0.2) : __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"],
-                maxWidth: contentWidth - keyColumnWidth - 20
-            });
-            currentY -= lineHeight;
-        }
-        currentY -= sectionSpacing;
-        // Placeholder for Profile Chart (if includeProfileChart is true and chart generation is implemented)
-        if (options?.includeProfileChart) {
-            if (currentY < contentMargin + 150) {
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName);
-                page = pdfDoc.addPage();
-                currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
-                currentY -= 20;
-            }
-            page.drawText("Path Profile Chart (Placeholder)", {
-                x: contentMargin,
-                y: currentY,
-                font: helveticaBoldFont,
-                size: 12,
-                color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
-            });
-            currentY -= lineHeight;
-            // Actual chart drawing logic would go here
-            page.drawRectangle({
-                x: contentMargin,
-                y: currentY - 120,
-                width: contentWidth,
-                height: 100,
-                borderColor: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.8, 0.8, 0.8),
-                borderWidth: 1
-            });
-            page.drawText("Chart would be rendered here.", {
-                x: contentMargin + 10,
-                y: currentY - 60,
-                font: helveticaFont,
-                size: regularFontSize,
-                color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
-            });
-            currentY -= 130;
-        }
-        const totalPages = pdfDoc.getPageCount();
-        for(let i = 0; i < totalPages; i++){
-            const p = pdfDoc.getPage(i);
-            (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(p, helveticaFont, i + 1, totalPages, companyName);
-        }
-        const pdfBytes = await pdfDoc.save();
-        return pdfBytes;
-    } catch (error) {
-        console.error("REPORT_ERROR: Failed to generate Single Analysis PDF report:", error);
-        throw new Error(`Failed to generate PDF report: ${error instanceof Error ? error.message : "An unknown error occurred"}`);
+        currentY -= lineHeight;
+        // Actual chart drawing logic would go here
+        page.drawRectangle({
+            x: contentMargin,
+            y: currentY - 120,
+            width: contentWidth,
+            height: 100,
+            borderColor: (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.8, 0.8, 0.8),
+            borderWidth: 1
+        });
+        page.drawText("Chart would be rendered here.", {
+            x: contentMargin + 10,
+            y: currentY - 60,
+            font: helveticaFont,
+            size: regularFontSize,
+            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
+        });
+        currentY -= 130;
     }
+    // Add footer to the last page (or current page if it's the only one)
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount(), companyName);
+    // If new pages were added, we need to iterate and add footers to previous pages.
+    // This is a bit tricky as pdfDoc.getPageCount() changes.
+    // A simpler approach for now is to add footer after content might span pages.
+    // For a multi-page document, this needs more robust handling.
+    // For now, this just correctly numbers the LAST page it was working on.
+    // A full solution would be to loop through all pages *after* all content is drawn.
+    const totalPages = pdfDoc.getPageCount();
+    for(let i = 0; i < totalPages; i++){
+        const p = pdfDoc.getPage(i);
+        // Re-call footer for each page to ensure correct totalPages
+        // (This is slightly inefficient but ensures correctness if content caused page additions)
+        // To be truly correct, this loop should be after all content is drawn, or manage Y position more carefully.
+        // For now, the addFooterToPdfPage called during content generation will have the running page count.
+        // Let's re-stamp the footers with final totalPages.
+        // NOTE: This assumes addFooterToPdfPage is idempotent or safe to call multiple times on the same visual footer area if needed.
+        // A better way: collect all pages, then loop *once* at the end.
+        // Simplified for now:
+        if (i < totalPages - 1) {
+        // Need to re-call footer for previous pages if their content caused page break and they need correct total count
+        // This is complex; for now the version called DURING content generation is what we have.
+        }
+    }
+    const pdfBytes = await pdfDoc.save();
+    return pdfBytes;
 }
 }}),
 "[project]/src/tools/report-generator/generateFiberPdfReport.ts [app-rsc] (ecmascript)": ((__turbopack_context__) => {
@@ -678,119 +692,114 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$ge
 const smallFontSize = 8;
 async function generatePdfReportForFiberAnalysis(fiberPathResult, // These `pointA_form` and `pointB_form` will now have name (string) and lat/lng (number)
 pointA_form, pointB_form, snapRadiusUsed, options) {
-    try {
-        const pdfDoc = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$PDFDocument$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$export__default__as__PDFDocument$3e$__["PDFDocument"].create();
-        const helveticaFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].Helvetica);
-        const helveticaBoldFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].HelveticaBold);
-        let page = pdfDoc.addPage();
-        const { width, height } = page.getSize(); // Get initial page dimensions
-        const reportTitle = options?.reportTitle || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_FIBER_REPORT_TITLE"];
-        const companyName = options?.companyName || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_COMPANY_NAME"];
-        let logoBytes = options?.logoImageBytes;
-        if (!logoBytes && options?.logoUrl !== null) {
-            logoBytes = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fetchLogoImageBytes"])(options?.logoUrl || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_LOGO_URL"]);
-        }
-        let currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
-        currentY -= 20;
-        const contentMargin = 50;
-        const regularFontSize = 10;
-        const lineHeight = 15;
-        const sectionSpacing = 20;
-        const keyColumnWidth = 200;
-        const valueColumnX = contentMargin + keyColumnWidth + 10;
-        page.drawText(`Date: ${new Date().toLocaleDateString()}`, {
-            x: contentMargin,
-            y: currentY,
-            font: helveticaFont,
-            size: regularFontSize,
-            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
-        });
-        currentY -= lineHeight * 1.5;
-        page.drawText("Fiber Path Analysis Summary", {
-            x: contentMargin,
-            y: currentY,
-            font: helveticaBoldFont,
-            size: 13,
-            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
-        });
-        currentY -= lineHeight * 1.5;
-        // Pass PointCoordinates (lat/lng as numbers) to the formatter
-        const fiberReportData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["formatFiberDataForReportTable"])(fiberPathResult, pointA_form, pointB_form, snapRadiusUsed);
-        for (const item of fiberReportData){
-            if (currentY < contentMargin + lineHeight * 3) {
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName);
-                page = pdfDoc.addPage();
-                currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
-                currentY -= 20;
-                page.drawText("Fiber Path Analysis Summary (Continued)", {
-                    x: contentMargin,
-                    y: currentY,
-                    font: helveticaBoldFont,
-                    size: 13,
-                    color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
-                });
-                currentY -= lineHeight * 1.5;
-            }
-            page.drawText(`${item.key}:`, {
-                x: contentMargin,
-                y: currentY,
-                font: helveticaFont,
-                size: regularFontSize,
-                color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
-            });
-            page.drawText(item.value, {
-                x: valueColumnX,
-                y: currentY,
-                font: helveticaBoldFont,
-                size: regularFontSize,
-                color: item.key === "Calculation Status" && fiberPathResult.status === 'success' ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"] : item.key === "Calculation Status" && fiberPathResult.status !== 'success' ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.8, 0.2, 0.2) : __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"],
-                maxWidth: width - valueColumnX - contentMargin
-            });
-            currentY -= lineHeight;
-        }
-        currentY -= sectionSpacing;
-        if (currentY < contentMargin + 150) {
+    const pdfDoc = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$PDFDocument$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__$3c$export__default__as__PDFDocument$3e$__["PDFDocument"].create();
+    const helveticaFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].Helvetica);
+    const helveticaBoldFont = await pdfDoc.embedFont(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$StandardFonts$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["StandardFonts"].HelveticaBold);
+    let page = pdfDoc.addPage();
+    const { width, height } = page.getSize(); // Get initial page dimensions
+    const reportTitle = options?.reportTitle || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_FIBER_REPORT_TITLE"];
+    const companyName = options?.companyName || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_COMPANY_NAME"];
+    let logoBytes = options?.logoImageBytes;
+    if (!logoBytes && options?.logoUrl !== null) {
+        logoBytes = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["fetchLogoImageBytes"])(options?.logoUrl || __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["DEFAULT_LOGO_URL"]);
+    }
+    let currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
+    currentY -= 20;
+    const contentMargin = 50;
+    const regularFontSize = 10;
+    const lineHeight = 15;
+    const sectionSpacing = 20;
+    const keyColumnWidth = 200;
+    const valueColumnX = contentMargin + keyColumnWidth + 10;
+    page.drawText(`Date: ${new Date().toLocaleDateString()}`, {
+        x: contentMargin,
+        y: currentY,
+        font: helveticaFont,
+        size: regularFontSize,
+        color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
+    });
+    currentY -= lineHeight * 1.5;
+    page.drawText("Fiber Path Analysis Summary", {
+        x: contentMargin,
+        y: currentY,
+        font: helveticaBoldFont,
+        size: 13,
+        color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
+    });
+    currentY -= lineHeight * 1.5;
+    // Pass PointCoordinates (lat/lng as numbers) to the formatter
+    const fiberReportData = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["formatFiberDataForReportTable"])(fiberPathResult, pointA_form, pointB_form, snapRadiusUsed);
+    for (const item of fiberReportData){
+        if (currentY < contentMargin + lineHeight * 3) {
             (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName);
             page = pdfDoc.addPage();
             currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
             currentY -= 20;
+            page.drawText("Fiber Path Analysis Summary (Continued)", {
+                x: contentMargin,
+                y: currentY,
+                font: helveticaBoldFont,
+                size: 13,
+                color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"]
+            });
+            currentY -= lineHeight * 1.5;
         }
-        page.drawText("Map Visualization (Placeholder)", {
-            x: contentMargin,
-            y: currentY,
-            font: helveticaBoldFont,
-            size: 12,
-            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
-        });
-        currentY -= lineHeight;
-        page.drawText("Refer to interactive map in the application for visual path.", {
+        page.drawText(`${item.key}:`, {
             x: contentMargin,
             y: currentY,
             font: helveticaFont,
-            size: smallFontSize,
-            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
+            size: regularFontSize,
+            color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
+        });
+        page.drawText(item.value, {
+            x: valueColumnX,
+            y: currentY,
+            font: helveticaBoldFont,
+            size: regularFontSize,
+            color: item.key === "Calculation Status" && fiberPathResult.status === 'success' ? __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["BRAND_COLOR_ACCENT_RGB"] : item.key === "Calculation Status" && fiberPathResult.status !== 'success' ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$pdf$2d$lib$2f$es$2f$api$2f$colors$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["rgb"])(0.8, 0.2, 0.2) : __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"],
+            maxWidth: width - valueColumnX - contentMargin
         });
         currentY -= lineHeight;
-        page.drawRectangle({
-            x: contentMargin,
-            y: currentY - 120,
-            width: width - 2 * contentMargin,
-            height: 100,
-            borderColor: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["LINE_COLOR_RGB"],
-            borderWidth: 1
-        });
-        currentY -= 130;
-        const totalPages = pdfDoc.getPageCount();
-        for(let i = 0; i < totalPages; i++){
-            const currentPageObject = pdfDoc.getPage(i);
-            (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(currentPageObject, helveticaFont, i + 1, totalPages, companyName);
-        }
-        const pdfBytes = await pdfDoc.save();
-        return pdfBytes;
-    } catch (error) {
-        console.error("REPORT_ERROR: Failed to generate Fiber PDF report:", error);
-        throw new Error(`Failed to generate Fiber PDF report: ${error instanceof Error ? error.message : "An unknown error occurred"}`);
     }
+    currentY -= sectionSpacing;
+    if (currentY < contentMargin + 150) {
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(page, helveticaFont, pdfDoc.getPageCount(), pdfDoc.getPageCount() + 1, companyName);
+        page = pdfDoc.addPage();
+        currentY = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addHeaderToPdfPage"])(page, helveticaBoldFont, pdfDoc, reportTitle, companyName, logoBytes);
+        currentY -= 20;
+    }
+    page.drawText("Map Visualization (Placeholder)", {
+        x: contentMargin,
+        y: currentY,
+        font: helveticaBoldFont,
+        size: 12,
+        color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_DARK_RGB"]
+    });
+    currentY -= lineHeight;
+    page.drawText("Refer to interactive map in the application for visual path.", {
+        x: contentMargin,
+        y: currentY,
+        font: helveticaFont,
+        size: smallFontSize,
+        color: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["TEXT_COLOR_LIGHT_RGB"]
+    });
+    currentY -= lineHeight;
+    page.drawRectangle({
+        x: contentMargin,
+        y: currentY - 120,
+        width: width - 2 * contentMargin,
+        height: 100,
+        borderColor: __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["LINE_COLOR_RGB"],
+        borderWidth: 1
+    });
+    currentY -= 130;
+    const totalPages = pdfDoc.getPageCount();
+    for(let i = 0; i < totalPages; i++){
+        const currentPageObject = pdfDoc.getPage(i);
+        (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$report$2d$generator$2f$reportUtils$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["addFooterToPdfPage"])(currentPageObject, helveticaFont, i + 1, totalPages, companyName);
+    }
+    const pdfBytes = await pdfDoc.save();
+    return pdfBytes;
 }
 }}),
 "[project]/src/tools/report-generator/index.ts [app-rsc] (ecmascript) <locals>": ((__turbopack_context__) => {
@@ -1011,7 +1020,7 @@ const ServerActionAnalysisSchema = __TURBOPACK__imported__module__$5b$project$5d
 });
 async function getGoogleElevationData(pointA, pointB, samples = 100) {
     if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
-        console.error("ACTION_ERROR: getGoogleElevationData - Google Elevation API key is not configured or is a placeholder.");
+        console.error("Google Elevation API key is not configured or is a placeholder.");
         throw new Error("Elevation service API key is not configured. Please check server environment variables.");
     }
     const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
@@ -1021,7 +1030,7 @@ async function getGoogleElevationData(pointA, pointB, samples = 100) {
         response = await fetch(url);
     } catch (networkError) {
         const errorMessage = networkError instanceof Error ? networkError.message : String(networkError);
-        console.error("ACTION_ERROR: getGoogleElevationData - Network error fetching elevation data:", errorMessage);
+        console.error("Network error fetching elevation data:", errorMessage);
         throw new Error(`Network error reaching Google Elevation API: ${errorMessage}. Check connectivity & firewall.`);
     }
     if (!response.ok) {
@@ -1029,9 +1038,9 @@ async function getGoogleElevationData(pointA, pointB, samples = 100) {
         try {
             errorBody = await response.text();
         } catch (textError) {
-            console.warn("ACTION_WARNING: getGoogleElevationData - Failed to read error body from Google API response:", textError);
+            console.warn("Failed to read error body from Google API response:", textError);
         }
-        console.error(`ACTION_ERROR: getGoogleElevationData - Google Elevation API request failed with status ${response.status}:`, errorBody);
+        console.error("Google Elevation API request failed:", response.status, errorBody);
         throw new Error(`Google Elevation API request failed (Status: ${response.status}). Details: ${errorBody.substring(0, 200)}`);
     }
     let data;
@@ -1039,15 +1048,14 @@ async function getGoogleElevationData(pointA, pointB, samples = 100) {
         data = await response.json();
     } catch (jsonError) {
         const errorMessage = jsonError instanceof Error ? jsonError.message : String(jsonError);
-        console.error("ACTION_ERROR: getGoogleElevationData - Failed to parse JSON response from Google Elevation API:", errorMessage);
+        console.error("Failed to parse JSON response from Google Elevation API:", errorMessage);
         throw new Error(`Failed to parse response from Google Elevation API: ${errorMessage}`);
     }
     if (data.status !== 'OK') {
-        console.error(`ACTION_ERROR: getGoogleElevationData - Google Elevation API error status '${data.status}':`, data.error_message);
+        console.error("Google Elevation API error:", data.status, data.error_message);
         throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown API error'}`);
     }
     if (!data.results || data.results.length === 0) {
-        console.error("ACTION_ERROR: getGoogleElevationData - Google Elevation API returned no results for the given path.");
         throw new Error("Google Elevation API returned no results for the given path. Check coordinates.");
     }
     return data.results.map((sample)=>({
@@ -1079,10 +1087,20 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
         const validationResult = ServerActionAnalysisSchema.safeParse(rawFormData);
         if (!validationResult.success) {
             const flattenedErrors = validationResult.error.flatten();
-            let finalErrorMessage = "Input validation failed. Please check the fields.";
-            console.error("ACTION_ERROR: performLosAnalysis - Server-side Zod validation failed:", flattenedErrors);
+            let finalErrorMessage = "Input validation failed. Issues:\n";
+            if (flattenedErrors.formErrors.length > 0) {
+                finalErrorMessage += `Form Errors: ${flattenedErrors.formErrors.map(String).join(', ')}\n`;
+            }
+            const fieldErrorMessages = Object.entries(flattenedErrors.fieldErrors).map(([path, messages])=>{
+                const typedMessages = messages;
+                return `${String(path)}: ${typedMessages.map(String).join(', ')}`;
+            }).join('\n');
+            if (fieldErrorMessages) {
+                finalErrorMessage += `Field Errors:\n${fieldErrorMessages}`;
+            }
+            console.error("Server-side Zod validation errors:", finalErrorMessage, flattenedErrors);
             return {
-                error: finalErrorMessage,
+                error: finalErrorMessage.trim(),
                 fieldErrors: flattenedErrors.fieldErrors
             };
         }
@@ -1111,8 +1129,13 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
             message: `${result.message} Using Google Elevation API data.`
         };
     } catch (err) {
-        const clientErrorMessageString = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
-        console.error("ACTION_ERROR: Unhandled exception in performLosAnalysis:", err);
+        let clientErrorMessageString;
+        if (err instanceof Error) {
+            clientErrorMessageString = String(err.message);
+        } else {
+            clientErrorMessageString = "An unknown error occurred during analysis.";
+        }
+        console.error("Error in performLosAnalysis server action:", clientErrorMessageString, err);
         return {
             error: clientErrorMessageString
         };
@@ -1121,7 +1144,6 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ performLosAnalysis(prev
 async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleAnalysisPdfReportAction(analysisResult, reportOptions) {
     try {
         if (!analysisResult) {
-            console.error("ACTION_ERROR: generateSingleAnalysisPdfReportAction - Analysis result data is missing.");
             return {
                 success: false,
                 error: "Analysis result data is missing."
@@ -1141,7 +1163,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleAnalysisP
         };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during PDF report generation.";
-        console.error("ACTION_ERROR: Unhandled exception in generateSingleAnalysisPdfReportAction:", error);
+        console.error("Error generating PDF report action:", errorMessage, error);
         return {
             success: false,
             error: `Failed to generate PDF report: ${errorMessage}`
@@ -1161,8 +1183,8 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
     try {
         const validation = FiberReportParamsSchema.safeParse(params);
         if (!validation.success) {
+            console.error("Invalid parameters for generateFiberReportAction:", validation.error.flatten());
             const errorMessages = validation.error.errors.map((e)=>`${e.path.join('.')}: ${e.message}`).join('; ');
-            console.error("ACTION_ERROR: generateFiberReportAction - Invalid input:", validation.error.flatten());
             return {
                 success: false,
                 error: `Invalid input: ${errorMessages}`
@@ -1170,7 +1192,6 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
         }
         const { fiberPathResult, pointA_form, pointB_form, snapRadiusUsed_form, reportOptions } = validation.data;
         if (!fiberPathResult || fiberPathResult.status !== 'success') {
-            console.warn("ACTION_WARNING: generateFiberReportAction - Cannot generate report: Fiber path calculation was not successful or data is missing.");
             return {
                 success: false,
                 error: "Cannot generate report: Fiber path calculation was not successful or data is missing."
@@ -1185,7 +1206,6 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
             lng: parseFloat(pointB_form.lng)
         };
         if (isNaN(pointA_coords_report.lat) || isNaN(pointA_coords_report.lng) || isNaN(pointB_coords_report.lat) || isNaN(pointB_coords_report.lng)) {
-            console.error("ACTION_ERROR: generateFiberReportAction - Invalid coordinates provided in form data for report generation.");
             return {
                 success: false,
                 error: "Invalid coordinates provided in form data for report generation."
@@ -1211,7 +1231,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateFiberReportActi
         };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during Fiber PDF report generation.";
-        console.error("ACTION_ERROR: Unhandled exception in generateFiberReportAction:", error);
+        console.error("Error generating Fiber PDF report action:", errorMessage, error);
         return {
             success: false,
             error: `Failed to generate Fiber PDF report: ${errorMessage}`
@@ -1236,7 +1256,6 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
         const validation = SingleFiberPathKmzParamsSchema.safeParse(params);
         if (!validation.success) {
             const errorMessages = validation.error.errors.map((e)=>`${e.path.join('.')}: ${e.message}`).join('; ');
-            console.error("ACTION_ERROR: generateSingleFiberPathKmzAction - Invalid input:", validation.error.flatten());
             return {
                 success: false,
                 error: `Invalid input for KMZ generation: ${errorMessages}`
@@ -1320,7 +1339,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
                             coordinatesString = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["formatCoordinatesForKml"])(decodedCoords);
                             description += `\nEncoded Polyline (for reference): ${(0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$xml$2d$escape$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["xmlEscape"])(segment.pathPolyline)}`;
                         } else {
-                            console.warn("ACTION_WARNING: KMZ Gen - Road_route segment missing pathPolyline. Drawing straight line.");
+                            console.warn("KMZ Gen: Road_route segment missing pathPolyline. Drawing straight line.");
                             coordinatesString = `${segment.startPoint.lng},${segment.startPoint.lat},0 ${segment.endPoint.lng},${segment.endPoint.lat},0`;
                             description += "\nNote: Polyline missing, showing straight line.";
                         }
@@ -1360,7 +1379,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ generateSingleFiberPath
         };
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during KMZ generation.";
-        console.error("ACTION_ERROR: Unhandled exception in generateSingleFiberPathKmzAction:", error);
+        console.error("Error generating Single Fiber Path KMZ action:", errorMessage, error);
         return {
             success: false,
             error: `Failed to generate KMZ: ${errorMessage}`
@@ -1387,6 +1406,95 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ getGoogleMapsApiKey() {
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(generateFiberReportAction, "402d3049fed11f2d39fa3d58520db39f6249045915", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(generateSingleFiberPathKmzAction, "4041e2f7f83ffb09b59671e5406bd714b8f54cba07", null);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getGoogleMapsApiKey, "00ed03f1d2d8a98b5211ddd718472e887421870838", null);
+}}),
+"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+/* __next_internal_action_entry_do_not_use__ {"6091a7f5eb670c7a62c05633ebf85658287acaec18":"getElevationProfileForPairAction"} */ __turbopack_context__.s({
+    "getElevationProfileForPairAction": (()=>getElevationProfileForPairAction)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/server-reference.js [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$app$2d$render$2f$encryption$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/app-render/encryption.js [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/webpack/loaders/next-flight-loader/action-validate.js [app-rsc] (ecmascript)");
+;
+;
+// --- Google Elevation API Configuration ---
+const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
+const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
+const GOOGLE_ELEVATION_API_SAMPLES = 100; // Number of samples along the path
+/**
+ * Fetches elevation data from Google Elevation API for a pair of coordinates.
+ * This is a simplified version of getGoogleElevationData for bulk use.
+ */ async function fetchElevationForPair(pointA, pointB, samples = GOOGLE_ELEVATION_API_SAMPLES) {
+    if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
+        console.error("Google Elevation API key is not configured or is a placeholder for bulk analysis.");
+        throw new Error("Elevation service API key is not configured. Please check server environment variables.");
+    }
+    const pathStr = `${pointA.lat},${pointA.lng}|${pointB.lat},${pointB.lng}`;
+    const url = `${GOOGLE_ELEVATION_API_URL}?path=${pathStr}&samples=${samples}&key=${GOOGLE_ELEVATION_API_KEY.trim()}`;
+    let response;
+    try {
+        response = await fetch(url);
+    } catch (networkError) {
+        const errorMessage = networkError instanceof Error ? networkError.message : String(networkError);
+        console.error("Network error fetching elevation data for bulk analysis:", errorMessage);
+        throw new Error(`Network error while trying to reach Google Elevation API for pair ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}: ${errorMessage}`);
+    }
+    if (!response.ok) {
+        let errorBody = "Could not retrieve error body from Google API.";
+        try {
+            errorBody = await response.text();
+        } catch (textError) {
+        // Ignore if reading error body fails
+        }
+        console.error(`Google Elevation API request failed for bulk analysis (Pair: ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}): ${response.status}`, errorBody);
+        throw new Error(`Google Elevation API request failed for pair with status ${response.status}. Details: ${errorBody.substring(0, 200)}`);
+    }
+    let data;
+    try {
+        data = await response.json();
+    } catch (jsonError) {
+        const errorMessage = jsonError instanceof Error ? jsonError.message : String(jsonError);
+        console.error("Failed to parse JSON response from Google Elevation API for bulk analysis:", errorMessage);
+        throw new Error(`Failed to parse response from Google Elevation API for pair: ${errorMessage}`);
+    }
+    if (data.status !== 'OK') {
+        console.error("Google Elevation API error for bulk analysis (Pair: ${pointA.lat},${pointA.lng} to ${pointB.lat},${pointB.lng}):", data.status, data.error_message);
+        throw new Error(`Google Elevation API error for pair: ${data.status} - ${data.error_message || 'Unknown API error'}`);
+    }
+    if (!data.results || data.results.length === 0) {
+        throw new Error("Google Elevation API returned no results for the given path in bulk analysis. Check coordinates.");
+    }
+    return data.results.map((sample)=>({
+            elevation: sample.elevation,
+            location: {
+                lat: sample.location.lat,
+                lng: sample.location.lng
+            },
+            resolution: sample.resolution
+        }));
+}
+async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ getElevationProfileForPairAction(pointA, pointB) {
+    try {
+        const elevationProfile = await fetchElevationForPair(pointA, pointB, GOOGLE_ELEVATION_API_SAMPLES);
+        return {
+            profile: elevationProfile
+        };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred fetching elevation profile for pair.";
+        console.error("Error in getElevationProfileForPairAction:", errorMessage);
+        return {
+            error: errorMessage
+        }; // Return error as part of the response object
+    }
+}
+;
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$action$2d$validate$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["ensureServerEntryExports"])([
+    getElevationProfileForPairAction
+]);
+(0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(getElevationProfileForPairAction, "6091a7f5eb670c7a62c05633ebf85658287acaec18", null);
 }}),
 "[externals]/http [external] (http, cjs)": (function(__turbopack_context__) {
 
@@ -1490,7 +1598,7 @@ const mapsClient = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modu
  * @returns A promise that resolves to an object with the snapped road point and offset distance, or null if no road is found within radius.
  */ async function findNearestRoadPointWithOffset(point, radiusMeters, client) {
     if (!GOOGLE_DIRECTIONS_API_KEY) {
-        console.error("FIBER_TOOL_ERROR: findNearestRoadPointWithOffset - GOOGLE_DIRECTIONS_API_KEY is not configured.");
+        console.error("GOOGLE_DIRECTIONS_API_KEY is not configured.");
         throw new Error("Directions API key not configured on server.");
     }
     const request = {
@@ -1526,19 +1634,19 @@ const mapsClient = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modu
                         offsetDistanceMeters
                     };
                 } else {
-                    console.warn(`FIBER_TOOL_WARNING: Road found for point ${point.lat},${point.lng}, but offset ${offsetDistanceMeters}m exceeds radius ${radiusMeters}m.`);
+                    console.log(`Road found for point ${point.lat},${point.lng}, but offset ${offsetDistanceMeters}m exceeds radius ${radiusMeters}m.`);
                     return null;
                 }
             } else {
-                console.warn(`FIBER_TOOL_WARNING: Directions API OK, but no route/legs/steps found for snapping point ${point.lat},${point.lng}. This might mean it's too far from any road network for the API to snap.`);
+                console.log(`Directions API OK, but no route/legs/steps found for snapping point ${point.lat},${point.lng}. This might mean it's too far from any road network for the API to snap.`);
                 return null;
             }
         } else {
-            console.warn(`FIBER_TOOL_WARNING: Directions API status not OK for snapping point ${point.lat},${point.lng}: ${response.data.status}. Error: ${response.data.error_message}`);
+            console.log(`Directions API status not OK for snapping point ${point.lat},${point.lng}: ${response.data.status}. Error: ${response.data.error_message}`);
             return null;
         }
     } catch (error) {
-        console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road snapping (point: ${point.lat},${point.lng}):`, error.response?.data || error.message);
+        console.error(`Error calling Google Directions API for road snapping (point: ${point.lat},${point.lng}):`, error.response?.data || error.message);
         throw new Error(`Google Directions API error during road snapping: ${error.response?.data?.error_message || error.message}`);
     }
 }
@@ -1550,7 +1658,7 @@ const mapsClient = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modu
  * @returns A promise resolving to route details (distance, polyline, segments) or null if no route found.
  */ async function getRoadRoute(origin, destination, client) {
     if (!GOOGLE_DIRECTIONS_API_KEY) {
-        console.error("FIBER_TOOL_ERROR: getRoadRoute - GOOGLE_DIRECTIONS_API_KEY is not configured.");
+        console.error("GOOGLE_DIRECTIONS_API_KEY is not configured.");
         throw new Error("Directions API key not configured on server.");
     }
     const request = {
@@ -1593,18 +1701,18 @@ const mapsClient = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modu
                     segments: routeSegmentsDetailed
                 };
             } else {
-                console.warn("FIBER_TOOL_WARNING: Directions API OK, but missing leg, distance, or polyline for route between", origin, "and", destination);
+                console.log("Directions API OK, but missing leg, distance, or polyline for route between", origin, "and", destination);
                 return null;
             }
         } else if (response.data.status === 'ZERO_RESULTS') {
-            console.log("FIBER_TOOL_INFO: No road route found (ZERO_RESULTS) between", origin, "and", destination);
+            console.log("No road route found (ZERO_RESULTS) between", origin, "and", destination);
             return null;
         } else {
-            console.warn(`FIBER_TOOL_WARNING: Directions API status not OK for routing: ${response.data.status}. Error: ${response.data.error_message}`);
+            console.log(`Directions API status not OK for routing: ${response.data.status}. Error: ${response.data.error_message}`);
             return null;
         }
     } catch (error) {
-        console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road routing (origin: ${origin.lat},${origin.lng}, dest: ${destination.lat},${destination.lng}):`, error.response?.data || error.message);
+        console.error(`Error calling Google Directions API for road routing (origin: ${origin.lat},${origin.lng}, dest: ${destination.lat},${destination.lng}):`, error.response?.data || error.message);
         throw new Error(`Google Directions API error during road routing: ${error.response?.data?.error_message || error.message}`);
     }
 }
@@ -1624,7 +1732,7 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ calculateFiberPath(para
         };
     }
     if (!GOOGLE_DIRECTIONS_API_KEY) {
-        console.error("FIBER_TOOL_ERROR: calculateFiberPath - GOOGLE_DIRECTIONS_API_KEY is not configured.");
+        console.error("FATAL: GOOGLE_DIRECTIONS_API_KEY is not configured for fiber path calculation.");
         return {
             ...baseResult,
             status: 'api_error',
@@ -1703,7 +1811,9 @@ async function /*#__TURBOPACK_DISABLE_EXPORT_MERGING__*/ calculateFiberPath(para
             segments
         };
     } catch (error) {
-        console.error("FIBER_TOOL_ERROR: Unhandled exception in calculateFiberPath:", error);
+        // This catch block handles errors thrown from findNearestRoadPointWithOffset or getRoadRoute,
+        // or any other unexpected errors within this function.
+        console.error("Error in calculateFiberPath main try-catch block:", error.message, error);
         return {
             ...baseResult,
             status: 'api_error',
@@ -1782,7 +1892,7 @@ pointA_lat, pointA_lng, pointB_lat, pointB_lng, radiusMeters, isLosFeasible) {
 ]);
 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$webpack$2f$loaders$2f$next$2d$flight$2d$loader$2f$server$2d$reference$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerServerReference"])(performFiberPathAnalysisAction, "7e9053ee96b2a8ff08a5535b919d94d4648359fba6", null);
 }}),
-"[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <locals>": ((__turbopack_context__) => {
+"[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <locals>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
@@ -1794,18 +1904,20 @@ __turbopack_context__.s({});
 ;
 ;
 ;
+;
 }}),
-"[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <module evaluation>": ((__turbopack_context__) => {
+"[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <module evaluation>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
 {
 __turbopack_context__.s({});
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');
+var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE2 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');
 }}),
-"[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <exports>": ((__turbopack_context__) => {
+"[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript) <exports>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
@@ -1816,27 +1928,30 @@ __turbopack_context__.s({
     "4041e2f7f83ffb09b59671e5406bd714b8f54cba07": (()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["generateSingleFiberPathKmzAction"]),
     "6032618b8418ac76277e7b9b725912dd40e39f206e": (()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["performLosAnalysis"]),
     "606e059f8f40dd4b377c51875d12e3221ca87a227e": (()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["generateSingleAnalysisPdfReportAction"]),
+    "6091a7f5eb670c7a62c05633ebf85658287acaec18": (()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["getElevationProfileForPairAction"]),
     "7e9053ee96b2a8ff08a5535b919d94d4648359fba6": (()=>__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["performFiberPathAnalysisAction"])
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-rsc] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');
+var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$locals$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE2 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <locals>');
 }}),
-"[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)": ((__turbopack_context__) => {
+"[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
 {
 __turbopack_context__.s({
-    "00ed03f1d2d8a98b5211ddd718472e887421870838": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["00ed03f1d2d8a98b5211ddd718472e887421870838"]),
-    "402d3049fed11f2d39fa3d58520db39f6249045915": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["402d3049fed11f2d39fa3d58520db39f6249045915"]),
-    "4041e2f7f83ffb09b59671e5406bd714b8f54cba07": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["4041e2f7f83ffb09b59671e5406bd714b8f54cba07"]),
-    "6032618b8418ac76277e7b9b725912dd40e39f206e": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["6032618b8418ac76277e7b9b725912dd40e39f206e"]),
-    "606e059f8f40dd4b377c51875d12e3221ca87a227e": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["606e059f8f40dd4b377c51875d12e3221ca87a227e"]),
-    "7e9053ee96b2a8ff08a5535b919d94d4648359fba6": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["7e9053ee96b2a8ff08a5535b919d94d4648359fba6"])
+    "00ed03f1d2d8a98b5211ddd718472e887421870838": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["00ed03f1d2d8a98b5211ddd718472e887421870838"]),
+    "402d3049fed11f2d39fa3d58520db39f6249045915": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["402d3049fed11f2d39fa3d58520db39f6249045915"]),
+    "4041e2f7f83ffb09b59671e5406bd714b8f54cba07": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["4041e2f7f83ffb09b59671e5406bd714b8f54cba07"]),
+    "6032618b8418ac76277e7b9b725912dd40e39f206e": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["6032618b8418ac76277e7b9b725912dd40e39f206e"]),
+    "606e059f8f40dd4b377c51875d12e3221ca87a227e": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["606e059f8f40dd4b377c51875d12e3221ca87a227e"]),
+    "6091a7f5eb670c7a62c05633ebf85658287acaec18": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["6091a7f5eb670c7a62c05633ebf85658287acaec18"]),
+    "7e9053ee96b2a8ff08a5535b919d94d4648359fba6": (()=>__TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__["7e9053ee96b2a8ff08a5535b919d94d4648359fba6"])
 });
-var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <module evaluation>');
-var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <exports>');
+var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE2 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <module evaluation>');
+var __TURBOPACK__imported__module__$5b$project$5d2f2e$next$2d$internal$2f$server$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2f$actions$2e$js__$7b$__ACTIONS_MODULE0__$3d3e$__$225b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE1__$3d3e$__$225b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$29222c$__ACTIONS_MODULE2__$3d3e$__$225b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$rsc$5d$__$28$ecmascript$2922$__$7d$__$5b$app$2d$rsc$5d$__$28$server__actions__loader$2c$__ecmascript$29$__$3c$exports$3e$__ = __turbopack_context__.i('[project]/.next-internal/server/app/bulk-los-analyzer/page/actions.js { ACTIONS_MODULE0 => "[project]/src/app/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE1 => "[project]/src/app/bulk-los-analyzer/actions.ts [app-rsc] (ecmascript)", ACTIONS_MODULE2 => "[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)" } [app-rsc] (server actions loader, ecmascript) <exports>');
 }}),
 "[project]/src/app/favicon.ico.mjs { IMAGE => \"[project]/src/app/favicon.ico (static in ecmascript)\" } [app-rsc] (structured image object, ecmascript, Next.js server component)": ((__turbopack_context__) => {
 
@@ -1850,7 +1965,7 @@ var { g: global, __dirname } = __turbopack_context__;
 {
 __turbopack_context__.n(__turbopack_context__.i("[project]/src/app/layout.tsx [app-rsc] (ecmascript)"));
 }}),
-"[project]/src/app/page.tsx (client reference/proxy) <module evaluation>": ((__turbopack_context__) => {
+"[project]/src/app/bulk-los-analyzer/page.tsx (client reference/proxy) <module evaluation>": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
@@ -1861,10 +1976,10 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2d$edge$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react-server-dom-turbopack-server-edge.js [app-rsc] (ecmascript)");
 ;
 const __TURBOPACK__default__export__ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2d$edge$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerClientReference"])(function() {
-    throw new Error("Attempted to call the default export of [project]/src/app/page.tsx <module evaluation> from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
-}, "[project]/src/app/page.tsx <module evaluation>", "default");
+    throw new Error("Attempted to call the default export of [project]/src/app/bulk-los-analyzer/page.tsx <module evaluation> from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
+}, "[project]/src/app/bulk-los-analyzer/page.tsx <module evaluation>", "default");
 }}),
-"[project]/src/app/page.tsx (client reference/proxy)": ((__turbopack_context__) => {
+"[project]/src/app/bulk-los-analyzer/page.tsx (client reference/proxy)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
@@ -1875,26 +1990,26 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2d$edge$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react-server-dom-turbopack-server-edge.js [app-rsc] (ecmascript)");
 ;
 const __TURBOPACK__default__export__ = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$server$2d$dom$2d$turbopack$2d$server$2d$edge$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["registerClientReference"])(function() {
-    throw new Error("Attempted to call the default export of [project]/src/app/page.tsx from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
-}, "[project]/src/app/page.tsx", "default");
+    throw new Error("Attempted to call the default export of [project]/src/app/bulk-los-analyzer/page.tsx from the server, but it's on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.");
+}, "[project]/src/app/bulk-los-analyzer/page.tsx", "default");
 }}),
-"[project]/src/app/page.tsx [app-rsc] (ecmascript)": ((__turbopack_context__) => {
+"[project]/src/app/bulk-los-analyzer/page.tsx [app-rsc] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$page$2e$tsx__$28$client__reference$2f$proxy$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/src/app/page.tsx (client reference/proxy) <module evaluation>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$page$2e$tsx__$28$client__reference$2f$proxy$29$__ = __turbopack_context__.i("[project]/src/app/page.tsx (client reference/proxy)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2e$tsx__$28$client__reference$2f$proxy$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/src/app/bulk-los-analyzer/page.tsx (client reference/proxy) <module evaluation>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2e$tsx__$28$client__reference$2f$proxy$29$__ = __turbopack_context__.i("[project]/src/app/bulk-los-analyzer/page.tsx (client reference/proxy)");
 ;
-__turbopack_context__.n(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$page$2e$tsx__$28$client__reference$2f$proxy$29$__);
+__turbopack_context__.n(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$bulk$2d$los$2d$analyzer$2f$page$2e$tsx__$28$client__reference$2f$proxy$29$__);
 }}),
-"[project]/src/app/page.tsx [app-rsc] (ecmascript, Next.js server component)": ((__turbopack_context__) => {
+"[project]/src/app/bulk-los-analyzer/page.tsx [app-rsc] (ecmascript, Next.js server component)": ((__turbopack_context__) => {
 
 var { g: global, __dirname } = __turbopack_context__;
 {
-__turbopack_context__.n(__turbopack_context__.i("[project]/src/app/page.tsx [app-rsc] (ecmascript)"));
+__turbopack_context__.n(__turbopack_context__.i("[project]/src/app/bulk-los-analyzer/page.tsx [app-rsc] (ecmascript)"));
 }}),
 
 };
 
-//# sourceMappingURL=%5Broot%20of%20the%20server%5D__de6126b9._.js.map
+//# sourceMappingURL=%5Broot%20of%20the%20server%5D__ea26dbf0._.js.map

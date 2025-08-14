@@ -1,3 +1,4 @@
+
 // src/tools/fiberPathCalculator/calculator.ts
 // This file will contain the core server-side logic for calculating fiber paths
 // using Google Maps Platform APIs.
@@ -35,7 +36,7 @@ async function findNearestRoadPointWithOffset(
   client: Client
 ): Promise<{ roadPoint: PointCoordinates; offsetDistanceMeters: number } | null> {
   if (!GOOGLE_DIRECTIONS_API_KEY) {
-    console.error("GOOGLE_DIRECTIONS_API_KEY is not configured.");
+    console.error("FIBER_TOOL_ERROR: findNearestRoadPointWithOffset - GOOGLE_DIRECTIONS_API_KEY is not configured.");
     throw new Error("Directions API key not configured on server.");
   }
 
@@ -67,19 +68,19 @@ async function findNearestRoadPointWithOffset(
         if (offsetDistanceMeters <= radiusMeters) {
           return { roadPoint: snappedRoadPoint, offsetDistanceMeters };
         } else {
-          console.log(`Road found for point ${point.lat},${point.lng}, but offset ${offsetDistanceMeters}m exceeds radius ${radiusMeters}m.`);
+          console.warn(`FIBER_TOOL_WARNING: Road found for point ${point.lat},${point.lng}, but offset ${offsetDistanceMeters}m exceeds radius ${radiusMeters}m.`);
           return null; 
         }
       } else {
-         console.log(`Directions API OK, but no route/legs/steps found for snapping point ${point.lat},${point.lng}. This might mean it's too far from any road network for the API to snap.`);
+         console.warn(`FIBER_TOOL_WARNING: Directions API OK, but no route/legs/steps found for snapping point ${point.lat},${point.lng}. This might mean it's too far from any road network for the API to snap.`);
          return null;
       }
     } else {
-      console.log(`Directions API status not OK for snapping point ${point.lat},${point.lng}: ${response.data.status}. Error: ${response.data.error_message}`);
+      console.warn(`FIBER_TOOL_WARNING: Directions API status not OK for snapping point ${point.lat},${point.lng}: ${response.data.status}. Error: ${response.data.error_message}`);
       return null;
     }
   } catch (error: any) {
-    console.error(`Error calling Google Directions API for road snapping (point: ${point.lat},${point.lng}):`, error.response?.data || error.message);
+    console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road snapping (point: ${point.lat},${point.lng}):`, error.response?.data || error.message);
     throw new Error(`Google Directions API error during road snapping: ${error.response?.data?.error_message || error.message}`);
   }
 }
@@ -98,7 +99,7 @@ async function getRoadRoute(
   client: Client
 ): Promise<{ distanceMeters: number; polyline: string; segments: FiberPathSegment[] } | null> {
   if (!GOOGLE_DIRECTIONS_API_KEY) {
-    console.error("GOOGLE_DIRECTIONS_API_KEY is not configured.");
+    console.error("FIBER_TOOL_ERROR: getRoadRoute - GOOGLE_DIRECTIONS_API_KEY is not configured.");
     throw new Error("Directions API key not configured on server.");
   }
   
@@ -136,18 +137,18 @@ async function getRoadRoute(
           segments: routeSegmentsDetailed,
         };
       } else {
-        console.log("Directions API OK, but missing leg, distance, or polyline for route between", origin, "and", destination);
+        console.warn("FIBER_TOOL_WARNING: Directions API OK, but missing leg, distance, or polyline for route between", origin, "and", destination);
         return null;
       }
     } else if (response.data.status === 'ZERO_RESULTS') {
-        console.log("No road route found (ZERO_RESULTS) between", origin, "and", destination);
+        console.log("FIBER_TOOL_INFO: No road route found (ZERO_RESULTS) between", origin, "and", destination);
         return null;
     } else {
-        console.log(`Directions API status not OK for routing: ${response.data.status}. Error: ${response.data.error_message}`);
+        console.warn(`FIBER_TOOL_WARNING: Directions API status not OK for routing: ${response.data.status}. Error: ${response.data.error_message}`);
         return null;
     }
   } catch (error: any) {
-    console.error(`Error calling Google Directions API for road routing (origin: ${origin.lat},${origin.lng}, dest: ${destination.lat},${destination.lng}):`, error.response?.data || error.message);
+    console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road routing (origin: ${origin.lat},${origin.lng}, dest: ${destination.lat},${destination.lng}):`, error.response?.data || error.message);
     throw new Error(`Google Directions API error during road routing: ${error.response?.data?.error_message || error.message}`);
   }
 }
@@ -172,7 +173,7 @@ export async function calculateFiberPath(params: FiberCalculatorParams): Promise
   }
 
   if (!GOOGLE_DIRECTIONS_API_KEY) {
-    console.error("FATAL: GOOGLE_DIRECTIONS_API_KEY is not configured for fiber path calculation.");
+    console.error("FIBER_TOOL_ERROR: calculateFiberPath - GOOGLE_DIRECTIONS_API_KEY is not configured.");
     return {
       ...baseResult,
       status: 'api_error',
@@ -260,12 +261,10 @@ export async function calculateFiberPath(params: FiberCalculatorParams): Promise
     };
 
   } catch (error: any) {
-    // This catch block handles errors thrown from findNearestRoadPointWithOffset or getRoadRoute,
-    // or any other unexpected errors within this function.
-    console.error("Error in calculateFiberPath main try-catch block:", error.message, error);
+    console.error("FIBER_TOOL_ERROR: Unhandled exception in calculateFiberPath:", error);
     return {
       ...baseResult,
-      status: 'api_error', // Or a more specific error if identifiable
+      status: 'api_error',
       errorMessage: error.message || 'An unknown error occurred during fiber path calculation.',
     };
   }
