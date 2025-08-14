@@ -1,11 +1,10 @@
 
 "use client";
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useLoadScript } from '@react-google-maps/api';
 import { Loader2 } from 'lucide-react';
-
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+import { getGoogleMapsApiKey } from '@/app/actions';
 
 interface GoogleMapsLoaderContextType {
   isLoaded: boolean;
@@ -26,34 +25,66 @@ interface GoogleMapsLoaderProviderProps {
   children: ReactNode;
 }
 
-// Libraries to load with the Google Maps API. Add more as needed.
 const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ['geometry', 'places'];
 
 export const GoogleMapsLoaderProvider: React.FC<GoogleMapsLoaderProviderProps> = ({ children }) => {
-  if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === "YOUR_GOOGLE_MAPS_JS_API_KEY_HERE") {
-    console.error("Google Maps API key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) is not configured or is a placeholder. Please set it in your .env.local file.");
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const key = await getGoogleMapsApiKey();
+        if (key) {
+          setApiKey(key);
+        } else {
+          setError("Google Maps API key is not configured on the server. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your .env.local file.");
+        }
+      } catch (e) {
+        setError("Failed to fetch Google Maps API key from the server.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchApiKey();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4">Initializing mapping service...</p>
+      </div>
+    );
+  }
+
+  if (error || !apiKey) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-destructive/10 text-destructive p-4 text-center">
-        <h2 className="text-lg font-semibold mb-2">Google Maps API Configuration Error</h2>
-        <p>The Google Maps JavaScript API key (<code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>) is missing or is still set to its placeholder value.</p>
-        <p className="mt-1">Please ensure it is correctly set in your <code>.env.local</code> file.</p>
+        <h2 className="text-lg font-semibold mb-2">Google Maps Configuration Error</h2>
+        <p>{error || "API key is missing."}</p>
         <p className="mt-1">Maps functionality will be unavailable until this is resolved.</p>
       </div>
     );
   }
 
+  return <LoadScriptComponent apiKey={apiKey}>{children}</LoadScriptComponent>;
+};
+
+const LoadScriptComponent: React.FC<{ apiKey: string; children: ReactNode }> = ({ apiKey, children }) => {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-    libraries: libraries, 
+    googleMapsApiKey: apiKey,
+    libraries: libraries,
   });
 
-  // If loadError occurs after attempting to load with a key, GoogleMapsScriptGuard will handle displaying it.
   return (
     <GoogleMapsLoaderContext.Provider value={{ isLoaded, loadError }}>
       {children}
     </GoogleMapsLoaderContext.Provider>
   );
 };
+
 
 // Optional: A component to handle loading/error states for map consumers
 export const GoogleMapsScriptGuard: React.FC<{ children: ReactNode, loadingMessage?: string, errorMessagePrefix?: string }> = ({ 
@@ -72,7 +103,7 @@ export const GoogleMapsScriptGuard: React.FC<{ children: ReactNode, loadingMessa
         <p className="mt-1 text-sm"><code>{loadError.name}: {loadError.message}</code></p>
         {loadError.message?.includes("InvalidKeyMapError") && (
             <p className="mt-2 text-xs">
-                This usually means the <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> is invalid, expired, or has incorrect restrictions (e.g., HTTP referrers) in the Google Cloud Console.
+                This usually means the API key is invalid, expired, or has incorrect restrictions (e.g., HTTP referrers) in the Google Cloud Console.
                 Ensure the Maps JavaScript API is enabled for this key.
             </p>
         )}
@@ -91,4 +122,3 @@ export const GoogleMapsScriptGuard: React.FC<{ children: ReactNode, loadingMessa
 
   return <>{children}</>;
 };
-

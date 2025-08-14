@@ -429,3 +429,12 @@ export async function generateSingleFiberPathKmzAction(
     return { success: false, error: `Failed to generate KMZ: ${errorMessage}` };
   }
 }
+
+export async function getGoogleMapsApiKey(): Promise<string | null> {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey || apiKey === "YOUR_GOOGLE_MAPS_JS_API_KEY_HERE") {
+    console.error("Google Maps API key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) is not configured.");
+    return null;
+  }
+  return apiKey;
+}

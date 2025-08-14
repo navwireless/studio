@@ -1,5 +1,16 @@
 {
   "node": {
+    "00ed03f1d2d8a98b5211ddd718472e887421870838": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/tools/fiberPathCalculator/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      }
+    },
     "402d3049fed11f2d39fa3d58520db39f6249045915": {
       "workers": {
         "app/page": {
