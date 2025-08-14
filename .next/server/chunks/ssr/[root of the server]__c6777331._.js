@@ -106,6 +106,9 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
     const mapRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
     const [currentMapClickTarget, setCurrentMapClickTarget] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('pointA');
     const { isLoaded: isMapApiLoaded } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$GoogleMapsLoaderProvider$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useGoogleMapsLoader"])();
+    // Refs to hold the actual Google Maps Polyline objects
+    const losPolylineRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const fiberPolylinesRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])([]);
     const markerIconA = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].useMemo(()=>getCustomMarkerIcon("A", isMapApiLoaded), [
         isMapApiLoaded
     ]);
@@ -241,6 +244,90 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
             fiberPathLabelMidPoint = losMidPoint;
         }
     }
+    // Effect to manage drawing and clearing polylines
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        if (!isMapApiLoaded || !mapRef.current) return;
+        const map = mapRef.current;
+        // --- Clean up previous polylines ---
+        if (losPolylineRef.current) {
+            losPolylineRef.current.setMap(null);
+            losPolylineRef.current = null;
+        }
+        fiberPolylinesRef.current.forEach((p)=>p.setMap(null));
+        fiberPolylinesRef.current = [];
+        // --- Draw LOS Polyline ---
+        if (pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined) {
+            losPolylineRef.current = new google.maps.Polyline({
+                path: [
+                    {
+                        lat: pALat,
+                        lng: pALng
+                    },
+                    {
+                        lat: pBLat,
+                        lng: pBLng
+                    }
+                ],
+                strokeColor: losPolylineColor(),
+                strokeOpacity: isStale ? 0.8 : 0.9,
+                strokeWeight: isStale ? 3.5 : 4,
+                geodesic: true,
+                zIndex: 1,
+                map: map
+            });
+        }
+        // --- Draw Fiber Path Polylines ---
+        if (fiberPathResult?.status === 'success' && fiberPathResult.segments) {
+            fiberPathResult.segments.forEach((segment, index)=>{
+                let pathCoords = [];
+                let segmentOptions = {};
+                if (segment.type === 'offset_a' || segment.type === 'offset_b') {
+                    pathCoords = [
+                        {
+                            lat: segment.startPoint.lat,
+                            lng: segment.startPoint.lng
+                        },
+                        {
+                            lat: segment.endPoint.lat,
+                            lng: segment.endPoint.lng
+                        }
+                    ];
+                    segmentOptions = FIBER_POLYLINE_STYLES.offset;
+                } else if (segment.type === 'road_route' && segment.pathPolyline) {
+                    const decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["decodePolyline"])(segment.pathPolyline);
+                    pathCoords = decoded.map((p)=>({
+                            lat: p[0],
+                            lng: p[1]
+                        }));
+                    segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
+                } else {
+                    return; // Do not draw fallback lines here, keep it clean
+                }
+                const fiberPolyline = new google.maps.Polyline({
+                    ...segmentOptions,
+                    path: pathCoords,
+                    map: map
+                });
+                fiberPolylinesRef.current.push(fiberPolyline);
+            });
+        }
+        // Cleanup function for when component unmounts or dependencies change
+        return ()=>{
+            if (losPolylineRef.current) {
+                losPolylineRef.current.setMap(null);
+            }
+            fiberPolylinesRef.current.forEach((p)=>p.setMap(null));
+        };
+    }, [
+        analysisResult,
+        fiberPathResult,
+        isStale,
+        isMapApiLoaded,
+        pALat,
+        pALng,
+        pBLat,
+        pBLng
+    ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["GoogleMap"], {
         mapContainerStyle: {
             width: '100%',
@@ -271,7 +358,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 257,
+                        lineNumber: 321,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -286,12 +373,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointA.name || "Site A"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 269,
+                            lineNumber: 333,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 264,
+                        lineNumber: 328,
                         columnNumber: 11
                     }, this)
                 ]
@@ -314,7 +401,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 279,
+                        lineNumber: 343,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -329,88 +416,16 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointB.name || "Site B"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 291,
+                            lineNumber: 355,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 286,
+                        lineNumber: 350,
                         columnNumber: 11
                     }, this)
                 ]
             }, void 0, true),
-            pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Polyline"], {
-                path: [
-                    {
-                        lat: pALat,
-                        lng: pALng
-                    },
-                    {
-                        lat: pBLat,
-                        lng: pBLng
-                    }
-                ],
-                options: {
-                    strokeColor: losPolylineColor(),
-                    strokeOpacity: isStale ? 0.8 : 0.9,
-                    strokeWeight: isStale ? 3.5 : 4,
-                    geodesic: true,
-                    zIndex: 1
-                }
-            }, void 0, false, {
-                fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 300,
-                columnNumber: 9
-            }, this),
-            isMapApiLoaded && fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0 && fiberPathResult.segments.map((segment, index)=>{
-                let pathCoords = [];
-                let segmentOptions = {};
-                if (segment.type === 'offset_a' || segment.type === 'offset_b') {
-                    pathCoords = [
-                        {
-                            lat: segment.startPoint.lat,
-                            lng: segment.startPoint.lng
-                        },
-                        {
-                            lat: segment.endPoint.lat,
-                            lng: segment.endPoint.lng
-                        }
-                    ];
-                    segmentOptions = FIBER_POLYLINE_STYLES.offset;
-                } else if (segment.type === 'road_route' && segment.pathPolyline) {
-                    const decoded = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$polyline$2d$decoder$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["decodePolyline"])(segment.pathPolyline);
-                    pathCoords = decoded.map((p)=>({
-                            lat: p[0],
-                            lng: p[1]
-                        }));
-                    segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
-                } else {
-                    // Fallback for road_route without polyline or unknown segment type - draw straight line
-                    console.warn(`Fiber segment type ${segment.type} at index ${index} missing polyline or is unknown. Drawing straight line.`);
-                    pathCoords = [
-                        {
-                            lat: segment.startPoint.lat,
-                            lng: segment.startPoint.lng
-                        },
-                        {
-                            lat: segment.endPoint.lat,
-                            lng: segment.endPoint.lng
-                        }
-                    ];
-                    segmentOptions = {
-                        ...FIBER_POLYLINE_STYLES.roadRoute,
-                        strokeColor: '#FF00FF'
-                    }; // Magenta for fallback
-                }
-                return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Polyline"], {
-                    path: pathCoords,
-                    options: segmentOptions
-                }, `fiber-segment-${index}`, false, {
-                    fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 340,
-                    columnNumber: 18
-                }, this);
-            }),
             losMidPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"], {
                 position: losMidPoint,
                 mapPaneName: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"].OVERLAY_MOUSE_TARGET,
@@ -423,12 +438,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 351,
+                    lineNumber: 371,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 346,
+                lineNumber: 366,
                 columnNumber: 9
             }, this),
             fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathLabelMidPoint && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -443,18 +458,18 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 364,
+                    lineNumber: 384,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 359,
+                lineNumber: 379,
                 columnNumber: 10
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 242,
+        lineNumber: 306,
         columnNumber: 5
     }, this);
 }
@@ -468,17 +483,17 @@ function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }) {
                 ...props
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 382,
+                lineNumber: 402,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/interactive-map.tsx",
-            lineNumber: 378,
+            lineNumber: 398,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 377,
+        lineNumber: 397,
         columnNumber: 5
     }, this);
 }
@@ -3822,9 +3837,6 @@ function Home() {
         watchedClearanceThreshold
     ]);
     const processSubmit = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useCallback"])((data)=>{
-        // Explicitly clear previous results before starting a new analysis.
-        // This ensures the map clears the old polyline immediately.
-        setAnalysisResult(null);
         setDisplayedError(null);
         setFieldErrors(null);
         setFiberPathResult(null);
@@ -4300,7 +4312,7 @@ function Home() {
                 currentPage: "home"
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 572,
+                lineNumber: 569,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4328,12 +4340,12 @@ function Home() {
                             fiberPathResult: fiberPathResult
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 580,
+                            lineNumber: 577,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 579,
+                        lineNumber: 576,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4348,19 +4360,19 @@ function Home() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 601,
+                                    lineNumber: 598,
                                     columnNumber: 15
                                 }, this),
                                 "Start Link Analysis"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 595,
+                            lineNumber: 592,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 594,
+                        lineNumber: 591,
                         columnNumber: 11
                     }, this),
                     (isActionPending || isFiberCalculating) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4374,7 +4386,7 @@ function Home() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 611,
+                                        lineNumber: 608,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4382,7 +4394,7 @@ function Home() {
                                         children: isActionPending ? "Analyzing Link..." : "Calculating Fiber Path..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 612,
+                                        lineNumber: 609,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4390,23 +4402,23 @@ function Home() {
                                         children: isActionPending ? "Please wait while we process elevation data." : "Accessing road network data..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 615,
+                                        lineNumber: 612,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 610,
+                                lineNumber: 607,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 609,
+                            lineNumber: 606,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 608,
+                        lineNumber: 605,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4423,19 +4435,19 @@ function Home() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 628,
+                                                lineNumber: 625,
                                                 columnNumber: 21
                                             }, this),
                                             " LOS Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 627,
+                                        lineNumber: 624,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 626,
+                                    lineNumber: 623,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -4445,7 +4457,7 @@ function Home() {
                                             children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 632,
+                                            lineNumber: 629,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Button"], {
@@ -4458,24 +4470,24 @@ function Home() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 633,
+                                            lineNumber: 630,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 631,
+                                    lineNumber: 628,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 625,
+                            lineNumber: 622,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 624,
+                        lineNumber: 621,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$bottom$2d$panel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -4505,7 +4517,7 @@ function Home() {
                         fiberPathError: fiberPathError
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 645,
+                        lineNumber: 642,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -4516,13 +4528,13 @@ function Home() {
                         onToggle: handleToggleHistoryPanel
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 671,
+                        lineNumber: 668,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 578,
+                lineNumber: 575,
                 columnNumber: 7
             }, this)
         ]

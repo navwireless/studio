@@ -102,6 +102,10 @@ function InteractiveMapInner({
   const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
   const { isLoaded: isMapApiLoaded } = useGoogleMapsLoader();
 
+  // Refs to hold the actual Google Maps Polyline objects
+  const losPolylineRef = useRef<google.maps.Polyline | null>(null);
+  const fiberPolylinesRef = useRef<google.maps.Polyline[]>([]);
+
   const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapApiLoaded), [isMapApiLoaded]);
   const markerIconB = React.useMemo(() => getCustomMarkerIcon("B", isMapApiLoaded), [isMapApiLoaded]);
 
@@ -237,6 +241,66 @@ function InteractiveMapInner({
     }
   }
 
+  // Effect to manage drawing and clearing polylines
+  useEffect(() => {
+    if (!isMapApiLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    // --- Clean up previous polylines ---
+    if (losPolylineRef.current) {
+        losPolylineRef.current.setMap(null);
+        losPolylineRef.current = null;
+    }
+    fiberPolylinesRef.current.forEach(p => p.setMap(null));
+    fiberPolylinesRef.current = [];
+
+    // --- Draw LOS Polyline ---
+    if (pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined) {
+      losPolylineRef.current = new google.maps.Polyline({
+        path: [{ lat: pALat, lng: pALng }, { lat: pBLat, lng: pBLng }],
+        strokeColor: losPolylineColor(),
+        strokeOpacity: isStale ? 0.8 : 0.9,
+        strokeWeight: isStale ? 3.5 : 4,
+        geodesic: true,
+        zIndex: 1,
+        map: map,
+      });
+    }
+    
+    // --- Draw Fiber Path Polylines ---
+    if (fiberPathResult?.status === 'success' && fiberPathResult.segments) {
+        fiberPathResult.segments.forEach((segment, index) => {
+            let pathCoords: google.maps.LatLngLiteral[] = [];
+            let segmentOptions: google.maps.PolylineOptions = {};
+
+            if (segment.type === 'offset_a' || segment.type === 'offset_b') {
+                pathCoords = [
+                    { lat: segment.startPoint.lat, lng: segment.startPoint.lng },
+                    { lat: segment.endPoint.lat, lng: segment.endPoint.lng },
+                ];
+                segmentOptions = FIBER_POLYLINE_STYLES.offset;
+            } else if (segment.type === 'road_route' && segment.pathPolyline) {
+                const decoded = decodePolyline(segment.pathPolyline);
+                pathCoords = decoded.map(p => ({ lat: p[0], lng: p[1] }));
+                segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
+            } else {
+                return; // Do not draw fallback lines here, keep it clean
+            }
+            const fiberPolyline = new google.maps.Polyline({ ...segmentOptions, path: pathCoords, map: map });
+            fiberPolylinesRef.current.push(fiberPolyline);
+        });
+    }
+
+    // Cleanup function for when component unmounts or dependencies change
+    return () => {
+        if (losPolylineRef.current) {
+            losPolylineRef.current.setMap(null);
+        }
+        fiberPolylinesRef.current.forEach(p => p.setMap(null));
+    };
+
+  }, [analysisResult, fiberPathResult, isStale, isMapApiLoaded, pALat, pALng, pBLat, pBLng]);
+
 
   return (
     <GoogleMap
@@ -295,51 +359,7 @@ function InteractiveMapInner({
         </>
       )}
 
-      {/* LOS Path Polyline */}
-      {pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined && (
-        <Polyline
-          path={[
-            { lat: pALat, lng: pALng },
-            { lat: pBLat, lng: pBLng },
-          ]}
-          options={{
-            strokeColor: losPolylineColor(),
-            strokeOpacity: isStale ? 0.8 : 0.9,
-            strokeWeight: isStale ? 3.5 : 4,
-            geodesic: true,
-            zIndex: 1, // Ensure LOS path is generally below fiber paths if they overlap
-          }}
-        />
-      )}
-
-      {/* Fiber Path Segments Polylines */}
-      {isMapApiLoaded && fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0 && (
-        fiberPathResult.segments.map((segment, index) => {
-          let pathCoords: google.maps.LatLngLiteral[] = [];
-          let segmentOptions = {};
-
-          if (segment.type === 'offset_a' || segment.type === 'offset_b') {
-            pathCoords = [
-              { lat: segment.startPoint.lat, lng: segment.startPoint.lng },
-              { lat: segment.endPoint.lat, lng: segment.endPoint.lng },
-            ];
-            segmentOptions = FIBER_POLYLINE_STYLES.offset;
-          } else if (segment.type === 'road_route' && segment.pathPolyline) {
-            const decoded = decodePolyline(segment.pathPolyline);
-            pathCoords = decoded.map(p => ({ lat: p[0], lng: p[1] }));
-            segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
-          } else {
-            // Fallback for road_route without polyline or unknown segment type - draw straight line
-            console.warn(`Fiber segment type ${segment.type} at index ${index} missing polyline or is unknown. Drawing straight line.`);
-            pathCoords = [
-              { lat: segment.startPoint.lat, lng: segment.startPoint.lng },
-              { lat: segment.endPoint.lat, lng: segment.endPoint.lng },
-            ];
-            segmentOptions = { ...FIBER_POLYLINE_STYLES.roadRoute, strokeColor: '#FF00FF' }; // Magenta for fallback
-          }
-          return <Polyline key={`fiber-segment-${index}`} path={pathCoords} options={segmentOptions} />;
-        })
-      )}
+      {/* Polylines are now managed via useEffect and refs, so no JSX needed here */}
 
       {/* LOS Distance Label */}
       {losMidPoint && currentDistanceKm !== null && currentDistanceKm !== undefined && (
