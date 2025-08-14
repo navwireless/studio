@@ -120,10 +120,6 @@ interface ProfilePanelMiddleColumnProps {
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
   onDownloadPdf: () => void;
   isGeneratingPdf: boolean;
-  calculateFiberPathEnabled: boolean;
-  onToggleFiberPath: (checked: boolean) => void;
-  fiberRadiusMeters: number;
-  onFiberRadiusChange: (value: number) => void;
   fiberPathResult: FiberPathResult | null;
   isFiberCalculating: boolean;
   fiberPathError: string | null;
@@ -144,41 +140,13 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   onTowerHeightChangeFromGraph,
   onDownloadPdf,
   isGeneratingPdf,
-  calculateFiberPathEnabled,
-  onToggleFiberPath,
-  fiberRadiusMeters,
-  onFiberRadiusChange,
   fiberPathResult,
   isFiberCalculating,
   fiberPathError,
 }) => {
-  const { toast } = useToast();
+
   const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
   const minRequiredClearance = parseFloat(watchedClearanceThresholdString);
-
-  const [localSnapRadiusInput, setLocalSnapRadiusInput] = useState<string>(fiberRadiusMeters.toString());
-
-  useEffect(() => {
-    // Sync local input if prop changes from parent (e.g. initial load, reset)
-    if (fiberRadiusMeters.toString() !== localSnapRadiusInput) {
-      setLocalSnapRadiusInput(fiberRadiusMeters.toString());
-    }
-  }, [fiberRadiusMeters, localSnapRadiusInput]);
-
-  const handleApplySnapRadiusForProfilePanel = () => {
-    const newRadiusNum = parseInt(localSnapRadiusInput, 10);
-    if (!isNaN(newRadiusNum) && newRadiusNum >= 1 && newRadiusNum <= 10000) {
-      onFiberRadiusChange(newRadiusNum); // This will trigger recalculation in page.tsx if toggle is ON
-    } else {
-      toast({
-        title: "Invalid Snap Radius",
-        description: "Radius must be a whole number between 1 and 10000.",
-        variant: "destructive",
-      });
-      setLocalSnapRadiusInput(fiberRadiusMeters.toString()); // Revert to last valid value
-    }
-  };
-
 
   let isClearBasedOnAnalysis = false;
   let deficit = 0;
@@ -206,12 +174,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
   return (
     <TooltipProvider>
     <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
-      {/* Main controls row: LOS Status, Distances, Buttons, Fresnel Input, AND Fiber Toggle/Radius */}
-      {/* This div will hold all primary interactive controls and key info display items. */}
-      {/* Using flex-nowrap and overflow-x-auto for single-line scrollable controls */}
       <div className="flex flex-nowrap items-center justify-start gap-x-3 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1 overflow-x-auto custom-scrollbar">
         
-        {/* Group 1: LOS Status */}
         <div className="flex-shrink-0 order-1 min-w-[130px] text-center">
           {isStale ? (
             <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow whitespace-nowrap">
@@ -235,7 +199,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           )}
         </div>
 
-        {/* Group 2: Aerial Distance */}
         <div className="flex-shrink-0 flex flex-col items-center order-2 min-w-[100px] text-center">
           <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap">Aerial Dist.</span>
           <span className="font-bold text-foreground text-xs md:text-sm whitespace-nowrap">
@@ -247,7 +210,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </span>
         </div>
         
-        {/* Group 3: Min Clearance */}
         <div className="flex-shrink-0 flex flex-col items-center order-3 min-w-[100px] text-center">
           <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap">Min. Clear.</span>
           <span className={cn(
@@ -258,7 +220,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </span>
         </div>
 
-        {/* Group 4: Buttons: Analyze/Re-Analyze and PDF Download */}
         <div className="order-4 flex items-center gap-2 flex-shrink-0 min-w-[160px]">
              <Button
                 type="submit"
@@ -286,87 +247,13 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
             )}
         </div>
 
-        {/* Group 5: Required Fresnel Input */}
-        <div className="flex-shrink-0 flex items-center space-x-1 order-5 min-w-[150px]">
-          <Label htmlFor="clearanceThresholdProfile" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Req. Fresnel (m):</Label>
-          <Controller
-              name="clearanceThreshold"
-              control={control}
-              render={({ field, fieldState: { error } }) => (
-                  <Input
-                  id="clearanceThresholdProfile"
-                  type="number"
-                  step="any"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-14 text-center"
-                  disabled={anyOperationPending}
-                  />
-              )}
-          />
-        </div>
+      </div>
 
-        {/* Group 6: Fiber Path Toggle and Tooltip */}
-        <div className="flex-shrink-0 flex items-center space-x-1 order-6 min-w-[110px]">
-          <Switch
-            id="fiber-path-toggle"
-            checked={calculateFiberPathEnabled}
-            onCheckedChange={onToggleFiberPath}
-            disabled={anyOperationPending}
-            className="data-[state=checked]:bg-appAccent data-[state=unchecked]:bg-input h-5 w-9 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4"
-          />
-          <Label htmlFor="fiber-path-toggle" className="text-xs text-muted-foreground flex items-center cursor-pointer whitespace-nowrap">
-            <Cable className="mr-1 h-3.5 w-3.5" /> Fiber
-          </Label>
-          <Tooltip delayDuration={100}>
-              <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-4 w-4 p-0 m-0" onClick={(e) => e.preventDefault()} aria-label="Fiber path calculation info">
-                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
-                  </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
-                  <p>Calculates estimated fiber optic cable path length using road networks. Requires Line-of-Sight (LOS) to be feasible.</p>
-                  <p className="mt-1">Automatically re-calculates if LOS is feasible and this toggle is switched ON, or if Snap Radius is Applied.</p>
-              </TooltipContent>
-          </Tooltip>
-        </div>
-
-        {/* Group 7: Snap Radius Input and Apply Button (Conditional) */}
-        {calculateFiberPathEnabled && (
-          <div className="flex-shrink-0 flex items-center space-x-1 order-7 min-w-[200px]">
-            <Label htmlFor="fiber-radius-input-bottom-panel" className="text-[0.65rem] text-muted-foreground whitespace-nowrap">Snap Radius (m):</Label>
-            <Input
-              id="fiber-radius-input-bottom-panel"
-              type="number"
-              value={localSnapRadiusInput}
-              onChange={(e) => setLocalSnapRadiusInput(e.target.value)}
-              min={1}
-              max={10000}
-              step={50}
-              className="bg-input border-border focus:border-primary/70 text-foreground h-6 text-xs px-1.5 py-0.5 rounded-sm focus:ring-1 focus:ring-primary/70 w-16 text-center"
-              disabled={anyOperationPending} // Input itself is not disabled by operations to allow editing
-            />
-            <Button
-              type="button"
-              onClick={handleApplySnapRadiusForProfilePanel}
-              disabled={anyOperationPending || localSnapRadiusInput === fiberRadiusMeters.toString()}
-              size="sm"
-              className="h-6 px-2 text-[0.65rem] leading-tight"
-              variant="outline"
-            >
-              <Check className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Apply</span>
-            </Button>
-          </div>
-        )}
-      </div> {/* End of main controls flex container */}
-
-      {/* Error for Clearance Threshold (remains below controls row) */}
       {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
         <p className="text-xs text-destructive mt-0.5 text-center px-2">
           {getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}
         </p>
       }
-      {/* Message for additional height needed (remains below controls row) */}
        {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
           <div className="text-center text-los-failure text-[0.7rem] py-0.5">
             Add&nbsp;
@@ -375,8 +262,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           </div>
         )}
 
-      {/* Fiber Path Status/Results - Rendered as block elements below the controls row */}
-      {/* This section remains, ensuring elevation profile is not hidden by it */}
       <div className="px-2 md:px-3 mt-1 text-xs">
         {isFiberCalculating && (
           <div className="text-primary flex items-center justify-center py-1">
@@ -432,20 +317,19 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         )}
       </div>
 
-      {/* Elevation Profile Chart - ALWAYS VISIBLE */}
       <div className={cn("flex-1 min-h-0 p-0.5")}>
-        {analysisResult || isActionPending ? ( // Render chart if there's a result OR if an action is pending (shows "Analyzing...")
+        {analysisResult || isActionPending ? (
           <CustomProfileChart
             key={chartKey}
-            data={analysisResult?.profile || []} // Pass empty array if no profile yet but action pending
+            data={analysisResult?.profile || []}
             pointAName={pointAName || "Site A"}
             pointBName={pointBName || "Site B"}
             isStale={isStale}
             totalDistanceKm={analysisResult?.distanceKm}
-            isActionPending={anyOperationPending} // Pass this to chart to show loading state
+            isActionPending={anyOperationPending}
             onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
           />
-        ) : ( // Initial state, no analysis done, no action pending
+        ) : ( 
           <div className="h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground">
             <ArrowRightLeft className="h-10 w-10 text-muted-foreground/50 mb-2" />
             <p>Perform analysis to see link profile.</p>
@@ -478,10 +362,6 @@ interface BottomPanelProps {
   setValue: UseFormSetValue<AnalysisFormValues>;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
 
-  calculateFiberPathEnabled: boolean;
-  onToggleFiberPath: (checked: boolean) => void; // Logic for this is in page.tsx
-  fiberRadiusMeters: number; // Authoritative value from page.tsx
-  onFiberRadiusChange: (value: number) => void; // Callback to page.tsx to update radius & trigger recalc
   fiberPathResult: FiberPathResult | null;
   isFiberCalculating: boolean;
   fiberPathError: string | null;
@@ -504,10 +384,6 @@ export default function BottomPanel({
   getValues,
   setValue,
   onTowerHeightChangeFromGraph,
-  calculateFiberPathEnabled,
-  onToggleFiberPath,
-  fiberRadiusMeters,
-  onFiberRadiusChange,
   fiberPathResult,
   isFiberCalculating,
   fiberPathError,
@@ -568,15 +444,12 @@ export default function BottomPanel({
       <div
         className={cn(
           "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[40vh] md:h-[35vh]" : "h-0" // Height is managed here
+          isContentExpanded && isPanelGloballyVisible ? "h-[40vh] md:h-[35vh]" : "h-0"
         )}
       >
-        {/* Content wrapper for the panel's three main columns */}
         <div className="p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto">
-           {/* Using flex for columns. On mobile, middle column (ProfilePanelMiddleColumn) will be primary view due to snap scroll. */}
            <div className="flex md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
 
-            {/* Left Column: Site A Input */}
             <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">
               <SiteInputGroup
                 id="pointA"
@@ -589,8 +462,6 @@ export default function BottomPanel({
               />
             </div>
 
-            {/* Middle Column: Controls and Elevation Profile Chart */}
-            {/* This ProfilePanelMiddleColumn now handles the responsive control row and always visible chart */}
             <ProfilePanelMiddleColumn
               analysisResult={analysisResult}
               isStale={isStale}
@@ -606,16 +477,11 @@ export default function BottomPanel({
               onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
               onDownloadPdf={handleDownloadPdf}
               isGeneratingPdf={isGeneratingPdf}
-              calculateFiberPathEnabled={calculateFiberPathEnabled}
-              onToggleFiberPath={onToggleFiberPath}
-              fiberRadiusMeters={fiberRadiusMeters}
-              onFiberRadiusChange={onFiberRadiusChange}
               fiberPathResult={fiberPathResult}
               isFiberCalculating={isFiberCalculating}
               fiberPathError={fiberPathError}
             />
 
-            {/* Right Column: Site B Input */}
             <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">
               <SiteInputGroup
                 id="pointB"
@@ -644,4 +510,3 @@ export default function BottomPanel({
     </form>
   );
 }
-

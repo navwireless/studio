@@ -697,6 +697,14 @@ body {
   top: 50%;
 }
 
+.bottom-4 {
+  bottom: 1rem;
+}
+
+.left-4 {
+  left: 1rem;
+}
+
 .z-10 {
   z-index: 10;
 }
@@ -1146,6 +1154,10 @@ body {
 
 .w-max {
   width: max-content;
+}
+
+.w-80 {
+  width: 20rem;
 }
 
 .min-w-0 {

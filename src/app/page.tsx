@@ -18,6 +18,7 @@ import { calculateDistanceKm } from '@/lib/los-calculator';
 import BottomPanel from '@/components/fso/bottom-panel';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator'; 
 import type { FiberPathResult } from '@/tools/fiberPathCalculator'; 
+import { AnalysisSettings } from '@/components/fso/analysis-settings';
 
 const LOCAL_STORAGE_KEYS = {
   FIBER_TOGGLE: 'fiberPathEnabled',
@@ -56,6 +57,7 @@ export default function Home() {
   // State for Fiber Path Calculation
   const [calculateFiberPathEnabled, setCalculateFiberPathEnabled] = useState<boolean>(false); // Initial static default
   const [fiberRadiusMeters, setFiberRadiusMeters] = useState<number>(500); // Initial static default
+  const [localSnapRadiusInput, setLocalSnapRadiusInput] = useState<string>('500'); // Local state for the input
   
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
   const [isFiberCalculating, setIsFiberCalculating] = useState(false);
@@ -85,7 +87,9 @@ export default function Home() {
       }
       const storedRadius = localStorage.getItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS);
       if (storedRadius) {
-        setFiberRadiusMeters(parseInt(storedRadius, 10));
+        const radiusNum = parseInt(storedRadius, 10);
+        setFiberRadiusMeters(radiusNum);
+        setLocalSnapRadiusInput(radiusNum.toString()); // Sync local input state
       }
 
       // Load and set form values using form.reset()
@@ -433,20 +437,16 @@ export default function Home() {
   };
 
   const handleClearMap = () => {
-    // This is the critical change: reset the form to its initial default state, not to the last submitted state.
     reset(defaultFormStateValues);
     
-    // Clear local storage to prevent stale data from being reloaded on refresh
     if (isClient) { 
         Object.values(LOCAL_STORAGE_KEYS).forEach(key => {
-            // Keep fiber settings, clear everything else
             if (key !== LOCAL_STORAGE_KEYS.FIBER_TOGGLE && key !== LOCAL_STORAGE_KEYS.FIBER_RADIUS) {
                  localStorage.removeItem(key);
             }
         });
     }
 
-    // Reset all relevant state variables
     setAnalysisResult(null);
     setLiveDistanceKm(null);
     setIsStale(false);
@@ -456,7 +456,6 @@ export default function Home() {
     setFiberPathError(null);
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     
-    // Close the panel if it's open
     if (isAnalysisPanelGloballyOpen) {
         setIsAnalysisPanelGloballyOpen(false);
     }
@@ -468,7 +467,6 @@ export default function Home() {
   const handleLoadHistoryItem = (id: string) => {
     const itemToLoad = historyList.find(item => item.id === id);
     if (itemToLoad) {
-      // Set analysisResult first to allow fiber calculation effect to pick it up
       setAnalysisResult(itemToLoad); 
       
       const formValuesFromHistory: AnalysisFormValues = {
@@ -496,14 +494,11 @@ export default function Home() {
       setIsBottomPanelContentExpanded(true);
       toast({ title: "History Loaded", description: `Loaded analysis for ${itemToLoad.pointA.name} - ${itemToLoad.pointB.name}.` });
       
-      // Fiber calculation is now handled by the useEffect watching analysisResult, isStale, and calculateFiberPathEnabled
-      // No explicit call to triggerFiberCalculation needed here, as setting analysisResult will trigger that effect.
-       if (!calculateFiberPathEnabled) { // If toggle is off, ensure fiber results are cleared
+       if (!calculateFiberPathEnabled) {
             setFiberPathResult(null);
             setFiberPathError(null);
             setIsFiberCalculating(false);
        } else if (calculateFiberPathEnabled && !itemToLoad.losPossible) {
-            // If toggle is on but loaded history item has LOS not possible
             setFiberPathResult({
                 status: 'los_not_feasible',
                 errorMessage: 'Fiber path not calculated: LOS is not feasible for this historical link.',
@@ -529,13 +524,11 @@ export default function Home() {
     if (isClient) {
         localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_TOGGLE, JSON.stringify(checked));
     }
-    // Let the useEffect watching calculateFiberPathEnabled and analysisResult handle triggering calculation.
     if (!checked) { 
         setFiberPathResult(null);
         setFiberPathError(null);
         setIsFiberCalculating(false);
     } else {
-        // If toggled on, and we have a valid, non-stale, feasible LOS result, trigger calc
         if (analysisResult && !isStale && analysisResult.losPossible) {
             triggerFiberCalculation();
         } else if (analysisResult && !isStale && !analysisResult.losPossible) {
@@ -552,27 +545,28 @@ export default function Home() {
     }
   };
 
-  // Called when "Apply" for Snap Radius is clicked in BottomPanel
-  const handleFiberRadiusChange = (newRadius: number) => {
-    setFiberRadiusMeters(newRadius);
-    if (isClient) {
-      localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
-    }
-    // Let the useEffect watching fiberRadiusMeters and analysisResult handle triggering calculation.
-     if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
+  const handleApplySnapRadius = () => {
+    const newRadius = parseInt(localSnapRadiusInput, 10);
+    if (!isNaN(newRadius) && newRadius > 0) {
+      setFiberRadiusMeters(newRadius);
+      if (isClient) {
+        localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
+      }
+      if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
         triggerFiberCalculation();
-    } else if (calculateFiberPathEnabled && analysisResult && !isStale && !analysisResult.losPossible) {
-        setFiberPathResult({
-            status: 'los_not_feasible',
-            errorMessage: 'Fiber path not calculated: LOS is not feasible for the current link with new radius.',
-            pointA_original: analysisResult.pointA,
-            pointB_original: analysisResult.pointB,
-            losFeasible: false,
-            radiusMetersUsed: newRadius,
-        });
-        setFiberPathError(null);
+      }
+    } else {
+      toast({title: "Invalid Radius", description: "Please enter a valid number for snap radius.", variant: "destructive"});
     }
   };
+  
+  const handleClearanceChange = (value: number[]) => {
+      const numValue = value[0];
+      if(typeof numValue === 'number'){
+          const stringValue = String(Math.round(numValue * 100) / 100);
+          setValue('clearanceThreshold', stringValue, { shouldValidate: true, shouldDirty: true });
+      }
+  }
 
 
   return (
@@ -585,6 +579,16 @@ export default function Home() {
       />
       <div className="flex-1 flex flex-col overflow-hidden relative h-full">
         <div className="flex-1 w-full relative">
+          <AnalysisSettings
+            isFiberPathEnabled={calculateFiberPathEnabled}
+            onToggleFiberPath={handleToggleFiberPath}
+            snapRadius={parseInt(localSnapRadiusInput, 10)}
+            onSnapRadiusChange={setLocalSnapRadiusInput}
+            onApplySnapRadius={handleApplySnapRadius}
+            clearanceThreshold={parseFloat(watch('clearanceThreshold'))}
+            onClearanceThresholdChange={handleClearanceChange}
+            isPending={isActionPending || isFiberCalculating}
+          />
           <InteractiveMap
             pointA={watchedPointA && isValidNumericString(watchedPointA.lat) && isValidNumericString(watchedPointA.lng) ? { lat: parseFloat(watchedPointA.lat), lng: parseFloat(watchedPointA.lng), name: watchedPointA.name } : undefined}
             pointB={watchedPointB && isValidNumericString(watchedPointB.lat) && isValidNumericString(watchedPointB.lng) ? { lat: parseFloat(watchedPointB.lat), lng: parseFloat(watchedPointB.lng), name: watchedPointB.name } : undefined}
@@ -667,11 +671,6 @@ export default function Home() {
           getValues={getValues}
           setValue={setValue}
           onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
-          // Fiber Path Props
-          calculateFiberPathEnabled={calculateFiberPathEnabled}
-          onToggleFiberPath={handleToggleFiberPath} 
-          fiberRadiusMeters={fiberRadiusMeters}
-          onFiberRadiusChange={handleFiberRadiusChange} 
           fiberPathResult={fiberPathResult}
           isFiberCalculating={isFiberCalculating}
           fiberPathError={fiberPathError}
