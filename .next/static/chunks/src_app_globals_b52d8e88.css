@@ -928,6 +928,10 @@ body {
   min-height: 100svh;
 }
 
+.min-h-\[50vh\] {
+  min-height: 50vh;
+}
+
 .w-0 {
   width: 0;
 }
