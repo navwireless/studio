@@ -433,14 +433,20 @@ export default function Home() {
   };
 
   const handleClearMap = () => {
-    reset(defaultFormStateValues); 
-     if (isClient) { 
+    // This is the critical change: reset the form to its initial default state, not to the last submitted state.
+    reset(defaultFormStateValues);
+    
+    // Clear local storage to prevent stale data from being reloaded on refresh
+    if (isClient) { 
         Object.values(LOCAL_STORAGE_KEYS).forEach(key => {
+            // Keep fiber settings, clear everything else
             if (key !== LOCAL_STORAGE_KEYS.FIBER_TOGGLE && key !== LOCAL_STORAGE_KEYS.FIBER_RADIUS) {
                  localStorage.removeItem(key);
             }
         });
     }
+
+    // Reset all relevant state variables
     setAnalysisResult(null);
     setLiveDistanceKm(null);
     setIsStale(false);
@@ -449,8 +455,13 @@ export default function Home() {
     setFiberPathResult(null); 
     setFiberPathError(null);
     toast({ title: "Map Cleared", description: "Form reset to default values." });
+    
+    // Close the panel if it's open
     if (isAnalysisPanelGloballyOpen) {
         setIsAnalysisPanelGloballyOpen(false);
+    }
+    if (isBottomPanelContentExpanded) {
+        setIsBottomPanelContentExpanded(false);
     }
   };
 
