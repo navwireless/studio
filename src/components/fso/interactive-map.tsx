@@ -247,11 +247,21 @@ function InteractiveMapInner({
     if (!isMapApiLoaded || !mapRef.current) return;
     const map = mapRef.current;
 
-    // --- Draw LOS Polyline ---
-    // Clear previous before drawing new
-    if (losPolylineRef.current) {
-        losPolylineRef.current.setMap(null);
-    }
+    // --- Cleanup function to remove all previous polylines ---
+    const cleanupPolylines = () => {
+        if (losPolylineRef.current) {
+            losPolylineRef.current.setMap(null);
+            losPolylineRef.current = null;
+        }
+        fiberPolylinesRef.current.forEach(p => p.setMap(null));
+        fiberPolylinesRef.current = [];
+    };
+
+    cleanupPolylines(); // Run cleanup first
+
+    // --- Draw new polylines based on current props ---
+    
+    // Draw LOS Polyline
     if (pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined) {
       losPolylineRef.current = new google.maps.Polyline({
         path: [{ lat: pALat, lng: pALng }, { lat: pBLat, lng: pBLng }],
@@ -260,16 +270,14 @@ function InteractiveMapInner({
         strokeWeight: isStale ? 3.5 : 4,
         geodesic: true,
         zIndex: 1,
-        map: map,
       });
+      losPolylineRef.current.setMap(map);
     }
 
-    // --- Draw Fiber Path Polylines ---
-    // Clear previous before drawing new
-    fiberPolylinesRef.current.forEach(p => p.setMap(null));
-    fiberPolylinesRef.current = []; // Reset the array
+    // Draw Fiber Path Polylines
     if (fiberPathResult?.status === 'success' && fiberPathResult.segments) {
-        fiberPathResult.segments.forEach((segment, index) => {
+        const newFiberPolylines: google.maps.Polyline[] = [];
+        fiberPathResult.segments.forEach((segment) => {
             let pathCoords: google.maps.LatLngLiteral[] = [];
             let segmentOptions: google.maps.PolylineOptions = {};
 
@@ -286,18 +294,15 @@ function InteractiveMapInner({
             } else {
                 return;
             }
-            const fiberPolyline = new google.maps.Polyline({ ...segmentOptions, path: pathCoords, map: map });
-            fiberPolylinesRef.current.push(fiberPolyline);
+            const fiberPolyline = new google.maps.Polyline({ ...segmentOptions, path: pathCoords });
+            fiberPolyline.setMap(map);
+            newFiberPolylines.push(fiberPolyline);
         });
+        fiberPolylinesRef.current = newFiberPolylines;
     }
 
-    // Return a cleanup function to be run when dependencies change OR component unmounts
-    return () => {
-        if (losPolylineRef.current) {
-            losPolylineRef.current.setMap(null);
-        }
-        fiberPolylinesRef.current.forEach(p => p.setMap(null));
-    };
+    // Return the cleanup function to be run when dependencies change OR component unmounts
+    return cleanupPolylines;
 
   }, [analysisResult, fiberPathResult, isStale, isMapApiLoaded, pALat, pALng, pBLat, pBLng]);
 

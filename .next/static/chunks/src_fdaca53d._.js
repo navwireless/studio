@@ -287,11 +287,22 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
             // This effect handles the full lifecycle: clear old lines, draw new ones.
             if (!isMapApiLoaded || !mapRef.current) return;
             const map = mapRef.current;
-            // --- Draw LOS Polyline ---
-            // Clear previous before drawing new
-            if (losPolylineRef.current) {
-                losPolylineRef.current.setMap(null);
-            }
+            // --- Cleanup function to remove all previous polylines ---
+            const cleanupPolylines = {
+                "InteractiveMapInner.useEffect.cleanupPolylines": ()=>{
+                    if (losPolylineRef.current) {
+                        losPolylineRef.current.setMap(null);
+                        losPolylineRef.current = null;
+                    }
+                    fiberPolylinesRef.current.forEach({
+                        "InteractiveMapInner.useEffect.cleanupPolylines": (p)=>p.setMap(null)
+                    }["InteractiveMapInner.useEffect.cleanupPolylines"]);
+                    fiberPolylinesRef.current = [];
+                }
+            }["InteractiveMapInner.useEffect.cleanupPolylines"];
+            cleanupPolylines(); // Run cleanup first
+            // --- Draw new polylines based on current props ---
+            // Draw LOS Polyline
             if (pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined) {
                 losPolylineRef.current = new google.maps.Polyline({
                     path: [
@@ -308,19 +319,15 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     strokeOpacity: isStale ? 0.8 : 0.9,
                     strokeWeight: isStale ? 3.5 : 4,
                     geodesic: true,
-                    zIndex: 1,
-                    map: map
+                    zIndex: 1
                 });
+                losPolylineRef.current.setMap(map);
             }
-            // --- Draw Fiber Path Polylines ---
-            // Clear previous before drawing new
-            fiberPolylinesRef.current.forEach({
-                "InteractiveMapInner.useEffect": (p)=>p.setMap(null)
-            }["InteractiveMapInner.useEffect"]);
-            fiberPolylinesRef.current = []; // Reset the array
+            // Draw Fiber Path Polylines
             if (fiberPathResult?.status === 'success' && fiberPathResult.segments) {
+                const newFiberPolylines = [];
                 fiberPathResult.segments.forEach({
-                    "InteractiveMapInner.useEffect": (segment, index)=>{
+                    "InteractiveMapInner.useEffect": (segment)=>{
                         let pathCoords = [];
                         let segmentOptions = {};
                         if (segment.type === 'offset_a' || segment.type === 'offset_b') {
@@ -349,24 +356,16 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                         const fiberPolyline = new google.maps.Polyline({
                             ...segmentOptions,
-                            path: pathCoords,
-                            map: map
+                            path: pathCoords
                         });
-                        fiberPolylinesRef.current.push(fiberPolyline);
+                        fiberPolyline.setMap(map);
+                        newFiberPolylines.push(fiberPolyline);
                     }
                 }["InteractiveMapInner.useEffect"]);
+                fiberPolylinesRef.current = newFiberPolylines;
             }
-            // Return a cleanup function to be run when dependencies change OR component unmounts
-            return ({
-                "InteractiveMapInner.useEffect": ()=>{
-                    if (losPolylineRef.current) {
-                        losPolylineRef.current.setMap(null);
-                    }
-                    fiberPolylinesRef.current.forEach({
-                        "InteractiveMapInner.useEffect": (p)=>p.setMap(null)
-                    }["InteractiveMapInner.useEffect"]);
-                }
-            })["InteractiveMapInner.useEffect"];
+            // Return the cleanup function to be run when dependencies change OR component unmounts
+            return cleanupPolylines;
         }
     }["InteractiveMapInner.useEffect"], [
         analysisResult,
@@ -408,7 +407,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 321,
+                        lineNumber: 326,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -423,12 +422,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointA.name || "Site A"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 333,
+                            lineNumber: 338,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 328,
+                        lineNumber: 333,
                         columnNumber: 11
                     }, this)
                 ]
@@ -451,7 +450,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 343,
+                        lineNumber: 348,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -466,12 +465,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             children: formPointB.name || "Site B"
                         }, void 0, false, {
                             fileName: "[project]/src/components/fso/interactive-map.tsx",
-                            lineNumber: 355,
+                            lineNumber: 360,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/components/fso/interactive-map.tsx",
-                        lineNumber: 350,
+                        lineNumber: 355,
                         columnNumber: 11
                     }, this)
                 ]
@@ -488,12 +487,12 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 371,
+                    lineNumber: 376,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 366,
+                lineNumber: 371,
                 columnNumber: 9
             }, this),
             fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathLabelMidPoint && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$react$2d$google$2d$maps$2f$api$2f$dist$2f$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OverlayView"], {
@@ -508,18 +507,18 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/components/fso/interactive-map.tsx",
-                    lineNumber: 384,
+                    lineNumber: 389,
                     columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 379,
+                lineNumber: 384,
                 columnNumber: 10
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 306,
+        lineNumber: 311,
         columnNumber: 5
     }, this);
 }
@@ -539,17 +538,17 @@ function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }) {
                 ...props
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/interactive-map.tsx",
-                lineNumber: 402,
+                lineNumber: 407,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/fso/interactive-map.tsx",
-            lineNumber: 398,
+            lineNumber: 403,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/components/fso/interactive-map.tsx",
-        lineNumber: 397,
+        lineNumber: 402,
         columnNumber: 5
     }, this);
 }
