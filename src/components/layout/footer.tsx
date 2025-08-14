@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="w-full h-10 border-t border-border/40 bg-background/95 backdrop-blur-sm print:hidden">
+    <footer className="w-full h-8 border-t border-border/40 bg-background/95 backdrop-blur-sm print:hidden">
       <div className="container mx-auto h-full flex items-center justify-between px-4 md:px-6">
         <p className="text-xs text-muted-foreground">
           © {new Date().getFullYear()} Nav Wireless
