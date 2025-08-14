@@ -440,16 +440,16 @@ export default function BulkLosAnalyzerPage() {
   return (
     <>
       <AppHeader currentPage="bulk" />
-      <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
-        <div className="max-w-7xl mx-auto w-full">
-            <Card className="shadow-xl bg-card/90 backdrop-blur-sm">
+      <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-hidden">
+        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
+            <Card className="shadow-xl bg-card/90 backdrop-blur-sm flex-1 flex flex-col overflow-hidden max-h-[calc(100vh-theme(spacing.24))]">
                 <CardHeader>
                     <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
                     <CardDescription>
                     Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 gap-6">
+                <CardContent className="flex-1 grid grid-cols-1 gap-6 overflow-y-auto custom-scrollbar">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-1 space-y-6">
                             <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
@@ -503,5 +503,3 @@ export default function BulkLosAnalyzerPage() {
     </>
   );
 }
-
-    
