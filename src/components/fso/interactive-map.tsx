@@ -111,13 +111,22 @@ function InteractiveMapInner({
       mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
       mapInstance.setOptions({
         streetViewControl: true,
+        streetViewControlOptions: {
+            position: google.maps.ControlPosition.TOP_LEFT,
+        },
         mapTypeControl: true,
         mapTypeControlOptions: {
-          style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
-          position: google.maps.ControlPosition.TOP_RIGHT,
+          style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+          position: google.maps.ControlPosition.TOP_LEFT,
         },
         fullscreenControl: true,
+        fullscreenControlOptions: {
+            position: google.maps.ControlPosition.TOP_LEFT,
+        },
         zoomControl: true,
+        zoomControlOptions: {
+            position: google.maps.ControlPosition.TOP_LEFT,
+        },
         gestureHandling: 'cooperative',
         clickableIcons: false, // Disable clicking on default map POIs
       });
@@ -375,4 +384,3 @@ export default function InteractiveMap({ mapContainerClassName = "w-full h-full"
     </div>
   );
 }
-
