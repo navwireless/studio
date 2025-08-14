@@ -117,7 +117,7 @@ function BulkAnalysisMapInner({ placemarks, results }: BulkAnalysisMapProps) {
               position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
               onCloseClick={() => setSelectedMarker(null)}
             >
-              <div className="p-1 text-sm">
+              <div className="p-1 text-sm bg-background text-foreground">
                 <h4 className="font-semibold">{selectedMarker.name}</h4>
                 <p>Lat: {selectedMarker.lat.toFixed(5)}</p>
                 <p>Lng: {selectedMarker.lng.toFixed(5)}</p>
@@ -143,5 +143,3 @@ const BulkAnalysisMap: React.FC<BulkAnalysisMapProps> = (props) => {
 };
 
 export default BulkAnalysisMap;
-
-    
