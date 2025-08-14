@@ -2902,16 +2902,10 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$re
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$right$2d$left$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowRightLeft$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-right-left.js [app-client] (ecmascript) <export default as ArrowRightLeft>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$utils$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/utils.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/use-toast.ts [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/file-saver/dist/FileSaver.min.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/actions.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$tooltip$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/ui/tooltip.tsx [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature(), _s1 = __turbopack_context__.k.signature();
 "use client";
-;
-;
-;
 ;
 ;
 ;
@@ -3548,10 +3542,8 @@ _s(ProfilePanelMiddleColumn, "dl8HUQb6+zRQquiQNehxO2ZDhew=", false, function() {
     ];
 });
 _c1 = ProfilePanelMiddleColumn;
-function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVisibility, isContentExpanded, onToggleContentExpansion, isStale, control, register, handleSubmit, processSubmit, clientFormErrors, serverFormErrors, isActionPending, getValues, setValue, onTowerHeightChangeFromGraph, fiberPathResult, isFiberCalculating, fiberPathError }) {
+function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVisibility, isContentExpanded, onToggleContentExpansion, isStale, control, register, handleSubmit, processSubmit, clientFormErrors, serverFormErrors, isActionPending, getValues, setValue, onTowerHeightChangeFromGraph, onDownloadPdf, isGeneratingPdf, fiberPathResult, isFiberCalculating, fiberPathError }) {
     _s1();
-    const { toast } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"])();
-    const [isGeneratingPdf, setIsGeneratingPdf] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const getCombinedError = (clientFieldError, serverFieldError)=>{
         if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
         return clientFieldError?.message;
@@ -3566,51 +3558,6 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
         name: 'pointB.name',
         defaultValue: analysisResult?.pointB?.name || "Site B"
     });
-    const handleDownloadPdf = async ()=>{
-        if (!analysisResult) {
-            toast({
-                title: "Error",
-                description: "No analysis data available to generate PDF.",
-                variant: "destructive"
-            });
-            return;
-        }
-        setIsGeneratingPdf(true);
-        try {
-            const response = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["generateSingleAnalysisPdfReportAction"])(analysisResult, {});
-            if (response.success) {
-                const { base64Pdf, fileName } = response.data;
-                const byteCharacters = atob(base64Pdf);
-                const byteNumbers = new Array(byteCharacters.length);
-                for(let i = 0; i < byteCharacters.length; i++){
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([
-                    byteArray
-                ], {
-                    type: 'application/pdf'
-                });
-                (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["saveAs"])(blob, fileName);
-                toast({
-                    title: "Success",
-                    description: "PDF report downloaded."
-                });
-            } else {
-                throw new Error(response.error);
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Unknown error generating PDF.";
-            console.error("PDF Generation Error:", error);
-            toast({
-                title: "PDF Generation Failed",
-                description: errorMessage,
-                variant: "destructive"
-            });
-        } finally{
-            setIsGeneratingPdf(false);
-        }
-    };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
         noValidate: true,
         onSubmit: handleSubmit(processSubmit),
@@ -3635,12 +3582,12 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 454,
+                                    lineNumber: 423,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 453,
+                                lineNumber: 422,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(ProfilePanelMiddleColumn, {
@@ -3656,14 +3603,14 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                 pointAName: pointAName || "Site A",
                                 pointBName: pointBName || "Site B",
                                 onTowerHeightChangeFromGraph: onTowerHeightChangeFromGraph,
-                                onDownloadPdf: handleDownloadPdf,
+                                onDownloadPdf: onDownloadPdf,
                                 isGeneratingPdf: isGeneratingPdf,
                                 fiberPathResult: fiberPathResult,
                                 isFiberCalculating: isFiberCalculating,
                                 fiberPathError: fiberPathError
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 465,
+                                lineNumber: 434,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3678,28 +3625,28 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                                     getCombinedError: getCombinedError
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                    lineNumber: 486,
+                                    lineNumber: 455,
                                     columnNumber: 15
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                                lineNumber: 485,
+                                lineNumber: 454,
                                 columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                        lineNumber: 451,
+                        lineNumber: 420,
                         columnNumber: 12
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 450,
+                    lineNumber: 419,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 444,
+                lineNumber: 413,
                 columnNumber: 7
             }, this),
             isPanelGloballyVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3710,30 +3657,29 @@ function BottomPanel({ analysisResult, isPanelGloballyVisible, onToggleGlobalVis
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 506,
+                    lineNumber: 475,
                     columnNumber: 13
                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$chevron$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ChevronUp$3e$__["ChevronUp"], {
                     className: "h-4 w-4 text-muted-foreground group-hover:text-foreground"
                 }, void 0, false, {
                     fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                    lineNumber: 507,
+                    lineNumber: 476,
                     columnNumber: 13
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/components/fso/bottom-panel.tsx",
-                lineNumber: 500,
+                lineNumber: 469,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/fso/bottom-panel.tsx",
-        lineNumber: 435,
+        lineNumber: 404,
         columnNumber: 5
     }, this);
 }
-_s1(BottomPanel, "vxN4BgJtxTOYTGYtkcrSWSWFrXs=", false, function() {
+_s1(BottomPanel, "9HaTKeL7qXyWRFszNa9/sB88IDA=", false, function() {
     return [
-        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useWatch"]
     ];
@@ -4233,9 +4179,11 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$index$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$module__evaluation$3e$__ = __turbopack_context__.i("[project]/src/tools/fiberPathCalculator/index.ts [app-client] (ecmascript) <module evaluation>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$tools$2f$fiberPathCalculator$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/tools/fiberPathCalculator/actions.ts [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$analysis$2d$settings$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/fso/analysis-settings.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/file-saver/dist/FileSaver.min.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 "use client";
+;
 ;
 ;
 ;
@@ -4286,6 +4234,7 @@ function Home() {
     const [localSnapRadiusInput, setLocalSnapRadiusInput] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('500'); // Local state for the input
     const [fiberPathResult, setFiberPathResult] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [isFiberCalculating, setIsFiberCalculating] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [fiberPathError, setFiberPathError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     // Initialize form with static default values
     const form = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"])({
@@ -4754,9 +4703,11 @@ function Home() {
     const handleClearMap = ()=>{
         reset(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$form$2d$schema$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["defaultFormStateValues"]);
         if (isClient) {
-            Object.values(LOCAL_STORAGE_KEYS).forEach((key)=>{
-                if (key !== LOCAL_STORAGE_KEYS.FIBER_TOGGLE && key !== LOCAL_STORAGE_KEYS.FIBER_RADIUS) {
-                    localStorage.removeItem(key);
+            Object.keys(LOCAL_STORAGE_KEYS).forEach((key)=>{
+                const keyName = key;
+                // Keep fiber settings, clear the rest
+                if (keyName !== 'FIBER_TOGGLE' && keyName !== 'FIBER_RADIUS') {
+                    localStorage.removeItem(LOCAL_STORAGE_KEYS[keyName]);
                 }
             });
         }
@@ -4855,6 +4806,10 @@ function Home() {
                     radiusMetersUsed: fiberRadiusMeters
                 });
                 setFiberPathError(null);
+            } else {
+                // If toggled on with no valid analysis result, just clear old fiber data
+                setFiberPathResult(null);
+                setFiberPathError(null);
             }
         }
     };
@@ -4866,6 +4821,10 @@ function Home() {
                 localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
             }
             if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
+                // Here we explicitly trigger the calculation again with the new radius
+                // To do this properly, we need to adapt triggerFiberCalculation to accept a new radius
+                // Or, more simply, rely on the useEffect that watches fiberRadiusMeters
+                // Let's rely on an effect to keep logic clean
                 triggerFiberCalculation();
             }
         } else {
@@ -4874,6 +4833,51 @@ function Home() {
                 description: "Please enter a valid number for snap radius.",
                 variant: "destructive"
             });
+        }
+    };
+    const handleDownloadPdf = async ()=>{
+        if (!analysisResult) {
+            toast({
+                title: "Error",
+                description: "No analysis data available to generate PDF.",
+                variant: "destructive"
+            });
+            return;
+        }
+        setIsGeneratingPdf(true);
+        try {
+            const response = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$actions$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["generateSingleAnalysisPdfReportAction"])(analysisResult, {});
+            if (response.success) {
+                const { base64Pdf, fileName } = response.data;
+                const byteCharacters = atob(base64Pdf);
+                const byteNumbers = new Array(byteCharacters.length);
+                for(let i = 0; i < byteCharacters.length; i++){
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([
+                    byteArray
+                ], {
+                    type: 'application/pdf'
+                });
+                (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$file$2d$saver$2f$dist$2f$FileSaver$2e$min$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["saveAs"])(blob, fileName);
+                toast({
+                    title: "Success",
+                    description: "PDF report downloaded."
+                });
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error generating PDF.";
+            console.error("PDF Generation Error:", error);
+            toast({
+                title: "PDF Generation Failed",
+                description: errorMessage,
+                variant: "destructive"
+            });
+        } finally{
+            setIsGeneratingPdf(false);
         }
     };
     const handleClearanceChange = (value)=>{
@@ -4895,7 +4899,7 @@ function Home() {
                 currentPage: "home"
             }, void 0, false, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 574,
+                lineNumber: 618,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4915,7 +4919,7 @@ function Home() {
                                 isPending: isActionPending || isFiberCalculating
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 582,
+                                lineNumber: 626,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$interactive$2d$map$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -4938,13 +4942,13 @@ function Home() {
                                 fiberPathResult: fiberPathResult
                             }, void 0, false, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 592,
+                                lineNumber: 636,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 581,
+                        lineNumber: 625,
                         columnNumber: 9
                     }, this),
                     !isAnalysisPanelGloballyOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4959,19 +4963,19 @@ function Home() {
                                     className: "mr-2 h-5 w-5"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 613,
+                                    lineNumber: 657,
                                     columnNumber: 15
                                 }, this),
                                 "Start Link Analysis"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 607,
+                            lineNumber: 651,
                             columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 606,
+                        lineNumber: 650,
                         columnNumber: 11
                     }, this),
                     (isActionPending || isFiberCalculating) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -4985,7 +4989,7 @@ function Home() {
                                         className: "h-12 w-12 animate-spin text-primary mb-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 623,
+                                        lineNumber: 667,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -4993,7 +4997,7 @@ function Home() {
                                         children: isActionPending ? "Analyzing Link..." : "Calculating Fiber Path..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 624,
+                                        lineNumber: 668,
                                         columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -5001,23 +5005,23 @@ function Home() {
                                         children: isActionPending ? "Please wait while we process elevation data." : "Accessing road network data..."
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 627,
+                                        lineNumber: 671,
                                         columnNumber: 19
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/page.tsx",
-                                lineNumber: 622,
+                                lineNumber: 666,
                                 columnNumber: 17
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 621,
+                            lineNumber: 665,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 620,
+                        lineNumber: 664,
                         columnNumber: 11
                     }, this),
                     displayedError && !isActionPending && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -5034,19 +5038,19 @@ function Home() {
                                                 className: "mr-2 h-6 w-6"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/page.tsx",
-                                                lineNumber: 640,
+                                                lineNumber: 684,
                                                 columnNumber: 21
                                             }, this),
                                             " LOS Analysis Failed"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/page.tsx",
-                                        lineNumber: 639,
+                                        lineNumber: 683,
                                         columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 638,
+                                    lineNumber: 682,
                                     columnNumber: 17
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CardContent"], {
@@ -5056,7 +5060,7 @@ function Home() {
                                             children: displayedError
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 644,
+                                            lineNumber: 688,
                                             columnNumber: 19
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$button$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Button"], {
@@ -5069,24 +5073,24 @@ function Home() {
                                             children: "Dismiss"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/page.tsx",
-                                            lineNumber: 645,
+                                            lineNumber: 689,
                                             columnNumber: 19
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/page.tsx",
-                                    lineNumber: 643,
+                                    lineNumber: 687,
                                     columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.tsx",
-                            lineNumber: 637,
+                            lineNumber: 681,
                             columnNumber: 15
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 636,
+                        lineNumber: 680,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$fso$2f$bottom$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -5106,12 +5110,14 @@ function Home() {
                         getValues: getValues,
                         setValue: setValue,
                         onTowerHeightChangeFromGraph: handleTowerHeightChangeFromGraph,
+                        onDownloadPdf: handleDownloadPdf,
+                        isGeneratingPdf: isGeneratingPdf,
                         fiberPathResult: fiberPathResult,
                         isFiberCalculating: isFiberCalculating,
                         fiberPathError: fiberPathError
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 657,
+                        lineNumber: 701,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$history$2d$panel$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -5122,19 +5128,19 @@ function Home() {
                         onToggle: handleToggleHistoryPanel
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.tsx",
-                        lineNumber: 678,
+                        lineNumber: 724,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.tsx",
-                lineNumber: 580,
+                lineNumber: 624,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true);
 }
-_s(Home, "eerH+PO/T5aBfn+3gVl1WsYuYNk=", false, function() {
+_s(Home, "tUzLyZbXannwlYon/SGOvS7D6hY=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$use$2d$toast$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useToast"],
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hook$2d$form$2f$dist$2f$index$2e$esm$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useForm"]

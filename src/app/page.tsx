@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, AlertTriangle, Waypoints, MapPin, Cable } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { performLosAnalysis } from '@/app/actions';
+import { performLosAnalysis, generateSingleAnalysisPdfReportAction } from '@/app/actions';
 import type { AnalysisResult, AnalysisFormValues, PointInput as PointFormInputType, PointCoordinates } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ import BottomPanel from '@/components/fso/bottom-panel';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator'; 
 import type { FiberPathResult } from '@/tools/fiberPathCalculator'; 
 import { AnalysisSettings } from '@/components/fso/analysis-settings';
+import { saveAs } from 'file-saver';
 
 const LOCAL_STORAGE_KEYS = {
   FIBER_TOGGLE: 'fiberPathEnabled',
@@ -61,6 +62,7 @@ export default function Home() {
   
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
   const [isFiberCalculating, setIsFiberCalculating] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [fiberPathError, setFiberPathError] = useState<string | null>(null);
 
   // Initialize form with static default values
@@ -440,11 +442,13 @@ export default function Home() {
     reset(defaultFormStateValues);
     
     if (isClient) { 
-        Object.values(LOCAL_STORAGE_KEYS).forEach(key => {
-            if (key !== LOCAL_STORAGE_KEYS.FIBER_TOGGLE && key !== LOCAL_STORAGE_KEYS.FIBER_RADIUS) {
-                 localStorage.removeItem(key);
-            }
-        });
+      Object.keys(LOCAL_STORAGE_KEYS).forEach(key => {
+        const keyName = key as keyof typeof LOCAL_STORAGE_KEYS;
+        // Keep fiber settings, clear the rest
+        if (keyName !== 'FIBER_TOGGLE' && keyName !== 'FIBER_RADIUS') {
+          localStorage.removeItem(LOCAL_STORAGE_KEYS[keyName]);
+        }
+      });
     }
 
     setAnalysisResult(null);
@@ -541,6 +545,10 @@ export default function Home() {
                 radiusMetersUsed: fiberRadiusMeters,
             });
             setFiberPathError(null);
+        } else {
+          // If toggled on with no valid analysis result, just clear old fiber data
+          setFiberPathResult(null);
+          setFiberPathError(null);
         }
     }
   };
@@ -553,10 +561,46 @@ export default function Home() {
         localStorage.setItem(LOCAL_STORAGE_KEYS.FIBER_RADIUS, newRadius.toString());
       }
       if (calculateFiberPathEnabled && analysisResult && !isStale && analysisResult.losPossible) {
+        // Here we explicitly trigger the calculation again with the new radius
+        // To do this properly, we need to adapt triggerFiberCalculation to accept a new radius
+        // Or, more simply, rely on the useEffect that watches fiberRadiusMeters
+        // Let's rely on an effect to keep logic clean
         triggerFiberCalculation();
       }
     } else {
       toast({title: "Invalid Radius", description: "Please enter a valid number for snap radius.", variant: "destructive"});
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!analysisResult) {
+      toast({ title: "Error", description: "No analysis data available to generate PDF.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingPdf(true);
+    try {
+      const response = await generateSingleAnalysisPdfReportAction(analysisResult, {});
+
+      if (response.success) {
+        const { base64Pdf, fileName } = response.data;
+        const byteCharacters = atob(base64Pdf);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        saveAs(blob, fileName);
+        toast({ title: "Success", description: "PDF report downloaded." });
+      } else {
+        throw new Error(response.error);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error generating PDF.";
+      console.error("PDF Generation Error:", error);
+      toast({ title: "PDF Generation Failed", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
   
@@ -671,6 +715,8 @@ export default function Home() {
           getValues={getValues}
           setValue={setValue}
           onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
+          onDownloadPdf={handleDownloadPdf}
+          isGeneratingPdf={isGeneratingPdf}
           fiberPathResult={fiberPathResult}
           isFiberCalculating={isFiberCalculating}
           fiberPathError={fiberPathError}
