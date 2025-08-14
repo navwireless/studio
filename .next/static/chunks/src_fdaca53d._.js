@@ -284,18 +284,14 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
     // Effect to manage drawing and clearing polylines
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "InteractiveMapInner.useEffect": ()=>{
+            // This effect handles the full lifecycle: clear old lines, draw new ones.
             if (!isMapApiLoaded || !mapRef.current) return;
             const map = mapRef.current;
-            // --- Clean up previous polylines ---
+            // --- Draw LOS Polyline ---
+            // Clear previous before drawing new
             if (losPolylineRef.current) {
                 losPolylineRef.current.setMap(null);
-                losPolylineRef.current = null;
             }
-            fiberPolylinesRef.current.forEach({
-                "InteractiveMapInner.useEffect": (p)=>p.setMap(null)
-            }["InteractiveMapInner.useEffect"]);
-            fiberPolylinesRef.current = [];
-            // --- Draw LOS Polyline ---
             if (pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined) {
                 losPolylineRef.current = new google.maps.Polyline({
                     path: [
@@ -317,6 +313,11 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                 });
             }
             // --- Draw Fiber Path Polylines ---
+            // Clear previous before drawing new
+            fiberPolylinesRef.current.forEach({
+                "InteractiveMapInner.useEffect": (p)=>p.setMap(null)
+            }["InteractiveMapInner.useEffect"]);
+            fiberPolylinesRef.current = []; // Reset the array
             if (fiberPathResult?.status === 'success' && fiberPathResult.segments) {
                 fiberPathResult.segments.forEach({
                     "InteractiveMapInner.useEffect": (segment, index)=>{
@@ -344,7 +345,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                             }["InteractiveMapInner.useEffect"]);
                             segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
                         } else {
-                            return; // Do not draw fallback lines here, keep it clean
+                            return;
                         }
                         const fiberPolyline = new google.maps.Polyline({
                             ...segmentOptions,
@@ -355,7 +356,7 @@ function InteractiveMapInner({ pointA: formPointA, pointB: formPointB, onMapClic
                     }
                 }["InteractiveMapInner.useEffect"]);
             }
-            // Cleanup function for when component unmounts or dependencies change
+            // Return a cleanup function to be run when dependencies change OR component unmounts
             return ({
                 "InteractiveMapInner.useEffect": ()=>{
                     if (losPolylineRef.current) {
