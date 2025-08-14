@@ -509,6 +509,10 @@ body {
   bottom: 0;
 }
 
+.bottom-20 {
+  bottom: 5rem;
+}
+
 .bottom-8 {
   bottom: 2rem;
 }
@@ -579,10 +583,6 @@ body {
 
 .top-\[50\%\] {
   top: 50%;
-}
-
-.bottom-20 {
-  bottom: 5rem;
 }
 
 .z-10 {
@@ -719,6 +719,10 @@ body {
   margin-bottom: 1rem;
 }
 
+.ml-4 {
+  margin-left: 1rem;
+}
+
 .ml-auto {
   margin-left: auto;
 }
@@ -757,10 +761,6 @@ body {
 
 .mt-6 {
   margin-top: 1.5rem;
-}
-
-.ml-4 {
-  margin-left: 1rem;
 }
 
 .block {
@@ -904,12 +904,12 @@ body {
   max-height: 24rem;
 }
 
-.max-h-screen {
-  max-height: 100vh;
-}
-
 .max-h-\[calc\(100vh-theme\(spacing\.24\)\)\] {
   max-height: calc(100vh - 6rem);
+}
+
+.max-h-screen {
+  max-height: 100vh;
 }
 
 .min-h-0 {
@@ -924,6 +924,10 @@ body {
   min-height: 250px;
 }
 
+.min-h-\[50vh\] {
+  min-height: 50vh;
+}
+
 .min-h-\[80px\] {
   min-height: 80px;
 }
@@ -934,10 +938,6 @@ body {
 
 .min-h-svh {
   min-height: 100svh;
-}
-
-.min-h-\[50vh\] {
-  min-height: 50vh;
 }
 
 .w-0 {
@@ -1682,13 +1682,13 @@ body {
   background-color: #0000;
 }
 
-.bg-yellow-500\/80 {
-  background-color: #eab308cc;
-}
-
 .bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+
+.bg-yellow-500\/80 {
+  background-color: #eab308cc;
 }
 
 .fill-current {
@@ -3353,10 +3353,6 @@ body {
 
   .sm\:mt-0 {
     margin-top: 0;
-  }
-
-  .sm\:block {
-    display: block;
   }
 
   .sm\:inline {
