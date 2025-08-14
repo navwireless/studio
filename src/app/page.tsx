@@ -141,6 +141,9 @@ export default function Home() {
 
 
   const processSubmit = useCallback((data: AnalysisFormValues) => {
+    // Explicitly clear previous results before starting a new analysis.
+    // This ensures the map clears the old polyline immediately.
+    setAnalysisResult(null);
     setDisplayedError(null);
     setFieldErrors(null);
     setFiberPathResult(null); 
@@ -676,5 +679,3 @@ export default function Home() {
     </>
   );
 }
-
-    
