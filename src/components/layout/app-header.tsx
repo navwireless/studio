@@ -30,10 +30,10 @@ export default function AppHeader({
               alt="LiFi Link Pro Logo"
               width={32}
               height={32}
-              className="object-contain cursor-pointer"
+              className="object-contain cursor-pointer bg-white rounded-full p-1"
           />
         </Link>
-        <h1 className="text-base font-medium tracking-wider text-slate-100/90 hidden sm:block">
+        <h1 className="text-lg sm:text-xl font-bold tracking-wider text-slate-100/90">
           LiFi Link Pro
         </h1>
       </div>
