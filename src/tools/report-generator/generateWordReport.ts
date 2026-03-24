@@ -6,7 +6,8 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
 // Example placeholder function
 export async function generateWordReportForSingleAnalysis(
   analysisResult: AnalysisResult,
-  companyName: string = "Nav Wireless Technologies Pvt. Ltd."
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _companyName: string = "Nav Wireless Technologies Pvt. Ltd."
 ): Promise<Buffer> {
   const doc = new Document({
     sections: [{

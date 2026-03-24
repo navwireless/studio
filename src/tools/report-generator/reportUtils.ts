@@ -1,9 +1,9 @@
 
 // src/tools/report-generator/reportUtils.ts
-import { AlignmentType, BorderStyle, Footer, Header, IBorderOptions, ImageRun, Packer, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, VerticalAlign, WidthType } from 'docx';
-import { PDFPage, StandardFonts, rgb, PDFFont, PDFDocument } from 'pdf-lib';
-import type { AnalysisResult, PointCoordinates as AppPointCoordinates } from '@/types'; 
-import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator'; 
+import { AlignmentType, BorderStyle, Footer, Header, ImageRun, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, VerticalAlign, WidthType } from 'docx';
+import { PDFPage, rgb, PDFFont, PDFDocument } from 'pdf-lib';
+import type { AnalysisResult } from '@/types'; 
+import type { FiberPathResult } from '@/tools/fiberPathCalculator'; 
 
 
 export const DEFAULT_COMPANY_NAME = "Nav Wireless Technologies Pvt. Ltd.";
@@ -26,6 +26,7 @@ export async function addHeaderToPdfPage(
     companyName: string = DEFAULT_COMPANY_NAME,
     logoImageBytes?: Uint8Array
 ): Promise<number> { // Return currentY position after header
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { width, height } = page.getSize();
     const margin = 40;
     const headerHeight = 60;
@@ -92,6 +93,7 @@ export async function addHeaderToPdfPage(
 }
 
 export function addFooterToPdfPage(page: PDFPage, font: PDFFont, pageNumber: number, totalPages: number, companyName: string = DEFAULT_COMPANY_NAME) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { width, height } = page.getSize();
     const margin = 40;
     const footerText = `Page ${pageNumber} of ${totalPages} | ${companyName} | ${new Date().toLocaleDateString()}`;
@@ -236,7 +238,7 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                                     children: [new ImageRun({ data: logoImageBuffer, transformation: { width: 100, height: 24}})], // Adjust size
                                 })] : [new Paragraph(DEFAULT_COMPANY_NAME)],
                                 verticalAlign: VerticalAlign.CENTER,
-                                borders: { right: { style: BorderStyle.NONE } } as IBorderOptions,
+                                borders: { right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' } },
                             }),
                             new TableCell({
                                 children: [new Paragraph({
@@ -245,7 +247,7 @@ export function createDocxHeader(logoImageBuffer?: Buffer): Header {
                                     // TODO: Style this text (font, size)
                                 })],
                                 verticalAlign: VerticalAlign.CENTER,
-                                borders: { left: { style: BorderStyle.NONE } } as IBorderOptions,
+                                borders: { left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' } },
                             }),
                         ],
                     }),

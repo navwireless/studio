@@ -5,14 +5,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, type UseFormSetValue } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppHeader from '@/components/layout/app-header';
 import InteractiveMap from '@/components/fso/interactive-map';
-import type { PointCoordinates } from '@/types';
+// import type { PointCoordinates } from '@/types';
 import { FiberCalculatorFormSchema, type FiberCalculatorFormValues, defaultFiberCalculatorFormValues } from '@/lib/fiber-calculator-form-schema';
 import { useToast } from '@/hooks/use-toast';
 import FiberInputPanel from '@/components/fiber-calculator/FiberInputPanel';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { generateFiberReportAction, generateSingleFiberPathKmzAction } from '@/app/actions';
@@ -118,13 +119,13 @@ export default function FiberCalculatorPage() {
         fiberPathResult: fiberPathResult,
         pointA_form: {
             name: currentFormValues.pointA.name,
-            lat: parseFloat(currentFormValues.pointA.lat),
-            lng: parseFloat(currentFormValues.pointA.lng),
+            lat: currentFormValues.pointA.lat,
+            lng: currentFormValues.pointA.lng,
         },
         pointB_form: {
             name: currentFormValues.pointB.name,
-            lat: parseFloat(currentFormValues.pointB.lat),
-            lng: parseFloat(currentFormValues.pointB.lng),
+            lat: currentFormValues.pointB.lat,
+            lng: currentFormValues.pointB.lng,
         },
         snapRadiusUsed_form: snapRadius,
       };
@@ -182,7 +183,7 @@ export default function FiberCalculatorPage() {
         saveAs(blob, fileName);
         toast({ title: "Success", description: "KMZ file downloaded." });
       } else {
-        throw new Error(response.error || "KMZ generation failed without specific error message.");
+        throw new Error(!response.success ? response.error : "KMZ generation failed without specific error message.");
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error generating KMZ.";
@@ -244,35 +245,39 @@ export default function FiberCalculatorPage() {
       <AppHeader currentPage="fiber" />
       <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden h-[calc(100vh-theme(spacing.12)-theme(spacing.12))]">
         <div className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-auto md:h-full overflow-y-auto custom-scrollbar bg-card/80 backdrop-blur-sm shadow-lg border-t md:border-t-0 md:border-r border-border p-1 print:hidden">
-          <FiberInputPanel
-            control={control}
-            register={register}
-            handleSubmit={handleSubmit}
-            onSubmit={handleCalculateSubmit}
-            setValue={setValue as UseFormSetValue<FiberCalculatorFormValues>}
-            formSnapRadius={currentFormSnapRadius}
-            onClear={handleClearForm}
-            onGeneratePdfReport={handleGeneratePdfReport}
-            onGenerateKmzReport={handleGenerateKmzReport}
-            clientFormErrors={clientFormErrors}
-            isCalculating={isCalculating}
-            isGeneratingPdf={isGeneratingPdf}
-            isGeneratingKmz={isGeneratingKmz}
-            fiberPathResult={fiberPathResult}
-            calculationError={calculationError}
-          />
+          <ErrorBoundary>
+            <FiberInputPanel
+              control={control}
+              register={register}
+              handleSubmit={handleSubmit}
+              onSubmit={handleCalculateSubmit}
+              setValue={setValue as UseFormSetValue<FiberCalculatorFormValues>}
+              formSnapRadius={currentFormSnapRadius}
+              onClear={handleClearForm}
+              onGeneratePdfReport={handleGeneratePdfReport}
+              onGenerateKmzReport={handleGenerateKmzReport}
+              clientFormErrors={clientFormErrors}
+              isCalculating={isCalculating}
+              isGeneratingPdf={isGeneratingPdf}
+              isGeneratingKmz={isGeneratingKmz}
+              fiberPathResult={fiberPathResult}
+              calculationError={calculationError}
+            />
+          </ErrorBoundary>
         </div>
         <div className="flex-1 w-full relative min-h-[250px] md:min-h-0">
-          <InteractiveMap
-            pointA={mapPointA}
-            pointB={mapPointB}
-            onMapClick={handleMapClick}
-            onMarkerDrag={handleMarkerDrag}
-            mapContainerClassName="w-full h-full"
-            analysisResult={null} 
-            isStale={false} 
-            fiberPathResult={fiberPathResult}
-          />
+          <MapErrorBoundary>
+            <InteractiveMap
+              pointA={mapPointA}
+              pointB={mapPointB}
+              onMapClick={handleMapClick}
+              onMarkerDrag={handleMarkerDrag}
+              mapContainerClassName="w-full h-full"
+              analysisResult={null} 
+              isStale={false} 
+              fiberPathResult={fiberPathResult}
+            />
+          </MapErrorBoundary>
         </div>
 
         {anyOperationPending && (

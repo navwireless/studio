@@ -75,7 +75,7 @@ interface LiveDragVisuals {
 }
 
 
-export default function CustomProfileChart({
+const CustomProfileChart = React.memo(function CustomProfileChart({
   data,
   pointAName = "Site A",
   pointBName = "Site B",
@@ -497,38 +497,49 @@ export default function CustomProfileChart({
       return;
     }
     const { getElevationFromPixelY, chartPixelHeight, getPixelYFromElevation: getPixelY } = chartMetricsRef.current;
+    
+    let animationFrameId: number;
 
     const handleGlobalMouseMove = (event: MouseEvent) => {
-      if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) return; // Should not happen if effect is bound correctly
+      if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) return;
       
       const clientYDelta = event.clientY - dragStartInfo.clientY;
-      // New tower LOS Y position in chart area coordinates (Y=0 at top)
-      let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta; 
-
-      // Clamp Y within chart boundaries
-      newTowerLosY_px_ChartArea = Math.max(0, Math.min(chartPixelHeight, newTowerLosY_px_ChartArea));
       
-      // Convert pixel Y back to absolute elevation
-      const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px_ChartArea);
-      // Calculate height relative to terrain
-      let currentHeightMeters = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
       
-      // Clamp and round height
-      currentHeightMeters = Math.round(currentHeightMeters);
-      currentHeightMeters = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, currentHeightMeters));
+      animationFrameId = requestAnimationFrame(() => {
+        // New tower LOS Y position in chart area coordinates (Y=0 at top)
+        let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta; 
 
-      // Recalculate LOS Y pixel from clamped height for visual consistency
-      const clampedAbsoluteElevation = currentHeightMeters + dragStartInfo.siteTerrainElevation;
-      newTowerLosY_px_ChartArea = getPixelY(clampedAbsoluteElevation);
+        // Clamp Y within chart boundaries
+        newTowerLosY_px_ChartArea = Math.max(0, Math.min(chartPixelHeight, newTowerLosY_px_ChartArea));
+        
+        // Convert pixel Y back to absolute elevation
+        const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px_ChartArea);
+        // Calculate height relative to terrain
+        let currentHeightMeters = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
+        
+        // Clamp and round height
+        currentHeightMeters = Math.round(currentHeightMeters);
+        currentHeightMeters = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, currentHeightMeters));
 
-      setLiveDragVisuals({
-        site: draggingTower,
-        currentLosY_px_ChartArea: newTowerLosY_px_ChartArea,
-        currentHeightMeters: currentHeightMeters,
+        // Recalculate LOS Y pixel from clamped height for visual consistency
+        const clampedAbsoluteElevation = currentHeightMeters + dragStartInfo.siteTerrainElevation;
+        newTowerLosY_px_ChartArea = getPixelY(clampedAbsoluteElevation);
+
+        setLiveDragVisuals({
+          site: draggingTower,
+          currentLosY_px_ChartArea: newTowerLosY_px_ChartArea,
+          currentHeightMeters: currentHeightMeters,
+        });
       });
     };
 
     const handleGlobalMouseUp = (event: MouseEvent) => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      
       if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) { // Safety check
           setDraggingTower(null); setDragStartInfo(null); setLiveDragVisuals(null);
           if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
@@ -558,11 +569,15 @@ export default function CustomProfileChart({
 
     window.addEventListener('mousemove', handleGlobalMouseMove);
     window.addEventListener('mouseup', handleGlobalMouseUp);
+    const canvas = canvasRef.current;
     return () => {
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
       // Ensure cursor is reset if component unmounts during drag
-      if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
+      if (canvas && canvas.style.cursor === 'grabbing') {
+        canvas.style.cursor = 'crosshair';
+      }
     };
   }, [draggingTower, dragStartInfo, onTowerHeightChangeFromGraph, data, liveDragVisuals]); // Add liveDragVisuals to dependencies if its state is read inside
 
@@ -604,13 +619,42 @@ export default function CustomProfileChart({
     >
       <canvas
         ref={canvasRef}
+        tabIndex={0}
+        role="img"
+        aria-label="Profile Elevation Chart. Interactive. Use Shift + Up/Down arrows to adjust Site A tower height. Use Up/Down arrows to adjust Site B tower height."
+        onKeyDown={(e) => {
+          if (!data || data.length < 2 || !onTowerHeightChangeFromGraph) return;
+          const siteA_Height = Math.round(data[0].losHeight - data[0].terrainElevation);
+          const siteB_Height = Math.round(data[data.length - 1].losHeight - data[data.length - 1].terrainElevation);
+
+          const step = 1;
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (e.shiftKey) {
+              onTowerHeightChangeFromGraph('pointA', Math.min(MAX_TOWER_HEIGHT, siteA_Height + step));
+            } else {
+              onTowerHeightChangeFromGraph('pointB', Math.min(MAX_TOWER_HEIGHT, siteB_Height + step));
+            }
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (e.shiftKey) {
+              onTowerHeightChangeFromGraph('pointA', Math.max(MIN_TOWER_HEIGHT, siteA_Height - step));
+            } else {
+              onTowerHeightChangeFromGraph('pointB', Math.max(MIN_TOWER_HEIGHT, siteB_Height - step));
+            }
+          }
+        }}
         style={{
           width: '100%',
           height: '100%',
-          cursor: isInteractingByDrag ? 'grabbing' : (hoverData ? 'pointer' : 'crosshair')
+          cursor: isInteractingByDrag ? 'grabbing' : (hoverData ? 'pointer' : 'crosshair'),
+          outline: 'none'
         }}
+        className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md transition-shadow"
       />
     </div>
   );
-}
+});
+
+export default CustomProfileChart;
 

@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import type { WorkBook } from 'xlsx';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver'; // For robust downloads
-import type { BulkAnalysisResultItem } from '@/app/bulk-los-analyzer/page';
+import type { BulkAnalysisResultItem } from '@/types';
 import type { KmzPlacemark } from './kmz-parser';
 import type { FiberPathSegment, FiberPathResult } from '@/tools/fiberPathCalculator';
 import { xmlEscape } from './xml-escape';
@@ -22,7 +22,7 @@ const formatFiberStatusForExport = (status?: FiberPathResult['status']): string 
     case 'radius_too_small': return 'Snap Radius Too Small';
     case 'api_error': return 'API Error';
     case 'input_error': return 'Input Error';
-    default: return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    default: return (status as string).replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
   }
 };
 
@@ -36,7 +36,7 @@ export function createExcelWorkbook(results: BulkAnalysisResultItem[]): WorkBook
   );
 
   const worksheetData = results.map(r => {
-    const baseData: any = {
+    const baseData: Record<string, string | number> = {
       'Point A Name': r.pointAName,
       'Point A Coordinates': r.pointACoords,
       'Tower Height A (m)': r.towerHeightUsed,
@@ -52,15 +52,15 @@ export function createExcelWorkbook(results: BulkAnalysisResultItem[]): WorkBook
     };
 
     if (hasFiberData) {
-      baseData['Fiber Path Status'] = formatFiberStatusForExport(r.fiberPathStatus);
+      baseData['Fiber Path Status'] = formatFiberStatusForExport(r.fiberPathStatus ?? undefined);
       baseData['Fiber Path Total Distance (m)'] = r.fiberPathTotalDistanceMeters?.toFixed(0) ?? 'N/A';
       
       let offsetA = 'N/A', roadRoute = 'N/A', offsetB = 'N/A';
       if (r.fiberPathStatus === 'success' && r.fiberPathSegments) {
-        const segA = r.fiberPathSegments.find(s => s.type === 'offset_a');
-        const segRoadList = r.fiberPathSegments.filter(s => s.type === 'road_route');
-        const totalRoadDistance = segRoadList.reduce((sum, s) => sum + s.distanceMeters, 0);
-        const segB = r.fiberPathSegments.find(s => s.type === 'offset_b');
+        const segA = r.fiberPathSegments.find((s: FiberPathSegment) => s.type === 'offset_a');
+        const segRoadList = r.fiberPathSegments.filter((s: FiberPathSegment) => s.type === 'road_route');
+        const totalRoadDistance = segRoadList.reduce((sum: number, s: FiberPathSegment) => sum + s.distanceMeters, 0);
+        const segB = r.fiberPathSegments.find((s: FiberPathSegment) => s.type === 'offset_b');
         
         offsetA = segA ? segA.distanceMeters.toFixed(0) : 'Error';
         roadRoute = totalRoadDistance > 0 ? totalRoadDistance.toFixed(0) : (segRoadList.length > 0 ? '0' : 'Error');
@@ -141,7 +141,7 @@ function generateKmlContent(
           <Data name="Fiber Total Distance (m)"><value>${link.fiberPathTotalDistanceMeters?.toFixed(0) ?? 'N/A'}</value></Data>`;
         
         // Create placemarks for each fiber segment (offset_a, road_route, offset_b)
-        link.fiberPathSegments.forEach((segment, index) => {
+        link.fiberPathSegments.forEach((segment: FiberPathSegment, index: number) => {
           let segmentName = `Fiber Segment ${index + 1} (${segment.type})`;
           let styleUrl = '';
           let coordinatesString = '';
@@ -280,7 +280,6 @@ export async function generateAndDownloadZipPackage(
     const excelBlob = new Blob([excelBuffer], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
     zip.file(`${baseFileName}_results.xlsx`, excelBlob);
 
-    const hasFeasibleLosLinks = bulkResults.some(r => r.losPossible);
     // Ensure there are results or placemarks to justify KMZ generation
     if (bulkResults.length > 0 || originalPlacemarks.length > 0) {
         const kmzBlob = await generateKmzBlob(originalPlacemarks, bulkResults, analysisParams);

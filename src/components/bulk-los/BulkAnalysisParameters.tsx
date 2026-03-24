@@ -24,8 +24,9 @@ interface BulkAnalysisParametersProps {
   onFiberRadiusMetersBulkChange: (value: string) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BulkAnalysisParameters: React.FC<BulkAnalysisParametersProps> = ({ 
-  control, 
+  control: _control, // eslint-disable-line @typescript-eslint/no-unused-vars
   register, 
   errors,
   calculateFiberPathBulkEnabled,
@@ -109,7 +110,7 @@ const BulkAnalysisParameters: React.FC<BulkAnalysisParametersProps> = ({
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
                         <p>If enabled, calculates estimated fiber optic cable path length using road networks for links where Line-of-Sight is feasible.</p>
-                        <p className="mt-1">Requires the "Google Directions API" key to be configured on the server.</p>
+                        <p className="mt-1">Requires the &quot;Google Directions API&quot; key to be configured on the server.</p>
                         <p className="mt-1">The Snap Radius determines how far from a site the tool will search for a road.</p>
                     </TooltipContent>
                 </Tooltip>

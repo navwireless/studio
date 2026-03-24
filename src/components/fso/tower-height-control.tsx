@@ -16,7 +16,7 @@ interface TowerHeightControlProps {
   idSuffix: string;
 }
 
-const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
+const TowerHeightControl: React.FC<TowerHeightControlProps> = React.memo(({
   label,
   height,
   onChange,
@@ -43,7 +43,7 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
         onChange(parseFloat(rawValue)); // This might become NaN
         return;
     }
-    let newValue = parseFloat(rawValue);
+    const newValue = parseFloat(rawValue);
     if (!isNaN(newValue)) {
         onChange(newValue); // Pass the float, rounding is done on blur or by chart.
     }
@@ -89,11 +89,12 @@ const TowerHeightControl: React.FC<TowerHeightControlProps> = ({
           max={max}
           step={step} // Slider step 1
           className="flex-1"
-          aria-labelledby={`label-${idSuffix}-height`}
+          aria-label={`${label} in meters`}
         />
       </div>
     </div>
   );
-};
+});
 
+TowerHeightControl.displayName = "TowerHeightControl";
 export default TowerHeightControl;

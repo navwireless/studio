@@ -46,11 +46,11 @@ export async function performFiberPathAnalysisAction(
   try {
     const result = await calculateFiberPath(params);
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("performFiberPathAnalysisAction caught an error:", error);
     return {
       status: 'api_error',
-      errorMessage: `Server error during fiber path analysis: ${error.message || 'Unknown error'}`,
+      errorMessage: `Server error during fiber path analysis: ${error instanceof Error ? error.message : 'Unknown error'}`,
       pointA_original: params.pointA,
       pointB_original: params.pointB,
       losFeasible: params.isLosFeasible,

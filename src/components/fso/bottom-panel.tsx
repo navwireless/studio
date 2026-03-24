@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Control, UseFormRegister, UseFormHandleSubmit, UseFormGetValues, UseFormSetValue, FieldErrors } from 'react-hook-form';
+import type { Control, UseFormRegister, UseFormHandleSubmit, FieldErrors } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
 import type { AnalysisResult, AnalysisFormValues } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,16 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import TowerHeightControl from './tower-height-control';
-import CustomProfileChart from './custom-profile-chart';
-import { ChevronDown, ChevronUp, Target, Settings, Loader2, AlertTriangle, X, Download, Cable, Router, HelpCircle, Check, ArrowRightLeft } from 'lucide-react'; // Added ArrowRightLeft
+const CustomProfileChart = React.lazy(() => import('./custom-profile-chart'));
+import { AnimatedNumber } from '@/components/animated-number';
+import { ChevronUp, Target, Loader2, AlertTriangle, Download, ArrowRightLeft } from 'lucide-react'; // Added ArrowRightLeft
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { saveAs } from 'file-saver';
-import { generateSingleAnalysisPdfReportAction } from '@/app/actions';
+import React, { useEffect, Suspense } from 'react';
+// Tooltip components available if needed
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
-import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 interface SiteInputGroupProps {
@@ -28,7 +27,7 @@ interface SiteInputGroupProps {
   register: UseFormRegister<AnalysisFormValues>;
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
-  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+  getCombinedError: (clientError: { message?: string } | undefined, serverError?: string[]) => string | undefined;
 }
 
 const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
@@ -40,7 +39,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
   serverFormErrors,
   getCombinedError,
 }) => (
-  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full">
+  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full transition-colors duration-200 hover:bg-accent/5">
     <CardHeader className="p-1">
       <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
         <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
@@ -52,6 +51,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
           <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Name</Label>
           <Input
             id={`${id}.name`}
+            aria-label={`${title} Name`}
             {...register(`${id}.name`)}
             placeholder="e.g. Main Site"
             className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
@@ -64,6 +64,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
             <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Latitude</Label>
             <Input
               id={`${id}.lat`}
+              aria-label={`${title} Latitude`}
               {...register(`${id}.lat`)}
               placeholder="-90 to 90"
               className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
@@ -75,6 +76,7 @@ const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
             <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Longitude</Label>
             <Input
               id={`${id}.lng`}
+              aria-label={`${title} Longitude`}
               {...register(`${id}.lng`)}
               placeholder="-180 to 180"
               className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
@@ -112,7 +114,7 @@ interface ProfilePanelMiddleColumnProps {
   control: Control<AnalysisFormValues>;
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
-  getCombinedError: (clientError: any, serverError?: string[]) => string | undefined;
+  getCombinedError: (clientError: { message?: string } | undefined, serverError?: string[]) => string | undefined;
   handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
   processSubmit: (data: AnalysisFormValues) => void;
   pointAName: string;
@@ -150,7 +152,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
   let isClearBasedOnAnalysis = false;
   let deficit = 0;
-  let actualMinClearance = analysisResult?.minClearance ?? null;
+  const actualMinClearance = analysisResult?.minClearance ?? null;
 
   if (analysisResult && analysisResult.minClearance !== null && !isNaN(minRequiredClearance)) {
     isClearBasedOnAnalysis = analysisResult.minClearance >= minRequiredClearance;
@@ -184,7 +186,8 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
           ) : analysisResult ? (
             <span
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-bold shadow-md whitespace-nowrap",
+                "px-3 py-1.5 rounded-md text-xs font-bold shadow-md whitespace-nowrap transition-all duration-300 transform",
+                analysisResult ? "opacity-100 scale-100" : "opacity-0 scale-95",
                 isClearBasedOnAnalysis
                   ? "bg-los-success text-los-success-foreground"
                   : "bg-los-failure text-los-failure-foreground"
@@ -202,21 +205,23 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
         <div className="flex-shrink-0 flex flex-col items-center order-2 min-w-[100px] text-center">
           <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap">Aerial Dist.</span>
           <span className="font-bold text-foreground text-xs md:text-sm whitespace-nowrap">
-            {analysisResult && !isStale
-              ? (analysisResult.distanceKm < 1
-                ? `${(analysisResult.distanceKm * 1000).toFixed(0)}m`
-                : `${analysisResult.distanceKm.toFixed(1)}km`)
-              : "N/A"}
+            {analysisResult && !isStale ? (
+               <AnimatedNumber 
+                  value={analysisResult.distanceKm < 1 ? analysisResult.distanceKm * 1000 : analysisResult.distanceKm} 
+                  decimals={analysisResult.distanceKm < 1 ? 0 : 1}
+                  suffix={analysisResult.distanceKm < 1 ? "m" : "km"} 
+               />
+            ) : "N/A"}
           </span>
         </div>
         
         <div className="flex-shrink-0 flex flex-col items-center order-3 min-w-[100px] text-center">
           <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap">Min. Clear.</span>
           <span className={cn(
-            "font-bold text-xs md:text-sm whitespace-nowrap",
+            "font-bold text-xs md:text-sm whitespace-nowrap transition-colors duration-300",
             isStale ? "text-muted-foreground" : (actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure")
           )}>
-            {analysisResult && !isStale && actualMinClearance !== null ? actualMinClearance.toFixed(1) + "m" : "N/A"}
+            {analysisResult && !isStale && actualMinClearance !== null ? <AnimatedNumber value={actualMinClearance} decimals={1} suffix="m" /> : "N/A"}
           </span>
         </div>
 
@@ -226,7 +231,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
                 onClick={handleSubmit(processSubmit)}
                 disabled={anyOperationPending}
                 size="sm"
-                className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight flex-1"
+                className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] whitespace-nowrap leading-tight flex-1"
             >
                 <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
                 {buttonText}
@@ -265,7 +270,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
       <div className="px-2 md:px-3 mt-1 text-xs">
         {isFiberCalculating && (
           <div className="text-primary flex items-center justify-center py-1">
-            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Calculating fiber path...
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> <span className="animate-subtle-pulse">Calculating fiber path...</span>
           </div>
         )}
         {fiberPathResult && !isFiberCalculating && (
@@ -287,7 +292,7 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
               </span>
             </p>
             {fiberPathResult.totalDistanceMeters !== undefined && fiberPathResult.status === 'success' && (
-              <p><span className="font-semibold">Total Fiber Distance:</span> {fiberPathResult.totalDistanceMeters.toFixed(0)} m</p>
+              <p><span className="font-semibold">Total Fiber Distance:</span> <AnimatedNumber value={fiberPathResult.totalDistanceMeters} decimals={0} suffix=" m" /></p>
             )}
             {fiberPathError && <p className="text-destructive">{fiberPathError}</p>}
             {fiberPathResult.errorMessage && fiberPathResult.status !== 'success' && !fiberPathError && (
@@ -319,16 +324,18 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 
       <div className={cn("flex-1 min-h-0 p-0.5")}>
         {analysisResult || isActionPending ? (
-          <CustomProfileChart
-            key={chartKey}
-            data={analysisResult?.profile || []}
-            pointAName={pointAName || "Site A"}
-            pointBName={pointBName || "Site B"}
-            isStale={isStale}
-            totalDistanceKm={analysisResult?.distanceKm}
-            isActionPending={anyOperationPending}
-            onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
-          />
+          <Suspense fallback={<div className="h-full flex items-center justify-center p-2 text-xs text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mr-2"/> Loading Chart Engine...</div>}>
+            <CustomProfileChart
+              key={chartKey}
+              data={analysisResult?.profile || []}
+              pointAName={pointAName || "Site A"}
+              pointBName={pointBName || "Site B"}
+              isStale={isStale}
+              totalDistanceKm={analysisResult?.distanceKm}
+              isActionPending={anyOperationPending}
+              onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
+            />
+          </Suspense>
         ) : ( 
           <div className="h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground">
             <ArrowRightLeft className="h-10 w-10 text-muted-foreground/50 mb-2" />
@@ -346,7 +353,6 @@ const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
   isPanelGloballyVisible: boolean;
-  onToggleGlobalVisibility: () => void;
   isContentExpanded: boolean;
   onToggleContentExpansion: () => void;
   isStale?: boolean;
@@ -358,8 +364,6 @@ interface BottomPanelProps {
   clientFormErrors: FieldErrors<AnalysisFormValues>;
   serverFormErrors?: Record<string, string[] | undefined>;
   isActionPending: boolean;
-  getValues: UseFormGetValues<AnalysisFormValues>;
-  setValue: UseFormSetValue<AnalysisFormValues>;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
   onDownloadPdf: () => void;
   isGeneratingPdf: boolean;
@@ -368,10 +372,9 @@ interface BottomPanelProps {
   fiberPathError: string | null;
 }
 
-export default function BottomPanel({
+const BottomPanel = React.memo(function BottomPanel({
   analysisResult,
   isPanelGloballyVisible,
-  onToggleGlobalVisibility,
   isContentExpanded,
   onToggleContentExpansion,
   isStale,
@@ -382,8 +385,6 @@ export default function BottomPanel({
   clientFormErrors,
   serverFormErrors,
   isActionPending,
-  getValues,
-  setValue,
   onTowerHeightChangeFromGraph,
   onDownloadPdf,
   isGeneratingPdf,
@@ -400,26 +401,41 @@ export default function BottomPanel({
   const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: analysisResult?.pointA?.name || "Site A" });
   const pointBName = useWatch({ control, name: 'pointB.name', defaultValue: analysisResult?.pointB?.name || "Site B" });
 
+  const panelRef = React.useRef<HTMLFormElement>(null);
+  
+  useEffect(() => {
+    if (isPanelGloballyVisible && isContentExpanded && panelRef.current && !isActionPending) {
+      const firstFocusable = panelRef.current.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      // Give the dom a tic to paint the slide transition so outline doesnt bug
+      setTimeout(() => firstFocusable?.focus(), 100);
+    }
+  }, [isPanelGloballyVisible, isContentExpanded, isActionPending]);
+
   return (
     <form
+      ref={panelRef}
       noValidate
+      role="region"
+      aria-label="Link analysis panel"
       onSubmit={handleSubmit(processSubmit)}
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-in-out print:hidden",
-        isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-full",
+        "fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out print:hidden",
+        isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-[120%]",
         "z-[50]"
       )}
     >
       <div
         className={cn(
-          "w-full overflow-hidden transition-[height] duration-500 ease-in-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[40vh] md:h-[35vh]" : "h-0"
+          "w-full overflow-hidden transition-[height,max-height] duration-500 ease-out",
+          isContentExpanded && isPanelGloballyVisible ? "h-[60vh] md:h-[45vh] lg:h-[35vh]" : "h-0"
         )}
       >
-        <div className="p-1.5 md:p-2 h-full overflow-y-hidden md:overflow-y-auto">
-           <div className="flex md:grid md:grid-cols-[minmax(200px,_1fr)_minmax(300px,_2fr)_minmax(200px,_1fr)] gap-1.5 h-full overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none custom-scrollbar">
+        <div className="p-1.5 md:p-2 h-full overflow-y-auto">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[280px_1fr_280px] gap-2 h-full lg:overflow-visible custom-scrollbar">
 
-            <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">
+            <div className="w-full lg:w-auto order-2 lg:order-1 p-1 lg:p-0">
               <SiteInputGroup
                 id="pointA"
                 title={pointAName || "Site A"}
@@ -431,27 +447,29 @@ export default function BottomPanel({
               />
             </div>
 
-            <ProfilePanelMiddleColumn
-              analysisResult={analysisResult}
-              isStale={isStale}
-              isActionPending={isActionPending}
-              control={control}
-              clientFormErrors={clientFormErrors}
-              serverFormErrors={serverFormErrors}
-              getCombinedError={getCombinedError}
-              handleSubmit={handleSubmit}
-              processSubmit={processSubmit}
-              pointAName={pointAName || "Site A"}
-              pointBName={pointBName || "Site B"}
-              onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
-              onDownloadPdf={onDownloadPdf}
-              isGeneratingPdf={isGeneratingPdf}
-              fiberPathResult={fiberPathResult}
-              isFiberCalculating={isFiberCalculating}
-              fiberPathError={fiberPathError}
-            />
+            <div className="order-1 lg:order-2">
+              <ProfilePanelMiddleColumn
+                analysisResult={analysisResult}
+                isStale={isStale}
+                isActionPending={isActionPending}
+                control={control}
+                clientFormErrors={clientFormErrors}
+                serverFormErrors={serverFormErrors}
+                getCombinedError={getCombinedError}
+                handleSubmit={handleSubmit}
+                processSubmit={processSubmit}
+                pointAName={pointAName || "Site A"}
+                pointBName={pointBName || "Site B"}
+                onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
+                onDownloadPdf={onDownloadPdf}
+                isGeneratingPdf={isGeneratingPdf}
+                fiberPathResult={fiberPathResult}
+                isFiberCalculating={isFiberCalculating}
+                fiberPathError={fiberPathError}
+              />
+            </div>
 
-            <div className="flex-shrink-0 w-full md:w-auto snap-start p-1 md:p-0">
+            <div className="w-full lg:w-auto order-3 lg:order-3 p-1 lg:p-0">
               <SiteInputGroup
                 id="pointB"
                 title={pointBName || "Site B"}
@@ -471,11 +489,11 @@ export default function BottomPanel({
           onClick={onToggleContentExpansion}
           aria-label={isContentExpanded ? "Collapse Panel Content" : "Expand Panel Content"}
         >
-          {isContentExpanded ?
-            <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground" /> :
-            <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />}
+          <ChevronUp className={cn("h-4 w-4 text-muted-foreground group-hover:text-foreground transition-transform duration-300 ease-out", isContentExpanded ? "rotate-180" : "rotate-0")} />
         </div>
       )}
     </form>
   );
-}
+});
+
+export default BottomPanel;

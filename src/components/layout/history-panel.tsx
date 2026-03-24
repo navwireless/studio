@@ -2,13 +2,14 @@
 "use client";
 
 import React from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button }
 from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { History, MapPin, CheckCircle, XCircle,maximize } from 'lucide-react';
+import { History, CheckCircle, XCircle, Maximize2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { AnalysisResult } from '@/types';
 import { formatDistanceStrict } from 'date-fns';
 
@@ -36,7 +37,7 @@ export default function HistoryPanel({ historyList, onLoadHistoryItem, onClearHi
         </SheetHeader>
         {sortedHistory.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-            <maximize className="h-16 w-16 text-muted-foreground mb-4" />
+            <Maximize2 className="h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-sm">No analyses recorded yet.</p>
             <p className="text-xs text-muted-foreground mt-1">Complete an analysis to see it here.</p>
           </div>
@@ -95,10 +96,5 @@ export default function HistoryPanel({ historyList, onLoadHistoryItem, onClearHi
       </SheetContent>
     </Sheet>
   );
-}
-
-// Helper function to cn class names - ensure this is available or define it
-function cn(...inputs: (string | undefined | null | false)[]): string {
-  return inputs.filter(Boolean).join(' ');
 }
 

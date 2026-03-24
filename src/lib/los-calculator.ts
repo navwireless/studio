@@ -60,7 +60,7 @@ export function calculateFresnelZoneRadius(d1: number, d2: number, totalDistance
 }
 
 
-export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampleAPI[]): AnalysisResult {
+export function analyzeLOS(params: AnalysisParams, elevationData: ElevationSampleAPI[]): Omit<AnalysisResult, 'id' | 'timestamp'> {
   if (elevationData.length < 2) {
     return {
       losPossible: false,

@@ -1,11 +1,11 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, Polyline, InfoWindow } from '@react-google-maps/api';
-import { Loader2, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import type { KmzPlacemark } from '@/lib/kmz-parser';
-import type { BulkAnalysisResultItem } from '@/app/bulk-los-analyzer/page';
+import type { BulkAnalysisResultItem } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
 
@@ -60,7 +60,7 @@ function BulkAnalysisMapInner({ placemarks, results }: BulkAnalysisMapProps) {
     }
   }, [placemarks, isMapApiLoaded]);
 
-  const feasibleLinks = results.filter(r => r.losPossible);
+  const feasibleLinks = useMemo(() => results.filter(r => r.losPossible), [results]);
 
   if (placemarks.length === 0) {
      return (
@@ -131,15 +131,16 @@ function BulkAnalysisMapInner({ placemarks, results }: BulkAnalysisMapProps) {
 };
 
 
-const BulkAnalysisMap: React.FC<BulkAnalysisMapProps> = (props) => {
+const BulkAnalysisMap: React.FC<BulkAnalysisMapProps> = React.memo((props) => {
   return (
     <GoogleMapsScriptGuard 
       loadingMessage="Initializing Bulk Analysis Map..."
-      errorMessage="Error loading Bulk Analysis Map."
+      errorMessagePrefix="Error loading Bulk Analysis Map."
     >
       <BulkAnalysisMapInner {...props} />
     </GoogleMapsScriptGuard>
   );
-};
+});
 
+BulkAnalysisMap.displayName = "BulkAnalysisMap";
 export default BulkAnalysisMap;

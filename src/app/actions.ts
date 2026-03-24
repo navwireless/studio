@@ -2,11 +2,11 @@
 "use server";
 
 import { z } from 'zod';
-import type { AnalysisParams, AnalysisResult, PointInput, PointCoordinates, ElevationSampleAPI } from '@/types';
+import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI } from '@/types';
 import { analyzeLOS } from '@/lib/los-calculator';
 import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/tools/report-generator';
-import { FiberCalculatorFormSchema, PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema';
-import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
+import { PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema';
+import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport';
 import JSZip from 'jszip';
 import { xmlEscape } from '@/lib/xml-escape';
@@ -59,41 +59,41 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
   try {
     response = await fetch(url);
   } catch (networkError: unknown) {
-    const errorMessage = networkError instanceof Error ? networkError.message : String(networkError);
-    console.error("ACTION_ERROR: getGoogleElevationData - Network error fetching elevation data:", errorMessage);
-    throw new Error(`Network error reaching Google Elevation API: ${errorMessage}. Check connectivity & firewall.`);
+    console.error("ACTION_ERROR: getGoogleElevationData - Network error fetching elevation data:", networkError);
+    throw new Error("Unable to reach the elevation service. Please check your internet connection and try again.");
   }
 
   if (!response.ok) {
-    let errorBody = "Could not retrieve error body.";
-    try {
-      errorBody = await response.text();
-    } catch (textError) {
-      console.warn("ACTION_WARNING: getGoogleElevationData - Failed to read error body from Google API response:", textError);
-    }
-    console.error(`ACTION_ERROR: getGoogleElevationData - Google Elevation API request failed with status ${response.status}:`, errorBody);
-    throw new Error(`Google Elevation API request failed (Status: ${response.status}). Details: ${errorBody.substring(0, 200)}`);
+    console.error(`ACTION_ERROR: getGoogleElevationData - HTTP ${response.status}`);
+    throw new Error(`Elevation service returned HTTP ${response.status}. Please try again in a moment.`);
   }
 
   let data;
   try {
     data = await response.json();
   } catch (jsonError: unknown) {
-    const errorMessage = jsonError instanceof Error ? jsonError.message : String(jsonError);
-    console.error("ACTION_ERROR: getGoogleElevationData - Failed to parse JSON response from Google Elevation API:", errorMessage);
-    throw new Error(`Failed to parse response from Google Elevation API: ${errorMessage}`);
+    console.error("ACTION_ERROR: getGoogleElevationData - JSON parse failed:", jsonError);
+    throw new Error("Received invalid data from the elevation service. Please try again.");
+  }
+
+  if (data.status === 'OVER_QUERY_LIMIT') {
+    throw new Error("Elevation API rate limit exceeded. Please wait 30 seconds and try again.");
+  }
+
+  if (data.status === 'REQUEST_DENIED') {
+    throw new Error("Elevation API access denied. This is a server configuration issue \u2014 please contact support.");
   }
 
   if (data.status !== 'OK') {
     console.error(`ACTION_ERROR: getGoogleElevationData - Google Elevation API error status '${data.status}':`, data.error_message);
-    throw new Error(`Google Elevation API error: ${data.status} - ${data.error_message || 'Unknown API error'}`);
+    throw new Error(`Elevation service error: ${data.status}. ${data.error_message || 'Please try again.'}`);
   }
 
   if (!data.results || data.results.length === 0) {
-    console.error("ACTION_ERROR: getGoogleElevationData - Google Elevation API returned no results for the given path.");
-    throw new Error("Google Elevation API returned no results for the given path. Check coordinates.");
+    throw new Error("No elevation data returned for this path. The points may be over ocean or in an unsupported area.");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.results.map((sample: any) => ({
       elevation: sample.elevation,
       location: {
@@ -106,8 +106,10 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
 
 
 export async function performLosAnalysis(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   prevState: AnalysisResult | { error: string; fieldErrors?: any } | null,
   formData: FormData
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<AnalysisResult | { error: string; fieldErrors?: any }> {
   try {
     const rawFormData = {
@@ -130,7 +132,7 @@ export async function performLosAnalysis(
 
     if (!validationResult.success) {
       const flattenedErrors = validationResult.error.flatten();
-      let finalErrorMessage = "Input validation failed. Please check the fields.";
+      const finalErrorMessage = "Input validation failed. Please check the fields.";
       console.error("ACTION_ERROR: performLosAnalysis - Server-side Zod validation failed:", flattenedErrors);
       return { error: finalErrorMessage, fieldErrors: flattenedErrors.fieldErrors };
     }
@@ -197,6 +199,7 @@ export async function generateSingleAnalysisPdfReportAction(
 }
 
 const FiberReportParamsSchema = z.object({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fiberPathResult: z.custom<FiberPathResult>((val) => val !== null && typeof val === 'object' && 'status' in (val as any), {
     message: "Valid FiberPathResult object is required."
   }),
@@ -264,6 +267,7 @@ export async function generateFiberReportAction(
 // Schema for KMZ generation parameters for a single fiber path
 const SingleFiberPathKmzParamsSchema = z.object({
   fiberPathResult: z.custom<FiberPathResult>((val) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (val === null || typeof val !== 'object' || !('status' in (val as any))) {
       return false;
     }

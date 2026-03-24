@@ -2,10 +2,10 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { GoogleMap, Marker, Polyline, OverlayView } from '@react-google-maps/api';
-import { Loader2, MapPin, ZoomIn, ZoomOut, Globe, Satellite } from 'lucide-react';
+import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
+import { ZoomIn, ZoomOut, Globe, Satellite } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult } from '@/types';
-import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
+import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
 import { decodePolyline } from '@/lib/polyline-decoder';
@@ -102,6 +102,20 @@ function InteractiveMapInner({
 
   const losPolylineRef = useRef<google.maps.Polyline | null>(null);
   const fiberPolylinesRef = useRef<google.maps.Polyline[]>([]);
+  const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isFlashing, setIsFlashing] = useState(false);
+  
+  useEffect(() => {
+    // Flash polyline strictly on result change
+    if (analysisResult) {
+      setIsFlashing(true);
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+      flashTimeoutRef.current = setTimeout(() => setIsFlashing(false), 300);
+    }
+    return () => {
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    }
+  }, [analysisResult]);
 
   const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapApiLoaded), [isMapApiLoaded]);
   const markerIconB = React.useMemo(() => getCustomMarkerIcon("B", isMapApiLoaded), [isMapApiLoaded]);
@@ -173,11 +187,11 @@ function InteractiveMapInner({
   }, [formPointA, formPointB, isMapApiLoaded, fiberPathResult]);
 
 
-  const losPolylineColor = () => {
+  const losPolylineColor = useCallback(() => {
     if (isStale) return LOS_POLYLINE_COLORS.stale;
     if (!analysisResult) return LOS_POLYLINE_COLORS.default;
     return analysisResult.losPossible ? LOS_POLYLINE_COLORS.feasible : LOS_POLYLINE_COLORS.notFeasible;
-  };
+  }, [isStale, analysisResult]);
 
   const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
   const pALng = typeof formPointA?.lng === 'number' ? formPointA.lng : undefined;
@@ -191,15 +205,10 @@ function InteractiveMapInner({
 
   let fiberPathLabelMidPoint: PointCoordinates | null = null;
   if (isMapApiLoaded && fiberPathResult?.status === 'success' && fiberPathResult.segments && fiberPathResult.segments.length > 0) {
-    let longestRoadSegment: FiberPathSegment | null = null;
-    let maxDistance = 0;
-
-    fiberPathResult.segments.forEach(segment => {
-      if (segment.type === 'road_route' && segment.pathPolyline && segment.distanceMeters > maxDistance) {
-        maxDistance = segment.distanceMeters;
-        longestRoadSegment = segment;
-      }
-    });
+    const roadSegments = fiberPathResult.segments.filter(s => s.type === 'road_route' && s.pathPolyline);
+    const longestRoadSegment = roadSegments.length > 0
+      ? roadSegments.reduce((prev, curr) => curr.distanceMeters > prev.distanceMeters ? curr : prev)
+      : null;
 
     if (longestRoadSegment && longestRoadSegment.pathPolyline) {
       const decoded = decodePolyline(longestRoadSegment.pathPolyline);
@@ -236,8 +245,8 @@ function InteractiveMapInner({
       losPolylineRef.current = new google.maps.Polyline({
         path: [{ lat: pALat, lng: pALng }, { lat: pBLat, lng: pBLng }],
         strokeColor: losPolylineColor(),
-        strokeOpacity: isStale ? 0.8 : 0.9,
-        strokeWeight: isStale ? 3.5 : 4,
+        strokeOpacity: isStale ? 0.8 : (isFlashing ? 1 : 0.9),
+        strokeWeight: isStale ? 3.5 : (isFlashing ? 6 : 4),
         geodesic: true,
         zIndex: 1,
       });
@@ -272,7 +281,7 @@ function InteractiveMapInner({
 
     return cleanupPolylines;
 
-  }, [analysisResult, fiberPathResult, isStale, isMapApiLoaded, pALat, pALng, pBLat, pBLng]);
+  }, [analysisResult, fiberPathResult, isStale, isFlashing, isMapApiLoaded, pALat, pALng, pBLat, pBLng, losPolylineColor]);
 
   const handleZoomIn = () => {
     if (!mapRef.current) return;
@@ -373,13 +382,21 @@ function InteractiveMapInner({
         )}
       </GoogleMap>
       
+      {/* Next Click Indicator overlay */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-medium text-foreground border border-border/50 transition-opacity duration-200 shadow-sm pointer-events-none shadow-md">
+        Click map to place <span className="text-primary font-bold">
+          {currentMapClickTarget === 'pointA' ? 'Site A' : 'Site B'}
+        </span>
+      </div>
+
       {/* Custom Map Controls */}
       <div className="absolute top-2 right-2 flex flex-col gap-1.5">
         <Button
           size="sm"
           variant={mapTypeId === 'satellite' ? 'default' : 'secondary'}
           onClick={() => handleMapTypeChange('satellite')}
-          className="shadow-md h-8 px-2.5"
+          className="shadow-md h-11 w-11 px-0 min-w-[44px] min-h-[44px] rounded-md"
+          aria-label="Switch to satellite view"
         >
           <Satellite className="h-4 w-4" />
         </Button>
@@ -387,35 +404,48 @@ function InteractiveMapInner({
           size="sm"
           variant={mapTypeId === 'roadmap' ? 'default' : 'secondary'}
           onClick={() => handleMapTypeChange('roadmap')}
-          className="shadow-md h-8 px-2.5"
+          className="shadow-md h-11 w-11 px-0 min-w-[44px] min-h-[44px] rounded-md"
+          aria-label="Switch to road map view"
         >
           <Globe className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="absolute bottom-20 right-2 flex flex-col gap-1">
-        <Button size="icon" variant="secondary" onClick={handleZoomIn} className="shadow-md h-9 w-9">
+      <div className="absolute bottom-28 md:bottom-20 right-2 flex flex-col gap-1.5">
+        <Button size="icon" variant="secondary" onClick={handleZoomIn} className="shadow-md h-11 w-11 min-w-[44px] min-h-[44px] rounded-md" aria-label="Zoom in">
           <ZoomIn className="h-5 w-5" />
-          <span className="sr-only">Zoom In</span>
         </Button>
-        <Button size="icon" variant="secondary" onClick={handleZoomOut} className="shadow-md h-9 w-9">
+        <Button size="icon" variant="secondary" onClick={handleZoomOut} className="shadow-md h-11 w-11 min-w-[44px] min-h-[44px] rounded-md" aria-label="Zoom out">
           <ZoomOut className="h-5 w-5" />
-          <span className="sr-only">Zoom Out</span>
         </Button>
       </div>
     </div>
   );
 }
 
-export default function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }: InteractiveMapProps) {
+const InteractiveMap = React.memo(function InteractiveMap({ mapContainerClassName = "w-full h-full", ...props }: InteractiveMapProps) {
   return (
     <div className={cn(mapContainerClassName)}>
       <GoogleMapsScriptGuard
         loadingMessage="Initializing Main Map..."
-        errorMessage="Error loading Main Map."
+        errorMessagePrefix="Error loading Main Map."
       >
         <InteractiveMapInner {...props} />
       </GoogleMapsScriptGuard>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  if (prevProps.isStale !== nextProps.isStale) return false;
+  if (prevProps.currentDistanceKm !== nextProps.currentDistanceKm) return false;
+  if (prevProps.analysisResult !== nextProps.analysisResult) return false;
+  if (prevProps.fiberPathResult !== nextProps.fiberPathResult) return false;
+  if (prevProps.pointA?.lat !== nextProps.pointA?.lat) return false;
+  if (prevProps.pointA?.lng !== nextProps.pointA?.lng) return false;
+  if (prevProps.pointA?.name !== nextProps.pointA?.name) return false;
+  if (prevProps.pointB?.lat !== nextProps.pointB?.lat) return false;
+  if (prevProps.pointB?.lng !== nextProps.pointB?.lng) return false;
+  if (prevProps.pointB?.name !== nextProps.pointB?.name) return false;
+  return true;
+});
+
+export default InteractiveMap;

@@ -1,6 +1,7 @@
 
 "use client";
 
+import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -21,7 +22,7 @@ interface AnalysisSettingsProps {
   isPending: boolean;
 }
 
-export function AnalysisSettings({
+export const AnalysisSettings = React.memo(function AnalysisSettings({
   isFiberPathEnabled, onToggleFiberPath, snapRadius, onSnapRadiusChange,
   onApplySnapRadius, clearanceThreshold, onClearanceThresholdChange, isPending
 }: AnalysisSettingsProps) {
@@ -38,7 +39,7 @@ export function AnalysisSettings({
           <Settings className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" side="top" align="start">
+      <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" side="top" align="start">
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Analysis Parameters</h4>
@@ -110,5 +111,5 @@ export function AnalysisSettings({
       </PopoverContent>
     </Popover>
     </TooltipProvider>
-  )
-}
+  );
+});

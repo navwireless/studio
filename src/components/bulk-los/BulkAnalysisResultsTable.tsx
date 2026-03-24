@@ -4,7 +4,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableCaption } from '@/components/ui/table';
-import type { BulkAnalysisResultItem, BulkAnalysisFormValues } from '@/app/bulk-los-analyzer/page';
+import type { BulkAnalysisFormValues } from '@/app/bulk-los-analyzer/page';
+import type { BulkAnalysisResultItem } from '@/types';
 import { cn } from '@/lib/utils';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator'; // For FiberPathStatus type
 
@@ -31,7 +32,7 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
       case 'radius_too_small': return 'Snap Radius Too Small';
       case 'api_error': return 'API Error';
       case 'input_error': return 'Input Error';
-      default: return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      default: return (status as string).replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
     }
   };
 
@@ -109,6 +110,7 @@ const BulkAnalysisResultsTable: React.FC<{ results: BulkAnalysisResultItem[]; an
           <TableCaption>
             Showing {results.length} processed pairs. 
             LOS Params - Tower: {analysisParams.globalTowerHeight}m, Fresnel: {analysisParams.globalFresnelHeight}m.
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {hasFiberData && ` Fiber Snap Radius: ${results.find(r => r.pointA && r.pointB)?.pointA.name && results.find(r => r.pointA && r.pointB)?.pointB.name ? (results.find(r => r.fiberPathStatus !== undefined)?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters !== undefined ? (results.find(r => r.fiberPathStatus !== undefined) as BulkAnalysisResultItem & { fiberPathSegments: any[] })?.fiberPathSegments?.find((s: any) => s.type === 'offset_a')?.distanceMeters : analysisParams.losCheckRadiusKm.toString()) : 'N/A'}m.`}
           </TableCaption>
         </Table>

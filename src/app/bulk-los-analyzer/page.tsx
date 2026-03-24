@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 // Removed dynamic import for BulkAnalysisMap
 import BulkAnalysisMap from '@/components/bulk-los/BulkAnalysisMap';
 import { useForm } from 'react-hook-form';
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import type { KmzPlacemark } from '@/lib/kmz-parser';
 import { calculateDistanceKm, analyzeLOS } from '@/lib/los-calculator';
-import type { AnalysisParams, LOSPoint, PointCoordinates, ElevationSampleAPI } from '@/types';
+import type { AnalysisParams, ElevationSampleAPI, BulkAnalysisResultItem } from '@/types';
 import { getElevationProfileForPairAction } from './actions';
 import AppHeader from '@/components/layout/app-header';
 
@@ -24,8 +24,11 @@ import BulkAnalysisAnalytics from '@/components/bulk-los/BulkAnalysisAnalytics';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
 
+import { ErrorBoundary } from '@/components/error-boundary';
+import { MapErrorBoundary } from '@/components/map-error-boundary';
+
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
-import type { FiberPathResult, FiberPathSegment } from '@/tools/fiberPathCalculator';
+// import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,32 +46,6 @@ const BulkAnalysisFormSchema = z.object({
 });
 
 export type BulkAnalysisFormValues = z.infer<typeof BulkAnalysisFormSchema>;
-
-export interface BulkAnalysisResultItem {
-  id: string;
-  pointAName: string;
-  pointACoords: string; 
-  pointBName: string;
-  pointBCoords: string; 
-  towerHeightUsed: number;
-  fresnelHeightUsed: number;
-  aerialDistanceKm: number;
-  losPossible: boolean;
-  minClearanceActual: number | null;
-  additionalHeightNeeded: number | null;
-  remarks: string;
-  pointA: PointCoordinates & { name: string; towerHeight: number };
-  pointB: PointCoordinates & { name: string; towerHeight: number };
-  profile?: LOSPoint[];
-  // Fiber Path related fields
-  fiberPathStatus?: FiberPathResult['status'] | null;
-  fiberPathTotalDistanceMeters?: number | null;
-  fiberPathErrorMessage?: string | null;
-  fiberPathSegments?: FiberPathSegment[] | null;
-  // Fields for KMZ path reconstruction for fiber, if snapped points are different
-  pointA_snappedToRoad?: PointCoordinates;
-  pointB_snappedToRoad?: PointCoordinates;
-}
 
 const LoginSchema = z.object({
     email: z.string().email({ message: "Invalid email address." }),
@@ -218,7 +195,7 @@ export default function BulkLosAnalyzerPage() {
       return;
     }
 
-    let tempResults: BulkAnalysisResultItem[] = [];
+    const tempResults: BulkAnalysisResultItem[] = [];
     const totalPairs = pairsToAnalyze.length;
 
     // Phase 1: LOS Analysis
@@ -440,8 +417,9 @@ export default function BulkLosAnalyzerPage() {
   return (
     <>
       <AppHeader currentPage="bulk" />
-      <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-hidden">
-        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
+      <ErrorBoundary>
+        <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-hidden">
+          <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
             <Card className="shadow-xl bg-card/90 backdrop-blur-sm flex flex-col overflow-hidden max-h-[calc(100vh-theme(spacing.24))] overflow-y-auto custom-scrollbar">
                 <CardHeader>
                     <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
@@ -485,7 +463,9 @@ export default function BulkLosAnalyzerPage() {
                         <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6 min-h-[50vh]">
                             <Separator className="my-4 xl:col-span-2" />
                             <h3 className="text-lg font-semibold mb-2 xl:col-span-2">Visualizations & Analytics</h3>
-                            <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
+                            <MapErrorBoundary>
+                              <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
+                            </MapErrorBoundary>
                             <BulkAnalysisAnalytics results={bulkResults} />
                         </div>
                     )}
@@ -498,8 +478,9 @@ export default function BulkLosAnalyzerPage() {
                     )}
                 </CardContent>
             </Card>
+          </div>
         </div>
-      </div>
+      </ErrorBoundary>
     </>
   );
 }

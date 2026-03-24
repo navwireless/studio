@@ -7,7 +7,8 @@
 'use server'; 
 
 import { Client, DirectionsRequest, TravelMode, UnitSystem } from "@googlemaps/google-maps-services-js";
-import type { PointCoordinates, FiberCalculatorParams, FiberPathResult, FiberPathSegment } from './types';
+import type { PointCoordinates } from '@/types';
+import type { FiberCalculatorParams, FiberPathResult, FiberPathSegment } from './types';
 import { calculateDistanceKm } from '@/lib/los-calculator'; // For Haversine distance
 
 const GOOGLE_DIRECTIONS_API_KEY = process.env.GOOGLE_DIRECTIONS_API_KEY;
@@ -79,9 +80,22 @@ async function findNearestRoadPointWithOffset(
       console.warn(`FIBER_TOOL_WARNING: Directions API status not OK for snapping point ${point.lat},${point.lng}: ${response.data.status}. Error: ${response.data.error_message}`);
       return null;
     }
-  } catch (error: any) {
-    console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road snapping (point: ${point.lat},${point.lng}):`, error.response?.data || error.message);
-    throw new Error(`Google Directions API error during road snapping: ${error.response?.data?.error_message || error.message}`);
+  } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).response?.data?.status === 'OVER_QUERY_LIMIT') {
+      throw new Error('Road network API rate limit exceeded. Please wait and retry.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).response?.data?.status === 'REQUEST_DENIED') {
+      throw new Error('Road network API access denied. Server configuration issue.');
+    }
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).code === 'ENOTFOUND' || (error as any).code === 'ECONNREFUSED' || !(error as any).response) {
+      throw new Error('Unable to reach road network service. Check your connection.');
+    }
+    console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road snapping (point: ${point.lat},${point.lng}):`, errorMessage);
+    throw new Error(`Google Directions API error during road snapping: ${errorMessage}`);
   }
 }
 
@@ -147,9 +161,22 @@ async function getRoadRoute(
         console.warn(`FIBER_TOOL_WARNING: Directions API status not OK for routing: ${response.data.status}. Error: ${response.data.error_message}`);
         return null;
     }
-  } catch (error: any) {
-    console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road routing (origin: ${origin.lat},${origin.lng}, dest: ${destination.lat},${destination.lng}):`, error.response?.data || error.message);
-    throw new Error(`Google Directions API error during road routing: ${error.response?.data?.error_message || error.message}`);
+  } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).response?.data?.status === 'OVER_QUERY_LIMIT') {
+      throw new Error('Road network API rate limit exceeded. Please wait and retry.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).response?.data?.status === 'REQUEST_DENIED') {
+      throw new Error('Road network API access denied. Server configuration issue.');
+    }
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).code === 'ENOTFOUND' || (error as any).code === 'ECONNREFUSED' || !(error as any).response) {
+      throw new Error('Unable to reach road network service. Check your connection.');
+    }
+    console.error(`FIBER_TOOL_ERROR: Error calling Google Directions API for road routing (origin: ${origin.lat},${origin.lng}, dest: ${destination.lat},${destination.lng}):`, errorMessage);
+    throw new Error(`Google Directions API error during road routing: ${errorMessage}`);
   }
 }
 
@@ -260,12 +287,12 @@ export async function calculateFiberPath(params: FiberCalculatorParams): Promise
       segments,
     };
 
-  } catch (error: any) {
-    console.error("FIBER_TOOL_ERROR: Unhandled exception in calculateFiberPath:", error);
+  } catch (error: unknown) { // eslint-disable-line @typescript-eslint/no-explicit-any -- Catching dynamic Google API error shapes
+    console.error("FIBER_TOOL_ERROR: General error during calculateFiberPath:", error);
     return {
       ...baseResult,
       status: 'api_error',
-      errorMessage: error.message || 'An unknown error occurred during fiber path calculation.',
+      errorMessage: error instanceof Error ? error.message : 'An unknown error occurred during fiber path calculation.',
     };
   }
 }

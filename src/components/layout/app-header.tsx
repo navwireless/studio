@@ -33,11 +33,11 @@ export default function AppHeader({
               className="object-contain cursor-pointer bg-white rounded-full p-1"
           />
         </Link>
-        <h1 className="text-lg sm:text-xl font-bold tracking-wider text-slate-100/90">
+        <h1 className="text-base sm:text-xl font-bold tracking-wider text-slate-100/90 truncate max-w-[140px] sm:max-w-none hidden xs:block">
           LiFi Link Pro
         </h1>
       </div>
-      <nav className="flex items-center gap-1 sm:gap-2">
+      <nav className="flex items-center gap-0.5 sm:gap-2">
         {currentPage !== 'home' && (
           <Link href="/" passHref legacyBehavior>
             <Button variant="ghost" size="sm" aria-label="Go to Single Link Analysis">

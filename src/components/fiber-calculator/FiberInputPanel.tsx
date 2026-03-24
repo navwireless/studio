@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Cable, Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin, Download, Loader2, FileArchive, Check } from 'lucide-react'; // Added Check
+import { Route, AlertTriangle, CheckCircle, XCircle, Trash2, HelpCircle, Sparkles, MapPin, Download, Loader2, FileArchive, Check } from 'lucide-react'; // Added Check
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast'; // Added useToast
@@ -21,7 +21,7 @@ interface SiteInputGroupFCProps {
   control: Control<FiberCalculatorFormValues>;
   register: UseFormRegister<FiberCalculatorFormValues>;
   clientFormErrors: FieldErrors<FiberCalculatorFormValues>;
-  getCombinedError: (clientError: any) => string | undefined;
+  getCombinedError: (clientError?: { message?: string }) => string | undefined;
 }
 
 const SiteInputGroupFC: React.FC<SiteInputGroupFCProps> = ({
@@ -127,7 +127,7 @@ export default function FiberInputPanel({
     return clientFieldError?.message;
   };
 
-  // Handler for the "Apply" button next to the snap radius input
+  // Handler for the &quot;Apply&quot; button next to the snap radius input
   const handleApplySnapRadiusAndRecalculate = () => {
     const newRadiusNum = parseInt(localSnapRadiusInput, 10);
     // Validate the locally entered radius
@@ -158,7 +158,7 @@ export default function FiberInputPanel({
       case 'radius_too_small': return 'Snap Radius Too Small For One or Both Points';
       case 'api_error': return 'API Communication Error';
       case 'input_error': return 'Invalid Input Provided';
-      default: return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      default: return (status as string).replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
     }
   };
 
@@ -240,7 +240,7 @@ export default function FiberInputPanel({
                     <TooltipContent side="top" className="max-w-xs text-xs p-2 bg-popover text-popover-foreground border border-border shadow-lg">
                         Max distance from each site (A or B) to search for a road.
                         If a road is found further than this radius, calculation for that point might fail.
-                        (e.g., 500 for 500m). Click "Apply" to use the new radius for calculation.
+                        (e.g., 500 for 500m). Click &quot;Apply&quot; to use the new radius for calculation.
                     </TooltipContent>
                 </Tooltip>
               </div>
@@ -260,7 +260,7 @@ export default function FiberInputPanel({
                   onClick={handleApplySnapRadiusAndRecalculate}
                   disabled={anyOperationPending || localSnapRadiusInput === formSnapRadius.toString()} // Disable if no change or processing
                   size="sm"
-                  className="h-9 px-3" // Adjusted padding for "Apply"
+                  className="h-9 px-3" // Adjusted padding for &quot;Apply&quot;
                   variant="outline"
                 >
                   <Check className="h-4 w-4 sm:mr-1.5" /> <span className="hidden sm:inline">Apply</span>
@@ -348,7 +348,7 @@ export default function FiberInputPanel({
                        )}>
                         {fiberPathResult.errorMessage}
                         {(fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') &&
-                         <span className="block text-xs text-amber-300/80 mt-0.5"> Consider increasing the Snap Radius and clicking "Apply".</span>
+                         <span className="block text-xs text-amber-300/80 mt-0.5"> Consider increasing the Snap Radius and clicking &quot;Apply&quot;.</span>
                         }
                          {fiberPathResult.status === 'no_route_between_roads' &&
                              <span className="block text-xs text-amber-300/80 mt-0.5"> The snapped road points for Site A and Site B may be on disconnected road networks.</span>

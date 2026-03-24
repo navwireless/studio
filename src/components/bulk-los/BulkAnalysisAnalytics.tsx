@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChartIcon, AlertTriangle } from 'lucide-react';
-import type { BulkAnalysisResultItem } from '@/app/bulk-los-analyzer/page';
+import type { BulkAnalysisResultItem } from '@/types';
 
 interface BulkAnalysisAnalyticsProps {
   results: BulkAnalysisResultItem[];
@@ -18,6 +18,7 @@ const COLORS = {
 };
 
 const RADIAN = Math.PI / 180;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }: any) => {
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -33,7 +34,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 
-const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }) => {
+const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = React.memo(function BulkAnalysisAnalytics({ results }) {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -113,8 +114,9 @@ const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }
                 dataKey="value"
                 nameKey="name"
               >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+              {/* eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */}
+                {pieData.map((entry, _index) => (
+                  <Cell key={`cell-${_index}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip 
@@ -141,8 +143,10 @@ const BulkAnalysisAnalytics: React.FC<BulkAnalysisAnalyticsProps> = ({ results }
       </CardContent>
     </Card>
   );
-};
+});
 
-export default BulkAnalysisAnalytics;
+const MemoizedBulkAnalysisAnalytics = React.memo(BulkAnalysisAnalytics);
+MemoizedBulkAnalysisAnalytics.displayName = "BulkAnalysisAnalytics";
+export default MemoizedBulkAnalysisAnalytics;
 
     

@@ -1,5 +1,4 @@
 
-
 export type PointCoordinates = {
   lat: number;
   lng: number;
@@ -52,13 +51,19 @@ export type AnalysisResult = {
   timestamp: number; // To sort or display history items
 };
 
-// Specific types for bulk analysis
+// ============================================
+// KMZ / Bulk Analysis Types
+// ============================================
+
 export type KmzPlacemark = {
   name: string;
   lat: number;
   lng: number;
   altitude?: number;
 };
+
+// Re-export fiber types for use in BulkAnalysisResultItem and consuming code
+export type { FiberPathSegment, FiberPathResult } from '@/tools/fiberPathCalculator/types';
 
 export interface BulkAnalysisResultItem {
   id: string;
@@ -76,5 +81,67 @@ export interface BulkAnalysisResultItem {
   // For KMZ export and detailed internal use
   pointA: PointCoordinates & { name: string; towerHeight: number };
   pointB: PointCoordinates & { name: string; towerHeight: number };
-  profile?: LOSPoint[]; 
+  profile?: LOSPoint[];
+  // Fiber Path related fields (consolidated from bulk-los-analyzer/page.tsx)
+  fiberPathStatus?: import('@/tools/fiberPathCalculator/types').FiberPathResult['status'] | null;
+  fiberPathTotalDistanceMeters?: number | null;
+  fiberPathErrorMessage?: string | null;
+  fiberPathSegments?: import('@/tools/fiberPathCalculator/types').FiberPathSegment[] | null;
+  // Fields for KMZ path reconstruction for fiber, if snapped points are different
+  pointA_snappedToRoad?: PointCoordinates;
+  pointB_snappedToRoad?: PointCoordinates;
+}
+
+// ============================================
+// User Authentication & Profile Types
+// (Used by NextAuth + Firestore integration in authOptions.ts)
+// ============================================
+
+export type Role = 'user' | 'admin' | 'viewer';
+
+export type ProPlanType = 'monthly' | 'yearly' | 'lifetime' | null;
+
+export interface UserCredits {
+  losAnalysis: number;
+  bulkAnalysis: number;
+}
+
+export interface DailyUsage {
+  date: string; // YYYY-MM-DD
+  losAnalysisCount: number;
+  bulkAnalysisCount: number;
+}
+
+export interface UserActionLog {
+  action: string;
+  timestamp: number;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Represents a Firestore-compatible Timestamp.
+ * Using a generic shape to avoid importing firebase-admin in shared types.
+ * At runtime, these are firebase-admin Timestamp instances from `firebase-admin/firestore`.
+ */
+export interface FirestoreTimestamp {
+  seconds: number;
+  nanoseconds: number;
+  toDate: () => Date;
+  toMillis: () => number;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string | null;
+  name: string | null;
+  photoURL: string | null;
+  role: Role;
+  proPlan: ProPlanType;
+  planExpiresAt: FirestoreTimestamp | null;
+  credits: UserCredits;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+  lastLoginAt: FirestoreTimestamp;
+  dailyUsage: DailyUsage;
+  userActionsCount: number;
 }

@@ -1,9 +1,9 @@
 
-import type { NextAuthOptions, User, Session, DefaultSession } from 'next-auth';
+import type { NextAuthOptions, DefaultSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { db, isAdminSDKInitialized } from '@/lib/firebaseAdmin'; // Use db() getter
-import { Timestamp, FieldValue } from 'firebase-admin/firestore';
-import type { UserProfile, Role, ProPlanType, UserActionLog } from '@/types';
+import { Timestamp } from 'firebase-admin/firestore';
+import type { UserProfile, Role, ProPlanType } from '@/types';
 
 // Define how the user profile from Firestore maps to the NextAuth User object
 // And how the session object should be structured
@@ -64,7 +64,8 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt', // Using JWT for session strategy
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async signIn({ user, account: _account, profile: _profile }) {
       if (!user.id || !user.email) {
         console.error('AUTH_SIGNIN_ERROR: User ID or email missing from provider response.');
         return false; // Deny sign-in
@@ -139,7 +140,8 @@ export const authOptions: NextAuthOptions = {
       }
     },
 
-    async jwt({ token, user, account, profile }) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async jwt({ token, user, account: _account, profile: _profile }) {
       // `user` is only passed on initial sign-in.
       // Persist user data like role and ID to the JWT token.
       if (user?.id) { // Successfully signed in (either new or existing user from signIn callback)

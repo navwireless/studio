@@ -41,7 +41,7 @@ export const GoogleMapsLoaderProvider: React.FC<GoogleMapsLoaderProviderProps> =
         } else {
           setError("Google Maps API key is not configured on the server. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your .env.local file.");
         }
-      } catch (e) {
+      } catch { // error intentionally ignored
         setError("Failed to fetch Google Maps API key from the server.");
       } finally {
         setIsLoading(false);

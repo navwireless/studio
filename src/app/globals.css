@@ -180,6 +180,13 @@ body {
     color: hsl(var(--los-failure-foreground));
 }
 
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-subtle-pulse {
+  animation: subtle-pulse 2s ease-in-out infinite;
+}
 
 /* Ensure ShadCN general accent uses our primary blue for dark theme */
 .dark {

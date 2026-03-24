@@ -7,7 +7,8 @@ import { Download, FileArchive } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { exportResultsToExcel, generateAndDownloadFeasibleLinksKmz, generateAndDownloadZipPackage } from '@/lib/export-utils';
-import type { BulkAnalysisResultItem, BulkAnalysisFormValues } from '@/app/bulk-los-analyzer/page';
+import type { BulkAnalysisFormValues } from '@/app/bulk-los-analyzer/page';
+import type { BulkAnalysisResultItem } from '@/types';
 import type { KmzPlacemark } from '@/lib/kmz-parser';
 
 interface BulkAnalysisDownloadsProps {

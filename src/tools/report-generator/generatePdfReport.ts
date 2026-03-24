@@ -1,7 +1,7 @@
 
 // src/tools/report-generator/generatePdfReport.ts
 import type { AnalysisResult } from '@/types';
-import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import type { ReportGenerationOptions } from './types';
 import { 
     addHeaderToPdfPage, 
@@ -26,6 +26,7 @@ export async function generatePdfReportForSingleAnalysis(
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     let page = pdfDoc.addPage();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { width, height } = page.getSize();
     
     const reportTitle = options?.reportTitle || DEFAULT_REPORT_TITLE;
@@ -43,7 +44,7 @@ export async function generatePdfReportForSingleAnalysis(
     const contentMargin = 50;
     const contentWidth = width - 2 * contentMargin;
     const regularFontSize = 10;
-    const smallFontSize = 8;
+    // const smallFontSize = 8; // Unused
     const lineHeight = 15;
     const sectionSpacing = 20;
 
@@ -68,7 +69,7 @@ export async function generatePdfReportForSingleAnalysis(
     currentY -= lineHeight * 1.5;
 
     const analysisData = formatAnalysisDataForReportTable(analysisResult);
-    const tableStartY = currentY;
+    // const tableStartY = currentY; // Unused
     const keyColumnWidth = 180;
     const valueColumnX = contentMargin + keyColumnWidth + 10;
 

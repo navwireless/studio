@@ -1,9 +1,9 @@
 
 // src/tools/report-generator/generateFiberPdfReport.ts
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
-import type { PointInput } from '@/lib/fiber-calculator-form-schema'; 
-import type { PointCoordinates } from '@/types';
-import { PDFDocument, rgb, StandardFonts, type PDFFont } from 'pdf-lib';
+// PointInput shape is defined inline in the function parameters below
+// PointCoordinates removed — unused
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import type { ReportGenerationOptions } from './types';
 import {
     addHeaderToPdfPage,
@@ -35,6 +35,7 @@ export async function generatePdfReportForFiberAnalysis(
     const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     let page = pdfDoc.addPage(); 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { width, height } = page.getSize(); // Get initial page dimensions
 
     const reportTitle = options?.reportTitle || DEFAULT_FIBER_REPORT_TITLE;

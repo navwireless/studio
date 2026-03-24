@@ -67,6 +67,7 @@ async function fetchElevationForPair(pointA: PointCoordinates, pointB: PointCoor
     throw new Error("Google Elevation API returned no results for the given path in bulk analysis. Check coordinates.");
   }
     
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.results.map((sample: any) => ({
       elevation: sample.elevation,
       location: {
