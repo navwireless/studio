@@ -51,6 +51,7 @@ export function useAnalysisState({
   const [historyList, setHistoryList] = useState<AnalysisResult[]>([]);
 
   const lastFormDataRef = React.useRef<FormData | null>(null);
+  const lastProcessedStateRef = React.useRef<unknown>(null);
 
   const wrappedFormAction = useCallback((formData: FormData) => {
     lastFormDataRef.current = formData;
@@ -69,7 +70,8 @@ export function useAnalysisState({
 
   // Process server action result
   useEffect(() => {
-    if (rawServerState === null) return;
+    if (rawServerState === null || rawServerState === lastProcessedStateRef.current) return;
+    lastProcessedStateRef.current = rawServerState;
 
     if (typeof rawServerState === 'object' && rawServerState !== null && 'error' in rawServerState && typeof rawServerState.error === 'string') {
       setAnalysisResult(null);

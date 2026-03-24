@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import AppHeader from '@/components/layout/app-header';
 import InteractiveMap from '@/components/fso/interactive-map';
+import type { PlacementMode } from '@/components/fso/map-toolbar';
 // import type { PointCoordinates } from '@/types';
 import { FiberCalculatorFormSchema, type FiberCalculatorFormValues, defaultFiberCalculatorFormValues } from '@/lib/fiber-calculator-form-schema';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +31,7 @@ export default function FiberCalculatorPage() {
   const [isGeneratingKmz, setIsGeneratingKmz] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
+  const [placementMode, setPlacementMode] = useState<PlacementMode>('A');
 
   const form = useForm<FiberCalculatorFormValues>({
     resolver: zodResolver(FiberCalculatorFormSchema),
@@ -203,6 +205,8 @@ export default function FiberCalculatorPage() {
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
       setFiberPathResult(null);
       setCalculationError(null);
+      // Auto-advance placement mode
+      setPlacementMode(pointId === 'pointA' ? 'B' : 'A');
     }
   }, [setValue]);
 
@@ -270,6 +274,7 @@ export default function FiberCalculatorPage() {
             <InteractiveMap
               pointA={mapPointA}
               pointB={mapPointB}
+              placementMode={placementMode}
               onMapClick={handleMapClick}
               onMarkerDrag={handleMarkerDrag}
               mapContainerClassName="w-full h-full"

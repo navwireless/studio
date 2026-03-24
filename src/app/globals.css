@@ -188,6 +188,33 @@ body {
   animation: subtle-pulse 2s ease-in-out infinite;
 }
 
+/* Animate-in utility for toolbar indicators */
+.animate-in {
+  animation: animate-in 200ms ease-out;
+}
+.fade-in {
+  --tw-enter-opacity: 0;
+}
+.slide-in-from-bottom-2 {
+  --tw-enter-translate-y: 0.5rem;
+}
+@keyframes animate-in {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translateY(var(--tw-enter-translate-y, 0));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Touch-safe targets - ensure 48px minimum for mobile */
+.touch-safe {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 /* Ensure ShadCN general accent uses our primary blue for dark theme */
 .dark {
     --accent: hsl(var(--primary)); 

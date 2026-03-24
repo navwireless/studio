@@ -6,14 +6,14 @@ import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
 import { ZoomIn, ZoomOut, Globe, Satellite } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult } from '@/types';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
+import type { PlacementMode } from './map-toolbar';
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
 import { decodePolyline } from '@/lib/polyline-decoder';
-import { Button } from '@/components/ui/button';
 
 const STYLES = {
-  mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/70 rounded-md shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+10px)] whitespace-nowrap w-max",
-  distanceOverlayLabelBase: "text-xs font-bold text-white rounded-md shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2 text-center px-2 py-1 w-max border border-black/20",
+  mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/80 rounded-lg shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+12px)] whitespace-nowrap w-max border border-slate-700/30",
+  distanceOverlayLabelBase: "text-xs font-bold text-white rounded-lg shadow-xl backdrop-blur-sm whitespace-nowrap transform -translate-x-1/2 -translate-y-1/2 text-center px-2.5 py-1 w-max border border-black/20",
   distanceOverlayLabelLOS: "bg-green-600/90",
   distanceOverlayLabelFiber: "bg-blue-600/90",
 };
@@ -21,6 +21,7 @@ const STYLES = {
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { name?: string });
   pointB?: (PointCoordinates & { name?: string });
+  placementMode?: PlacementMode;
   onMapClick?: (event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => void;
   onMarkerDrag?: (event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => void;
   mapContainerClassName?: string;
@@ -30,24 +31,21 @@ interface InteractiveMapProps {
   fiberPathResult?: FiberPathResult | null;
 }
 
-const defaultCenter = {
-  lat: 20.5937,
-  lng: 78.9629,
-};
+const defaultCenter = { lat: 20.5937, lng: 78.9629 };
 const defaultZoom = 5;
 
 const getSiteNameLabelOffset = (width: number, height: number) => ({
   x: -(width / 2),
-  y: -(height + 10),
+  y: -(height + 12),
 });
 
 const getPathDistanceLabelOffset = (width: number, height: number) => ({
-    x: 0, 
-    y: -(height / 2) - 5,
+  x: 0,
+  y: -(height / 2) - 5,
 });
 
 const getCustomMarkerIcon = (label: string, isMapApiLoaded: boolean) => {
-  if (isMapApiLoaded && typeof window !== 'undefined' && window.google && window.google.maps) {
+  if (isMapApiLoaded && typeof window !== 'undefined' && window.google?.maps) {
     return {
       path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       fillColor: '#FFEE58',
@@ -71,23 +69,14 @@ const LOS_POLYLINE_COLORS = {
 };
 
 const FIBER_POLYLINE_STYLES = {
-  offset: {
-    strokeColor: '#FF9800',
-    strokeOpacity: 0.9,
-    strokeWeight: 3,
-    zIndex: 2,
-  },
-  roadRoute: {
-    strokeColor: '#2196F3',
-    strokeOpacity: 0.8,
-    strokeWeight: 4,
-    zIndex: 2,
-  },
+  offset: { strokeColor: '#FF9800', strokeOpacity: 0.9, strokeWeight: 3, zIndex: 2 },
+  roadRoute: { strokeColor: '#2196F3', strokeOpacity: 0.8, strokeWeight: 4, zIndex: 2 },
 };
 
 function InteractiveMapInner({
   pointA: formPointA,
   pointB: formPointB,
+  placementMode,
   onMapClick,
   onMarkerDrag,
   analysisResult,
@@ -96,7 +85,6 @@ function InteractiveMapInner({
   fiberPathResult,
 }: Omit<InteractiveMapProps, 'mapContainerClassName'>) {
   const mapRef = useRef<google.maps.Map | null>(null);
-  const [currentMapClickTarget, setCurrentMapClickTarget] = useState<'pointA' | 'pointB'>('pointA');
   const [mapTypeId, setMapTypeId] = useState<"roadmap" | "satellite">("satellite");
   const { isLoaded: isMapApiLoaded } = useGoogleMapsLoader();
 
@@ -104,17 +92,14 @@ function InteractiveMapInner({
   const fiberPolylinesRef = useRef<google.maps.Polyline[]>([]);
   const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
-  
+
   useEffect(() => {
-    // Flash polyline strictly on result change
     if (analysisResult) {
       setIsFlashing(true);
       if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
       flashTimeoutRef.current = setTimeout(() => setIsFlashing(false), 300);
     }
-    return () => {
-      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
-    }
+    return () => { if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current); };
   }, [analysisResult]);
 
   const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapApiLoaded), [isMapApiLoaded]);
@@ -122,12 +107,11 @@ function InteractiveMapInner({
 
   const handleActualMapLoad = useCallback((mapInstance: google.maps.Map) => {
     mapRef.current = mapInstance;
-    if (window.google && window.google.maps) {
+    if (window.google?.maps) {
       mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
       mapInstance.setOptions({
-        gestureHandling: 'cooperative',
+        gestureHandling: 'greedy', // Better mobile UX - no two-finger required
         clickableIcons: false,
-        // Disable all default controls
         mapTypeControl: false,
         zoomControl: false,
         streetViewControl: false,
@@ -136,28 +120,37 @@ function InteractiveMapInner({
     }
   }, []);
 
-  const handleMapUnmount = useCallback(() => {
-    mapRef.current = null;
-  }, []);
+  const handleMapUnmount = useCallback(() => { mapRef.current = null; }, []);
 
+  // Only process map clicks when in placement mode
   const handleInternalMapClick = useCallback((event: google.maps.MapMouseEvent) => {
-    if (onMapClick) {
-      onMapClick(event, currentMapClickTarget);
-      setCurrentMapClickTarget(prev => prev === 'pointA' ? 'pointB' : 'pointA');
+    if (!onMapClick) return;
+    // If placementMode is explicitly provided, only allow clicks in A or B mode
+    // If placementMode is undefined (e.g. fiber calculator), allow direct clicks with pointA target
+    if (placementMode === null) return;
+    const pointId = placementMode === 'B' ? 'pointB' : 'pointA';
+    onMapClick(event, pointId);
+    // Haptic feedback on mobile
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(30);
     }
-  }, [onMapClick, currentMapClickTarget]);
+  }, [onMapClick, placementMode]);
 
+  // Fit bounds when points change
   useEffect(() => {
-    if (isMapApiLoaded && mapRef.current && formPointA && formPointB && typeof formPointA.lat === 'number' && typeof formPointA.lng === 'number' && typeof formPointB.lat === 'number' && typeof formPointB.lng === 'number') {
+    if (isMapApiLoaded && mapRef.current && formPointA && formPointB &&
+      typeof formPointA.lat === 'number' && typeof formPointA.lng === 'number' &&
+      typeof formPointB.lat === 'number' && typeof formPointB.lng === 'number') {
       const bounds = new window.google.maps.LatLngBounds();
       bounds.extend(new window.google.maps.LatLng(formPointA.lat, formPointA.lng));
       bounds.extend(new window.google.maps.LatLng(formPointB.lat, formPointB.lng));
 
-      if (fiberPathResult && fiberPathResult.status === 'success' && fiberPathResult.segments) {
+      if (fiberPathResult?.status === 'success' && fiberPathResult.segments) {
         fiberPathResult.segments.forEach(segment => {
           if (segment.type === 'road_route' && segment.pathPolyline && google.maps.geometry?.encoding) {
-            const decodedPath = decodePolyline(segment.pathPolyline);
-            decodedPath.forEach(p => bounds.extend(new window.google.maps.LatLng(p[0], p[1])));
+            decodePolyline(segment.pathPolyline).forEach(p =>
+              bounds.extend(new window.google.maps.LatLng(p[0], p[1]))
+            );
           } else {
             bounds.extend(new window.google.maps.LatLng(segment.startPoint.lat, segment.startPoint.lng));
             bounds.extend(new window.google.maps.LatLng(segment.endPoint.lat, segment.endPoint.lng));
@@ -168,24 +161,17 @@ function InteractiveMapInner({
       if (!bounds.isEmpty()) {
         mapRef.current.fitBounds(bounds, 75);
         const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'idle', () => {
-          if (mapRef.current?.getZoom() && mapRef.current.getZoom()! > 17) {
-            mapRef.current.setZoom(17);
-          } else if (mapRef.current?.getZoom() && mapRef.current.getZoom()! < 3) {
-             mapRef.current.setZoom(3);
-          }
+          const currentZoom = mapRef.current?.getZoom() ?? 10;
+          if (currentZoom > 17) mapRef.current?.setZoom(17);
+          else if (currentZoom < 3) mapRef.current?.setZoom(3);
         });
-         return () => {
-           if (listener && window.google && window.google.maps) {
-              window.google.maps.event.removeListener(listener);
-           }
-         };
+        return () => { if (listener && window.google?.maps) window.google.maps.event.removeListener(listener); };
       }
     } else if (isMapApiLoaded && mapRef.current && (!formPointA?.lat || !formPointB?.lat)) {
-        mapRef.current.setCenter(defaultCenter);
-        mapRef.current.setZoom(defaultZoom);
+      mapRef.current.setCenter(defaultCenter);
+      mapRef.current.setZoom(defaultZoom);
     }
   }, [formPointA, formPointB, isMapApiLoaded, fiberPathResult]);
-
 
   const losPolylineColor = useCallback(() => {
     if (isStale) return LOS_POLYLINE_COLORS.stale;
@@ -210,35 +196,31 @@ function InteractiveMapInner({
       ? roadSegments.reduce((prev, curr) => curr.distanceMeters > prev.distanceMeters ? curr : prev)
       : null;
 
-    if (longestRoadSegment && longestRoadSegment.pathPolyline) {
+    if (longestRoadSegment?.pathPolyline) {
       const decoded = decodePolyline(longestRoadSegment.pathPolyline);
       if (decoded.length > 0) {
         const midIndex = Math.floor(decoded.length / 2);
         fiberPathLabelMidPoint = { lat: decoded[midIndex][0], lng: decoded[midIndex][1] };
       }
     } else if (fiberPathResult.pointA_snappedToRoad && fiberPathResult.pointB_snappedToRoad) {
-        fiberPathLabelMidPoint = {
-            lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
-            lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2,
-        };
+      fiberPathLabelMidPoint = {
+        lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2,
+        lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2,
+      };
     } else if (losMidPoint) {
-        fiberPathLabelMidPoint = losMidPoint;
+      fiberPathLabelMidPoint = losMidPoint;
     }
   }
 
+  // Draw/update polylines
   useEffect(() => {
     if (!isMapApiLoaded || !mapRef.current) return;
     const map = mapRef.current;
-
     const cleanupPolylines = () => {
-        if (losPolylineRef.current) {
-            losPolylineRef.current.setMap(null);
-            losPolylineRef.current = null;
-        }
-        fiberPolylinesRef.current.forEach(p => p.setMap(null));
-        fiberPolylinesRef.current = [];
+      if (losPolylineRef.current) { losPolylineRef.current.setMap(null); losPolylineRef.current = null; }
+      fiberPolylinesRef.current.forEach(p => p.setMap(null));
+      fiberPolylinesRef.current = [];
     };
-
     cleanupPolylines();
 
     if (pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined) {
@@ -254,60 +236,41 @@ function InteractiveMapInner({
     }
 
     if (fiberPathResult?.status === 'success' && fiberPathResult.segments) {
-        const newFiberPolylines: google.maps.Polyline[] = [];
-        fiberPathResult.segments.forEach((segment) => {
-            let pathCoords: google.maps.LatLngLiteral[] = [];
-            let segmentOptions: google.maps.PolylineOptions = {};
-
-            if (segment.type === 'offset_a' || segment.type === 'offset_b') {
-                pathCoords = [
-                    { lat: segment.startPoint.lat, lng: segment.startPoint.lng },
-                    { lat: segment.endPoint.lat, lng: segment.endPoint.lng },
-                ];
-                segmentOptions = FIBER_POLYLINE_STYLES.offset;
-            } else if (segment.type === 'road_route' && segment.pathPolyline) {
-                const decoded = decodePolyline(segment.pathPolyline);
-                pathCoords = decoded.map(p => ({ lat: p[0], lng: p[1] }));
-                segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
-            } else {
-                return;
-            }
-            const fiberPolyline = new google.maps.Polyline({ ...segmentOptions, path: pathCoords });
-            fiberPolyline.setMap(map);
-            newFiberPolylines.push(fiberPolyline);
-        });
-        fiberPolylinesRef.current = newFiberPolylines;
+      const newFiberPolylines: google.maps.Polyline[] = [];
+      fiberPathResult.segments.forEach((segment) => {
+        let pathCoords: google.maps.LatLngLiteral[] = [];
+        let segmentOptions: google.maps.PolylineOptions = {};
+        if (segment.type === 'offset_a' || segment.type === 'offset_b') {
+          pathCoords = [
+            { lat: segment.startPoint.lat, lng: segment.startPoint.lng },
+            { lat: segment.endPoint.lat, lng: segment.endPoint.lng },
+          ];
+          segmentOptions = FIBER_POLYLINE_STYLES.offset;
+        } else if (segment.type === 'road_route' && segment.pathPolyline) {
+          pathCoords = decodePolyline(segment.pathPolyline).map(p => ({ lat: p[0], lng: p[1] }));
+          segmentOptions = FIBER_POLYLINE_STYLES.roadRoute;
+        } else { return; }
+        const fiberPolyline = new google.maps.Polyline({ ...segmentOptions, path: pathCoords });
+        fiberPolyline.setMap(map);
+        newFiberPolylines.push(fiberPolyline);
+      });
+      fiberPolylinesRef.current = newFiberPolylines;
     }
-
     return cleanupPolylines;
-
   }, [analysisResult, fiberPathResult, isStale, isFlashing, isMapApiLoaded, pALat, pALng, pBLat, pBLng, losPolylineColor]);
 
-  const handleZoomIn = () => {
-    if (!mapRef.current) return;
-    const currentZoom = mapRef.current.getZoom() || 0;
-    mapRef.current.setZoom(currentZoom + 1);
-  };
-
-  const handleZoomOut = () => {
-    if (!mapRef.current) return;
-    const currentZoom = mapRef.current.getZoom() || 0;
-    mapRef.current.setZoom(currentZoom - 1);
-  };
-
+  const handleZoomIn = () => { if (mapRef.current) mapRef.current.setZoom((mapRef.current.getZoom() || 0) + 1); };
+  const handleZoomOut = () => { if (mapRef.current) mapRef.current.setZoom((mapRef.current.getZoom() || 0) - 1); };
   const handleMapTypeChange = (type: "roadmap" | "satellite") => {
     if (!mapRef.current) return;
     setMapTypeId(type);
     mapRef.current.setMapTypeId(type);
-  }
+  };
 
   return (
     <div className="relative w-full h-full">
       <GoogleMap
-        mapContainerStyle={{
-          width: '100%',
-          height: '100%',
-        }}
+        mapContainerStyle={{ width: '100%', height: '100%' }}
         center={defaultCenter}
         zoom={defaultZoom}
         onLoad={handleActualMapLoad}
@@ -329,15 +292,13 @@ function InteractiveMapInner({
               mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
               getPixelPositionOffset={getSiteNameLabelOffset}
             >
-              <div className={STYLES.mapMarkerLabel}>
-                {formPointA.name || "Site A"}
-              </div>
+              <div className={STYLES.mapMarkerLabel}>{formPointA.name || "Site A"}</div>
             </OverlayView>
           </>
         )}
 
         {formPointB && pBLat !== undefined && pBLng !== undefined && markerIconB && (
-           <>
+          <>
             <Marker
               position={{ lat: pBLat, lng: pBLng }}
               draggable={true}
@@ -350,9 +311,7 @@ function InteractiveMapInner({
               mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
               getPixelPositionOffset={getSiteNameLabelOffset}
             >
-              <div className={STYLES.mapMarkerLabel}>
-                {formPointB.name || "Site B"}
-              </div>
+              <div className={STYLES.mapMarkerLabel}>{formPointB.name || "Site B"}</div>
             </OverlayView>
           </>
         )}
@@ -364,60 +323,73 @@ function InteractiveMapInner({
             getPixelPositionOffset={getPathDistanceLabelOffset}
           >
             <div className={cn(STYLES.distanceOverlayLabelBase, STYLES.distanceOverlayLabelLOS)}>
-              Aerial Distance: {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)} m` : `${currentDistanceKm.toFixed(1)} km`}
+              {currentDistanceKm < 1 ? `${(currentDistanceKm * 1000).toFixed(0)} m` : `${currentDistanceKm.toFixed(1)} km`}
             </div>
           </OverlayView>
         )}
 
         {fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && fiberPathLabelMidPoint && (
-           <OverlayView
+          <OverlayView
             position={fiberPathLabelMidPoint}
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
             getPixelPositionOffset={getPathDistanceLabelOffset}
           >
             <div className={cn(STYLES.distanceOverlayLabelBase, STYLES.distanceOverlayLabelFiber)}>
-              Fiber Route: {fiberPathResult.totalDistanceMeters < 1000 ? `${(fiberPathResult.totalDistanceMeters).toFixed(0)} m` : `${(fiberPathResult.totalDistanceMeters / 1000).toFixed(1)} km`}
+              Fiber: {fiberPathResult.totalDistanceMeters < 1000 ? `${fiberPathResult.totalDistanceMeters.toFixed(0)} m` : `${(fiberPathResult.totalDistanceMeters / 1000).toFixed(1)} km`}
             </div>
           </OverlayView>
         )}
       </GoogleMap>
-      
-      {/* Next Click Indicator overlay */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-background/80 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-medium text-foreground border border-border/50 transition-opacity duration-200 shadow-sm pointer-events-none shadow-md">
-        Click map to place <span className="text-primary font-bold">
-          {currentMapClickTarget === 'pointA' ? 'Site A' : 'Site B'}
-        </span>
-      </div>
 
-      {/* Custom Map Controls */}
-      <div className="absolute top-2 right-2 flex flex-col gap-1.5">
-        <Button
-          size="sm"
-          variant={mapTypeId === 'satellite' ? 'default' : 'secondary'}
+      {/* Placement mode edge glow - subtle border indication without obstructing map */}
+      {placementMode && (
+        <div className={cn(
+          "absolute inset-0 pointer-events-none z-10 rounded-sm",
+          "border-2 transition-colors duration-300",
+          placementMode === 'A' ? "border-emerald-500/40" : "border-blue-500/40"
+        )} />
+      )}
+
+      {/* Map type buttons - glassmorphic mini pills */}
+      <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
+        <button
           onClick={() => handleMapTypeChange('satellite')}
-          className="shadow-md h-11 w-11 px-0 min-w-[44px] min-h-[44px] rounded-md"
-          aria-label="Switch to satellite view"
+          className={cn(
+            "w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl shadow-lg",
+            mapTypeId === 'satellite'
+              ? "bg-white/20 text-white border border-white/20"
+              : "bg-black/40 text-white/50 border border-white/[0.06] hover:bg-black/50 hover:text-white/70"
+          )}
+          aria-label="Satellite view"
         >
-          <Satellite className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant={mapTypeId === 'roadmap' ? 'default' : 'secondary'}
+          <Satellite className="h-3.5 w-3.5" />
+        </button>
+        <button
           onClick={() => handleMapTypeChange('roadmap')}
-          className="shadow-md h-11 w-11 px-0 min-w-[44px] min-h-[44px] rounded-md"
-          aria-label="Switch to road map view"
+          className={cn(
+            "w-9 h-9 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl shadow-lg",
+            mapTypeId === 'roadmap'
+              ? "bg-white/20 text-white border border-white/20"
+              : "bg-black/40 text-white/50 border border-white/[0.06] hover:bg-black/50 hover:text-white/70"
+          )}
+          aria-label="Road map view"
         >
-          <Globe className="h-4 w-4" />
-        </Button>
+          <Globe className="h-3.5 w-3.5" />
+        </button>
       </div>
 
-      <div className="absolute bottom-28 md:bottom-20 right-2 flex flex-col gap-1.5">
-        <Button size="icon" variant="secondary" onClick={handleZoomIn} className="shadow-md h-11 w-11 min-w-[44px] min-h-[44px] rounded-md" aria-label="Zoom in">
-          <ZoomIn className="h-5 w-5" />
-        </Button>
-        <Button size="icon" variant="secondary" onClick={handleZoomOut} className="shadow-md h-11 w-11 min-w-[44px] min-h-[44px] rounded-md" aria-label="Zoom out">
-          <ZoomOut className="h-5 w-5" />
-        </Button>
+      {/* Zoom controls - compact glassmorphic */}
+      <div className="absolute bottom-20 right-2 flex flex-col gap-1 z-10">
+        <button onClick={handleZoomIn}
+          className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/40 text-white/60 border border-white/[0.06] backdrop-blur-xl shadow-lg hover:bg-black/50 hover:text-white/80 active:bg-black/60 transition-all"
+          aria-label="Zoom in">
+          <ZoomIn className="h-4 w-4" />
+        </button>
+        <button onClick={handleZoomOut}
+          className="w-9 h-9 rounded-xl flex items-center justify-center bg-black/40 text-white/60 border border-white/[0.06] backdrop-blur-xl shadow-lg hover:bg-black/50 hover:text-white/80 active:bg-black/60 transition-all"
+          aria-label="Zoom out">
+          <ZoomOut className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
@@ -439,6 +411,7 @@ const InteractiveMap = React.memo(function InteractiveMap({ mapContainerClassNam
   if (prevProps.currentDistanceKm !== nextProps.currentDistanceKm) return false;
   if (prevProps.analysisResult !== nextProps.analysisResult) return false;
   if (prevProps.fiberPathResult !== nextProps.fiberPathResult) return false;
+  if (prevProps.placementMode !== nextProps.placementMode) return false;
   if (prevProps.pointA?.lat !== nextProps.pointA?.lat) return false;
   if (prevProps.pointA?.lng !== nextProps.pointA?.lng) return false;
   if (prevProps.pointA?.name !== nextProps.pointA?.name) return false;
