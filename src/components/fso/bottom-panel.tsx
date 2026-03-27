@@ -1,354 +1,18 @@
-
 "use client";
 
 import type { Control, UseFormRegister, UseFormHandleSubmit, FieldErrors } from 'react-hook-form';
-import { Controller, useWatch } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import type { AnalysisResult, AnalysisFormValues } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import TowerHeightControl from './tower-height-control';
-const CustomProfileChart = React.lazy(() => import('./custom-profile-chart'));
-import { AnimatedNumber } from '@/components/animated-number';
-import { ChevronUp, Target, Loader2, AlertTriangle, Download, ArrowRightLeft } from 'lucide-react'; // Added ArrowRightLeft
-import { cn } from '@/lib/utils';
-import React, { useEffect, Suspense } from 'react';
-// Tooltip components available if needed
-import { TooltipProvider } from "@/components/ui/tooltip";
-
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
+import { AnimatedNumber } from '@/components/animated-number';
+import { ChevronUp, Loader2, AlertTriangle, Cable } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import React, { Suspense, useRef, useEffect, useCallback } from 'react';
 
+const CustomProfileChart = React.lazy(() => import('./custom-profile-chart'));
 
-interface SiteInputGroupProps {
-  id: 'pointA' | 'pointB';
-  title: string;
-  control: Control<AnalysisFormValues>;
-  register: UseFormRegister<AnalysisFormValues>;
-  clientFormErrors: FieldErrors<AnalysisFormValues>;
-  serverFormErrors?: Record<string, string[] | undefined>;
-  getCombinedError: (clientError: { message?: string } | undefined, serverError?: string[]) => string | undefined;
-}
-
-const SiteInputGroup: React.FC<SiteInputGroupProps> = ({
-  id,
-  title,
-  control,
-  register,
-  clientFormErrors,
-  serverFormErrors,
-  getCombinedError,
-}) => (
-  <Card className="bg-transparent backdrop-blur-2px shadow-none border-0 h-full flex flex-col p-1 md:p-2 w-full transition-colors duration-200 hover:bg-accent/5">
-    <CardHeader className="p-1">
-      <CardTitle className="text-xs flex items-center text-slate-100/90 uppercase tracking-wider font-medium">
-        <Target className="mr-1.5 h-3.5 w-3.5 text-primary/70" /> {title}
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="p-1 space-y-1.5 text-xs flex-grow overflow-y-auto pr-1 flex flex-col justify-between">
-      <div className="space-y-1.5">
-        <div>
-          <Label htmlFor={`${id}.name`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Name</Label>
-          <Input
-            id={`${id}.name`}
-            aria-label={`${title} Name`}
-            {...register(`${id}.name`)}
-            placeholder="e.g. Main Site"
-            className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-          />
-          {(clientFormErrors[id]?.name || serverFormErrors?.[`${id}.name`]) &&
-            <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.name, serverFormErrors?.[`${id}.name`])}</p>}
-        </div>
-        <div className="grid grid-cols-2 gap-1">
-          <div>
-            <Label htmlFor={`${id}.lat`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Latitude</Label>
-            <Input
-              id={`${id}.lat`}
-              aria-label={`${title} Latitude`}
-              {...register(`${id}.lat`)}
-              placeholder="-90 to 90"
-              className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-            />
-            {(clientFormErrors[id]?.lat || serverFormErrors?.[`${id}.lat`]) &&
-              <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lat, serverFormErrors?.[`${id}.lat`])}</p>}
-          </div>
-          <div>
-            <Label htmlFor={`${id}.lng`} className="text-[0.7rem] uppercase tracking-wider text-muted-foreground font-normal">Longitude</Label>
-            <Input
-              id={`${id}.lng`}
-              aria-label={`${title} Longitude`}
-              {...register(`${id}.lng`)}
-              placeholder="-180 to 180"
-              className="mt-0.5 bg-transparent border-b border-border focus:border-primary/70 text-foreground h-7 text-xs px-1 py-0.5 rounded-none focus:ring-0"
-            />
-            {(clientFormErrors[id]?.lng || serverFormErrors?.[`${id}.lng`]) &&
-              <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.lng, serverFormErrors?.[`${id}.lng`])}</p>}
-          </div>
-        </div>
-        <Controller
-          name={`${id}.height`}
-          control={control}
-          defaultValue={20}
-          render={({ field }) => (
-            <TowerHeightControl
-              label="Tower Height"
-              height={field.value}
-              onChange={field.onChange}
-              min={0}
-              max={100}
-              idSuffix={id}
-            />
-          )}
-        />
-        {(clientFormErrors[id]?.height || serverFormErrors?.[`${id}.height`]) &&
-          <p className="text-xs text-destructive/80 mt-0.5">{getCombinedError(clientFormErrors[id]?.height, serverFormErrors?.[`${id}.height`])}</p>}
-      </div>
-    </CardContent>
-  </Card>
-);
-
-interface ProfilePanelMiddleColumnProps {
-  analysisResult: AnalysisResult | null;
-  isStale?: boolean;
-  isActionPending: boolean;
-  control: Control<AnalysisFormValues>;
-  clientFormErrors: FieldErrors<AnalysisFormValues>;
-  serverFormErrors?: Record<string, string[] | undefined>;
-  getCombinedError: (clientError: { message?: string } | undefined, serverError?: string[]) => string | undefined;
-  handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
-  processSubmit: (data: AnalysisFormValues) => void;
-  pointAName: string;
-  pointBName: string;
-  onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
-  onDownloadPdf: () => void;
-  isGeneratingPdf: boolean;
-  fiberPathResult: FiberPathResult | null;
-  isFiberCalculating: boolean;
-  fiberPathError: string | null;
-}
-
-const ProfilePanelMiddleColumn: React.FC<ProfilePanelMiddleColumnProps> = ({
-  analysisResult,
-  isStale,
-  isActionPending,
-  control,
-  clientFormErrors,
-  serverFormErrors,
-  getCombinedError,
-  handleSubmit,
-  processSubmit,
-  pointAName,
-  pointBName,
-  onTowerHeightChangeFromGraph,
-  onDownloadPdf,
-  isGeneratingPdf,
-  fiberPathResult,
-  isFiberCalculating,
-  fiberPathError,
-}) => {
-
-  const watchedClearanceThresholdString = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
-  const minRequiredClearance = parseFloat(watchedClearanceThresholdString);
-
-  let isClearBasedOnAnalysis = false;
-  let deficit = 0;
-  const actualMinClearance = analysisResult?.minClearance ?? null;
-
-  if (analysisResult && analysisResult.minClearance !== null && !isNaN(minRequiredClearance)) {
-    isClearBasedOnAnalysis = analysisResult.minClearance >= minRequiredClearance;
-    deficit = isClearBasedOnAnalysis ? 0 : Math.ceil(minRequiredClearance - analysisResult.minClearance);
-  }
-
-  const chartKey = React.useMemo(() => {
-    if (!analysisResult) return 'no-result';
-    const profileDataSignature = analysisResult.profile.length > 0
-      ? `${analysisResult.profile[0].distance}-${analysisResult.profile[0].terrainElevation}-${analysisResult.profile[0].losHeight}-${analysisResult.profile[analysisResult.profile.length-1].distance}-${analysisResult.profile[analysisResult.profile.length-1].terrainElevation}-${analysisResult.profile[analysisResult.profile.length-1].losHeight}`
-      : 'empty-profile';
-    return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${profileDataSignature}-${minRequiredClearance}`;
-  }, [analysisResult, minRequiredClearance]);
-
-  const buttonText = isActionPending
-    ? "Analyzing..."
-    : (isStale || !analysisResult ? "Analyze Link" : "Re-Analyze");
-
-  const anyOperationPending = isActionPending || isGeneratingPdf || isFiberCalculating;
-
-  return (
-    <TooltipProvider>
-    <div className="flex-shrink-0 w-full md:w-auto snap-start flex flex-col h-full overflow-hidden bg-transparent backdrop-blur-2px rounded-lg p-1 md:p-0">
-      <div className="flex flex-nowrap items-center justify-start gap-x-3 gap-y-2 py-1 md:py-1.5 px-2 md:px-3 border-b border-border mb-1 overflow-x-auto custom-scrollbar">
-        
-        <div className="flex-shrink-0 order-1 min-w-[130px] text-center">
-          {isStale ? (
-            <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-500/80 text-yellow-900 flex items-center shadow whitespace-nowrap">
-              <AlertTriangle className="mr-1 h-3 w-3" /> NEEDS RE-ANALYZE
-            </span>
-          ) : analysisResult ? (
-            <span
-              className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-bold shadow-md whitespace-nowrap transition-all duration-300 transform",
-                analysisResult ? "opacity-100 scale-100" : "opacity-0 scale-95",
-                isClearBasedOnAnalysis
-                  ? "bg-los-success text-los-success-foreground"
-                  : "bg-los-failure text-los-failure-foreground"
-              )}
-            >
-              {isClearBasedOnAnalysis ? "LOS POSSIBLE" : "LOS BLOCKED"}
-            </span>
-          ) : (
-            <span className="px-3 py-1.5 rounded-md text-xs font-semibold text-muted-foreground italic whitespace-nowrap">
-                Perform analysis
-            </span>
-          )}
-        </div>
-
-        <div className="flex-shrink-0 flex flex-col items-center order-2 min-w-[100px] text-center">
-          <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap">Aerial Dist.</span>
-          <span className="font-bold text-foreground text-xs md:text-sm whitespace-nowrap">
-            {analysisResult && !isStale ? (
-               <AnimatedNumber 
-                  value={analysisResult.distanceKm < 1 ? analysisResult.distanceKm * 1000 : analysisResult.distanceKm} 
-                  decimals={analysisResult.distanceKm < 1 ? 0 : 1}
-                  suffix={analysisResult.distanceKm < 1 ? "m" : "km"} 
-               />
-            ) : "N/A"}
-          </span>
-        </div>
-        
-        <div className="flex-shrink-0 flex flex-col items-center order-3 min-w-[100px] text-center">
-          <span className="uppercase tracking-wider text-muted-foreground text-[0.6rem] md:text-[0.65rem] font-medium whitespace-nowrap">Min. Clear.</span>
-          <span className={cn(
-            "font-bold text-xs md:text-sm whitespace-nowrap transition-colors duration-300",
-            isStale ? "text-muted-foreground" : (actualMinClearance !== null && actualMinClearance >= (minRequiredClearance || 0) ? "text-los-success" : "text-los-failure")
-          )}>
-            {analysisResult && !isStale && actualMinClearance !== null ? <AnimatedNumber value={actualMinClearance} decimals={1} suffix="m" /> : "N/A"}
-          </span>
-        </div>
-
-        <div className="order-4 flex items-center gap-2 flex-shrink-0 min-w-[160px]">
-             <Button
-                type="submit"
-                onClick={handleSubmit(processSubmit)}
-                disabled={anyOperationPending}
-                size="sm"
-                className="bg-primary/90 hover:bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] whitespace-nowrap leading-tight flex-1"
-            >
-                <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isActionPending && "hidden", isActionPending && "animate-spin" )} />
-                {buttonText}
-            </Button>
-            {analysisResult && !isStale && (
-                 <Button
-                    type="button"
-                    onClick={onDownloadPdf}
-                    disabled={anyOperationPending}
-                    size="sm"
-                    variant="outline"
-                    className="text-xs font-semibold px-2 py-1 h-auto min-h-7 rounded-md shadow-none transition-all duration-200 whitespace-nowrap leading-tight border-primary/50 hover:bg-primary/10 flex-shrink-0"
-                >
-                    <Loader2 className={cn("mr-1.5 h-3.5 w-3.5", !isGeneratingPdf && "hidden", isGeneratingPdf && "animate-spin" )} />
-                    <Download className={cn("mr-1.5 h-3.5 w-3.5", isGeneratingPdf && "hidden")} />
-                    PDF
-                </Button>
-            )}
-        </div>
-
-      </div>
-
-      {(clientFormErrors.clearanceThreshold || serverFormErrors?.clearanceThreshold) &&
-        <p className="text-xs text-destructive mt-0.5 text-center px-2">
-          {getCombinedError(clientFormErrors.clearanceThreshold, serverFormErrors?.clearanceThreshold)}
-        </p>
-      }
-       {analysisResult && !isClearBasedOnAnalysis && actualMinClearance !== null && !isNaN(minRequiredClearance) && !isStale && (
-          <div className="text-center text-los-failure text-[0.7rem] py-0.5">
-            Add&nbsp;
-            <span className="font-semibold">{deficit.toFixed(0)}m</span>
-            &nbsp;to tower(s) for clearance.
-          </div>
-        )}
-
-      <div className="px-2 md:px-3 mt-1 text-xs">
-        {isFiberCalculating && (
-          <div className="text-primary flex items-center justify-center py-1">
-            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> <span className="animate-subtle-pulse">Calculating fiber path...</span>
-          </div>
-        )}
-        {fiberPathResult && !isFiberCalculating && (
-          <div className="p-1.5 rounded-sm bg-muted/50 space-y-0.5">
-            <p>
-              <span className="font-semibold">Fiber Route Status:</span>{' '}
-              <span className={cn(
-                fiberPathResult.status === 'success' ? 'text-los-success' :
-                (fiberPathResult.status === 'los_not_feasible' || fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'no_route_between_roads' || fiberPathResult.status === 'radius_too_small') ? 'text-amber-500' :
-                'text-los-failure'
-              )}>
-                {fiberPathResult.status === 'success' ? 'Calculated' :
-                 fiberPathResult.status === 'los_not_feasible' ? 'LOS Not Feasible' :
-                 fiberPathResult.status === 'no_road_for_a' ? 'No Road Near Site A' :
-                 fiberPathResult.status === 'no_road_for_b' ? 'No Road Near Site B' :
-                 fiberPathResult.status === 'no_route_between_roads' ? 'No Road Route' :
-                 fiberPathResult.status === 'radius_too_small' ? 'Snap Radius Too Small' :
-                 'Error'}
-              </span>
-            </p>
-            {fiberPathResult.totalDistanceMeters !== undefined && fiberPathResult.status === 'success' && (
-              <p><span className="font-semibold">Total Fiber Distance:</span> <AnimatedNumber value={fiberPathResult.totalDistanceMeters} decimals={0} suffix=" m" /></p>
-            )}
-            {fiberPathError && <p className="text-destructive">{fiberPathError}</p>}
-            {fiberPathResult.errorMessage && fiberPathResult.status !== 'success' && !fiberPathError && (
-                <p className="text-muted-foreground italic">{fiberPathResult.errorMessage}</p>
-            )}
-            {fiberPathResult.status === 'success' && (
-                <div className="text-[0.65rem] text-muted-foreground/80">
-                   (Offset A: {fiberPathResult.offsetDistanceA_meters?.toFixed(0)}m
-                   + Road: {fiberPathResult.roadRouteDistanceMeters?.toFixed(0)}m
-                   + Offset B: {fiberPathResult.offsetDistanceB_meters?.toFixed(0)}m)
-                </div>
-            )}
-          </div>
-        )}
-        {fiberPathResult && (fiberPathResult.status === 'no_road_for_a' || fiberPathResult.status === 'no_road_for_b' || fiberPathResult.status === 'radius_too_small') && !isFiberCalculating && (
-            <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
-                <AlertTriangle className="inline h-3 w-3 mr-1" />
-                {fiberPathResult.status === 'radius_too_small' ? "Snap radius is too small. " : "No road found near one or both sites. "}
-                Try increasing the Snap Radius and click Apply.
-            </p>
-        )}
-        {fiberPathResult && fiberPathResult.status === 'no_route_between_roads' && !isFiberCalculating && (
-            <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 text-center">
-                <AlertTriangle className="inline h-3 w-3 mr-1" />
-                Could not find a road route between the snapped points for Site A and Site B. They might be on disconnected road networks.
-            </p>
-        )}
-      </div>
-
-      <div className={cn("flex-1 min-h-0 p-0.5")}>
-        {analysisResult || isActionPending ? (
-          <Suspense fallback={<div className="h-full flex items-center justify-center p-2 text-xs text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mr-2"/> Loading Chart Engine...</div>}>
-            <CustomProfileChart
-              key={chartKey}
-              data={analysisResult?.profile || []}
-              pointAName={pointAName || "Site A"}
-              pointBName={pointBName || "Site B"}
-              isStale={isStale}
-              totalDistanceKm={analysisResult?.distanceKm}
-              isActionPending={anyOperationPending}
-              onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
-            />
-          </Suspense>
-        ) : ( 
-          <div className="h-full flex flex-col items-center justify-center p-2 text-xs text-muted-foreground">
-            <ArrowRightLeft className="h-10 w-10 text-muted-foreground/50 mb-2" />
-            <p>Perform analysis to see link profile.</p>
-            <p className="mt-1 text-[0.7rem]">Click on the map to set site locations or enter coordinates manually.</p>
-          </div>
-        )}
-      </div>
-    </div>
-    </TooltipProvider>
-  );
-};
-
+const EXPANDED_HEIGHT_MOBILE = 200;
+const EXPANDED_HEIGHT_DESKTOP = 220;
 
 interface BottomPanelProps {
   analysisResult: AnalysisResult | null;
@@ -356,7 +20,6 @@ interface BottomPanelProps {
   isContentExpanded: boolean;
   onToggleContentExpansion: () => void;
   isStale?: boolean;
-
   control: Control<AnalysisFormValues>;
   register: UseFormRegister<AnalysisFormValues>;
   handleSubmit: UseFormHandleSubmit<AnalysisFormValues>;
@@ -373,126 +36,283 @@ interface BottomPanelProps {
 }
 
 const BottomPanel = React.memo(function BottomPanel({
-  analysisResult,
-  isPanelGloballyVisible,
-  isContentExpanded,
-  onToggleContentExpansion,
-  isStale,
-  control,
-  register,
-  handleSubmit,
-  processSubmit,
-  clientFormErrors,
-  serverFormErrors,
-  isActionPending,
+  analysisResult, isPanelGloballyVisible, isContentExpanded, onToggleContentExpansion,
+  isStale, control, isActionPending,
   onTowerHeightChangeFromGraph,
-  onDownloadPdf,
-  isGeneratingPdf,
-  fiberPathResult,
-  isFiberCalculating,
-  fiberPathError,
+  fiberPathResult, isFiberCalculating, isGeneratingPdf,
 }: BottomPanelProps) {
 
-  const getCombinedError = (clientFieldError?: { message?: string }, serverFieldError?: string[]) => {
-    if (serverFieldError && serverFieldError.length > 0) return serverFieldError.join(', ');
-    return clientFieldError?.message;
-  };
+  const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: "Site A" });
+  const pointBName = useWatch({ control, name: 'pointB.name', defaultValue: "Site B" });
+  const watchedClearance = useWatch({ control, name: 'clearanceThreshold', defaultValue: "10" });
+  const minRequiredClearance = parseFloat(watchedClearance);
 
-  const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: analysisResult?.pointA?.name || "Site A" });
-  const pointBName = useWatch({ control, name: 'pointB.name', defaultValue: analysisResult?.pointB?.name || "Site B" });
+  const actualMinClearance = analysisResult?.minClearance ?? null;
+  const isClear = analysisResult && actualMinClearance !== null ? actualMinClearance >= minRequiredClearance : false;
 
-  const panelRef = React.useRef<HTMLFormElement>(null);
-  
+  const chartKey = React.useMemo(() => {
+    if (!analysisResult) return 'no-result';
+    const p = analysisResult.profile;
+    const sig = p.length > 0
+      ? `${p[0].distance}-${p[0].terrainElevation}-${p[0].losHeight}-${p[p.length - 1].distance}-${p[p.length - 1].terrainElevation}-${p[p.length - 1].losHeight}`
+      : 'empty';
+    return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${sig}-${minRequiredClearance}`;
+  }, [analysisResult, minRequiredClearance]);
+
+  const anyPending = isActionPending || isGeneratingPdf || isFiberCalculating;
+
+  // ── Drag gesture state (ref-based to avoid re-render issues inside React.memo) ──
+  const peekBarRef = useRef<HTMLButtonElement>(null);
+  const chartAreaRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{
+    startY: number;
+    startExpanded: boolean;
+    dragging: boolean;
+    lastY: number;
+    lastTime: number;
+    velocity: number;
+  } | null>(null);
+  const dragHeightRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const [, forceRender] = React.useState(0);
+
+  const getExpandedHeight = useCallback(() => {
+    if (typeof window === 'undefined') return EXPANDED_HEIGHT_DESKTOP;
+    return window.innerWidth < 768 ? EXPANDED_HEIGHT_MOBILE : EXPANDED_HEIGHT_DESKTOP;
+  }, []);
+
+  // Attach drag listeners to peek bar
   useEffect(() => {
-    if (isPanelGloballyVisible && isContentExpanded && panelRef.current && !isActionPending) {
-      const firstFocusable = panelRef.current.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      // Give the dom a tic to paint the slide transition so outline doesnt bug
-      setTimeout(() => firstFocusable?.focus(), 100);
-    }
-  }, [isPanelGloballyVisible, isContentExpanded, isActionPending]);
+    const bar = peekBarRef.current;
+    if (!bar) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      dragState.current = {
+        startY: t.clientY,
+        startExpanded: isContentExpanded,
+        dragging: true,
+        lastY: t.clientY,
+        lastTime: Date.now(),
+        velocity: 0,
+      };
+      isDraggingRef.current = true;
+      forceRender(c => c + 1);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const s = dragState.current;
+      if (!s || !s.dragging || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const now = Date.now();
+      const dt = now - s.lastTime;
+
+      // Track velocity (pixels per ms, positive = downward)
+      if (dt > 0) {
+        s.velocity = (t.clientY - s.lastY) / dt;
+      }
+      s.lastY = t.clientY;
+      s.lastTime = now;
+
+      const dy = t.clientY - s.startY; // positive = dragging down
+      const expandedH = getExpandedHeight();
+
+      if (s.startExpanded) {
+        // Started expanded: dragging down reduces height
+        const h = Math.max(0, expandedH - dy);
+        dragHeightRef.current = Math.max(0, Math.min(expandedH, h));
+      } else {
+        // Started collapsed: dragging up increases height
+        // dy is negative when dragging up
+        const h = Math.max(0, -dy);
+        dragHeightRef.current = Math.min(expandedH, h);
+      }
+
+      forceRender(c => c + 1);
+      e.preventDefault();
+    };
+
+    const onTouchEnd = () => {
+      const s = dragState.current;
+      if (!s) return;
+
+      const expandedH = getExpandedHeight();
+      const currentH = dragHeightRef.current ?? (isContentExpanded ? expandedH : 0);
+
+      // Velocity-based snap: fast flick overrides position
+      const VELOCITY_THRESHOLD = 0.4; // px/ms
+
+      let shouldExpand: boolean;
+      if (Math.abs(s.velocity) > VELOCITY_THRESHOLD) {
+        // Fast flick: negative velocity = upward = expand
+        shouldExpand = s.velocity < 0;
+      } else {
+        // Slow drag: snap to nearest
+        shouldExpand = currentH > expandedH / 2;
+      }
+
+      // Haptic feedback
+      if (navigator.vibrate) navigator.vibrate(15);
+
+      dragHeightRef.current = null;
+      isDraggingRef.current = false;
+      dragState.current = null;
+      forceRender(c => c + 1);
+
+      // Toggle if needed
+      if (shouldExpand !== isContentExpanded) {
+        onToggleContentExpansion();
+      }
+    };
+
+    bar.addEventListener('touchstart', onTouchStart, { passive: true });
+    bar.addEventListener('touchmove', onTouchMove, { passive: false });
+    bar.addEventListener('touchend', onTouchEnd, { passive: true });
+    bar.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+    return () => {
+      bar.removeEventListener('touchstart', onTouchStart);
+      bar.removeEventListener('touchmove', onTouchMove);
+      bar.removeEventListener('touchend', onTouchEnd);
+      bar.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, [isContentExpanded, onToggleContentExpansion, getExpandedHeight]);
+
+  if (!isPanelGloballyVisible) return null;
+
+  const expandedH = typeof window !== 'undefined'
+    ? (window.innerWidth < 768 ? EXPANDED_HEIGHT_MOBILE : EXPANDED_HEIGHT_DESKTOP)
+    : EXPANDED_HEIGHT_DESKTOP;
+
+  // Determine chart area height
+  const isCurrentlyDragging = isDraggingRef.current && dragHeightRef.current !== null;
+  const chartHeight = isCurrentlyDragging
+    ? dragHeightRef.current!
+    : (isContentExpanded ? expandedH : 0);
 
   return (
-    <form
-      ref={panelRef}
-      noValidate
-      role="region"
-      aria-label="Link analysis panel"
-      onSubmit={handleSubmit(processSubmit)}
-      className={cn(
-        "fixed bottom-0 left-0 right-0 bg-slate-800/90 backdrop-blur-lg border-t border-slate-700/60 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out print:hidden",
-        isPanelGloballyVisible ? "transform translate-y-0" : "transform translate-y-[120%]",
-        "z-[50]"
-      )}
-    >
-      <div
-        className={cn(
-          "w-full overflow-hidden transition-[height,max-height] duration-500 ease-out",
-          isContentExpanded && isPanelGloballyVisible ? "h-[60vh] md:h-[45vh] lg:h-[35vh]" : "h-0"
-        )}
+    <div className="border-t border-slate-700/40 bg-slate-900/95 backdrop-blur-lg flex flex-col pb-safe">
+
+      {/* Peek bar — always visible, acts as drag handle on mobile */}
+      <button
+        ref={peekBarRef}
+        type="button"
+        onClick={onToggleContentExpansion}
+        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.02] transition-colors relative touch-manipulation"
       >
-        <div className="p-1.5 md:p-2 h-full overflow-y-auto">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[280px_1fr_280px] gap-2 h-full lg:overflow-visible custom-scrollbar">
+        {/* Drag handle */}
+        <div className={cn(
+          "drag-handle absolute left-1/2 -translate-x-1/2 top-1.5",
+          isCurrentlyDragging && "active"
+        )} />
 
-            <div className="w-full lg:w-auto order-2 lg:order-1 p-1 lg:p-0">
-              <SiteInputGroup
-                id="pointA"
-                title={pointAName || "Site A"}
-                control={control}
-                register={register}
-                clientFormErrors={clientFormErrors}
-                serverFormErrors={serverFormErrors}
-                getCombinedError={getCombinedError}
-              />
-            </div>
+        <div className="flex items-center gap-3 flex-1 min-w-0 pt-2">
+          {isActionPending ? (
+            <span className="flex items-center gap-1.5 text-xs text-primary">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Analyzing...
+            </span>
+          ) : analysisResult && !isStale ? (
+            <>
+              <span className={cn("px-2 py-0.5 rounded text-[0.65rem] font-bold whitespace-nowrap flex-shrink-0",
+                isClear ? "bg-los-success text-los-success-foreground" : "bg-los-failure text-los-failure-foreground"
+              )}>
+                {isClear ? "LOS FEASIBLE" : "LOS BLOCKED"}
+              </span>
 
-            <div className="order-1 lg:order-2">
-              <ProfilePanelMiddleColumn
-                analysisResult={analysisResult}
-                isStale={isStale}
-                isActionPending={isActionPending}
-                control={control}
-                clientFormErrors={clientFormErrors}
-                serverFormErrors={serverFormErrors}
-                getCombinedError={getCombinedError}
-                handleSubmit={handleSubmit}
-                processSubmit={processSubmit}
+              <div className="flex items-center gap-3 text-xs overflow-x-auto flex-1 min-w-0 custom-scrollbar">
+                <div className="flex flex-col flex-shrink-0">
+                  <span className="text-[0.5rem] text-muted-foreground uppercase">Distance</span>
+                  <span className="font-bold text-foreground text-[0.7rem] leading-tight">
+                    <AnimatedNumber value={analysisResult.distanceKm < 1 ? analysisResult.distanceKm * 1000 : analysisResult.distanceKm}
+                      decimals={analysisResult.distanceKm < 1 ? 0 : 1} suffix={analysisResult.distanceKm < 1 ? "m" : "km"} />
+                  </span>
+                </div>
+                <div className="flex flex-col flex-shrink-0">
+                  <span className="text-[0.5rem] text-muted-foreground uppercase">Clearance</span>
+                  <span className={cn("font-bold text-[0.7rem] leading-tight", isClear ? "text-los-success" : "text-los-failure")}>
+                    {actualMinClearance !== null ? <AnimatedNumber value={actualMinClearance} decimals={1} suffix="m" /> : "N/A"}
+                  </span>
+                </div>
+                <div className="flex flex-col flex-shrink-0">
+                  <span className="text-[0.5rem] text-muted-foreground uppercase">Tower A</span>
+                  <span className="font-bold text-[0.7rem] leading-tight text-foreground">{analysisResult.pointA?.towerHeight}m</span>
+                </div>
+                <div className="flex flex-col flex-shrink-0">
+                  <span className="text-[0.5rem] text-muted-foreground uppercase">Tower B</span>
+                  <span className="font-bold text-[0.7rem] leading-tight text-foreground">{analysisResult.pointB?.towerHeight}m</span>
+                </div>
+                {fiberPathResult?.status === 'success' && fiberPathResult.totalDistanceMeters !== undefined && (
+                  <div className="flex flex-col flex-shrink-0">
+                    <span className="text-[0.5rem] text-muted-foreground uppercase flex items-center gap-0.5">
+                      <Cable className="h-2.5 w-2.5" /> Fiber
+                    </span>
+                    <span className="font-bold text-[0.7rem] leading-tight text-blue-400">
+                      <AnimatedNumber value={fiberPathResult.totalDistanceMeters} decimals={0} suffix="m" />
+                    </span>
+                  </div>
+                )}
+                {isFiberCalculating && (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                    <span className="text-[0.6rem] text-primary">Fiber...</span>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : isStale ? (
+            <span className="text-xs text-yellow-500 flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" /> Parameters changed &mdash; re-analyze
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground italic">Analysis results will appear here</span>
+          )}
+        </div>
+
+        <ChevronUp className={cn("h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform duration-300",
+          isContentExpanded ? "rotate-180" : "rotate-0"
+        )} />
+      </button>
+
+      {/* Expandable chart area — height controlled by drag or toggle */}
+      <div
+        ref={chartAreaRef}
+        className={cn(
+          "overflow-hidden",
+          !isCurrentlyDragging && "transition-[height] duration-300 ease-out"
+        )}
+        style={{ height: chartHeight }}
+      >
+        <div className="h-full px-2 py-1">
+          {analysisResult ? (
+            <Suspense fallback={
+              <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading Chart...
+              </div>
+            }>
+              <CustomProfileChart
+                key={chartKey}
+                data={analysisResult.profile || []}
                 pointAName={pointAName || "Site A"}
                 pointBName={pointBName || "Site B"}
+                isStale={isStale}
+                totalDistanceKm={analysisResult.distanceKm}
+                isActionPending={anyPending}
                 onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
-                onDownloadPdf={onDownloadPdf}
-                isGeneratingPdf={isGeneratingPdf}
-                fiberPathResult={fiberPathResult}
-                isFiberCalculating={isFiberCalculating}
-                fiberPathError={fiberPathError}
               />
+            </Suspense>
+          ) : (
+            <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+              {isActionPending ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Analyzing...</>
+              ) : (
+                'Run analysis to see elevation profile'
+              )}
             </div>
-
-            <div className="w-full lg:w-auto order-3 lg:order-3 p-1 lg:p-0">
-              <SiteInputGroup
-                id="pointB"
-                title={pointBName || "Site B"}
-                control={control}
-                register={register}
-                clientFormErrors={clientFormErrors}
-                serverFormErrors={serverFormErrors}
-                getCombinedError={getCombinedError}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </div>
-      {isPanelGloballyVisible && (
-        <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 p-1.5 bg-card rounded-t-lg border-t border-x border-border shadow-lg cursor-pointer hover:bg-muted group"
-          onClick={onToggleContentExpansion}
-          aria-label={isContentExpanded ? "Collapse Panel Content" : "Expand Panel Content"}
-        >
-          <ChevronUp className={cn("h-4 w-4 text-muted-foreground group-hover:text-foreground transition-transform duration-300 ease-out", isContentExpanded ? "rotate-180" : "rotate-0")} />
-        </div>
-      )}
-    </form>
+    </div>
   );
 });
 

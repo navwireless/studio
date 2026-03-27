@@ -3,44 +3,52 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, WifiOff } from 'lucide-react';
+import { Loader2, AlertTriangle, WifiOff, Menu } from 'lucide-react';
 
 import { useToast } from '@/hooks/use-toast';
-import { performLosAnalysis } from '@/app/actions';
-import type { AnalysisFormValues } from '@/types';
+import { performLosAnalysis, generateCombinedPdfReportAction } from '@/app/actions';
+import type { AnalysisFormValues, MapNavigationTarget, MapContextMenuState, SavedLink } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 
-import AppHeader from '@/components/layout/app-header';
 import InteractiveMap from '@/components/fso/interactive-map';
-import BottomSheet from '@/components/fso/bottom-sheet';
-import { AnalysisSettings } from '@/components/fso/analysis-settings';
-import MapToolbar from '@/components/fso/map-toolbar';
-import HistoryPanel from '@/components/layout/history-panel';
+import BottomPanel from '@/components/fso/bottom-panel';
+import SidePanel from '@/components/fso/side-panel';
+import MapContextMenu from '@/components/fso/map-context-menu';
+import MapSearchBar from '@/components/fso/map-search-bar';
+import KeyboardHint from '@/components/fso/keyboard-hint';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { MapErrorBoundary } from '@/components/map-error-boundary';
 import { ErrorModal } from '@/components/error-modal';
 import { ProgressBar } from '@/components/progress-bar';
+import { cn } from '@/lib/utils';
 
-// Custom Hooks
 import { useFormPersistence, LOCAL_STORAGE_KEYS } from '@/hooks/use-form-persistence';
 import { useMapInteraction } from '@/hooks/use-map-interaction';
 import { useAnalysisState } from '@/hooks/use-analysis-state';
 import { useFiberCalculation } from '@/hooks/use-fiber-calculation';
 import { usePdfDownload } from '@/hooks/use-pdf-download';
 import { useOnlineStatus } from '@/hooks/use-online-status';
+import { useSavedLinks } from '@/hooks/use-saved-links';
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 
 export default function Home() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const isOnline = useOnlineStatus();
 
-  // UI State
-  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
+  const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+  const [mapNavigationTarget, setMapNavigationTarget] = useState<MapNavigationTarget | null>(null);
+  const [contextMenu, setContextMenu] = useState<MapContextMenuState>({ isOpen: false, x: 0, y: 0, lat: 0, lng: 0 });
 
   useEffect(() => { setIsClient(true); }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsSidePanelOpen(false);
+    }
+  }, []);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
@@ -53,13 +61,14 @@ export default function Home() {
   useFormPersistence(form);
   const mapInteraction = useMapInteraction(form);
   const pdfDownload = usePdfDownload();
+  const saved = useSavedLinks();
 
   const analysis = useAnalysisState({
     serverAction: performLosAnalysis,
     form,
-    isAnalysisPanelGloballyOpen: isBottomSheetVisible,
-    setIsAnalysisPanelGloballyOpen: setIsBottomSheetVisible,
-    setIsBottomPanelContentExpanded: () => {},
+    isAnalysisPanelGloballyOpen: true,
+    setIsAnalysisPanelGloballyOpen: () => { },
+    setIsBottomPanelContentExpanded: setIsProfileExpanded,
     toast
   });
 
@@ -70,7 +79,6 @@ export default function Home() {
     rawServerState: analysis.rawServerState
   });
 
-  // Use refs to avoid stale closures and infinite update loops
   const analysisRef = useRef(analysis);
   analysisRef.current = analysis;
   const fiberRef = useRef(fiber);
@@ -81,7 +89,6 @@ export default function Home() {
       toast({ title: 'No Connection', description: 'Please check your internet connection.', variant: 'destructive' });
       return;
     }
-
     analysisRef.current.setDisplayedError(null);
     analysisRef.current.setFieldErrors(null);
     fiberRef.current.setFiberPathResult(null);
@@ -106,64 +113,264 @@ export default function Home() {
   const handleTowerHeightChangeFromGraph = useCallback((siteId: 'pointA' | 'pointB', newHeight: number) => {
     setValue(`${siteId}.height`, Math.round(newHeight), { shouldDirty: true, shouldValidate: true });
     form.trigger().then(isValid => {
-      if (isValid) {
-        handleSubmit(processSubmit)();
-      } else {
-        toast({ title: "Input Error", description: "Please correct form errors before re-analyzing.", variant: "destructive" });
-      }
+      if (isValid) handleSubmit(processSubmit)();
+      else toast({ title: "Input Error", description: "Please correct form errors before re-analyzing.", variant: "destructive" });
     });
   }, [setValue, handleSubmit, processSubmit, form, toast]);
 
   const handleAnalyzeClick = useCallback(() => {
-    setIsBottomSheetVisible(true);
     form.trigger().then(isValid => {
-      if (isValid) {
-        handleSubmit(processSubmit)();
-      } else {
-        toast({ title: "Input Error", description: "Please set both site locations before analyzing.", variant: "destructive" });
-      }
+      if (isValid) handleSubmit(processSubmit)();
+      else toast({ title: "Input Error", description: "Please set both site locations before analyzing.", variant: "destructive" });
     });
   }, [form, handleSubmit, processSubmit, toast]);
-
-  const handleToggleHistoryPanel = useCallback(() => {
-    setIsHistoryPanelOpen(prev => !prev);
-  }, []);
 
   const handleClearHistory = useCallback(() => {
     analysis.setHistoryList([]);
     toast({ title: "History Cleared" });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   const handleClearMap = useCallback(() => {
     reset(defaultFormStateValues);
-
     if (isClient) {
       Object.keys(LOCAL_STORAGE_KEYS).forEach(key => {
         const keyName = key as keyof typeof LOCAL_STORAGE_KEYS;
-        if (keyName !== 'FIBER_TOGGLE' && keyName !== 'FIBER_RADIUS') {
-          localStorage.removeItem(LOCAL_STORAGE_KEYS[keyName]);
-        }
+        if (keyName !== 'FIBER_TOGGLE' && keyName !== 'FIBER_RADIUS') localStorage.removeItem(LOCAL_STORAGE_KEYS[keyName]);
       });
     }
-
     analysisRef.current.clearAnalysis();
     fiberRef.current.setFiberPathResult(null);
     fiberRef.current.setFiberPathError(null);
     mapInteraction.setPlacementMode(null);
+    setMapNavigationTarget(null);
     toast({ title: "Map Cleared", description: "Form reset to default values." });
+    setIsProfileExpanded(false);
+  }, [reset, isClient, toast, mapInteraction]);
 
-    setIsBottomSheetVisible(false);
+  const handleNewLink = useCallback(() => {
+    reset(defaultFormStateValues);
+    if (isClient) {
+      Object.keys(LOCAL_STORAGE_KEYS).forEach(key => {
+        const keyName = key as keyof typeof LOCAL_STORAGE_KEYS;
+        if (keyName !== 'FIBER_TOGGLE' && keyName !== 'FIBER_RADIUS') localStorage.removeItem(LOCAL_STORAGE_KEYS[keyName]);
+      });
+    }
+    analysisRef.current.clearAnalysis();
+    fiberRef.current.setFiberPathResult(null);
+    fiberRef.current.setFiberPathError(null);
+    mapInteraction.setPlacementMode('A');
+    setMapNavigationTarget(null);
+    setIsProfileExpanded(false);
+    toast({ title: "Ready for New Link", description: "Place Site A to begin." });
   }, [reset, isClient, toast, mapInteraction]);
 
   const handleClearanceChange = useCallback((value: number[]) => {
     const numValue = value[0];
     if (typeof numValue === 'number') {
-      const stringValue = String(Math.round(numValue * 100) / 100);
-      setValue('clearanceThreshold', stringValue, { shouldValidate: true, shouldDirty: true });
+      setValue('clearanceThreshold', String(Math.round(numValue * 100) / 100), { shouldValidate: true, shouldDirty: true });
     }
   }, [setValue]);
 
+  const toggleProfileExpansion = useCallback(() => setIsProfileExpanded(prev => !prev), []);
+
+  // ── Search navigation (shared by side panel search + floating map search) ──
+  const handleSearchNavigate = useCallback((lat: number, lng: number, name: string) => {
+    setMapNavigationTarget({ lat, lng, zoom: 15, timestamp: Date.now() });
+
+    if (mapInteraction.placementMode === 'A') {
+      setValue('pointA.lat', lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
+      setValue('pointA.lng', lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
+      if (name && name !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) setValue('pointA.name', name, { shouldDirty: true });
+      mapInteraction.setPlacementMode('B');
+      toast({ title: `Site A set to ${name}`, description: 'Now place Site B.' });
+    } else if (mapInteraction.placementMode === 'B') {
+      setValue('pointB.lat', lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
+      setValue('pointB.lng', lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
+      if (name && name !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) setValue('pointB.name', name, { shouldDirty: true });
+      mapInteraction.setPlacementMode(null);
+      toast({ title: `Site B set to ${name}`, description: 'Both sites placed. Ready to analyze.' });
+    } else {
+      toast({ title: `Navigated to ${name}`, description: 'Press A or B to start placing a site.' });
+    }
+  }, [mapInteraction, setValue, toast]);
+
+  // ── Search action picker handlers (when no placement mode) ──
+  const handleSearchPlaceA = useCallback((lat: number, lng: number, name: string) => {
+    setValue('pointA.lat', lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    setValue('pointA.lng', lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    if (name && name !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) setValue('pointA.name', name, { shouldDirty: true });
+    setMapNavigationTarget({ lat, lng, zoom: 15, timestamp: Date.now() });
+    mapInteraction.setPlacementMode('B');
+    toast({ title: `Site A set to ${name}`, description: 'Now place Site B.' });
+  }, [setValue, toast, mapInteraction]);
+
+  const handleSearchPlaceB = useCallback((lat: number, lng: number, name: string) => {
+    setValue('pointB.lat', lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    setValue('pointB.lng', lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    if (name && name !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) setValue('pointB.name', name, { shouldDirty: true });
+    setMapNavigationTarget({ lat, lng, zoom: 15, timestamp: Date.now() });
+    mapInteraction.setPlacementMode(null);
+    toast({ title: `Site B set to ${name}`, description: 'Both sites placed. Ready to analyze.' });
+  }, [setValue, toast, mapInteraction]);
+
+  const handleSearchNavigateOnly = useCallback((lat: number, lng: number, name: string) => {
+    setMapNavigationTarget({ lat, lng, zoom: 15, timestamp: Date.now() });
+    toast({ title: `Navigated to ${name}` });
+  }, [toast]);
+
+  // ── Save link ──
+  const handleSaveLink = useCallback(() => {
+    if (!analysis.analysisResult || analysis.isStale) {
+      toast({ title: "Cannot Save", description: "Run analysis first.", variant: "destructive" });
+      return;
+    }
+    const link = saved.saveLink({
+      analysisResult: analysis.analysisResult,
+      fiberPathResult: fiber.fiberPathResult,
+      clearanceThreshold: parseFloat(watch('clearanceThreshold')),
+    });
+    toast({ title: "Link Saved", description: `"${link.name}" saved to library.` });
+  }, [analysis.analysisResult, analysis.isStale, fiber.fiberPathResult, saved, toast, watch]);
+
+  // ── Load saved link ──
+  const handleLoadSavedLink = useCallback((link: SavedLink) => {
+    setValue('pointA.name', link.pointA.name, { shouldDirty: true });
+    setValue('pointA.lat', link.pointA.lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    setValue('pointA.lng', link.pointA.lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    setValue('pointA.height', link.pointA.towerHeight, { shouldDirty: true, shouldValidate: true });
+    setValue('pointB.name', link.pointB.name, { shouldDirty: true });
+    setValue('pointB.lat', link.pointB.lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    setValue('pointB.lng', link.pointB.lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    setValue('pointB.height', link.pointB.towerHeight, { shouldDirty: true, shouldValidate: true });
+    setValue('clearanceThreshold', link.clearanceThreshold.toString(), { shouldDirty: true, shouldValidate: true });
+
+    const midLat = (link.pointA.lat + link.pointB.lat) / 2;
+    const midLng = (link.pointA.lng + link.pointB.lng) / 2;
+    setMapNavigationTarget({ lat: midLat, lng: midLng, zoom: 12, timestamp: Date.now() });
+
+    toast({ title: "Link Loaded", description: `"${link.name}" restored. Click Analyze to refresh.` });
+
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsSidePanelOpen(false);
+    }
+  }, [setValue, toast]);
+
+  // ── Context menu handlers ──
+  const handleContextMenu = useCallback((state: MapContextMenuState) => setContextMenu(state), []);
+  const closeContextMenu = useCallback(() => setContextMenu(prev => ({ ...prev, isOpen: false })), []);
+
+  const handleContextPlaceSite = useCallback((site: 'A' | 'B', lat: number, lng: number) => {
+    const pointId = site === 'A' ? 'pointA' : 'pointB';
+    setValue(`${pointId}.lat`, lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    setValue(`${pointId}.lng`, lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
+    mapInteraction.setPlacementMode(site === 'A' ? 'B' : null);
+    toast({ title: `Site ${site} placed`, description: `${lat.toFixed(6)}, ${lng.toFixed(6)}` });
+  }, [setValue, mapInteraction, toast]);
+
+  const handleContextCopy = useCallback((lat: number, lng: number) => {
+    const text = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    navigator.clipboard.writeText(text).then(() => {
+      toast({ title: "Copied", description: text });
+    }).catch(() => {
+      toast({ title: "Copy failed", variant: "destructive" });
+    });
+  }, [toast]);
+
+  const handleContextNavigate = useCallback((lat: number, lng: number) => {
+    setMapNavigationTarget({ lat, lng, zoom: 16, timestamp: Date.now() });
+  }, []);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleContextWhatsHere = useCallback((_lat: number, _lng: number) => {
+    // Reverse geocode happens inside the context menu component
+  }, []);
+
+  // ── Export handlers ──
+  const handleExportKmz = useCallback(async (links: SavedLink[]) => {
+    try {
+      const { exportSavedLinksAsKmz } = await import('@/lib/saved-link-exports');
+      await exportSavedLinksAsKmz(links);
+      toast({ title: "KMZ Exported", description: `${links.length} link(s) exported to KMZ.` });
+    } catch (e) {
+      console.error('KMZ export failed:', e);
+      toast({ title: "Export Failed", description: e instanceof Error ? e.message : "KMZ export failed.", variant: "destructive" });
+    }
+  }, [toast]);
+
+  const handleExportExcel = useCallback(async (links: SavedLink[]) => {
+    try {
+      const { exportSavedLinksAsExcel } = await import('@/lib/saved-link-exports');
+      await exportSavedLinksAsExcel(links);
+      toast({ title: "Excel Exported", description: `${links.length} link(s) exported to Excel.` });
+    } catch (e) {
+      console.error('Excel export failed:', e);
+      toast({ title: "Export Failed", description: e instanceof Error ? e.message : "Excel export failed.", variant: "destructive" });
+    }
+  }, [toast]);
+
+  const handleExportCsv = useCallback(async (links: SavedLink[]) => {
+    try {
+      const { exportSavedLinksAsCsv } = await import('@/lib/saved-link-exports');
+      await exportSavedLinksAsCsv(links);
+      toast({ title: "CSV Exported", description: `${links.length} link(s) exported to CSV.` });
+    } catch (e) {
+      console.error('CSV export failed:', e);
+      toast({ title: "Export Failed", description: e instanceof Error ? e.message : "CSV export failed.", variant: "destructive" });
+    }
+  }, [toast]);
+
+  // ← CHANGED: Include profile data for ≤15 links (needed for detail page elevation charts)
+  const handleExportPdf = useCallback(async (links: SavedLink[]) => {
+    try {
+      const MAX_DETAIL_LINKS = 15;
+      const linksForExport = links.length <= MAX_DETAIL_LINKS
+        ? links  // Keep full profile data for elevation charts in detail pages
+        : links.map(l => ({
+            ...l,
+            analysisResult: { ...l.analysisResult, profile: [] },
+          }));
+
+      const result = await generateCombinedPdfReportAction(JSON.stringify(linksForExport));
+      if (!result.success) {
+        toast({ title: "PDF Failed", description: result.error, variant: "destructive" });
+        return;
+      }
+      const byteCharacters = atob(result.data.base64Pdf);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = result.data.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "PDF Exported", description: `${links.length} link(s) exported to PDF report.` });
+    } catch (e) {
+      console.error('PDF export failed:', e);
+      toast({ title: "Export Failed", description: e instanceof Error ? e.message : "PDF export failed.", variant: "destructive" });
+    }
+  }, [toast]);
+
+  // ── Keyboard shortcuts ──
+  const toggleSidePanel = useCallback(() => setIsSidePanelOpen(prev => !prev), []);
+
+  useKeyboardShortcuts({
+    onSetPlacementMode: mapInteraction.setPlacementMode,
+    onAnalyze: handleAnalyzeClick,
+    onToggleSidePanel: toggleSidePanel,
+    onSaveLink: handleSaveLink,
+    placementMode: mapInteraction.placementMode,
+    isActionPending: analysis.isActionPending,
+    hasAnalysisResult: !!analysis.analysisResult && !analysis.isStale,
+  });
+
+  // ── Watched form values ──
   const isValidNumericString = (val: string) => val && !isNaN(parseFloat(val));
   const watchedPointALat = watch('pointA.lat');
   const watchedPointALng = watch('pointA.lng');
@@ -174,19 +381,15 @@ export default function Home() {
 
   const hasPointA = !!(watchedPointALat && isValidNumericString(watchedPointALat) && watchedPointALng && isValidNumericString(watchedPointALng));
   const hasPointB = !!(watchedPointBLat && isValidNumericString(watchedPointBLat) && watchedPointBLng && isValidNumericString(watchedPointBLng));
-  const hasBothPoints = hasPointA && hasPointB;
-  const hasAnyPoints = hasPointA || hasPointB;
 
-  // Show bottom sheet when we have an analysis result
   useEffect(() => {
-    if (analysis.analysisResult) {
-      setIsBottomSheetVisible(true);
-    }
+    if (analysis.analysisResult) setIsProfileExpanded(true);
   }, [analysis.analysisResult]);
 
   return (
     <>
       <ProgressBar isActive={analysis.isActionPending || fiber.isFiberCalculating} />
+
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {analysis.analysisResult && !analysis.isStale && (
           analysis.analysisResult.losPossible
@@ -194,109 +397,36 @@ export default function Home() {
             : `Analysis complete. Line of sight is blocked. ${analysis.analysisResult.message || ''}`
         )}
       </div>
+
       {!isOnline && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[70] bg-red-500/95 text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2 backdrop-blur-sm">
-          <WifiOff className="h-3.5 w-3.5" />
-          Offline — analysis requires internet
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[70] bg-red-500/95 text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2 backdrop-blur-sm pt-safe">
+          <WifiOff className="h-3.5 w-3.5" /> Offline &mdash; analysis requires internet
         </div>
       )}
-      <AppHeader
-        onToggleHistory={handleToggleHistoryPanel}
-        isHistoryPanelSupported={true}
-        currentPage="home"
-      />
-      <div className="flex-1 flex flex-col overflow-hidden relative h-full">
-        <div className="flex-1 w-full relative">
-          <MapErrorBoundary>
-            <InteractiveMap
-              pointA={hasPointA ? { lat: parseFloat(watchedPointALat), lng: parseFloat(watchedPointALng), name: watchedPointAName } : undefined}
-              pointB={hasPointB ? { lat: parseFloat(watchedPointBLat), lng: parseFloat(watchedPointBLng), name: watchedPointBName } : undefined}
-              placementMode={mapInteraction.placementMode}
-              onMapClick={mapInteraction.handleMapClick}
-              onMarkerDrag={mapInteraction.handleMarkerDrag}
-              mapContainerClassName="w-full h-full"
-              analysisResult={analysis.analysisResult}
-              isStale={analysis.isStale}
-              currentDistanceKm={mapInteraction.liveDistanceKm}
-              fiberPathResult={fiber.fiberPathResult}
-            />
-          </MapErrorBoundary>
 
-          {/* Map Toolbar - floating above bottom sheet */}
-          <MapToolbar
-            placementMode={mapInteraction.placementMode}
-            onSetPlacementMode={mapInteraction.setPlacementMode}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onClearMap={handleClearMap}
-            onAnalyze={handleAnalyzeClick}
-            isPending={analysis.isActionPending || fiber.isFiberCalculating}
-            hasAnyPoints={hasAnyPoints}
-            hasBothPoints={hasBothPoints}
-            hasAnalysisResult={!!analysis.analysisResult && !analysis.isStale}
-          />
-        </div>
+      {/* ── MAIN LAYOUT ── */}
+      <div className="flex h-full w-full overflow-hidden">
 
-        {/* Loading indicator - compact floating pill */}
-        {(analysis.isActionPending || fiber.isFiberCalculating) && (
-          <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-2.5 bg-slate-950/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl border border-white/[0.06]">
-            <div className="relative">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-sm animate-pulse" />
-            </div>
-            <span className="text-xs font-medium text-white/80">
-              {analysis.isActionPending ? "Analyzing link..." : "Computing fiber path..."}
-            </span>
-          </div>
-        )}
-
-        {analysis.displayedError && !analysis.isActionPending && (
-          <ErrorModal
-            message={analysis.displayedError}
-            onDismiss={analysis.dismissErrorModal}
-            onRetry={analysis.retryLastAnalysis}
-            title="LOS Analysis Failed"
-          />
-        )}
-
-        {isClient && (
-          <ErrorBoundary
-            fallbackRender={({ error, resetErrorBoundary }) => (
-              <div className="fixed bottom-0 left-0 right-0 z-50 bg-red-950/95 backdrop-blur-md border-t border-red-500/30 p-6 flex flex-col items-center justify-center text-center space-y-4">
-                <AlertTriangle className="h-8 w-8 text-red-400" />
-                <h3 className="text-lg font-semibold text-white">Panel error</h3>
-                <p className="text-sm text-red-200/80">{error.message}</p>
-                <div className="flex gap-4">
-                  <Button variant="outline" className="text-white border-white/20 hover:bg-white/5" onClick={resetErrorBoundary}>Reset</Button>
-                  <Button variant="secondary" onClick={handleClearMap}>Clear Map</Button>
-                </div>
-              </div>
-            )}
-          >
-            <BottomSheet
-              analysisResult={analysis.analysisResult}
-              isVisible={isBottomSheetVisible}
-              isStale={analysis.isStale}
-              control={control}
-              register={register}
-              handleSubmit={handleSubmit}
-              processSubmit={processSubmit}
-              clientFormErrors={clientFormErrors}
-              serverFormErrors={analysis.fieldErrors ?? undefined}
-              isActionPending={analysis.isActionPending}
-              onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
-              onDownloadPdf={() => pdfDownload.handleDownloadPdf(analysis.analysisResult, toast)}
-              isGeneratingPdf={pdfDownload.isGeneratingPdf}
-              fiberPathResult={fiber.fiberPathResult}
-              isFiberCalculating={fiber.isFiberCalculating}
-              fiberPathError={fiber.fiberPathError}
-            />
-          </ErrorBoundary>
-        )}
-
-        {/* Settings Drawer */}
-        <AnalysisSettings
-          isOpen={isSettingsOpen}
-          onClose={setIsSettingsOpen}
+        {/* Side Panel */}
+        <SidePanel
+          isOpen={isSidePanelOpen}
+          onClose={() => setIsSidePanelOpen(false)}
+          control={control} register={register}
+          clientFormErrors={clientFormErrors}
+          serverFormErrors={analysis.fieldErrors ?? undefined}
+          placementMode={mapInteraction.placementMode}
+          onSetPlacementMode={mapInteraction.setPlacementMode}
+          onAnalyze={handleAnalyzeClick}
+          onClearMap={handleClearMap}
+          onNewLink={handleNewLink}
+          isActionPending={analysis.isActionPending}
+          analysisResult={analysis.analysisResult}
+          isStale={analysis.isStale}
+          onDownloadPdf={() => pdfDownload.handleDownloadPdf(analysis.analysisResult, toast, fiber.fiberPathResult)}
+          isGeneratingPdf={pdfDownload.isGeneratingPdf}
+          fiberPathResult={fiber.fiberPathResult}
+          isFiberCalculating={fiber.isFiberCalculating}
+          fiberPathError={fiber.fiberPathError}
           isFiberPathEnabled={fiber.calculateFiberPathEnabled}
           onToggleFiberPath={fiber.handleToggleFiberPath}
           snapRadius={parseInt(fiber.localSnapRadiusInput, 10)}
@@ -305,16 +435,174 @@ export default function Home() {
           clearanceThreshold={parseFloat(watch('clearanceThreshold'))}
           onClearanceThresholdChange={handleClearanceChange}
           isPending={analysis.isActionPending || fiber.isFiberCalculating}
-        />
-
-        <HistoryPanel
+          onSearchNavigate={handleSearchNavigate}
+          savedLinks={saved.savedLinks}
+          onSaveLink={handleSaveLink}
+          onLoadSavedLink={handleLoadSavedLink}
+          onDeleteSavedLink={saved.deleteLink}
+          onDeleteMultipleSavedLinks={saved.deleteMultipleLinks}
+          onClearAllSavedLinks={saved.clearAllLinks}
+          selectedLinkIds={saved.selectedLinkIds}
+          onToggleLinkSelection={saved.toggleLinkSelection}
+          onSelectAllLinks={saved.selectAllLinks}
+          onDeselectAllLinks={saved.deselectAllLinks}
+          isSelectionMode={saved.isSelectionMode}
+          onSetSelectionMode={saved.setIsSelectionMode}
+          onExportKmz={handleExportKmz}
+          onExportExcel={handleExportExcel}
+          onExportCsv={handleExportCsv}
+          onExportPdf={handleExportPdf}
           historyList={analysis.historyList}
           onLoadHistoryItem={analysis.loadFromHistory}
           onClearHistory={handleClearHistory}
-          isOpen={isHistoryPanelOpen}
-          onToggle={handleToggleHistoryPanel}
         />
+
+        {/* Map + Bottom Profile */}
+        <div className="flex-1 flex flex-col min-w-0 relative">
+
+          {/* Floating top bar */}
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-center gap-2 px-3 py-2 pt-safe">
+            {/* Left: hamburger + logo */}
+            <button onClick={() => setIsSidePanelOpen(true)}
+              className="lg:hidden w-10 h-10 rounded-xl bg-black/60 backdrop-blur-xl border border-white/[0.08] flex items-center justify-center text-white/70 hover:text-white shadow-lg touch-target touch-manipulation">
+              <Menu className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl rounded-xl px-3 py-1.5 border border-white/[0.08] shadow-lg flex-shrink-0">
+              <img src="/logo.png" alt="FindLOS" className="h-6 w-6 rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <span className="text-sm font-bold text-white hidden sm:block">FindLOS</span>
+            </div>
+
+            {/* Center: Floating search bar */}
+            <MapSearchBar
+              onPlaceSelected={handleSearchNavigate}
+              onPlaceASelected={handleSearchPlaceA}
+              onPlaceBSelected={handleSearchPlaceB}
+              onNavigateOnly={handleSearchNavigateOnly}
+              placementMode={mapInteraction.placementMode}
+              className="flex-1 max-w-lg mx-auto hidden sm:block"
+            />
+
+            {/* Right: nav links */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <a href="/bulk-los-analyzer"
+                className="text-[0.65rem] font-medium text-white/60 hover:text-white px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-xl border border-white/[0.06] hover:bg-black/60 transition-all hidden md:block">Bulk</a>
+              <a href="/fiber-calculator"
+                className="text-[0.65rem] font-medium text-white/60 hover:text-white px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-xl border border-white/[0.06] hover:bg-black/60 transition-all hidden md:block">Fiber</a>
+            </div>
+          </div>
+
+          {/* Mobile search bar — below top bar on small screens */}
+          <div className="absolute top-14 left-0 right-0 z-20 px-3 sm:hidden mt-safe">
+            <MapSearchBar
+              onPlaceSelected={handleSearchNavigate}
+              onPlaceASelected={handleSearchPlaceA}
+              onPlaceBSelected={handleSearchPlaceB}
+              onNavigateOnly={handleSearchNavigateOnly}
+              placementMode={mapInteraction.placementMode}
+            />
+          </div>
+
+          {/* Placement indicator */}
+          {mapInteraction.placementMode && (
+            <div className="absolute top-28 sm:top-14 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-2 max-w-[90vw] mt-safe">
+              <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl border backdrop-blur-xl",
+                mapInteraction.placementMode === 'A' ? "bg-emerald-950/80 border-emerald-500/30 text-emerald-300" : "bg-blue-950/80 border-blue-500/30 text-blue-300")}>
+                <div className="h-3.5 w-3.5 rounded-full bg-current animate-pulse" />
+                <span className="text-xs font-semibold whitespace-nowrap">
+                  {typeof window !== 'undefined' && window.innerWidth < 768
+                    ? `Tap or long-press to place Site ${mapInteraction.placementMode}`
+                    : `Click map or search to place Site ${mapInteraction.placementMode}`
+                  }
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Loading pill */}
+          {(analysis.isActionPending || fiber.isFiberCalculating) && (
+            <div className="absolute top-28 sm:top-14 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-slate-950/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl border border-white/[0.06] mt-safe">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-xs font-medium text-white/80">
+                {analysis.isActionPending ? "Analyzing link..." : "Computing fiber path..."}
+              </span>
+            </div>
+          )}
+
+          {/* Error modal */}
+          {analysis.displayedError && !analysis.isActionPending && (
+            <ErrorModal message={analysis.displayedError} onDismiss={analysis.dismissErrorModal}
+              onRetry={analysis.retryLastAnalysis} title="LOS Analysis Failed" />
+          )}
+
+          {/* Map */}
+          <div className="flex-1 min-h-0 relative">
+            <MapErrorBoundary>
+              <InteractiveMap
+                pointA={hasPointA ? { lat: parseFloat(watchedPointALat), lng: parseFloat(watchedPointALng), name: watchedPointAName } : undefined}
+                pointB={hasPointB ? { lat: parseFloat(watchedPointBLat), lng: parseFloat(watchedPointBLng), name: watchedPointBName } : undefined}
+                placementMode={mapInteraction.placementMode}
+                onMapClick={mapInteraction.handleMapClick}
+                onMarkerDrag={mapInteraction.handleMarkerDrag}
+                mapContainerClassName="w-full h-full"
+                analysisResult={analysis.analysisResult}
+                isStale={analysis.isStale}
+                currentDistanceKm={mapInteraction.liveDistanceKm}
+                fiberPathResult={fiber.fiberPathResult}
+                mapNavigationTarget={mapNavigationTarget}
+                onContextMenu={handleContextMenu}
+                savedLinks={saved.savedLinks}
+                onSavedLinkClick={handleLoadSavedLink}
+              />
+            </MapErrorBoundary>
+
+            <KeyboardHint show={isClient && typeof window !== 'undefined' && window.innerWidth >= 1024} />
+          </div>
+
+          {/* Bottom Profile Strip */}
+          {isClient && (
+            <ErrorBoundary
+              fallbackRender={({ error, resetErrorBoundary }) => (
+                <div className="bg-red-950/95 border-t border-red-500/30 p-4 flex items-center justify-between pb-safe">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400" />
+                    <p className="text-sm text-red-200">{error.message}</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={resetErrorBoundary} className="text-white border-white/20">Reset</Button>
+                </div>
+              )}
+            >
+              <BottomPanel
+                analysisResult={analysis.analysisResult}
+                isPanelGloballyVisible={!!analysis.analysisResult || analysis.isActionPending}
+                isContentExpanded={isProfileExpanded}
+                onToggleContentExpansion={toggleProfileExpansion}
+                isStale={analysis.isStale}
+                control={control} register={register}
+                handleSubmit={handleSubmit} processSubmit={processSubmit}
+                clientFormErrors={clientFormErrors}
+                serverFormErrors={analysis.fieldErrors ?? undefined}
+                isActionPending={analysis.isActionPending}
+                onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
+                onDownloadPdf={() => pdfDownload.handleDownloadPdf(analysis.analysisResult, toast, fiber.fiberPathResult)}
+                isGeneratingPdf={pdfDownload.isGeneratingPdf}
+                fiberPathResult={fiber.fiberPathResult}
+                isFiberCalculating={fiber.isFiberCalculating}
+                fiberPathError={fiber.fiberPathError}
+              />
+            </ErrorBoundary>
+          )}
+        </div>
       </div>
+
+      {/* Context Menu */}
+      <MapContextMenu
+        state={contextMenu}
+        onClose={closeContextMenu}
+        onPlaceSite={handleContextPlaceSite}
+        onCopyCoordinates={handleContextCopy}
+        onNavigateHere={handleContextNavigate}
+        onWhatsHere={handleContextWhatsHere}
+      />
     </>
   );
 }

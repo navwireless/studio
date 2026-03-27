@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import AppHeader from '@/components/layout/app-header';
 import InteractiveMap from '@/components/fso/interactive-map';
-import type { PlacementMode } from '@/components/fso/map-toolbar';
+import type { PlacementMode } from '@/types';
 // import type { PointCoordinates } from '@/types';
 import { FiberCalculatorFormSchema, type FiberCalculatorFormValues, defaultFiberCalculatorFormValues } from '@/lib/fiber-calculator-form-schema';
 import { useToast } from '@/hooks/use-toast';
@@ -72,7 +72,7 @@ export default function FiberCalculatorPage() {
 
       if (isNaN(pointA_lat_num) || isNaN(pointA_lng_num) || isNaN(pointB_lat_num) || isNaN(pointB_lng_num)) {
         setCalculationError("Invalid coordinates provided for Point A or Point B.");
-        toast({ title: "Input Error", description: "Please provide valid numeric coordinates for both points.", variant: "destructive"});
+        toast({ title: "Input Error", description: "Please provide valid numeric coordinates for both points.", variant: "destructive" });
         setIsCalculating(false);
         return;
       }
@@ -82,7 +82,7 @@ export default function FiberCalculatorPage() {
         pointB_lat_num,
         pointB_lng_num,
         data.fiberSnapRadius,
-        true 
+        true
       );
 
       setFiberPathResult(result);
@@ -90,10 +90,10 @@ export default function FiberCalculatorPage() {
       if (result.status !== 'success') {
         setCalculationError(result.errorMessage || 'Fiber path calculation failed.');
         toast({
-            title: result.status === 'api_error' ? "API Error" : "Calculation Info",
-            description: result.errorMessage || 'Could not calculate fiber path.',
-            variant: result.status === 'api_error' ? "destructive" : "default",
-            duration: 7000
+          title: result.status === 'api_error' ? "API Error" : "Calculation Info",
+          description: result.errorMessage || 'Could not calculate fiber path.',
+          variant: result.status === 'api_error' ? "destructive" : "default",
+          duration: 7000
         });
       } else {
         toast({ title: "Fiber Path Calculated", description: `Total distance: ${result.totalDistanceMeters?.toFixed(0)}m` });
@@ -116,18 +116,18 @@ export default function FiberCalculatorPage() {
     try {
       const currentFormValues = getValues();
       const snapRadius = currentFormValues.fiberSnapRadius;
-      
+
       const reportParams = {
         fiberPathResult: fiberPathResult,
         pointA_form: {
-            name: currentFormValues.pointA.name,
-            lat: currentFormValues.pointA.lat,
-            lng: currentFormValues.pointA.lng,
+          name: currentFormValues.pointA.name,
+          lat: currentFormValues.pointA.lat,
+          lng: currentFormValues.pointA.lng,
         },
         pointB_form: {
-            name: currentFormValues.pointB.name,
-            lat: currentFormValues.pointB.lat,
-            lng: currentFormValues.pointB.lng,
+          name: currentFormValues.pointB.name,
+          lat: currentFormValues.pointB.lat,
+          lng: currentFormValues.pointB.lng,
         },
         snapRadiusUsed_form: snapRadius,
       };
@@ -240,7 +240,7 @@ export default function FiberCalculatorPage() {
   const mapPointB = formPointBForMap.lat && formPointBForMap.lng && !isNaN(parseFloat(formPointBForMap.lat)) && !isNaN(parseFloat(formPointBForMap.lng))
     ? { lat: parseFloat(formPointBForMap.lat), lng: parseFloat(formPointBForMap.lng), name: formPointBForMap.name }
     : undefined;
-  
+
   const anyOperationPending = isCalculating || isGeneratingPdf || isGeneratingKmz;
   const currentFormSnapRadius = watch('fiberSnapRadius');
 
@@ -278,8 +278,8 @@ export default function FiberCalculatorPage() {
               onMapClick={handleMapClick}
               onMarkerDrag={handleMarkerDrag}
               mapContainerClassName="w-full h-full"
-              analysisResult={null} 
-              isStale={false} 
+              analysisResult={null}
+              isStale={false}
               fiberPathResult={fiberPathResult}
             />
           </MapErrorBoundary>
@@ -291,9 +291,9 @@ export default function FiberCalculatorPage() {
               <CardContent className="flex flex-col items-center text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
                 <p className="text-lg font-semibold text-foreground">
-                  {isCalculating ? "Calculating Fiber Path..." : 
-                   isGeneratingPdf ? "Generating PDF Report..." :
-                   isGeneratingKmz ? "Generating KMZ File..." : "Processing..."}
+                  {isCalculating ? "Calculating Fiber Path..." :
+                    isGeneratingPdf ? "Generating PDF Report..." :
+                      isGeneratingKmz ? "Generating KMZ File..." : "Processing..."}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   {isCalculating ? "Accessing road network data..." : "Please wait..."}

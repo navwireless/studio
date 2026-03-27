@@ -1,3 +1,56 @@
+// ============================================
+// UI State Types
+// ============================================
+
+/** Which site the user is currently placing on the map */
+export type PlacementMode = 'A' | 'B' | null;
+
+/** Target for programmatic map navigation (e.g., from search) */
+export interface MapNavigationTarget {
+  lat: number;
+  lng: number;
+  zoom?: number;
+  timestamp: number;
+}
+
+/** Right-click context menu state */
+export interface MapContextMenuState {
+  isOpen: boolean;
+  x: number;
+  y: number;
+  lat: number;
+  lng: number;
+}
+
+/** Saved link for the library */
+export interface SavedLink {
+  id: string;
+  name: string;
+  pointA: {
+    name: string;
+    lat: number;
+    lng: number;
+    towerHeight: number;
+  };
+  pointB: {
+    name: string;
+    lat: number;
+    lng: number;
+    towerHeight: number;
+  };
+  clearanceThreshold: number;
+  analysisResult: AnalysisResult;
+  fiberPathResult?: import('@/tools/fiberPathCalculator/types').FiberPathResult | null;
+  createdAt: number;
+  color: string;
+}
+
+/** Search action when no placement mode is active */
+export type SearchAction = 'placeA' | 'placeB' | 'navigate';
+
+// ============================================
+// Core Geometry & Form Types
+// ============================================
 
 export type PointCoordinates = {
   lat: number;
@@ -6,9 +59,9 @@ export type PointCoordinates = {
 
 export type PointInput = {
   name: string;
-  lat: string; // Keep as string for form input
-  lng: string; // Keep as string for form input
-  height: number; // Number for controlled component (slider/TowerHeightControl)
+  lat: string;
+  lng: string;
+  height: number;
 };
 
 export type AnalysisFormValues = {
@@ -19,7 +72,7 @@ export type AnalysisFormValues = {
 
 export type AnalysisParams = {
   pointA: PointCoordinates & { towerHeight: number; name?: string };
-  pointB: PointCoordinates & { towerHeight: number; name?:string };
+  pointB: PointCoordinates & { towerHeight: number; name?: string };
   clearanceThreshold: number;
 };
 
@@ -30,25 +83,25 @@ export type ElevationSampleAPI = {
 };
 
 export type LOSPoint = {
-  distance: number; // distance from point A in km
-  terrainElevation: number; // terrain elevation AMSL in meters
-  losHeight: number; // LOS path height AMSL in meters (corrected for curvature)
-  clearance: number; // losHeight - terrainElevation in meters
-  fresnelRadius?: number; // Optional: For future Fresnel zone display
+  distance: number;
+  terrainElevation: number;
+  losHeight: number;
+  clearance: number;
+  fresnelRadius?: number;
 };
 
 export type AnalysisResult = {
-  id: string; // Unique identifier for history
+  id: string;
   losPossible: boolean;
   distanceKm: number;
-  minClearance: number | null; // Actual minimum clearance from terrain to LOS path
-  additionalHeightNeeded: number | null; // Additional height to meet clearanceThreshold
+  minClearance: number | null;
+  additionalHeightNeeded: number | null;
   profile: LOSPoint[];
   message: string;
-  pointA: PointCoordinates & { towerHeight: number; name?: string }; 
-  pointB: PointCoordinates & { towerHeight: number; name?: string }; 
-  clearanceThresholdUsed: number; // The threshold value used for this analysis
-  timestamp: number; // To sort or display history items
+  pointA: PointCoordinates & { towerHeight: number; name?: string };
+  pointB: PointCoordinates & { towerHeight: number; name?: string };
+  clearanceThresholdUsed: number;
+  timestamp: number;
 };
 
 // ============================================
@@ -62,43 +115,37 @@ export type KmzPlacemark = {
   altitude?: number;
 };
 
-// Re-export fiber types for use in BulkAnalysisResultItem and consuming code
 export type { FiberPathSegment, FiberPathResult } from '@/tools/fiberPathCalculator/types';
 
 export interface BulkAnalysisResultItem {
   id: string;
   pointAName: string;
-  pointACoords: string; // "lat, lng"
+  pointACoords: string;
   pointBName: string;
-  pointBCoords: string; // "lat, lng"
+  pointBCoords: string;
   towerHeightUsed: number;
-  fresnelHeightUsed: number; // This is the clearanceThresholdUsed
+  fresnelHeightUsed: number;
   aerialDistanceKm: number;
   losPossible: boolean;
-  minClearanceActual: number | null; // Actual min clearance from terrain to LOS line
+  minClearanceActual: number | null;
   additionalHeightNeeded: number | null;
   remarks: string;
-  // For KMZ export and detailed internal use
   pointA: PointCoordinates & { name: string; towerHeight: number };
   pointB: PointCoordinates & { name: string; towerHeight: number };
   profile?: LOSPoint[];
-  // Fiber Path related fields (consolidated from bulk-los-analyzer/page.tsx)
   fiberPathStatus?: import('@/tools/fiberPathCalculator/types').FiberPathResult['status'] | null;
   fiberPathTotalDistanceMeters?: number | null;
   fiberPathErrorMessage?: string | null;
   fiberPathSegments?: import('@/tools/fiberPathCalculator/types').FiberPathSegment[] | null;
-  // Fields for KMZ path reconstruction for fiber, if snapped points are different
   pointA_snappedToRoad?: PointCoordinates;
   pointB_snappedToRoad?: PointCoordinates;
 }
 
 // ============================================
 // User Authentication & Profile Types
-// (Used by NextAuth + Firestore integration in authOptions.ts)
 // ============================================
 
 export type Role = 'user' | 'admin' | 'viewer';
-
 export type ProPlanType = 'monthly' | 'yearly' | 'lifetime' | null;
 
 export interface UserCredits {
@@ -107,7 +154,7 @@ export interface UserCredits {
 }
 
 export interface DailyUsage {
-  date: string; // YYYY-MM-DD
+  date: string;
   losAnalysisCount: number;
   bulkAnalysisCount: number;
 }
@@ -118,11 +165,6 @@ export interface UserActionLog {
   details?: Record<string, unknown>;
 }
 
-/**
- * Represents a Firestore-compatible Timestamp.
- * Using a generic shape to avoid importing firebase-admin in shared types.
- * At runtime, these are firebase-admin Timestamp instances from `firebase-admin/firestore`.
- */
 export interface FirestoreTimestamp {
   seconds: number;
   nanoseconds: number;

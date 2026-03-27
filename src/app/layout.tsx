@@ -1,10 +1,8 @@
-
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import Footer from '@/components/layout/footer';
-import { GoogleMapsLoaderProvider } from '@/components/GoogleMapsLoaderProvider'; // Import the provider
+import { GoogleMapsLoaderProvider } from '@/components/GoogleMapsLoaderProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -21,6 +19,12 @@ export const metadata: Metadata = {
   description: 'Line-of-Sight Analyzer for LiFi links by Nav Wireless Technologies Pvt. Ltd.',
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,16 +32,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body 
+      <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased 
                    bg-background text-foreground 
-                   flex flex-col h-screen overflow-hidden`}
+                   flex flex-col h-dvh overflow-hidden`}
       >
-        <GoogleMapsLoaderProvider> {/* Wrap with the provider */}
+        <GoogleMapsLoaderProvider>
           <main className="flex-1 overflow-hidden relative flex flex-col">
             {children}
           </main>
-          <Footer />
           <Toaster />
         </GoogleMapsLoaderProvider>
       </body>

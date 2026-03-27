@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,136 +8,103 @@ body {
 
 @layer base {
   :root {
-    /* Light theme (reference, but app will default to dark) */
-    --background-light: 0 0% 96.1%; /* #F5F5F5 */
+    --background-light: 0 0% 96.1%;
     --foreground-light: 240 10% 3.9%;
-
     --card-light: 0 0% 100%;
     --card-foreground-light: 240 10% 3.9%;
-
     --popover-light: 0 0% 100%;
     --popover-foreground-light: 240 10% 3.9%;
-
-    --primary-light: 221 83% 53%; /* A vibrant blue for light mode */
+    --primary-light: 221 83% 53%;
     --primary-foreground-light: 0 0% 100%;
-
     --secondary-light: 220 10% 92%;
     --secondary-foreground-light: 220 10% 20%;
-
     --muted-light: 0 0% 90%;
     --muted-foreground-light: 240 5% 35%;
-
-    --accent-light: 220 80% 95%; /* Lighter blue for general UI accents */
+    --accent-light: 220 80% 95%;
     --accent-foreground-light: 220 80% 40%;
-
-    --app-accent-light: 120 60% 50%; /* Green for specific app highlights (LOS success) */
+    --app-accent-light: 120 60% 50%;
     --app-accent-foreground-light: 0 0% 100%;
-
     --destructive-light: 0 84.2% 60.2%;
     --destructive-foreground-light: 0 0% 98%;
-
     --border-light: 0 0% 85%;
     --input-light: 0 0% 89.8%;
     --ring-light: 221 83% 53%;
-
     --radius: 0.5rem;
-
     --chart-1-light: 221 83% 53%;
     --chart-2-light: 120 60% 50%;
     --chart-3-light: 30 80% 55%;
     --chart-4-light: 280 70% 60%;
     --chart-5-light: 190 70% 50%;
-
     --los-success-text-light: 120 60% 30%;
     --los-failure-text-light: 0 70% 40%;
-    --los-success-foreground-light: 0 0% 100%; /* For text on green bg */
-    --los-failure-foreground-light: 0 0% 100%; /* For text on red bg */
+    --los-success-foreground-light: 0 0% 100%;
+    --los-failure-foreground-light: 0 0% 100%;
 
-
-    /* Default to dark theme variables */
-    /* Adjusted for more minimalist/GIS feel and better clarity */
-    --background: 222 47% 11%; /* Slightly lighter than 8% for less harshness */
-    --foreground: 210 40% 98%; /* Brighter white */
-
-    --card: 222 40% 15%; /* Lighter card */
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 40% 13%; /* Lighter popover */
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217 91% 65%; /* Brighter Blue */
-    --primary-foreground: 210 40% 98%; 
-
-    --secondary: 217 33% 25%; /* Lighter Muted Blue/Gray */
-    --secondary-foreground: 210 40% 90%; /* Lighter secondary text */
-
-    --muted: 217 33% 18%; /* Lighter Muted */
-    --muted-foreground: 210 30% 75%; /* Brighter Muted Gray Text */
-
-    --accent: 217 91% 55%; 
-    --accent-foreground: 210 40% 98%;
-
-    --app-accent: 140 60% 55%; /* Brighter Green for LOS success */
-    --app-accent-foreground: 0 0% 100%;
-
-    --destructive: 0 72% 55%; /* Brighter Vivid Red */
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 217 33% 28%; /* Lighter border */
-    --input: 217 33% 22%; /* Lighter input background */
-    --ring: 217 91% 70%; 
-
-    --chart-1: 217 91% 65%; 
-    --chart-2: 140 60% 55%;  
-    --chart-3: 30 80% 65%;  
-    --chart-4: 280 70% 70%;  
-    --chart-5: 190 70% 60%;  
-
-    --los-success-text: 140 65% 75%; /* Brighter green for text */
-    --los-failure-text: 0 75% 75%; /* Brighter red for text */
-    --los-success-foreground: 0 0% 100%; 
-    --los-failure-foreground: 0 0% 100%;
-  }
-
-  .dark {
-    /* Dark theme is default, these are identical to :root but kept for explicitness */
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-
     --card: 222 40% 15%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222 40% 13%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 217 91% 65%;
     --primary-foreground: 210 40% 98%;
-
     --secondary: 217 33% 25%;
     --secondary-foreground: 210 40% 90%;
-
     --muted: 217 33% 18%;
     --muted-foreground: 210 30% 75%;
-
     --accent: 217 91% 55%;
     --accent-foreground: 210 40% 98%;
-
     --app-accent: 140 60% 55%;
     --app-accent-foreground: 0 0% 100%;
-
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 98%;
-
     --border: 217 33% 28%;
     --input: 217 33% 22%;
     --ring: 217 91% 70%;
-
     --chart-1: 217 91% 65%;
     --chart-2: 140 60% 55%;
     --chart-3: 30 80% 65%;
     --chart-4: 280 70% 70%;
     --chart-5: 190 70% 60%;
+    --los-success-text: 140 65% 75%;
+    --los-failure-text: 0 75% 75%;
+    --los-success-foreground: 0 0% 100%;
+    --los-failure-foreground: 0 0% 100%;
 
+    /* Safe area insets — populated by env() on supported devices */
+    --sai-top: env(safe-area-inset-top, 0px);
+    --sai-right: env(safe-area-inset-right, 0px);
+    --sai-bottom: env(safe-area-inset-bottom, 0px);
+    --sai-left: env(safe-area-inset-left, 0px);
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 40% 15%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 40% 13%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 65%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 25%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 210 30% 75%;
+    --accent: 217 91% 55%;
+    --accent-foreground: 210 40% 98%;
+    --app-accent: 140 60% 55%;
+    --app-accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 33% 28%;
+    --input: 217 33% 22%;
+    --ring: 217 91% 70%;
+    --chart-1: 217 91% 65%;
+    --chart-2: 140 60% 55%;
+    --chart-3: 30 80% 65%;
+    --chart-4: 280 70% 70%;
+    --chart-5: 190 70% 60%;
     --los-success-text: 140 65% 75%;
     --los-failure-text: 0 75% 75%;
     --los-success-foreground: 0 0% 100%;
@@ -150,124 +116,493 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
-    /* Smooth scrolling and font antialiasing */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent pull-to-refresh and overscroll bounce */
+    overscroll-behavior: none;
+    /* Prevent iOS rubber-banding on body */
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
   }
 }
 
-/* Custom text color classes for LOS results */
+/* =============================================================================
+   Dynamic Viewport Height — fixes Safari mobile toolbar issue
+   ============================================================================= */
+.h-dvh {
+  height: 100vh;
+  /* fallback */
+  height: 100dvh;
+}
+
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* =============================================================================
+   Safe Area Utilities
+   ============================================================================= */
+.pt-safe {
+  padding-top: var(--sai-top);
+}
+
+.pr-safe {
+  padding-right: var(--sai-right);
+}
+
+.pb-safe {
+  padding-bottom: var(--sai-bottom);
+}
+
+.pl-safe {
+  padding-left: var(--sai-left);
+}
+
+.mt-safe {
+  margin-top: var(--sai-top);
+}
+
+.mb-safe {
+  margin-bottom: var(--sai-bottom);
+}
+
+.ml-safe {
+  margin-left: var(--sai-left);
+}
+
+.mr-safe {
+  margin-right: var(--sai-right);
+}
+
+/* =============================================================================
+   Touch Target Utilities
+   ============================================================================= */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.touch-target-lg {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+/* Remove 300ms tap delay and prevent double-tap zoom on interactive elements */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* =============================================================================
+   LOS Result Colors
+   ============================================================================= */
 .text-los-success {
   color: hsl(var(--los-success-text));
 }
+
 .text-los-failure {
   color: hsl(var(--los-failure-text));
 }
+
 .bg-los-success {
-  background-color: hsl(var(--app-accent)); 
-  color: hsl(var(--los-success-foreground)); 
-}
-.bg-los-failure {
-  background-color: hsl(var(--destructive));
-  color: hsl(var(--los-failure-foreground)); 
-}
-.text-los-success-foreground {
-    color: hsl(var(--los-success-foreground));
-}
-.text-los-failure-foreground {
-    color: hsl(var(--los-failure-foreground));
+  background-color: hsl(var(--app-accent));
+  color: hsl(var(--los-success-foreground));
 }
 
-@keyframes subtle-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+.bg-los-failure {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--los-failure-foreground));
 }
+
+.text-los-success-foreground {
+  color: hsl(var(--los-success-foreground));
+}
+
+.text-los-failure-foreground {
+  color: hsl(var(--los-failure-foreground));
+}
+
+/* =============================================================================
+   Animations — General
+   ============================================================================= */
+@keyframes subtle-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
 .animate-subtle-pulse {
   animation: subtle-pulse 2s ease-in-out infinite;
 }
 
-/* Animate-in utility for toolbar indicators */
 .animate-in {
   animation: animate-in 200ms ease-out;
 }
+
 .fade-in {
   --tw-enter-opacity: 0;
 }
+
 .slide-in-from-bottom-2 {
   --tw-enter-translate-y: 0.5rem;
 }
+
+.slide-in-from-bottom-4 {
+  --tw-enter-translate-y: 1rem;
+}
+
 @keyframes animate-in {
   from {
     opacity: var(--tw-enter-opacity, 1);
     transform: translateY(var(--tw-enter-translate-y, 0));
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Touch-safe targets - ensure 48px minimum for mobile */
-.touch-safe {
-  min-width: 44px;
-  min-height: 44px;
+/* =============================================================================
+   Long-Press Ripple — visual feedback on map long-press
+   ============================================================================= */
+@keyframes longPressRipple {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
 }
 
-/* Ensure ShadCN general accent uses our primary blue for dark theme */
-.dark {
-    --accent: hsl(var(--primary)); 
-    --accent-foreground: hsl(var(--primary-foreground));
-}
-:root { /* For light theme, if ever used, provide a sensible default */
-    --accent: hsl(var(--accent-light));
-    --accent-foreground: hsl(var(--accent-foreground-light));
+.long-press-ripple {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid hsl(217 91% 65%);
+  background: hsl(217 91% 65% / 0.15);
+  pointer-events: none;
+  z-index: 25;
+  animation: longPressRipple 0.6s ease-out forwards;
 }
 
-/* Custom scrollbar for horizontal scrolling in bottom panel on mobile */
+/* =============================================================================
+   Long-Press Progress Ring — shows hold progress
+   ============================================================================= */
+@keyframes longPressGrow {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.long-press-indicator {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid hsl(217 91% 65% / 0.5);
+  background: hsl(217 91% 65% / 0.08);
+  pointer-events: none;
+  z-index: 25;
+  transform: translate(-50%, -50%) scale(0.3);
+  transition: transform 0.5s ease-out, opacity 0.2s ease;
+}
+
+.long-press-indicator.active {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+/* =============================================================================
+   Mobile Bottom Sheet (Context Menu)
+   ============================================================================= */
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheetSlideDown {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.sheet-enter {
+  animation: sheetSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.sheet-backdrop {
+  animation: fadeIn 0.2s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* =============================================================================
+   Context Menu Animation (Desktop)
+   ============================================================================= */
+@keyframes contextMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =============================================================================
+   Saved Link Card Transitions
+   ============================================================================= */
+.saved-link-enter {
+  animation: savedLinkSlideIn 0.2s ease-out;
+}
+
+@keyframes savedLinkSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================================================================
+   Keyboard Hint Animation
+   ============================================================================= */
+@keyframes kbHintFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* =============================================================================
+   Custom Scrollbars
+   ============================================================================= */
 .custom-scrollbar::-webkit-scrollbar {
-  height: 6px; /* Height of horizontal scrollbar */
-  width: 6px; /* Width of vertical scrollbar */
+  height: 6px;
+  width: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: hsl(var(--muted) / 0.5);
   border-radius: 3px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: hsl(var(--secondary-foreground) / 0.6);
   border-radius: 3px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--secondary-foreground) / 0.8);
 }
-/* For Firefox */
+
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--secondary-foreground) / 0.6) hsl(var(--muted) / 0.5);
 }
 
-/* Styles for print mode */
+.saved-links-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.saved-links-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.saved-links-scroll::-webkit-scrollbar-thumb {
+  background: hsl(215 20% 30%);
+  border-radius: 9999px;
+}
+
+.saved-links-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(215 20% 40%);
+}
+
+/* =============================================================================
+   Touch-safe targets (legacy, kept for compat)
+   ============================================================================= */
+.touch-safe {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* =============================================================================
+   Accent overrides
+   ============================================================================= */
+.dark {
+  --accent: hsl(var(--primary));
+  --accent-foreground: hsl(var(--primary-foreground));
+}
+
+:root {
+  --accent: hsl(var(--accent-light));
+  --accent-foreground: hsl(var(--accent-foreground-light));
+}
+
+/* =============================================================================
+   Print Mode
+   ============================================================================= */
 @media print {
   body {
-    overflow: visible !important; /* Allow content to naturally flow for printing */
+    overflow: visible !important;
+    position: static !important;
   }
+
   main {
     overflow: visible !important;
   }
+
   .print\:hidden {
     display: none !important;
   }
+
   .print\:overflow-visible {
     overflow: visible !important;
   }
+
   .print\:h-auto {
     height: auto !important;
   }
+
   .print\:shadow-none {
     box-shadow: none !important;
   }
+
   .print\:border-none {
     border: none !important;
   }
+}
+
+/* =============================================================================
+   Google Places Autocomplete Dropdown — Dark Theme
+   ============================================================================= */
+.pac-container {
+  background-color: hsl(222 47% 11%) !important;
+  border: 1px solid hsl(215 20% 25% / 0.5) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5) !important;
+  margin-top: 4px !important;
+  padding: 4px !important;
+  font-family: var(--font-geist-sans), sans-serif !important;
+  z-index: 9999 !important;
+}
+
+.pac-container::after {
+  background-image: none !important;
+  padding: 0 !important;
+  height: 0 !important;
+}
+
+.pac-item {
+  border: none !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+  border-radius: 0.5rem !important;
+  color: hsl(210 20% 80%) !important;
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.pac-item:hover {
+  background-color: hsl(215 20% 20%) !important;
+}
+
+.pac-item-selected,
+.pac-item-selected:hover {
+  background-color: hsl(215 20% 22%) !important;
+}
+
+.pac-item-query {
+  color: hsl(210 20% 95%) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+}
+
+.pac-matched {
+  color: hsl(217 91% 60%) !important;
+  font-weight: 700 !important;
+}
+
+.pac-icon {
+  filter: invert(0.7) !important;
+  margin-right: 8px !important;
+}
+
+.pac-icon-marker {
+  filter: invert(0.7) !important;
+}
+
+@media (max-width: 1024px) {
+  .pac-container {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+}
+
+/* =============================================================================
+   Bottom Panel Drag Handle
+   ============================================================================= */
+.drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: hsl(215 20% 40%);
+  transition: background 0.15s ease, width 0.15s ease;
+}
+
+.drag-handle:hover,
+.drag-handle.active {
+  background: hsl(215 20% 60%);
+  width: 48px;
 }

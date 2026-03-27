@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
-import type { AnalysisFormValues } from '@/types';
-import type { PlacementMode } from '@/components/fso/map-toolbar';
+import type { AnalysisFormValues, PlacementMode } from '@/types';
 import { calculateDistanceKm } from '@/lib/los-calculator';
 
 export interface UseMapInteractionReturn {
@@ -49,7 +48,6 @@ export function useMapInteraction(
 
       updateDistanceIfValid();
 
-      // Auto-advance placement mode: A → B → null (pan-only)
       if (pointId === 'pointA') {
         setPlacementMode('B');
       } else {

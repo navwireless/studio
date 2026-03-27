@@ -1,10 +1,9 @@
-
 "use server";
 
 import { z } from 'zod';
 import type { AnalysisParams, AnalysisResult, PointCoordinates, ElevationSampleAPI } from '@/types';
 import { analyzeLOS } from '@/lib/los-calculator';
-import { generatePdfReportForSingleAnalysis, ReportGenerationOptions } from '@/tools/report-generator';
+import { generatePdfReportForSingleAnalysis, type ReportGenerationOptions } from '@/tools/report-generator';
 import { PointInputSchema_FC } from '@/lib/fiber-calculator-form-schema';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/generateFiberPdfReport';
@@ -16,7 +15,6 @@ import { decodePolyline, formatCoordinatesForKml } from '@/lib/polyline-decoder'
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
 const GOOGLE_ELEVATION_API_URL = "https://maps.googleapis.com/maps/api/elevation/json";
 // --- End Google Elevation API Configuration ---
-
 
 // Define Zod schema for form validation on the server, expecting string inputs from FormData
 const ServerActionPointInputSchema = z.object({
@@ -44,7 +42,6 @@ const ServerActionAnalysisSchema = z.object({
     .transform(val => parseFloat(val))
     .refine(val => val >= 0, "Clearance threshold must be a non-negative number"),
 });
-
 
 async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
   if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
@@ -95,15 +92,14 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.results.map((sample: any) => ({
-      elevation: sample.elevation,
-      location: {
-          lat: sample.location.lat,
-          lng: sample.location.lng,
-      },
-      resolution: sample.resolution,
+    elevation: sample.elevation,
+    location: {
+      lat: sample.location.lat,
+      lng: sample.location.lng,
+    },
+    resolution: sample.resolution,
   }));
 }
-
 
 export async function performLosAnalysis(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,11 +156,10 @@ export async function performLosAnalysis(
 
     return {
       ...result,
-      id: new Date().toISOString() + Math.random().toString(36).substring(2,9),
+      id: new Date().toISOString() + Math.random().toString(36).substring(2, 9),
       timestamp: Date.now(),
       message: `${result.message} Using Google Elevation API data.`
     };
-
   } catch (err: unknown) {
     const clientErrorMessageString = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
     console.error("ACTION_ERROR: Unhandled exception in performLosAnalysis:", err);
@@ -172,10 +167,12 @@ export async function performLosAnalysis(
   }
 }
 
+// ─── Single Analysis PDF Report ─────────────────────── // ← CHANGED: accepts fiberResult
 
 export async function generateSingleAnalysisPdfReportAction(
   analysisResult: AnalysisResult,
-  reportOptions?: ReportGenerationOptions
+  reportOptions?: ReportGenerationOptions,
+  fiberResult?: FiberPathResult | null,                   // ← CHANGED: new parameter
 ): Promise<{ success: true; data: { base64Pdf: string; fileName: string } } | { success: false; error: string }> {
   try {
     if (!analysisResult) {
@@ -183,7 +180,11 @@ export async function generateSingleAnalysisPdfReportAction(
       return { success: false, error: "Analysis result data is missing." };
     }
 
-    const pdfBytes = await generatePdfReportForSingleAnalysis(analysisResult, reportOptions);
+    const pdfBytes = await generatePdfReportForSingleAnalysis(
+      analysisResult,
+      reportOptions,
+      fiberResult ?? null,                                // ← CHANGED: pass fiberResult
+    );
     const base64Pdf = Buffer.from(pdfBytes).toString('base64');
 
     const safePointAName = (analysisResult.pointA.name || "SiteA").replace(/[^a-zA-Z0-9]/g, '_');
@@ -198,6 +199,8 @@ export async function generateSingleAnalysisPdfReportAction(
   }
 }
 
+// ─── Fiber Report ───────────────────────────────────────
+
 const FiberReportParamsSchema = z.object({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fiberPathResult: z.custom<FiberPathResult>((val) => val !== null && typeof val === 'object' && 'status' in (val as any), {
@@ -208,7 +211,6 @@ const FiberReportParamsSchema = z.object({
   snapRadiusUsed_form: z.number().min(0, "Snap radius must be non-negative."),
   reportOptions: z.custom<ReportGenerationOptions>().optional()
 });
-
 
 export async function generateFiberReportAction(
   params: z.infer<typeof FiberReportParamsSchema>
@@ -229,25 +231,25 @@ export async function generateFiberReportAction(
     }
 
     const pointA_coords_report: PointCoordinates = {
-        lat: parseFloat(pointA_form.lat),
-        lng: parseFloat(pointA_form.lng)
+      lat: parseFloat(pointA_form.lat),
+      lng: parseFloat(pointA_form.lng)
     };
     const pointB_coords_report: PointCoordinates = {
-        lat: parseFloat(pointB_form.lat),
-        lng: parseFloat(pointB_form.lng)
+      lat: parseFloat(pointB_form.lat),
+      lng: parseFloat(pointB_form.lng)
     };
 
     if (isNaN(pointA_coords_report.lat) || isNaN(pointA_coords_report.lng) || isNaN(pointB_coords_report.lat) || isNaN(pointB_coords_report.lng)) {
-        console.error("ACTION_ERROR: generateFiberReportAction - Invalid coordinates provided in form data for report generation.");
-        return { success: false, error: "Invalid coordinates provided in form data for report generation." };
+      console.error("ACTION_ERROR: generateFiberReportAction - Invalid coordinates provided in form data for report generation.");
+      return { success: false, error: "Invalid coordinates provided in form data for report generation." };
     }
 
     const pdfBytes = await generatePdfReportForFiberAnalysis(
-        fiberPathResult,
-        { name: pointA_form.name, ...pointA_coords_report },
-        { name: pointB_form.name, ...pointB_coords_report },
-        snapRadiusUsed_form,
-        reportOptions
+      fiberPathResult,
+      { name: pointA_form.name, ...pointA_coords_report },
+      { name: pointB_form.name, ...pointB_coords_report },
+      snapRadiusUsed_form,
+      reportOptions
     );
     const base64Pdf = Buffer.from(pdfBytes).toString('base64');
 
@@ -263,8 +265,8 @@ export async function generateFiberReportAction(
   }
 }
 
+// ─── Single Fiber Path KMZ ──────────────────────────────
 
-// Schema for KMZ generation parameters for a single fiber path
 const SingleFiberPathKmzParamsSchema = z.object({
   fiberPathResult: z.custom<FiberPathResult>((val) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -279,7 +281,6 @@ const SingleFiberPathKmzParamsSchema = z.object({
   pointB_name: z.string().min(1, "Point B name is required."),
 });
 
-
 export async function generateSingleFiberPathKmzAction(
   params: z.infer<typeof SingleFiberPathKmzParamsSchema>
 ): Promise<{ success: true; data: { base64Kmz: string; fileName: string } } | { success: false; error: string }> {
@@ -293,7 +294,6 @@ export async function generateSingleFiberPathKmzAction(
 
     const { fiberPathResult, pointA_name, pointB_name } = validation.data;
 
-    // KML Styles
     let kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
@@ -307,10 +307,10 @@ export async function generateSingleFiberPathKmzAction(
       <LabelStyle><scale>0.7</scale></LabelStyle>
     </Style>
     <Style id="offsetLineStyle">
-      <LineStyle><color>a000aaff</color><width>3</width></LineStyle> <!-- Orange-ish, slightly transparent -->
+      <LineStyle><color>a000aaff</color><width>3</width></LineStyle>
     </Style>
     <Style id="roadRouteLineStyle">
-      <LineStyle><color>a0ffaa00</color><width>4</width></LineStyle> <!-- Cyan-ish, slightly transparent -->
+      <LineStyle><color>a0ffaa00</color><width>4</width></LineStyle>
     </Style>
 
     <Folder><name>Original Sites</name>
@@ -328,7 +328,6 @@ export async function generateSingleFiberPathKmzAction(
 
     <Folder><name>Fiber Path Segments</name>`;
 
-    // Add snapped points if they exist
     if (fiberPathResult.pointA_snappedToRoad) {
       kmlContent += `
       <Placemark>
@@ -345,8 +344,7 @@ export async function generateSingleFiberPathKmzAction(
         <Point><coordinates>${fiberPathResult.pointB_snappedToRoad.lng},${fiberPathResult.pointB_snappedToRoad.lat},0</coordinates></Point>
       </Placemark>`;
     }
-    
-    // Iterate through segments to draw lines
+
     if (fiberPathResult.segments) {
       for (const segment of fiberPathResult.segments) {
         let segmentName = "";
@@ -382,12 +380,12 @@ export async function generateSingleFiberPathKmzAction(
 
         if (segmentName && styleUrl && coordinatesString) {
           kmlContent += `
-          <Placemark>
-            <name>${segmentName}</name>
-            <styleUrl>${styleUrl}</styleUrl>
-            <description>${xmlEscape(description)}</description>
-            <LineString><tessellate>1</tessellate><coordinates>${coordinatesString}</coordinates></LineString>
-          </Placemark>`;
+      <Placemark>
+        <name>${segmentName}</name>
+        <styleUrl>${styleUrl}</styleUrl>
+        <description>${xmlEscape(description)}</description>
+        <LineString><tessellate>1</tessellate><coordinates>${coordinatesString}</coordinates></LineString>
+      </Placemark>`;
         }
       }
     }
@@ -408,7 +406,6 @@ export async function generateSingleFiberPathKmzAction(
     const fileName = `Fiber_Path_KMZ_${safePointAName}_to_${safePointBName}.kmz`;
 
     return { success: true, data: { base64Kmz, fileName } };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during KMZ generation.";
     console.error("ACTION_ERROR: Unhandled exception in generateSingleFiberPathKmzAction:", error);
@@ -423,4 +420,32 @@ export async function getGoogleMapsApiKey(): Promise<string | null> {
     return null;
   }
   return apiKey;
+}
+
+// ─── Combined PDF Report for Saved Links ─────────────── // ← CHANGED: passes options
+
+export async function generateCombinedPdfReportAction(
+  savedLinksJson: string,
+  reportOptionsJson?: string,                              // ← CHANGED: new parameter
+): Promise<{ success: true; data: { base64Pdf: string; fileName: string } } | { success: false; error: string }> {
+  'use server';
+  try {
+    const links = JSON.parse(savedLinksJson) as import('@/types').SavedLink[];
+    if (!links.length) return { success: false, error: 'No links to export.' };
+
+    const options = reportOptionsJson ? JSON.parse(reportOptionsJson) : undefined;
+
+    const { generateCombinedPdfReport } = await import('@/tools/report-generator/generateCombinedPdfReport');
+    const pdfBytes = await generateCombinedPdfReport(links, options); // ← CHANGED: pass options
+
+    const base64Pdf = Buffer.from(pdfBytes).toString('base64');
+    const ts = new Date().toISOString().slice(0, 10);
+    return {
+      success: true,
+      data: { base64Pdf, fileName: `findlos_combined_report_${ts}.pdf` },
+    };
+  } catch (e) {
+    console.error('Combined PDF generation failed:', e);
+    return { success: false, error: e instanceof Error ? e.message : 'PDF generation failed.' };
+  }
 }
