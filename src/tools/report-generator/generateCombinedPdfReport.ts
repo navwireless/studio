@@ -489,7 +489,6 @@ export async function generateCombinedPdfReport(
         y = drawTableTitleBanner(tablePage);
         y = drawTableHeader(tablePage, y);
         let rowOnPage = 0;
-        let isFirstTablePage = true;
 
         for (let i = 0; i < links.length; i++) {
             const link = links[i];
@@ -502,7 +501,6 @@ export async function generateCombinedPdfReport(
                 tablePage.drawRectangle({ x: 0, y: 0, width: PAGE_WIDTH, height: 3, color: COLORS.brandBlue });
                 y = drawTableHeader(tablePage, PAGE_HEIGHT - MARGIN);
                 rowOnPage = 0;
-                isFirstTablePage = false;
             }
 
             // Alternating rows
