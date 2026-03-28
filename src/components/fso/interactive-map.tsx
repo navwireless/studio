@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
-import { ZoomIn, ZoomOut, Globe, Satellite } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult, PlacementMode, MapNavigationTarget, MapContextMenuState, SavedLink } from '@/types';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { cn } from '@/lib/utils';
@@ -79,6 +79,7 @@ function InteractiveMapInner({
   const containerRef = useRef<HTMLDivElement>(null);
   const projectionOverlayRef = useRef<google.maps.OverlayView | null>(null);
   const [mapTypeId, setMapTypeId] = useState<"roadmap" | "hybrid">("hybrid");
+  const [showLayerMenu, setShowLayerMenu] = useState(false);
   const { isLoaded: isMapApiLoaded } = useGoogleMapsLoader();
 
   const losPolylineRef = useRef<google.maps.Polyline | null>(null);
@@ -92,13 +93,11 @@ function InteractiveMapInner({
   const [cursorLng, setCursorLng] = useState<number | null>(null);
   const [isCursorOnMap, setIsCursorOnMap] = useState(false);
 
-  // ── Saved link hover tooltip ──
   const [hoveredLinkInfo, setHoveredLinkInfo] = useState<{
     link: SavedLink;
     position: PointCoordinates;
   } | null>(null);
 
-  // ── Long-press state refs ──
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const longPressFiredRef = useRef(false);
@@ -113,6 +112,14 @@ function InteractiveMapInner({
 
   const savedLinksRef = useRef(savedLinks);
   savedLinksRef.current = savedLinks;
+
+  // Close layer menu on outside click
+  useEffect(() => {
+    if (!showLayerMenu) return;
+    const handleClick = () => setShowLayerMenu(false);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [showLayerMenu]);
 
   useEffect(() => {
     if (analysisResult) {
@@ -268,8 +275,15 @@ function InteractiveMapInner({
     if (window.google?.maps) {
       mapInstance.setMapTypeId(google.maps.MapTypeId.HYBRID);
       mapInstance.setOptions({
-        gestureHandling: 'greedy', clickableIcons: false,
-        mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false,
+        gestureHandling: 'greedy',
+        clickableIcons: false,
+        mapTypeControl: false,
+        zoomControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        rotateControl: false,
+        scaleControl: false,
+        keyboardShortcuts: false,
       });
       try {
         projectionOverlayRef.current = createProjectionOverlay(mapInstance);
@@ -290,8 +304,8 @@ function InteractiveMapInner({
       suppressNextClickRef.current = false;
       return;
     }
-    // Clear hovered link tooltip on map click
     setHoveredLinkInfo(null);
+    setShowLayerMenu(false);
     if (!onMapClick) return;
     if (placementMode === null || placementMode === undefined) return;
     const pointId = placementMode === 'B' ? 'pointB' : 'pointA';
@@ -446,12 +460,11 @@ function InteractiveMapInner({
     return cleanup;
   }, [analysisResult, fiberPathResult, isStale, isFlashing, isMapApiLoaded, pALat, pALng, pBLat, pBLng, losPolylineColor]);
 
-  // Draw saved link polylines — NOW CLICKABLE with hover + click handlers
+  // Draw saved link polylines
   useEffect(() => {
     if (!isMapApiLoaded || !mapRef.current) return;
     const map = mapRef.current;
 
-    // Cleanup old polylines and listeners
     savedLinkListenersRef.current.forEach(l => google.maps.event.removeListener(l));
     savedLinkListenersRef.current = [];
     savedLinkPolylinesRef.current.forEach(({ polyline }) => polyline.setMap(null));
@@ -477,7 +490,6 @@ function InteractiveMapInner({
       });
       pl.setMap(map);
 
-      // Hover — highlight polyline
       const overListener = pl.addListener('mouseover', () => {
         pl.setOptions({ strokeOpacity: 0.85, strokeWeight: 4.5, zIndex: 2 });
         const midLat = (link.pointA.lat + link.pointB.lat) / 2;
@@ -490,11 +502,9 @@ function InteractiveMapInner({
         setHoveredLinkInfo(null);
       });
 
-      // Click — load this saved link's analysis
       const clickListener = pl.addListener('click', () => {
         if (navigator.vibrate) navigator.vibrate(20);
         setHoveredLinkInfo(null);
-        // Find the link from current ref to ensure latest data
         const currentLinks = savedLinksRef.current;
         const currentLink = currentLinks?.find(l => l.id === link.id);
         if (currentLink && onSavedLinkClickRef.current) {
@@ -517,13 +527,12 @@ function InteractiveMapInner({
     };
   }, [savedLinks, isMapApiLoaded]);
 
-  const handleZoomIn = () => { if (mapRef.current) mapRef.current.setZoom((mapRef.current.getZoom() || 0) + 1); };
-  const handleZoomOut = () => { if (mapRef.current) mapRef.current.setZoom((mapRef.current.getZoom() || 0) - 1); };
-  const handleMapTypeChange = (type: "roadmap" | "hybrid") => {
+  const handleMapTypeChange = useCallback((type: "roadmap" | "hybrid") => {
     if (!mapRef.current) return;
     setMapTypeId(type);
     mapRef.current.setMapTypeId(type);
-  };
+    setShowLayerMenu(false);
+  }, []);
 
   return (
     <div
@@ -576,7 +585,6 @@ function InteractiveMapInner({
           </OverlayView>
         )}
 
-        {/* Saved link hover tooltip */}
         {hoveredLinkInfo && (
           <OverlayView position={hoveredLinkInfo.position} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
             getPixelPositionOffset={(w, h) => ({ x: -(w / 2), y: -(h + 8) })}>
@@ -617,27 +625,67 @@ function InteractiveMapInner({
           placementMode === 'A' ? "border-emerald-500/40" : "border-blue-500/40")} />
       )}
 
-      {/* Map controls */}
-      <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
-        <button onClick={() => handleMapTypeChange('hybrid')}
-          className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl shadow-lg touch-target touch-manipulation",
-            mapTypeId === 'hybrid' ? "bg-white/20 text-white border border-white/20" : "bg-black/40 text-white/50 border border-white/[0.06] hover:bg-black/50 hover:text-white/70"
+      {/* ── Layers button (bottom-right, single button) ── */}
+      <div className="absolute bottom-20 right-3 z-10">
+        <div className="relative">
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowLayerMenu(prev => !prev); }}
+            className="w-11 h-11 rounded-full bg-white shadow-md shadow-black/20 flex items-center justify-center text-gray-700 hover:shadow-lg transition-all touch-manipulation active:scale-95"
+            aria-label="Map layers"
+          >
+            <Layers className="h-5 w-5" />
+          </button>
+
+          {/* Layer menu popup */}
+          {showLayerMenu && (
+            <div
+              className="absolute bottom-14 right-0 bg-white rounded-2xl shadow-xl shadow-black/20 border border-gray-100 p-2 min-w-[140px] animate-in fade-in slide-in-from-bottom-2 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-[0.6rem] font-semibold text-gray-400 uppercase tracking-wider px-3 pt-1 pb-2">
+                Map Type
+              </p>
+              <button
+                onClick={() => handleMapTypeChange('hybrid')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all touch-manipulation",
+                  mapTypeId === 'hybrid'
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
+                )}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold",
+                  mapTypeId === 'hybrid'
+                    ? "border-blue-500 bg-blue-100 text-blue-600"
+                    : "border-gray-200 bg-gray-100 text-gray-400"
+                )}>
+                  🛰
+                </div>
+                Satellite
+              </button>
+              <button
+                onClick={() => handleMapTypeChange('roadmap')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all touch-manipulation",
+                  mapTypeId === 'roadmap'
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-600 hover:bg-gray-50"
+                )}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold",
+                  mapTypeId === 'roadmap'
+                    ? "border-blue-500 bg-blue-100 text-blue-600"
+                    : "border-gray-200 bg-gray-100 text-gray-400"
+                )}>
+                  🗺
+                </div>
+                Road Map
+              </button>
+            </div>
           )}
-          aria-label="Satellite view"><Satellite className="h-4 w-4" /></button>
-        <button onClick={() => handleMapTypeChange('roadmap')}
-          className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center transition-all backdrop-blur-xl shadow-lg touch-target touch-manipulation",
-            mapTypeId === 'roadmap' ? "bg-white/20 text-white border border-white/20" : "bg-black/40 text-white/50 border border-white/[0.06] hover:bg-black/50 hover:text-white/70"
-          )}
-          aria-label="Road map view"><Globe className="h-4 w-4" /></button>
-        <div className="h-px bg-white/10 mx-1" />
-        <button onClick={handleZoomIn}
-          className="w-10 h-10 rounded-xl flex items-center justify-center bg-black/40 text-white/60 border border-white/[0.06] backdrop-blur-xl shadow-lg hover:bg-black/50 hover:text-white/80 active:bg-black/60 transition-all touch-target touch-manipulation"
-          aria-label="Zoom in"><ZoomIn className="h-4 w-4" /></button>
-        <button onClick={handleZoomOut}
-          className="w-10 h-10 rounded-xl flex items-center justify-center bg-black/40 text-white/60 border border-white/[0.06] backdrop-blur-xl shadow-lg hover:bg-black/50 hover:text-white/80 active:bg-black/60 transition-all touch-target touch-manipulation"
-          aria-label="Zoom out"><ZoomOut className="h-4 w-4" /></button>
+        </div>
       </div>
     </div>
   );

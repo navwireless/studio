@@ -1,13 +1,11 @@
 // src/app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth";
+import { authOptions } from "@/lib/authOptions";
+
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-async function auth(req: Request) {
-  const NextAuth = (await import("next-auth")).default;
-  const { authOptions } = await import("@/lib/authOptions");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handler = NextAuth(authOptions) as any;
-  return handler(req);
-}
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const handler = NextAuth(authOptions);
 
-export { auth as GET, auth as POST };
+export { handler as GET, handler as POST };

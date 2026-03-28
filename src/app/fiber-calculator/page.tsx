@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import AppHeader from '@/components/layout/app-header';
 import InteractiveMap from '@/components/fso/interactive-map';
 import type { PlacementMode } from '@/types';
-// import type { PointCoordinates } from '@/types';
 import { FiberCalculatorFormSchema, type FiberCalculatorFormValues, defaultFiberCalculatorFormValues } from '@/lib/fiber-calculator-form-schema';
 import { useToast } from '@/hooks/use-toast';
 import FiberInputPanel from '@/components/fiber-calculator/FiberInputPanel';
@@ -19,6 +17,9 @@ import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import { generateFiberReportAction, generateSingleFiberPathKmzAction } from '@/app/actions';
 import { saveAs } from 'file-saver';
+import { useCredits } from '@/hooks/use-credits';
+import CreditWarning from '@/components/credit-warning';
+import ProUpsellModal from '@/components/pro-upsell-modal';
 
 const FC_LOCAL_STORAGE_KEYS = {
   SNAP_RADIUS: 'fiberCalculatorSnapRadius',
@@ -26,12 +27,18 @@ const FC_LOCAL_STORAGE_KEYS = {
 
 export default function FiberCalculatorPage() {
   const { toast } = useToast();
+  const { refreshCredits } = useCredits();
   const [isCalculating, setIsCalculating] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isGeneratingKmz, setIsGeneratingKmz] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [fiberPathResult, setFiberPathResult] = useState<FiberPathResult | null>(null);
   const [placementMode, setPlacementMode] = useState<PlacementMode>('A');
+
+  // Credit management
+  const [creditWarningTrigger, setCreditWarningTrigger] = useState(false);
+  const [latestCredits, setLatestCredits] = useState<number>(999);
+  const [showZeroCreditModal, setShowZeroCreditModal] = useState(false);
 
   const form = useForm<FiberCalculatorFormValues>({
     resolver: zodResolver(FiberCalculatorFormSchema),
@@ -41,7 +48,6 @@ export default function FiberCalculatorPage() {
 
   const { register, handleSubmit, control, formState: { errors: clientFormErrors }, getValues, setValue, reset, watch } = form;
 
-  // Effect to load SNAP RADIUS ONLY from localStorage
   useEffect(() => {
     const storedRadius = localStorage.getItem(FC_LOCAL_STORAGE_KEYS.SNAP_RADIUS);
     if (storedRadius) {
@@ -49,7 +55,6 @@ export default function FiberCalculatorPage() {
     }
   }, [setValue]);
 
-  // Effect to persist SNAP RADIUS ONLY to localStorage
   const watchedSnapRadius = watch('fiberSnapRadius');
 
   useEffect(() => {
@@ -58,11 +63,11 @@ export default function FiberCalculatorPage() {
     }
   }, [watchedSnapRadius]);
 
-
   const handleCalculateSubmit = async (data: FiberCalculatorFormValues) => {
     setIsCalculating(true);
     setCalculationError(null);
     setFiberPathResult(null);
+    setCreditWarningTrigger(false);
 
     try {
       const pointA_lat_num = parseFloat(data.pointA.lat);
@@ -76,6 +81,42 @@ export default function FiberCalculatorPage() {
         setIsCalculating(false);
         return;
       }
+
+      // ── Credit deduction via server action ──
+      const creditResponse = await fetch('/api/auth/refresh');
+      const creditData = await creditResponse.json();
+
+      if (creditData.plan !== 'pro') {
+        // Deduct credit for non-pro users
+        const deductResponse = await fetch('/api/credits/deduct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ analysisType: 'fiber_path' }),
+        });
+        const deductData = await deductResponse.json();
+
+        if (!deductResponse.ok || !deductData.success) {
+          const errorMsg = deductData.error || 'Credit check failed.';
+          if (errorMsg.includes('Not enough credits') || errorMsg.includes('Credit check failed')) {
+            setShowZeroCreditModal(true);
+          }
+          setCalculationError(errorMsg);
+          toast({ title: "Credit Error", description: errorMsg, variant: "destructive" });
+          setIsCalculating(false);
+          return;
+        }
+
+        // Update credit display
+        if (typeof deductData.creditsRemaining === 'number') {
+          setLatestCredits(deductData.creditsRemaining);
+          setCreditWarningTrigger(true);
+          if (deductData.creditsRemaining <= 0) {
+            setShowZeroCreditModal(true);
+          }
+          refreshCredits();
+        }
+      }
+
       const result = await performFiberPathAnalysisAction(
         pointA_lat_num,
         pointA_lng_num,
@@ -196,7 +237,6 @@ export default function FiberCalculatorPage() {
     }
   };
 
-
   const handleMapClick = useCallback((event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
     if (event.latLng) {
       const lat = event.latLng.lat().toFixed(6);
@@ -205,7 +245,6 @@ export default function FiberCalculatorPage() {
       setValue(pointId === 'pointA' ? 'pointA.lng' : 'pointB.lng', lng, { shouldDirty: true, shouldValidate: true });
       setFiberPathResult(null);
       setCalculationError(null);
-      // Auto-advance placement mode
       setPlacementMode(pointId === 'pointA' ? 'B' : 'A');
     }
   }, [setValue]);
@@ -246,8 +285,20 @@ export default function FiberCalculatorPage() {
 
   return (
     <>
-      <AppHeader currentPage="fiber" />
-      <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden h-[calc(100vh-theme(spacing.12)-theme(spacing.12))]">
+      <AppHeader />
+
+      {/* Credit warning toasts */}
+      <CreditWarning credits={latestCredits} trigger={creditWarningTrigger} />
+
+      {/* Zero-credit blocking modal */}
+      <ProUpsellModal
+        open={showZeroCreditModal}
+        onOpenChange={setShowZeroCreditModal}
+        blocking={latestCredits <= 0}
+        trigger="zero_credits"
+      />
+
+      <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden h-[calc(100vh-theme(spacing.11))]">
         <div className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-auto md:h-full overflow-y-auto custom-scrollbar bg-card/80 backdrop-blur-sm shadow-lg border-t md:border-t-0 md:border-r border-border p-1 print:hidden">
           <ErrorBoundary>
             <FiberInputPanel

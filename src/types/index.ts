@@ -1,9 +1,11 @@
+// src/types/index.ts
+
 // ============================================
 // UI State Types
 // ============================================
 
 /** Which site the user is currently placing on the map */
-export type PlacementMode = 'A' | 'B' | null;
+export type PlacementMode = "A" | "B" | null;
 
 /** Target for programmatic map navigation (e.g., from search) */
 export interface MapNavigationTarget {
@@ -40,13 +42,15 @@ export interface SavedLink {
   };
   clearanceThreshold: number;
   analysisResult: AnalysisResult;
-  fiberPathResult?: import('@/tools/fiberPathCalculator/types').FiberPathResult | null;
+  fiberPathResult?:
+  | import("@/tools/fiberPathCalculator/types").FiberPathResult
+  | null;
   createdAt: number;
   color: string;
 }
 
 /** Search action when no placement mode is active */
-export type SearchAction = 'placeA' | 'placeB' | 'navigate';
+export type SearchAction = "placeA" | "placeB" | "navigate";
 
 // ============================================
 // Core Geometry & Form Types
@@ -115,7 +119,10 @@ export type KmzPlacemark = {
   altitude?: number;
 };
 
-export type { FiberPathSegment, FiberPathResult } from '@/tools/fiberPathCalculator/types';
+export type {
+  FiberPathSegment,
+  FiberPathResult,
+} from "@/tools/fiberPathCalculator/types";
 
 export interface BulkAnalysisResultItem {
   id: string;
@@ -133,38 +140,68 @@ export interface BulkAnalysisResultItem {
   pointA: PointCoordinates & { name: string; towerHeight: number };
   pointB: PointCoordinates & { name: string; towerHeight: number };
   profile?: LOSPoint[];
-  fiberPathStatus?: import('@/tools/fiberPathCalculator/types').FiberPathResult['status'] | null;
+  fiberPathStatus?:
+  | import("@/tools/fiberPathCalculator/types").FiberPathResult["status"]
+  | null;
   fiberPathTotalDistanceMeters?: number | null;
   fiberPathErrorMessage?: string | null;
-  fiberPathSegments?: import('@/tools/fiberPathCalculator/types').FiberPathSegment[] | null;
+  fiberPathSegments?:
+  | import("@/tools/fiberPathCalculator/types").FiberPathSegment[]
+  | null;
   pointA_snappedToRoad?: PointCoordinates;
   pointB_snappedToRoad?: PointCoordinates;
 }
 
 // ============================================
-// User Authentication & Profile Types
+// Re-export Auth Types for convenience
 // ============================================
 
-export type Role = 'user' | 'admin' | 'viewer';
-export type ProPlanType = 'monthly' | 'yearly' | 'lifetime' | null;
+export type {
+  UserRole,
+  UserStatus,
+  UserPlan,
+  FirestoreUser,
+  CreditTransactionType,
+  AnalysisType,
+  AnalysisHistoryDoc,
+  CreditTransactionDoc,
+  AdminLogDoc,
+  SubscriptionDoc,
+  SessionUser,
+} from "./auth";
 
+// ============================================
+// Legacy compatibility aliases
+// (keeping these so existing code doesn't break)
+// ============================================
+
+/** @deprecated Use UserRole from auth types */
+export type Role = "user" | "admin";
+
+/** @deprecated Use UserPlan from auth types */
+export type ProPlanType = "monthly" | "yearly" | "lifetime" | null;
+
+/** @deprecated Use FirestoreUser from auth types */
 export interface UserCredits {
   losAnalysis: number;
   bulkAnalysis: number;
 }
 
+/** @deprecated */
 export interface DailyUsage {
   date: string;
   losAnalysisCount: number;
   bulkAnalysisCount: number;
 }
 
+/** @deprecated */
 export interface UserActionLog {
   action: string;
   timestamp: number;
   details?: Record<string, unknown>;
 }
 
+/** @deprecated */
 export interface FirestoreTimestamp {
   seconds: number;
   nanoseconds: number;
@@ -172,6 +209,7 @@ export interface FirestoreTimestamp {
   toMillis: () => number;
 }
 
+/** @deprecated Use FirestoreUser from auth types instead */
 export interface UserProfile {
   id: string;
   email: string | null;

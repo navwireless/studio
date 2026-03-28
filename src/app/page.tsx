@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, WifiOff, Menu } from 'lucide-react';
+import { Loader2, AlertTriangle, WifiOff } from 'lucide-react';
 
 import { useToast } from '@/hooks/use-toast';
 import { performLosAnalysis, generateCombinedPdfReportAction } from '@/app/actions';
@@ -14,7 +14,7 @@ import InteractiveMap from '@/components/fso/interactive-map';
 import BottomPanel from '@/components/fso/bottom-panel';
 import SidePanel from '@/components/fso/side-panel';
 import MapContextMenu from '@/components/fso/map-context-menu';
-import MapSearchBar from '@/components/fso/map-search-bar';
+import MapHeader from '@/components/layout/map-header';
 import KeyboardHint from '@/components/fso/keyboard-hint';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -31,6 +31,10 @@ import { usePdfDownload } from '@/hooks/use-pdf-download';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useSavedLinks } from '@/hooks/use-saved-links';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
+import { useCredits } from '@/hooks/use-credits';
+
+import CreditWarning from '@/components/credit-warning';
+import ProUpsellModal from '@/components/pro-upsell-modal';
 
 export default function Home() {
   const { toast } = useToast();
@@ -41,6 +45,12 @@ export default function Home() {
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [mapNavigationTarget, setMapNavigationTarget] = useState<MapNavigationTarget | null>(null);
   const [contextMenu, setContextMenu] = useState<MapContextMenuState>({ isOpen: false, x: 0, y: 0, lat: 0, lng: 0 });
+
+  // Credit management
+  const { refreshCredits } = useCredits();
+  const [creditWarningTrigger, setCreditWarningTrigger] = useState(false);
+  const [latestCredits, setLatestCredits] = useState<number>(999);
+  const [showZeroCreditModal, setShowZeroCreditModal] = useState(false);
 
   useEffect(() => { setIsClient(true); }, []);
 
@@ -84,6 +94,36 @@ export default function Home() {
   const fiberRef = useRef(fiber);
   fiberRef.current = fiber;
 
+  // ── Handle credit updates after analysis ──
+  useEffect(() => {
+    const result = analysis.analysisResult;
+    if (result && !analysis.isStale && 'creditsRemaining' in result) {
+      const remaining = (result as { creditsRemaining?: number }).creditsRemaining;
+      if (typeof remaining === 'number') {
+        setLatestCredits(remaining);
+        setCreditWarningTrigger(true);
+
+        if (remaining <= 0) {
+          setShowZeroCreditModal(true);
+        }
+
+        // Refresh session to update header credits
+        refreshCredits();
+      }
+    }
+  }, [analysis.analysisResult, analysis.isStale, refreshCredits]);
+
+  // ── Handle credit errors from server ──
+  useEffect(() => {
+    const rawState = analysis.rawServerState;
+    if (rawState && 'error' in rawState && typeof rawState.error === 'string') {
+      const errorMsg = rawState.error;
+      if (errorMsg.includes('Not enough credits') || errorMsg.includes('Credit check failed')) {
+        setShowZeroCreditModal(true);
+      }
+    }
+  }, [analysis.rawServerState]);
+
   const processSubmit = useCallback((data: AnalysisFormValues) => {
     if (!navigator.onLine) {
       toast({ title: 'No Connection', description: 'Please check your internet connection.', variant: 'destructive' });
@@ -93,6 +133,7 @@ export default function Home() {
     analysisRef.current.setFieldErrors(null);
     fiberRef.current.setFiberPathResult(null);
     fiberRef.current.setFiberPathError(null);
+    setCreditWarningTrigger(false);
 
     const formData = new FormData();
     formData.append('pointA.name', data.pointA.name);
@@ -174,7 +215,7 @@ export default function Home() {
 
   const toggleProfileExpansion = useCallback(() => setIsProfileExpanded(prev => !prev), []);
 
-  // ── Search navigation (shared by side panel search + floating map search) ──
+  // ── Search navigation ──
   const handleSearchNavigate = useCallback((lat: number, lng: number, name: string) => {
     setMapNavigationTarget({ lat, lng, zoom: 15, timestamp: Date.now() });
 
@@ -195,7 +236,6 @@ export default function Home() {
     }
   }, [mapInteraction, setValue, toast]);
 
-  // ── Search action picker handlers (when no placement mode) ──
   const handleSearchPlaceA = useCallback((lat: number, lng: number, name: string) => {
     setValue('pointA.lat', lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
     setValue('pointA.lng', lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
@@ -283,7 +323,6 @@ export default function Home() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleContextWhatsHere = useCallback((_lat: number, _lng: number) => {
-    // Reverse geocode happens inside the context menu component
   }, []);
 
   // ── Export handlers ──
@@ -320,16 +359,15 @@ export default function Home() {
     }
   }, [toast]);
 
-  // ← CHANGED: Include profile data for ≤15 links (needed for detail page elevation charts)
   const handleExportPdf = useCallback(async (links: SavedLink[]) => {
     try {
       const MAX_DETAIL_LINKS = 15;
       const linksForExport = links.length <= MAX_DETAIL_LINKS
-        ? links  // Keep full profile data for elevation charts in detail pages
+        ? links
         : links.map(l => ({
-            ...l,
-            analysisResult: { ...l.analysisResult, profile: [] },
-          }));
+          ...l,
+          analysisResult: { ...l.analysisResult, profile: [] },
+        }));
 
       const result = await generateCombinedPdfReportAction(JSON.stringify(linksForExport));
       if (!result.success) {
@@ -389,6 +427,17 @@ export default function Home() {
   return (
     <>
       <ProgressBar isActive={analysis.isActionPending || fiber.isFiberCalculating} />
+
+      {/* Credit warning toasts */}
+      <CreditWarning credits={latestCredits} trigger={creditWarningTrigger} />
+
+      {/* Zero-credit blocking modal */}
+      <ProUpsellModal
+        open={showZeroCreditModal}
+        onOpenChange={setShowZeroCreditModal}
+        blocking={latestCredits <= 0}
+        trigger="zero_credits"
+      />
 
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {analysis.analysisResult && !analysis.isStale && (
@@ -460,57 +509,26 @@ export default function Home() {
         {/* Map + Bottom Profile */}
         <div className="flex-1 flex flex-col min-w-0 relative">
 
-          {/* Floating top bar */}
-          <div className="absolute top-0 left-0 right-0 z-20 flex items-center gap-2 px-3 py-2 pt-safe">
-            {/* Left: hamburger + logo */}
-            <button onClick={() => setIsSidePanelOpen(true)}
-              className="lg:hidden w-10 h-10 rounded-xl bg-black/60 backdrop-blur-xl border border-white/[0.08] flex items-center justify-center text-white/70 hover:text-white shadow-lg touch-target touch-manipulation">
-              <Menu className="h-4 w-4" />
-            </button>
-            <div className="flex items-center gap-2 bg-black/60 backdrop-blur-xl rounded-xl px-3 py-1.5 border border-white/[0.08] shadow-lg flex-shrink-0">
-              <img src="/logo.png" alt="FindLOS" className="h-6 w-6 rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-              <span className="text-sm font-bold text-white hidden sm:block">FindLOS</span>
-            </div>
-
-            {/* Center: Floating search bar */}
-            <MapSearchBar
-              onPlaceSelected={handleSearchNavigate}
-              onPlaceASelected={handleSearchPlaceA}
-              onPlaceBSelected={handleSearchPlaceB}
-              onNavigateOnly={handleSearchNavigateOnly}
-              placementMode={mapInteraction.placementMode}
-              className="flex-1 max-w-lg mx-auto hidden sm:block"
-            />
-
-            {/* Right: nav links */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <a href="/bulk-los-analyzer"
-                className="text-[0.65rem] font-medium text-white/60 hover:text-white px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-xl border border-white/[0.06] hover:bg-black/60 transition-all hidden md:block">Bulk</a>
-              <a href="/fiber-calculator"
-                className="text-[0.65rem] font-medium text-white/60 hover:text-white px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-xl border border-white/[0.06] hover:bg-black/60 transition-all hidden md:block">Fiber</a>
-            </div>
-          </div>
-
-          {/* Mobile search bar — below top bar on small screens */}
-          <div className="absolute top-14 left-0 right-0 z-20 px-3 sm:hidden mt-safe">
-            <MapSearchBar
-              onPlaceSelected={handleSearchNavigate}
-              onPlaceASelected={handleSearchPlaceA}
-              onPlaceBSelected={handleSearchPlaceB}
-              onNavigateOnly={handleSearchNavigateOnly}
-              placementMode={mapInteraction.placementMode}
-            />
-          </div>
+          {/* ── MapHeader: Google Maps-style floating header ── */}
+          <MapHeader
+            onToggleSidePanel={() => setIsSidePanelOpen(true)}
+            showHamburger={!isSidePanelOpen}
+            onSearchPlaceSelected={handleSearchNavigate}
+            onSearchPlaceA={handleSearchPlaceA}
+            onSearchPlaceB={handleSearchPlaceB}
+            onSearchNavigateOnly={handleSearchNavigateOnly}
+            placementMode={mapInteraction.placementMode}
+          />
 
           {/* Placement indicator */}
           {mapInteraction.placementMode && (
-            <div className="absolute top-28 sm:top-14 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-2 max-w-[90vw] mt-safe">
-              <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl border backdrop-blur-xl",
+            <div className="absolute top-[7.5rem] sm:top-[5.5rem] left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-2 max-w-[90vw] pointer-events-none">
+              <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl border backdrop-blur-xl pointer-events-auto",
                 mapInteraction.placementMode === 'A' ? "bg-emerald-950/80 border-emerald-500/30 text-emerald-300" : "bg-blue-950/80 border-blue-500/30 text-blue-300")}>
                 <div className="h-3.5 w-3.5 rounded-full bg-current animate-pulse" />
                 <span className="text-xs font-semibold whitespace-nowrap">
                   {typeof window !== 'undefined' && window.innerWidth < 768
-                    ? `Tap or long-press to place Site ${mapInteraction.placementMode}`
+                    ? `Tap to place Site ${mapInteraction.placementMode}`
                     : `Click map or search to place Site ${mapInteraction.placementMode}`
                   }
                 </span>
@@ -520,7 +538,7 @@ export default function Home() {
 
           {/* Loading pill */}
           {(analysis.isActionPending || fiber.isFiberCalculating) && (
-            <div className="absolute top-28 sm:top-14 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-slate-950/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl border border-white/[0.06] mt-safe">
+            <div className="absolute top-[7.5rem] sm:top-[5.5rem] left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-slate-950/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl border border-white/[0.06] pointer-events-none">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
               <span className="text-xs font-medium text-white/80">
                 {analysis.isActionPending ? "Analyzing link..." : "Computing fiber path..."}

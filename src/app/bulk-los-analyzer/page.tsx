@@ -1,8 +1,6 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
-// Removed dynamic import for BulkAnalysisMap
 import BulkAnalysisMap from '@/components/bulk-los/BulkAnalysisMap';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,15 +26,13 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { MapErrorBoundary } from '@/components/map-error-boundary';
 
 import { performFiberPathAnalysisAction } from '@/tools/fiberPathCalculator';
-// import type { FiberPathResult } from '@/tools/fiberPathCalculator';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+
+import { useAuth } from '@/hooks/use-auth';
+import ProUpsellModal from '@/components/pro-upsell-modal';
 
 const LOCAL_STORAGE_KEYS_BULK = {
   FIBER_TOGGLE_BULK: 'fiberPathEnabledBulk',
   FIBER_RADIUS_BULK: 'fiberPathRadiusMetersBulk',
-  AUTH_TOKEN_BULK: 'bulk-analyzer-auth-token',
 };
 
 const BulkAnalysisFormSchema = z.object({
@@ -47,41 +43,36 @@ const BulkAnalysisFormSchema = z.object({
 
 export type BulkAnalysisFormValues = z.infer<typeof BulkAnalysisFormSchema>;
 
-const LoginSchema = z.object({
-    email: z.string().email({ message: "Invalid email address." }),
-    password: z.string().min(1, { message: "Password is required." }),
-});
-type LoginFormValues = z.infer<typeof LoginSchema>;
-
-
 export default function BulkLosAnalyzerPage() {
   const { toast } = useToast();
+  const { plan } = useAuth();
   const [kmzPlacemarks, setKmzPlacemarks] = useState<KmzPlacemark[]>([]);
   const [kmzFile, setKmzFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false); // Covers both LOS and Fiber processing phases
+  const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState('');
   const [bulkResults, setBulkResults] = useState<BulkAnalysisResultItem[]>([]);
-  
-  const [isClient, setIsClient] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showProGate, setShowProGate] = useState(false);
 
-  // Initialize with static defaults for SSR and initial client render
+  const [isClient, setIsClient] = useState(false);
+
   const [calculateFiberPathBulkEnabled, setCalculateFiberPathBulkEnabled] = useState<boolean>(false);
   const [fiberRadiusMetersBulk, setFiberRadiusMetersBulk] = useState<number>(500);
 
-  // Effect to sync with localStorage after client-side mount
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Show pro gate for free users
+  useEffect(() => {
+    if (isClient && plan === 'free') {
+      setShowProGate(true);
+    }
+  }, [isClient, plan]);
+
   useEffect(() => {
     if (isClient) {
-      if (localStorage.getItem(LOCAL_STORAGE_KEYS_BULK.AUTH_TOKEN_BULK) === 'true') {
-          setIsAuthenticated(true);
-      }
       const storedToggle = localStorage.getItem(LOCAL_STORAGE_KEYS_BULK.FIBER_TOGGLE_BULK);
       if (storedToggle) {
         setCalculateFiberPathBulkEnabled(JSON.parse(storedToggle));
@@ -91,7 +82,7 @@ export default function BulkLosAnalyzerPage() {
         setFiberRadiusMetersBulk(parseInt(storedRadius, 10));
       }
     }
-  }, [isClient]); 
+  }, [isClient]);
 
   const form = useForm<BulkAnalysisFormValues>({
     resolver: zodResolver(BulkAnalysisFormSchema),
@@ -102,41 +93,6 @@ export default function BulkLosAnalyzerPage() {
     },
     mode: 'onBlur',
   });
-
-  const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(LoginSchema),
-    defaultValues: {
-        email: '',
-        password: '',
-    },
-  });
-
-
-  const handleLoginSubmit = async (data: LoginFormValues) => {
-    setIsLoggingIn(true);
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-
-        if (response.ok) {
-            toast({ title: "Login Successful", description: "Access granted." });
-            localStorage.setItem(LOCAL_STORAGE_KEYS_BULK.AUTH_TOKEN_BULK, 'true');
-            setIsAuthenticated(true);
-        } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Invalid credentials.");
-        }
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown login error occurred.";
-        toast({ title: "Login Failed", description: errorMessage, variant: "destructive" });
-    } finally {
-        setIsLoggingIn(false);
-    }
-  };
-
 
   const generateRemarks = (
     result: Omit<BulkAnalysisResultItem, 'remarks' | 'id' | 'pointACoords' | 'pointBCoords' | 'fiberPathStatus' | 'fiberPathTotalDistanceMeters' | 'fiberPathErrorMessage' | 'fiberPathSegments' | 'pointA_snappedToRoad' | 'pointB_snappedToRoad'>,
@@ -154,26 +110,32 @@ export default function BulkLosAnalyzerPage() {
     if (result.additionalHeightNeeded !== null && result.additionalHeightNeeded > 0) {
       remark += ` Additional height of ${result.additionalHeightNeeded.toFixed(1)}m needed for ${params.clearanceThreshold}m threshold.`;
     } else if (fullAnalysisResult.minClearance !== null && params.clearanceThreshold > fullAnalysisResult.minClearance) {
-        const neededForThreshold = params.clearanceThreshold - fullAnalysisResult.minClearance;
-         remark += ` Additional height of approx ${neededForThreshold.toFixed(1)}m needed for ${params.clearanceThreshold}m threshold.`;
+      const neededForThreshold = params.clearanceThreshold - fullAnalysisResult.minClearance;
+      remark += ` Additional height of approx ${neededForThreshold.toFixed(1)}m needed for ${params.clearanceThreshold}m threshold.`;
     }
     return remark;
   };
 
   const handleAnalysisSubmit = async (data: BulkAnalysisFormValues) => {
+    // Block free users
+    if (plan === 'free') {
+      setShowProGate(true);
+      return;
+    }
+
     if (kmzPlacemarks.length < 2) {
       toast({ title: "Not Enough Points", description: "Please upload a KMZ file with at least two placemarks.", variant: "destructive" });
       return;
     }
     if (!kmzFile) {
-      toast({ title: "No KMZ File", description: "Please select a KMZ file.", variant: "destructive"});
+      toast({ title: "No KMZ File", description: "Please select a KMZ file.", variant: "destructive" });
       return;
     }
 
     setIsProcessing(true);
     setProgress(0);
     setProcessingMessage('Starting LOS analysis...');
-    setBulkResults([]); 
+    setBulkResults([]);
 
     const { globalTowerHeight, globalFresnelHeight, losCheckRadiusKm } = data;
     const pairsToAnalyze: Array<{ pA: KmzPlacemark, pB: KmzPlacemark }> = [];
@@ -202,7 +164,7 @@ export default function BulkLosAnalyzerPage() {
     for (let i = 0; i < totalPairs; i++) {
       const { pA, pB } = pairsToAnalyze[i];
       setProcessingMessage(`LOS Analysis: ${pA.name} ↔ ${pB.name} (${i + 1}/${totalPairs})`);
-      
+
       try {
         const elevationProfileResponse = await getElevationProfileForPairAction(
           { lat: pA.lat, lng: pA.lng },
@@ -212,7 +174,7 @@ export default function BulkLosAnalyzerPage() {
         if (elevationProfileResponse.error || !elevationProfileResponse.profile) {
           throw new Error(elevationProfileResponse.error || `Failed to get elevation profile for ${pA.name}-${pB.name}.`);
         }
-        
+
         const elevationDataAPI: ElevationSampleAPI[] = elevationProfileResponse.profile;
 
         const analysisParams: AnalysisParams = {
@@ -220,29 +182,29 @@ export default function BulkLosAnalyzerPage() {
           pointB: { lat: pB.lat, lng: pB.lng, towerHeight: globalTowerHeight, name: pB.name },
           clearanceThreshold: globalFresnelHeight,
         };
-        
+
         const singlePairAnalysis = analyzeLOS(analysisParams, elevationDataAPI);
 
         const resultItemBase = {
-            pointAName: pA.name,
-            pointBName: pB.name,
-            pointA: { lat: pA.lat, lng: pA.lng, name: pA.name, towerHeight: globalTowerHeight },
-            pointB: { lat: pB.lat, lng: pB.lng, name: pB.name, towerHeight: globalTowerHeight },
-            towerHeightUsed: globalTowerHeight,
-            fresnelHeightUsed: globalFresnelHeight,
-            aerialDistanceKm: parseFloat(calculateDistanceKm(pA, pB).toFixed(2)),
-            losPossible: singlePairAnalysis.losPossible,
-            minClearanceActual: singlePairAnalysis.minClearance,
-            additionalHeightNeeded: singlePairAnalysis.additionalHeightNeeded,
-            profile: singlePairAnalysis.profile,
+          pointAName: pA.name,
+          pointBName: pB.name,
+          pointA: { lat: pA.lat, lng: pA.lng, name: pA.name, towerHeight: globalTowerHeight },
+          pointB: { lat: pB.lat, lng: pB.lng, name: pB.name, towerHeight: globalTowerHeight },
+          towerHeightUsed: globalTowerHeight,
+          fresnelHeightUsed: globalFresnelHeight,
+          aerialDistanceKm: parseFloat(calculateDistanceKm(pA, pB).toFixed(2)),
+          losPossible: singlePairAnalysis.losPossible,
+          minClearanceActual: singlePairAnalysis.minClearance,
+          additionalHeightNeeded: singlePairAnalysis.additionalHeightNeeded,
+          profile: singlePairAnalysis.profile,
         };
-        
+
         tempResults.push({
-            ...resultItemBase,
-            id: `${pA.name}_${pB.name}_${Date.now()}_${i}`,
-            pointACoords: `${pA.lat.toFixed(6)}, ${pA.lng.toFixed(6)}`,
-            pointBCoords: `${pB.lat.toFixed(6)}, ${pB.lng.toFixed(6)}`,
-            remarks: generateRemarks(resultItemBase, analysisParams, singlePairAnalysis),
+          ...resultItemBase,
+          id: `${pA.name}_${pB.name}_${Date.now()}_${i}`,
+          pointACoords: `${pA.lat.toFixed(6)}, ${pA.lng.toFixed(6)}`,
+          pointBCoords: `${pB.lat.toFixed(6)}, ${pB.lng.toFixed(6)}`,
+          remarks: generateRemarks(resultItemBase, analysisParams, singlePairAnalysis),
         });
 
       } catch (error) {
@@ -266,16 +228,16 @@ export default function BulkLosAnalyzerPage() {
         });
       }
       setProgress(Math.round(((i + 1) / totalPairs) * (calculateFiberPathBulkEnabled ? 50 : 100)));
-      setBulkResults([...tempResults]); 
+      setBulkResults([...tempResults]);
     }
 
     // Phase 2: Fiber Path Analysis (if enabled)
     if (calculateFiberPathBulkEnabled && tempResults.length > 0) {
       const losFeasibleLinks = tempResults.filter(r => r.losPossible);
-      
+
       if (losFeasibleLinks.length > 0) {
         setProcessingMessage(`Calculating fiber paths for ${losFeasibleLinks.length} feasible links...`);
-        
+
         for (let k = 0; k < losFeasibleLinks.length; k++) {
           const link = losFeasibleLinks[k];
           setProcessingMessage(`Fiber Path: ${link.pointAName} ↔ ${link.pointBName} (${k + 1}/${losFeasibleLinks.length})`);
@@ -285,7 +247,7 @@ export default function BulkLosAnalyzerPage() {
               link.pointA.lat, link.pointA.lng,
               link.pointB.lat, link.pointB.lng,
               fiberRadiusMetersBulk,
-              true 
+              true
             );
 
             const resultIndex = tempResults.findIndex(r => r.id === link.id);
@@ -309,41 +271,40 @@ export default function BulkLosAnalyzerPage() {
             }
           }
           setProgress(50 + Math.round(((k + 1) / losFeasibleLinks.length) * 50));
-          setBulkResults([...tempResults]); 
+          setBulkResults([...tempResults]);
         }
         setProcessingMessage(`Fiber path analysis complete for ${losFeasibleLinks.length} links.`);
       } else {
         setProcessingMessage('No LOS-feasible links found for fiber path calculation.');
-        setProgress(100); 
+        setProgress(100);
       }
     } else if (!calculateFiberPathBulkEnabled) {
-        setProgress(100); // If fiber not enabled, LOS progress completion means 100%
+      setProgress(100);
     }
 
-
-    setBulkResults(tempResults); 
+    setBulkResults(tempResults);
     setIsProcessing(false);
-    
+
     let finalMessage = `LOS Analysis Complete. Processed ${totalPairs} pairs.`;
     if (calculateFiberPathBulkEnabled) {
-        finalMessage += ` Fiber path analysis also performed.`;
+      finalMessage += ` Fiber path analysis also performed.`;
     }
     setProcessingMessage(finalMessage);
     toast({ title: "Bulk Analysis Complete", description: finalMessage, duration: 7000 });
   };
-  
+
   const handleKmzUploaded = (file: File, placemarks: KmzPlacemark[], fName: string) => {
     setKmzFile(file);
     setKmzPlacemarks(placemarks);
     setFileName(fName);
-    setBulkResults([]); 
+    setBulkResults([]);
     setProgress(0);
     setProcessingMessage('');
   };
 
   const handleToggleFiberPathBulk = (checked: boolean) => {
     setCalculateFiberPathBulkEnabled(checked);
-    if (isClient) { // Only access localStorage on client
+    if (isClient) {
       localStorage.setItem(LOCAL_STORAGE_KEYS_BULK.FIBER_TOGGLE_BULK, JSON.stringify(checked));
     }
   };
@@ -352,7 +313,7 @@ export default function BulkLosAnalyzerPage() {
     const newRadius = parseInt(value, 10);
     if (!isNaN(newRadius) && newRadius >= 0) {
       setFiberRadiusMetersBulk(newRadius);
-      if (isClient) { // Only access localStorage on client
+      if (isClient) {
         localStorage.setItem(LOCAL_STORAGE_KEYS_BULK.FIBER_RADIUS_BULK, newRadius.toString());
       }
     }
@@ -360,123 +321,89 @@ export default function BulkLosAnalyzerPage() {
 
   if (!isClient) {
     return (
-        <div className="w-full h-screen flex items-center justify-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
+      <div className="w-full h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
     );
   }
-
-  if (!isAuthenticated) {
-    return (
-        <>
-            <AppHeader currentPage="bulk" />
-            <div className="container mx-auto p-4 flex items-center justify-center min-h-[calc(100vh-theme(spacing.24))]">
-                <Card className="max-w-md w-full shadow-2xl">
-                    <CardHeader>
-                        <CardTitle>Bulk Analyzer Access</CardTitle>
-                        <CardDescription>Please log in to use the bulk analysis tool.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4">
-                            <div className="space-y-1">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="user@example.com"
-                                    {...loginForm.register('email')}
-                                />
-                                {loginForm.formState.errors.email && (
-                                    <p className="text-sm text-destructive">{loginForm.formState.errors.email.message}</p>
-                                )}
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    {...loginForm.register('password')}
-                                />
-                                {loginForm.formState.errors.password && (
-                                    <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
-                                )}
-                            </div>
-                            <Button type="submit" className="w-full" disabled={isLoggingIn}>
-                                {isLoggingIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Login
-                            </Button>
-                        </form>
-                    </CardContent>
-                </Card>
-            </div>
-        </>
-    );
-  }
-
 
   return (
     <>
-      <AppHeader currentPage="bulk" />
+      <AppHeader />
+
+      {/* Pro gate modal for free users */}
+      <ProUpsellModal
+        open={showProGate}
+        onOpenChange={setShowProGate}
+        blocking={false}
+        trigger="bulk_gate"
+      />
+
       <ErrorBoundary>
         <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-hidden">
           <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
             <Card className="shadow-xl bg-card/90 backdrop-blur-sm flex flex-col overflow-hidden max-h-[calc(100vh-theme(spacing.24))] overflow-y-auto custom-scrollbar">
-                <CardHeader>
-                    <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
-                    <CardDescription>
-                    Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 grid grid-cols-1 gap-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-1 space-y-6">
-                            <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
-                            <BulkAnalysisParameters 
-                                control={form.control} 
-                                register={form.register} 
-                                errors={form.formState.errors}
-                                calculateFiberPathBulkEnabled={calculateFiberPathBulkEnabled}
-                                onToggleFiberPathBulk={handleToggleFiberPathBulk}
-                                fiberRadiusMetersBulk={fiberRadiusMetersBulk}
-                                onFiberRadiusMetersBulkChange={handleFiberRadiusMetersBulkChange}
-                            />
-                        </div>
-                        <div className="lg:col-span-2 space-y-6">
-                            <BulkAnalysisActions
-                            onAnalyze={form.handleSubmit(handleAnalysisSubmit)}
-                            isProcessing={isProcessing}
-                            processingMessage={processingMessage}
-                            progress={progress}
-                            canAnalyze={kmzPlacemarks.length >= 2 && !!kmzFile}
-                            />
-                            <BulkAnalysisDownloads
-                            results={bulkResults}
-                            originalPlacemarks={kmzPlacemarks}
-                            analysisParams={form.getValues()}
-                            baseFileName={fileName ? fileName.replace(/\.[^/.]+$/, "") : 'bulk_analysis'}
-                            disabled={isProcessing || bulkResults.length === 0}
-                            />
-                        </div>
-                    </div>
-                    
-                    {kmzPlacemarks.length > 0 && (
-                        <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6 min-h-[50vh]">
-                            <Separator className="my-4 xl:col-span-2" />
-                            <h3 className="text-lg font-semibold mb-2 xl:col-span-2">Visualizations & Analytics</h3>
-                            <MapErrorBoundary>
-                              <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
-                            </MapErrorBoundary>
-                            <BulkAnalysisAnalytics results={bulkResults} />
-                        </div>
-                    )}
+              <CardHeader>
+                <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
+                <CardDescription>
+                  Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
+                  {plan === 'free' && (
+                    <span className="block mt-1 text-purple-400 font-medium">
+                      ⚡ This feature requires a Pro subscription.
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-1 space-y-6">
+                    <BulkAnalysisUploader onKmzUploaded={handleKmzUploaded} />
+                    <BulkAnalysisParameters
+                      control={form.control}
+                      register={form.register}
+                      errors={form.formState.errors}
+                      calculateFiberPathBulkEnabled={calculateFiberPathBulkEnabled}
+                      onToggleFiberPathBulk={handleToggleFiberPathBulk}
+                      fiberRadiusMetersBulk={fiberRadiusMetersBulk}
+                      onFiberRadiusMetersBulkChange={handleFiberRadiusMetersBulkChange}
+                    />
+                  </div>
+                  <div className="lg:col-span-2 space-y-6">
+                    <BulkAnalysisActions
+                      onAnalyze={form.handleSubmit(handleAnalysisSubmit)}
+                      isProcessing={isProcessing}
+                      processingMessage={processingMessage}
+                      progress={progress}
+                      canAnalyze={kmzPlacemarks.length >= 2 && !!kmzFile}
+                    />
+                    <BulkAnalysisDownloads
+                      results={bulkResults}
+                      originalPlacemarks={kmzPlacemarks}
+                      analysisParams={form.getValues()}
+                      baseFileName={fileName ? fileName.replace(/\.[^/.]+$/, "") : 'bulk_analysis'}
+                      disabled={isProcessing || bulkResults.length === 0}
+                    />
+                  </div>
+                </div>
 
-                    {bulkResults.length > 0 && !isProcessing && (
-                    <div className="mt-6">
-                        <Separator className="my-4"/>
-                        <BulkAnalysisResultsTable results={bulkResults} analysisParams={form.getValues()} />
-                    </div>
-                    )}
-                </CardContent>
+                {kmzPlacemarks.length > 0 && (
+                  <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6 min-h-[50vh]">
+                    <Separator className="my-4 xl:col-span-2" />
+                    <h3 className="text-lg font-semibold mb-2 xl:col-span-2">Visualizations & Analytics</h3>
+                    <MapErrorBoundary>
+                      <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
+                    </MapErrorBoundary>
+                    <BulkAnalysisAnalytics results={bulkResults} />
+                  </div>
+                )}
+
+                {bulkResults.length > 0 && !isProcessing && (
+                  <div className="mt-6">
+                    <Separator className="my-4" />
+                    <BulkAnalysisResultsTable results={bulkResults} analysisParams={form.getValues()} />
+                  </div>
+                )}
+              </CardContent>
             </Card>
           </div>
         </div>
@@ -484,5 +411,3 @@ export default function BulkLosAnalyzerPage() {
     </>
   );
 }
-
-    

@@ -10,6 +10,10 @@ import { generatePdfReportForFiberAnalysis } from '@/tools/report-generator/gene
 import JSZip from 'jszip';
 import { xmlEscape } from '@/lib/xml-escape';
 import { decodePolyline, formatCoordinatesForKml } from '@/lib/polyline-decoder';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
+import { checkAndDeductCredit, logAnalysisHistory } from '@/lib/credits';
+import { checkRateLimit } from '@/lib/rate-limiter';
 
 // --- Google Elevation API Configuration ---
 const GOOGLE_ELEVATION_API_KEY = process.env.GOOGLE_ELEVATION_API_KEY;
@@ -108,6 +112,24 @@ export async function performLosAnalysis(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<AnalysisResult | { error: string; fieldErrors?: any }> {
   try {
+    // ── Auth + Credit check ──
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || !session?.user?.email) {
+      return { error: "You must be signed in to run an analysis. Please refresh the page and sign in." };
+    }
+
+    // ── Rate limiting ──
+    const rateCheck = checkRateLimit(session.user.id, "analysis");
+    if (!rateCheck.allowed) {
+      const retrySeconds = Math.ceil(rateCheck.retryAfterMs / 1000);
+      return { error: `Too many analyses. Please wait ${retrySeconds} seconds before trying again.` };
+    }
+
+    const creditResult = await checkAndDeductCredit(session.user.id, 'single_los');
+    if (!creditResult.success) {
+      return { error: creditResult.error || "Credit check failed." };
+    }
+
     const rawFormData = {
       pointA: {
         name: String(formData.get('pointA.name') ?? "Site A"),
@@ -154,11 +176,41 @@ export async function performLosAnalysis(
     const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
     const result = analyzeLOS(params, elevationData);
 
+    // ── Log analysis history ──
+    try {
+      await logAnalysisHistory(
+        session.user.id,
+        session.user.email,
+        'single_los',
+        {
+          name: params.pointA.name || 'Site A',
+          lat: params.pointA.lat,
+          lng: params.pointA.lng,
+          towerHeight: params.pointA.towerHeight,
+        },
+        {
+          name: params.pointB.name || 'Site B',
+          lat: params.pointB.lat,
+          lng: params.pointB.lng,
+          towerHeight: params.pointB.towerHeight,
+        },
+        {
+          isFeasible: result.losPossible,
+          distance: result.distanceKm,
+          minClearance: result.minClearance,
+          additionalHeightNeeded: result.additionalHeightNeeded,
+        }
+      );
+    } catch (logErr) {
+      console.error("ACTION_WARNING: Failed to log analysis history:", logErr);
+      // Don't fail the analysis if logging fails
+    }
+
     return {
       ...result,
       id: new Date().toISOString() + Math.random().toString(36).substring(2, 9),
       timestamp: Date.now(),
-      message: `${result.message} Using Google Elevation API data.`
+      message: `${result.message} Using Google Elevation API data.`,
     };
   } catch (err: unknown) {
     const clientErrorMessageString = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
@@ -167,12 +219,12 @@ export async function performLosAnalysis(
   }
 }
 
-// ─── Single Analysis PDF Report ─────────────────────── // ← CHANGED: accepts fiberResult
+// ─── Single Analysis PDF Report ─────────────────────── //
 
 export async function generateSingleAnalysisPdfReportAction(
   analysisResult: AnalysisResult,
   reportOptions?: ReportGenerationOptions,
-  fiberResult?: FiberPathResult | null,                   // ← CHANGED: new parameter
+  fiberResult?: FiberPathResult | null,
 ): Promise<{ success: true; data: { base64Pdf: string; fileName: string } } | { success: false; error: string }> {
   try {
     if (!analysisResult) {
@@ -183,7 +235,7 @@ export async function generateSingleAnalysisPdfReportAction(
     const pdfBytes = await generatePdfReportForSingleAnalysis(
       analysisResult,
       reportOptions,
-      fiberResult ?? null,                                // ← CHANGED: pass fiberResult
+      fiberResult ?? null,
     );
     const base64Pdf = Buffer.from(pdfBytes).toString('base64');
 
@@ -422,11 +474,11 @@ export async function getGoogleMapsApiKey(): Promise<string | null> {
   return apiKey;
 }
 
-// ─── Combined PDF Report for Saved Links ─────────────── // ← CHANGED: passes options
+// ─── Combined PDF Report for Saved Links ─────────────── //
 
 export async function generateCombinedPdfReportAction(
   savedLinksJson: string,
-  reportOptionsJson?: string,                              // ← CHANGED: new parameter
+  reportOptionsJson?: string,
 ): Promise<{ success: true; data: { base64Pdf: string; fileName: string } } | { success: false; error: string }> {
   'use server';
   try {
@@ -436,7 +488,7 @@ export async function generateCombinedPdfReportAction(
     const options = reportOptionsJson ? JSON.parse(reportOptionsJson) : undefined;
 
     const { generateCombinedPdfReport } = await import('@/tools/report-generator/generateCombinedPdfReport');
-    const pdfBytes = await generateCombinedPdfReport(links, options); // ← CHANGED: pass options
+    const pdfBytes = await generateCombinedPdfReport(links, options);
 
     const base64Pdf = Buffer.from(pdfBytes).toString('base64');
     const ts = new Date().toISOString().slice(0, 10);
