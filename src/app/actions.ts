@@ -1,3 +1,5 @@
+// src/app/actions.ts
+
 "use server";
 
 import { z } from 'zod';
@@ -47,6 +49,14 @@ const ServerActionAnalysisSchema = z.object({
     .refine(val => val >= 0, "Clearance threshold must be a non-negative number"),
 });
 
+/**
+ * Fetches elevation data from Google Elevation API along a path between two points.
+ * @param pointA - Start coordinates
+ * @param pointB - End coordinates
+ * @param samples - Number of elevation samples along the path (default: 100)
+ * @returns Array of elevation samples
+ * @throws Error on API failure, rate limiting, or configuration issues
+ */
 async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoordinates, samples: number = 100): Promise<ElevationSampleAPI[]> {
   if (!GOOGLE_ELEVATION_API_KEY || GOOGLE_ELEVATION_API_KEY.trim() === "" || GOOGLE_ELEVATION_API_KEY === "YOUR_GOOGLE_ELEVATION_API_KEY_HERE") {
     console.error("ACTION_ERROR: getGoogleElevationData - Google Elevation API key is not configured or is a placeholder.");
@@ -105,6 +115,15 @@ async function getGoogleElevationData(pointA: PointCoordinates, pointB: PointCoo
   }));
 }
 
+/**
+ * Main server action for performing LOS analysis.
+ * Handles auth, rate limiting, credit deduction, validation, elevation API call,
+ * LOS calculation, device compatibility, and history logging.
+ *
+ * @param prevState - Previous action state (for useActionState pattern)
+ * @param formData - Form data with point coordinates, tower heights, clearance threshold, and optional selectedDeviceId
+ * @returns AnalysisResult on success, or error object on failure
+ */
 export async function performLosAnalysis(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   prevState: AnalysisResult | { error: string; fieldErrors?: any } | null,
@@ -146,6 +165,12 @@ export async function performLosAnalysis(
       clearanceThreshold: String(formData.get('clearanceThreshold') ?? ""),
     };
 
+    // ── Extract optional device selection ──
+    const selectedDeviceIdRaw = formData.get('selectedDeviceId');
+    const selectedDeviceId = selectedDeviceIdRaw && String(selectedDeviceIdRaw).trim() !== ''
+      ? String(selectedDeviceIdRaw).trim()
+      : undefined;
+
     const validationResult = ServerActionAnalysisSchema.safeParse(rawFormData);
 
     if (!validationResult.success) {
@@ -174,7 +199,7 @@ export async function performLosAnalysis(
     };
 
     const elevationData = await getGoogleElevationData(params.pointA, params.pointB, 100);
-    const result = analyzeLOS(params, elevationData);
+    const result = analyzeLOS(params, elevationData, selectedDeviceId);
 
     // ── Log analysis history ──
     try {
@@ -199,6 +224,7 @@ export async function performLosAnalysis(
           distance: result.distanceKm,
           minClearance: result.minClearance,
           additionalHeightNeeded: result.additionalHeightNeeded,
+          selectedDeviceId: selectedDeviceId || null,
         }
       );
     } catch (logErr) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
 import { Layers } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult, PlacementMode, MapNavigationTarget, MapContextMenuState, SavedLink } from '@/types';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
 import { decodePolyline } from '@/lib/polyline-decoder';
 import CursorCoordinates from './cursor-coordinates';
+import { getDeviceById } from '@/config/devices';
 
 const STYLES = {
   mapMarkerLabel: "p-1.5 text-xs font-semibold text-white bg-slate-800/80 rounded-lg shadow-lg backdrop-blur-sm -translate-x-1/2 -translate-y-[calc(100%+12px)] whitespace-nowrap w-max border border-slate-700/30",
@@ -16,6 +17,10 @@ const STYLES = {
   distanceOverlayLabelLOS: "bg-green-600/90",
   distanceOverlayLabelFiber: "bg-blue-600/90",
 };
+
+// Brand color for device range circle
+const DEVICE_RANGE_CIRCLE_COLOR = '#1E3A5F';
+const DEVICE_RANGE_CIRCLE_OUT_COLOR = '#DC2626';
 
 interface InteractiveMapProps {
   pointA?: (PointCoordinates & { name?: string });
@@ -32,6 +37,8 @@ interface InteractiveMapProps {
   onContextMenu?: (state: MapContextMenuState) => void;
   savedLinks?: SavedLink[];
   onSavedLinkClick?: (link: SavedLink) => void;
+  /** Selected device ID for range circle (Phase 6C) */
+  selectedDeviceId?: string | null;
 }
 
 const defaultCenter = { lat: 20.5937, lng: 78.9629 };
@@ -74,6 +81,7 @@ function InteractiveMapInner({
   pointA: formPointA, pointB: formPointB, placementMode, onMapClick, onMarkerDrag,
   analysisResult, isStale, currentDistanceKm, fiberPathResult,
   mapNavigationTarget, onContextMenu, savedLinks, onSavedLinkClick,
+  selectedDeviceId,
 }: Omit<InteractiveMapProps, 'mapContainerClassName'>) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -86,6 +94,7 @@ function InteractiveMapInner({
   const fiberPolylinesRef = useRef<google.maps.Polyline[]>([]);
   const savedLinkPolylinesRef = useRef<{ polyline: google.maps.Polyline; linkId: string }[]>([]);
   const savedLinkListenersRef = useRef<google.maps.MapsEventListener[]>([]);
+  const deviceRangeCircleRef = useRef<google.maps.Circle | null>(null);
   const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const lastNavTimestampRef = useRef<number>(0);
@@ -113,6 +122,25 @@ function InteractiveMapInner({
   const savedLinksRef = useRef(savedLinks);
   savedLinksRef.current = savedLinks;
 
+  // Resolve device max range in meters
+  const deviceMaxRangeMeters = useMemo(() => {
+    if (!selectedDeviceId) return null;
+    const device = getDeviceById(selectedDeviceId);
+    return device ? device.maxRange : null;
+  }, [selectedDeviceId]);
+
+  // Point A coordinates for range circle center
+  const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
+  const pALng = typeof formPointA?.lng === 'number' ? formPointA.lng : undefined;
+  const pBLat = typeof formPointB?.lat === 'number' ? formPointB.lat : undefined;
+  const pBLng = typeof formPointB?.lng === 'number' ? formPointB.lng : undefined;
+
+  // Check if point B is outside device range
+  const isPointBOutsideRange = useMemo(() => {
+    if (deviceMaxRangeMeters === null || currentDistanceKm == null) return false;
+    return currentDistanceKm * 1000 > deviceMaxRangeMeters;
+  }, [deviceMaxRangeMeters, currentDistanceKm]);
+
   // Close layer menu on outside click
   useEffect(() => {
     if (!showLayerMenu) return;
@@ -138,8 +166,8 @@ function InteractiveMapInner({
     mapRef.current.setZoom(mapNavigationTarget.zoom ?? 15);
   }, [mapNavigationTarget, isMapApiLoaded]);
 
-  const markerIconA = React.useMemo(() => getCustomMarkerIcon("A", isMapApiLoaded), [isMapApiLoaded]);
-  const markerIconB = React.useMemo(() => getCustomMarkerIcon("B", isMapApiLoaded), [isMapApiLoaded]);
+  const markerIconA = useMemo(() => getCustomMarkerIcon("A", isMapApiLoaded), [isMapApiLoaded]);
+  const markerIconB = useMemo(() => getCustomMarkerIcon("B", isMapApiLoaded), [isMapApiLoaded]);
 
   const pixelToLatLng = useCallback((clientX: number, clientY: number): { lat: number; lng: number } | null => {
     const map = mapRef.current;
@@ -296,6 +324,11 @@ function InteractiveMapInner({
       projectionOverlayRef.current.setMap(null);
       projectionOverlayRef.current = null;
     }
+    // Clean up device range circle
+    if (deviceRangeCircleRef.current) {
+      deviceRangeCircleRef.current.setMap(null);
+      deviceRangeCircleRef.current = null;
+    }
     mapRef.current = null;
   }, []);
 
@@ -399,11 +432,6 @@ function InteractiveMapInner({
     return analysisResult.losPossible ? LOS_POLYLINE_COLORS.feasible : LOS_POLYLINE_COLORS.notFeasible;
   }, [isStale, analysisResult]);
 
-  const pALat = typeof formPointA?.lat === 'number' ? formPointA.lat : undefined;
-  const pALng = typeof formPointA?.lng === 'number' ? formPointA.lng : undefined;
-  const pBLat = typeof formPointB?.lat === 'number' ? formPointB.lat : undefined;
-  const pBLng = typeof formPointB?.lng === 'number' ? formPointB.lng : undefined;
-
   const losMidPoint = pALat !== undefined && pALng !== undefined && pBLat !== undefined && pBLng !== undefined
     ? { lat: (pALat + pBLat) / 2, lng: (pALng + pBLng) / 2 } : null;
 
@@ -418,6 +446,47 @@ function InteractiveMapInner({
       fiberPathLabelMidPoint = { lat: (fiberPathResult.pointA_snappedToRoad.lat + fiberPathResult.pointB_snappedToRoad.lat) / 2, lng: (fiberPathResult.pointA_snappedToRoad.lng + fiberPathResult.pointB_snappedToRoad.lng) / 2 };
     } else if (losMidPoint) { fiberPathLabelMidPoint = losMidPoint; }
   }
+
+  // ── Device Range Circle ──
+  useEffect(() => {
+    if (!isMapApiLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    // Clean up existing circle
+    if (deviceRangeCircleRef.current) {
+      deviceRangeCircleRef.current.setMap(null);
+      deviceRangeCircleRef.current = null;
+    }
+
+    // Draw new circle if device is selected and point A exists
+    if (deviceMaxRangeMeters !== null && pALat !== undefined && pALng !== undefined) {
+      const circleColor = isPointBOutsideRange ? DEVICE_RANGE_CIRCLE_OUT_COLOR : DEVICE_RANGE_CIRCLE_COLOR;
+
+      deviceRangeCircleRef.current = new google.maps.Circle({
+        map,
+        center: { lat: pALat, lng: pALng },
+        radius: deviceMaxRangeMeters,
+        fillColor: circleColor,
+        fillOpacity: 0.08,
+        strokeColor: circleColor,
+        strokeOpacity: 0.45,
+        strokeWeight: 2,
+        clickable: false,
+        zIndex: 0,
+      });
+
+      // Use dash pattern via icons for dashed border effect
+      // Google Maps Circle doesn't support dashed lines natively,
+      // so we use a lower opacity solid line which looks clean
+    }
+
+    return () => {
+      if (deviceRangeCircleRef.current) {
+        deviceRangeCircleRef.current.setMap(null);
+        deviceRangeCircleRef.current = null;
+      }
+    };
+  }, [isMapApiLoaded, deviceMaxRangeMeters, pALat, pALng, isPointBOutsideRange]);
 
   // Draw LOS + fiber polylines
   useEffect(() => {
@@ -707,6 +776,7 @@ const InteractiveMap = React.memo(function InteractiveMap({ mapContainerClassNam
   if (prevProps.placementMode !== nextProps.placementMode) return false;
   if (prevProps.mapNavigationTarget !== nextProps.mapNavigationTarget) return false;
   if (prevProps.savedLinks !== nextProps.savedLinks) return false;
+  if (prevProps.selectedDeviceId !== nextProps.selectedDeviceId) return false;
   if (prevProps.pointA?.lat !== nextProps.pointA?.lat) return false;
   if (prevProps.pointA?.lng !== nextProps.pointA?.lng) return false;
   if (prevProps.pointA?.name !== nextProps.pointA?.name) return false;

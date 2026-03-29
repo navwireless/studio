@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import TowerHeightControl from './tower-height-control';
+import DeviceSelector from './device-selector';
+import DeviceCompatibility from './device-compatibility';
 import { AnimatedNumber } from '@/components/animated-number';
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader } from '@/components/GoogleMapsLoaderProvider';
@@ -20,7 +22,7 @@ import {
     Cable, ChevronDown, ChevronRight, Settings2, Ruler, Radio,
     MapPin, FileDown, BookmarkPlus, Search, Check,
     Save, Globe, FileSpreadsheet, FileText, History, CheckCircle, XCircle,
-    Plus
+    Plus, Wifi
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════
@@ -316,6 +318,12 @@ export interface SidePanelProps {
     historyList: AnalysisResult[];
     onLoadHistoryItem: (id: string) => void;
     onClearHistory: () => void;
+    /** Currently selected device ID (Phase 6C) */
+    selectedDeviceId?: string | null;
+    /** Callback to change device selection (Phase 6C) */
+    onSelectDevice?: (deviceId: string | null) => void;
+    /** Live distance between the two points in km (Phase 6C) */
+    currentDistanceKm?: number | null;
 }
 
 export default function SidePanel({
@@ -334,6 +342,9 @@ export default function SidePanel({
     isSelectionMode, onSetSelectionMode,
     onExportKmz, onExportExcel, onExportCsv, onExportPdf,
     historyList, onLoadHistoryItem, onClearHistory,
+    selectedDeviceId,
+    onSelectDevice,
+    currentDistanceKm,
 }: SidePanelProps) {
 
     const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: "Site A" });
@@ -344,6 +355,16 @@ export default function SidePanel({
     const isClear = analysisResult && actualMinClearance !== null ? actualMinClearance >= clearanceThreshold : false;
     const deficit = !isClear && actualMinClearance !== null ? Math.ceil(clearanceThreshold - actualMinClearance) : 0;
     const anyPending = isActionPending || isGeneratingPdf || isFiberCalculating;
+
+    // ── Device badge for collapsed section ──
+    const deviceBadge = React.useMemo(() => {
+        if (selectedDeviceId == null) return undefined;
+        return (
+            <span className="text-[0.55rem] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary/80 truncate max-w-[100px]">
+                {selectedDeviceId.replace('opticspectra-', '').replace(/-/g, ' ').toUpperCase()}
+            </span>
+        );
+    }, [selectedDeviceId]);
 
     // ── Swipe-to-close gesture (mobile) ──
     const panelRef = useRef<HTMLElement>(null);
@@ -508,6 +529,25 @@ export default function SidePanel({
                         </div>
                     </Section>
 
+                    {/* ── DEVICE SELECTION ── */}
+                    {onSelectDevice && (
+                        <Section
+                            title="Device"
+                            icon={<Wifi className="h-3.5 w-3.5" />}
+                            defaultOpen={false}
+                            badge={deviceBadge}
+                        >
+                            <DeviceSelector
+                                selectedDeviceId={selectedDeviceId ?? null}
+                                onSelectDevice={onSelectDevice}
+                                currentDistanceKm={currentDistanceKm}
+                                hasAnalysisResult={!!analysisResult}
+                                isStale={isStale}
+                                disabled={anyPending}
+                            />
+                        </Section>
+                    )}
+
                     {/* ── RESULTS ── */}
                     {(analysisResult || isActionPending) && (
                         <Section title="Results" icon={<Zap className="h-3.5 w-3.5" />} defaultOpen={true}
@@ -567,6 +607,21 @@ export default function SidePanel({
                                         <div className="flex items-center gap-1.5 text-[0.7rem] text-red-400 bg-red-500/10 rounded-md px-3 py-1.5">
                                             <AlertTriangle className="h-3 w-3 flex-shrink-0" />
                                             Add <span className="font-bold">{deficit}m</span> to tower(s) for clearance.
+                                        </div>
+                                    )}
+
+                                    {/* ── DEVICE COMPATIBILITY in Results ── */}
+                                    {analysisResult.deviceCompatibility && (
+                                        <div className="border-t border-slate-700/20 pt-2 mt-2">
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <Wifi className="h-3.5 w-3.5 text-primary/70" />
+                                                <span className="text-[0.65rem] font-semibold text-slate-300 uppercase tracking-wider">Device Compatibility</span>
+                                            </div>
+                                            <DeviceCompatibility
+                                                deviceCompatibility={analysisResult.deviceCompatibility}
+                                                distanceKm={analysisResult.distanceKm}
+                                                isFeasible={analysisResult.losPossible}
+                                            />
                                         </div>
                                     )}
 

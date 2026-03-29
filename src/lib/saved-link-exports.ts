@@ -5,13 +5,28 @@ import { xmlEscape } from '@/lib/xml-escape';
 
 // ─── Helpers ───────────────────────────────────────────
 
+/**
+ * Formats a Unix timestamp to a human-readable date string.
+ * @param timestamp - Unix timestamp in milliseconds
+ * @returns Formatted date string
+ */
 function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
+/**
+ * Escapes a value for safe inclusion in a CSV cell.
+ * Wraps in quotes and escapes internal quotes if the value contains
+ * commas, quotes, or newlines.
+ * @param value - The value to escape
+ * @returns A CSV-safe string
+ */
 function csvEscape(value: string | number | boolean): string {
   const str = String(value);
   if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -39,14 +54,28 @@ interface ExportRow {
   'Height Deficit (m)': string;
   'Fiber Status': string;
   'Fiber Distance (m)': string;
+  'Device': string;
   'Date': string;
 }
 
+/**
+ * Converts an array of SavedLink objects into flat export rows.
+ * Includes device information if a selectedDeviceId is present.
+ * @param links - Array of saved links to convert
+ * @returns Array of flat export row objects
+ */
 function linksToRows(links: SavedLink[]): ExportRow[] {
   return links.map(link => {
     const mc = link.analysisResult.minClearance;
-    const deficit = mc !== null && mc < link.clearanceThreshold
-      ? Math.ceil(link.clearanceThreshold - mc) : 0;
+    const deficit =
+      mc !== null && mc < link.clearanceThreshold
+        ? Math.ceil(link.clearanceThreshold - mc)
+        : 0;
+
+    // Device info from analysis result or saved link
+    const deviceName =
+      link.analysisResult.deviceCompatibility?.selectedDevice?.deviceName ??
+      (link.selectedDeviceId || 'N/A');
 
     return {
       'Link Name': link.name,
@@ -63,10 +92,17 @@ function linksToRows(links: SavedLink[]): ExportRow[] {
       'Min Clearance (m)': mc !== null ? mc.toFixed(1) : 'N/A',
       'Threshold (m)': link.clearanceThreshold,
       'Height Deficit (m)': deficit > 0 ? String(deficit) : '0',
-      'Fiber Status': link.fiberPathResult?.status === 'success' ? 'Calculated' :
-        link.fiberPathResult?.status ? link.fiberPathResult.status : 'N/A',
-      'Fiber Distance (m)': link.fiberPathResult?.status === 'success' && link.fiberPathResult.totalDistanceMeters
-        ? link.fiberPathResult.totalDistanceMeters.toFixed(0) : 'N/A',
+      'Fiber Status':
+        link.fiberPathResult?.status === 'success'
+          ? 'Calculated'
+          : link.fiberPathResult?.status
+            ? link.fiberPathResult.status
+            : 'N/A',
+      'Fiber Distance (m)':
+        link.fiberPathResult?.status === 'success' && link.fiberPathResult.totalDistanceMeters
+          ? link.fiberPathResult.totalDistanceMeters.toFixed(0)
+          : 'N/A',
+      'Device': deviceName,
       'Date': formatDate(link.createdAt),
     };
   });
@@ -74,6 +110,12 @@ function linksToRows(links: SavedLink[]): ExportRow[] {
 
 // ─── KMZ Export ────────────────────────────────────────
 
+/**
+ * Builds a KML document string from saved links, including site placemarks
+ * and LOS link lines with color coding (green = feasible, red = blocked).
+ * @param links - Array of saved links
+ * @returns A KML XML string
+ */
 function buildKml(links: SavedLink[]): string {
   const COLOR_GREEN = 'ff00cc00';
   const COLOR_RED = 'ff0000ff';
@@ -82,7 +124,7 @@ function buildKml(links: SavedLink[]): string {
   const siteSet = new Map<string, { name: string; lat: number; lng: number; towerHeight: number }>();
   let linkPlacemarks = '';
 
-  links.forEach((link) => {
+  links.forEach(link => {
     const keyA = `${link.pointA.lat.toFixed(6)},${link.pointA.lng.toFixed(6)}`;
     const keyB = `${link.pointB.lat.toFixed(6)},${link.pointB.lng.toFixed(6)}`;
     if (!siteSet.has(keyA)) siteSet.set(keyA, link.pointA);
@@ -91,10 +133,17 @@ function buildKml(links: SavedLink[]): string {
     const color = link.analysisResult.losPossible ? COLOR_GREEN : COLOR_RED;
     const status = link.analysisResult.losPossible ? 'Feasible' : 'Blocked';
     const dist = link.analysisResult.distanceKm.toFixed(2);
-    const clearance = link.analysisResult.minClearance !== null
-      ? `${link.analysisResult.minClearance.toFixed(1)}m` : 'N/A';
-    const fiberInfo = link.fiberPathResult?.status === 'success' && link.fiberPathResult.totalDistanceMeters
-      ? `<b>Fiber:</b> ${(link.fiberPathResult.totalDistanceMeters / 1000).toFixed(2)} km<br/>` : '';
+    const clearance =
+      link.analysisResult.minClearance !== null
+        ? `${link.analysisResult.minClearance.toFixed(1)}m`
+        : 'N/A';
+    const fiberInfo =
+      link.fiberPathResult?.status === 'success' && link.fiberPathResult.totalDistanceMeters
+        ? `<b>Fiber:</b> ${(link.fiberPathResult.totalDistanceMeters / 1000).toFixed(2)} km<br/>`
+        : '';
+    const deviceInfo = link.selectedDeviceId
+      ? `<b>Device:</b> ${xmlEscape(link.analysisResult.deviceCompatibility?.selectedDevice?.deviceName ?? link.selectedDeviceId)}<br/>`
+      : '';
 
     linkPlacemarks += `
     <Placemark>
@@ -104,7 +153,7 @@ function buildKml(links: SavedLink[]): string {
         <b>Distance:</b> ${dist} km<br/>
         <b>Clearance:</b> ${clearance}<br/>
         <b>Tower A:</b> ${link.pointA.towerHeight}m | <b>Tower B:</b> ${link.pointB.towerHeight}m<br/>
-        ${fiberInfo}
+        ${fiberInfo}${deviceInfo}
         <b>Analyzed:</b> ${formatDate(link.createdAt)}
       ]]></description>
       <Style>
@@ -118,7 +167,7 @@ function buildKml(links: SavedLink[]): string {
   });
 
   let sitePlacemarks = '';
-  siteSet.forEach((site) => {
+  siteSet.forEach(site => {
     sitePlacemarks += `
     <Placemark>
       <name>${xmlEscape(site.name)}</name>
@@ -138,14 +187,22 @@ function buildKml(links: SavedLink[]): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
-    <name>LiFi Link Pro — Saved Links Export</name>
-    <description>Exported ${links.length} link(s) from LiFi Link Pro</description>
+    <name>FindLOS — Saved Links Export</name>
+    <description>Exported ${links.length} link(s) from FindLOS</description>
     <Folder><name>Sites</name>${sitePlacemarks}</Folder>
     <Folder><name>LOS Links</name>${linkPlacemarks}</Folder>
   </Document>
 </kml>`;
 }
 
+/**
+ * Exports saved links as a KMZ file and triggers a browser download.
+ *
+ * @param links - Array of saved links to export
+ *
+ * @example
+ * await exportSavedLinksAsKmz(selectedLinks);
+ */
 export async function exportSavedLinksAsKmz(links: SavedLink[]): Promise<void> {
   const JSZip = (await import('jszip')).default;
   const { saveAs } = await import('file-saver');
@@ -157,8 +214,14 @@ export async function exportSavedLinksAsKmz(links: SavedLink[]): Promise<void> {
   saveAs(blob, `findlos_links_${ts}.kmz`);
 }
 
-// ─── Excel Export ──────────────────────────────────────
-
+/**
+ * Exports saved links as an Excel (.xlsx) file and triggers a browser download.
+ *
+ * @param links - Array of saved links to export
+ *
+ * @example
+ * await exportSavedLinksAsExcel(selectedLinks);
+ */
 export async function exportSavedLinksAsExcel(links: SavedLink[]): Promise<void> {
   const XLSX = await import('xlsx');
   const { saveAs } = await import('file-saver');
@@ -168,18 +231,27 @@ export async function exportSavedLinksAsExcel(links: SavedLink[]): Promise<void>
     { wch: 25 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
     { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
     { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 14 },
-    { wch: 14 }, { wch: 14 }, { wch: 20 },
+    { wch: 14 }, { wch: 14 }, { wch: 22 }, { wch: 20 },
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Saved Links');
   const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const blob = new Blob([buf], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   const ts = new Date().toISOString().slice(0, 10);
   saveAs(blob, `findlos_links_${ts}.xlsx`);
 }
 
-// ─── CSV Export ────────────────────────────────────────
-
+/**
+ * Exports saved links as a CSV file and triggers a browser download.
+ * Handles empty data gracefully (no download triggered).
+ *
+ * @param links - Array of saved links to export
+ *
+ * @example
+ * await exportSavedLinksAsCsv(selectedLinks);
+ */
 export async function exportSavedLinksAsCsv(links: SavedLink[]): Promise<void> {
   const { saveAs } = await import('file-saver');
   const rows = linksToRows(links);

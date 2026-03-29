@@ -74,6 +74,8 @@ export interface AnalysisHistoryDoc {
         distance: number;
         minClearance: number | null;
         additionalHeightNeeded: number | null;
+        /** Device selected during analysis (Phase 6) */
+        selectedDeviceId?: string | null;
     };
     creditsCost: number;
     createdAt: Timestamp;

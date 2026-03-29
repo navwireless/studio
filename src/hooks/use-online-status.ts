@@ -3,14 +3,24 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Tracks browser online/offline status.
- * Returns true if online, false if offline.
+ * Tracks browser online/offline status using the Navigator API.
+ *
+ * Returns `true` if the browser is online, `false` if offline.
+ * Defaults to `true` during SSR to avoid hydration mismatch.
+ * Updates in real-time as the browser goes online or offline.
+ *
+ * @returns Whether the browser is currently online
+ *
+ * @example
+ * const isOnline = useOnlineStatus();
+ * if (!isOnline) showOfflineBanner();
  */
 export function useOnlineStatus(): boolean {
-  const [isOnline, setIsOnline] = useState(true); // default to true to avoid hydration mismatch assuming online
+  // Default to true to avoid hydration mismatch (assume online during SSR)
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
-    // Only set after hydration
+    // Set actual status after hydration
     setIsOnline(navigator.onLine);
 
     const handleOnline = () => setIsOnline(true);

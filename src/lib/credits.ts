@@ -159,6 +159,16 @@ export async function getUserCredits(userId: string): Promise<number> {
 // Log analysis to history
 // ============================================
 
+/**
+ * Logs an analysis to the analysisHistory Firestore collection.
+ * @param userId - User who ran the analysis
+ * @param userEmail - User's email
+ * @param analysisType - Type of analysis performed
+ * @param pointA - Site A details
+ * @param pointB - Site B details
+ * @param resultSummary - Summary of analysis results including optional device selection
+ * @returns Firestore document ID of the created log entry
+ */
 export async function logAnalysisHistory(
     userId: string,
     userEmail: string,
@@ -170,6 +180,7 @@ export async function logAnalysisHistory(
         distance: number;
         minClearance: number | null;
         additionalHeightNeeded: number | null;
+        selectedDeviceId?: string | null;
     }
 ): Promise<string> {
     const firestore = db();

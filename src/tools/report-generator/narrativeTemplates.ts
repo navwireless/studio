@@ -1,5 +1,5 @@
 // src/tools/report-generator/narrativeTemplates.ts
-import type { AnalysisResult } from '@/types';
+import type { AnalysisResult, DeviceCompatibilityData } from '@/types';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 
 // ═══════════════════════════════════════════════════════
@@ -17,6 +17,7 @@ interface NarrativeContext {
     additionalHeight: number | null;
     fiberStatus?: string;
     fiberDistance?: number;
+    deviceCompatibility?: DeviceCompatibilityData;
 }
 
 function getCtx(
@@ -35,6 +36,7 @@ function getCtx(
         additionalHeight: result.additionalHeightNeeded,
         fiberStatus: fiber?.status,
         fiberDistance: fiber?.totalDistanceMeters,
+        deviceCompatibility: result.deviceCompatibility,
     };
 }
 
@@ -48,37 +50,37 @@ function distStr(km: number): string {
 // CLEAR TEMPLATES
 // ═══════════════════════════════════════════════════════
 
-function clearLargeMargin(c: NarrativeContext): string {
+function clearLargeClearance(c: NarrativeContext): string {
     return (
         `The line-of-sight path between ${c.pointAName} and ${c.pointBName} spanning ` +
-        `${distStr(c.distanceKm)} is confirmed CLEAR with excellent margin. ` +
+        `${distStr(c.distanceKm)} is confirmed CLEAR with excellent clearance. ` +
         `The minimum clearance of ${c.minClearance?.toFixed(1)}m significantly exceeds the ` +
         `required threshold of ${c.threshold}m, providing robust tolerance for environmental ` +
-        `variations, equipment sway, and seasonal vegetation changes. ` +
-        `This link is highly suitable for Free Space Optical deployment.`
+        `variations and equipment sway. ` +
+        `This link is highly suitable for Free Space Optical (FSO) deployment.`
     );
 }
 
-function clearAdequateMargin(c: NarrativeContext): string {
+function clearAdequateClearance(c: NarrativeContext): string {
     return (
         `The line-of-sight between ${c.pointAName} and ${c.pointBName} over ` +
         `${distStr(c.distanceKm)} is CLEAR with adequate clearance. ` +
         `The minimum clearance of ${c.minClearance?.toFixed(1)}m meets the ${c.threshold}m ` +
-        `Fresnel zone requirement, indicating a viable FSO link. ` +
+        `requirement, indicating a viable FSO link. ` +
         `Tower heights of ${c.towerA}m (${c.pointAName}) and ${c.towerB}m (${c.pointBName}) ` +
         `provide sufficient elevation above terrain obstructions for reliable operation.`
     );
 }
 
-function clearMarginal(c: NarrativeContext): string {
-    const margin = (c.minClearance ?? 0) - c.threshold;
+function clearLimited(c: NarrativeContext): string {
+    const headroom = (c.minClearance ?? 0) - c.threshold;
     return (
         `The line-of-sight between ${c.pointAName} and ${c.pointBName} ` +
-        `(${distStr(c.distanceKm)}) is CLEAR but with marginal clearance. ` +
+        `(${distStr(c.distanceKm)}) is CLEAR but with limited clearance. ` +
         `The minimum clearance of ${c.minClearance?.toFixed(1)}m exceeds the ${c.threshold}m ` +
-        `threshold by only ${margin.toFixed(1)}m. While technically feasible, consider ` +
-        `increasing tower heights to improve reliability during adverse weather conditions, ` +
-        `heavy rainfall, or potential vegetation growth along the path.`
+        `threshold by only ${headroom.toFixed(1)}m. While technically feasible, consider ` +
+        `increasing tower heights to improve reliability during adverse weather conditions ` +
+        `or heavy rainfall.`
     );
 }
 
@@ -104,8 +106,8 @@ function blockedLargeDeficit(c: NarrativeContext): string {
         `${distStr(c.distanceKm)} is BLOCKED by significant terrain obstruction. ` +
         `The path requires approximately ${c.additionalHeight?.toFixed(1)}m of additional ` +
         `height above the current tower configuration of ${c.towerA}m / ${c.towerB}m. ` +
-        `Consider alternative tower placements, intermediate relay points, or evaluating ` +
-        `a fiber-optic backup path to maintain connectivity.`
+        `Consider alternative tower placements or intermediate relay points to establish ` +
+        `connectivity along this path.`
     );
 }
 
@@ -115,8 +117,8 @@ function blockedSevere(c: NarrativeContext): string {
         `(${distStr(c.distanceKm)}) faces severe terrain obstruction requiring ` +
         `${c.additionalHeight?.toFixed(1)}m of additional height. ` +
         `An FSO link along this trajectory is not recommended without major infrastructure ` +
-        `investment. A fiber-optic alternative, a completely different path geometry, or ` +
-        `deployment of intermediate relay stations should be evaluated as alternatives.`
+        `investment. A completely different path geometry or deployment of intermediate ` +
+        `relay stations should be evaluated as alternatives.`
     );
 }
 
@@ -129,8 +131,8 @@ function shortDistance(c: NarrativeContext): string {
         return (
             `This short-range link of ${distStr(c.distanceKm)} between ${c.pointAName} ` +
             `and ${c.pointBName} is CLEAR with ${c.minClearance?.toFixed(1)}m clearance. ` +
-            `At this distance, Fresnel zone effects are minimal and the link should deliver ` +
-            `reliable, high-bandwidth performance with standard FSO equipment.`
+            `At this distance, the link should deliver reliable, high-bandwidth performance ` +
+            `with standard FSO equipment.`
         );
     }
     return (
@@ -148,16 +150,15 @@ function longDistance(c: NarrativeContext): string {
             `and ${c.pointBName} is confirmed CLEAR. At this distance, atmospheric ` +
             `attenuation and beam divergence become significant factors. While the path ` +
             `geometry is favorable with ${c.minClearance?.toFixed(1)}m clearance, ensure ` +
-            `equipment specifications support the ${c.distanceKm.toFixed(1)}km range and ` +
+            `the selected device supports the ${c.distanceKm.toFixed(1)}km range and ` +
             `consider weather-related availability targets for this region.`
         );
     }
     return (
         `This long-range path of ${distStr(c.distanceKm)} between ${c.pointAName} ` +
         `and ${c.pointBName} is BLOCKED. The combination of distance and terrain ` +
-        `makes this a challenging deployment. Earth curvature effects contribute to ` +
-        `the obstruction at this range. An intermediate relay site or fiber-optic ` +
-        `alternative is strongly recommended.`
+        `makes this a challenging deployment. An intermediate relay site is ` +
+        `recommended to establish connectivity along this corridor.`
     );
 }
 
@@ -170,7 +171,7 @@ function fiberAvailableFragment(c: NarrativeContext): string {
         const fiberKm = (c.fiberDistance / 1000).toFixed(2);
         const ratio = (c.fiberDistance / 1000 / c.distanceKm).toFixed(1);
         return (
-            ` A fiber-optic path has been calculated at ${fiberKm} km via road routing, ` +
+            ` A fiber path has been calculated at ${fiberKm} km via road routing, ` +
             `which is ${ratio}x the aerial distance.`
         );
     }
@@ -223,12 +224,89 @@ function zeroTowerFragment(c: NarrativeContext): string {
 }
 
 // ═══════════════════════════════════════════════════════
+// DEVICE COMPATIBILITY FRAGMENT
+// No percentages. Binary compatible / not compatible.
+// ═══════════════════════════════════════════════════════
+
+function deviceFragment(c: NarrativeContext): string {
+    const dc = c.deviceCompatibility;
+    if (!dc) return '';
+
+    // Specific device selected
+    if (dc.selectedDevice) {
+        const sd = dc.selectedDevice;
+
+        if (sd.isCompatible) {
+            return (
+                ` The analysis was conducted for the ${sd.deviceName}. ` +
+                `This device is compatible with the ${c.distanceKm.toFixed(2)} km link, ` +
+                `as the link distance is within its maximum operational range.`
+            );
+        } else {
+            const rec = dc.recommendation;
+            const recName = rec.recommendedDeviceName;
+            const recDevice = rec.compatibleDevices.find(d => d.deviceId === rec.recommendedDeviceId);
+            let alt = '';
+            if (recName && recDevice) {
+                alt = ` The recommended alternative is the ${recName} (${recDevice.bandwidth}, ${recDevice.maxRangeKm} km range).`;
+            }
+            // Calculate shortfall
+            const shortfall = dc.recommendation.incompatibleDevices.find(
+                d => d.deviceId === sd.deviceId
+            )?.shortfallMeters;
+            const shortfallStr = shortfall
+                ? ` The link exceeds the device range by ${(shortfall / 1000).toFixed(1)} km.`
+                : '';
+            return (
+                ` The ${sd.deviceName} is not compatible with this link distance of ` +
+                `${c.distanceKm.toFixed(2)} km, which exceeds the device's maximum operational range.${shortfallStr}${alt}`
+            );
+        }
+    }
+
+    // Auto-detect mode (no specific device selected)
+    const compatible = dc.recommendation.compatibleDevices;
+    const rec = dc.recommendation;
+
+    if (compatible.length > 0) {
+        const recText = rec.recommendedDeviceName
+            ? ` The recommended device is the ${rec.recommendedDeviceName}.`
+            : '';
+        return (
+            ` ${compatible.length} Nav Wireless OpticSpectra device(s) are compatible with this ` +
+            `${c.distanceKm.toFixed(2)} km link.${recText}`
+        );
+    }
+
+    // No devices compatible
+    const maxRange = dc.recommendation.incompatibleDevices.length > 0
+        ? Math.max(...dc.recommendation.incompatibleDevices.map(d => d.maxRangeKm))
+        : 0;
+    return (
+        ` No Nav Wireless OpticSpectra devices currently support the ` +
+        `${c.distanceKm.toFixed(2)} km link distance.` +
+        (maxRange > 0 ? ` The maximum supported range in the current product line is ${maxRange} km. Consider relay points to reduce individual link distances.` : '')
+    );
+}
+
+// ═══════════════════════════════════════════════════════
 // MAIN GENERATOR — selects template + appends modifiers
 // ═══════════════════════════════════════════════════════
 
+/**
+ * Generates a professional narrative paragraph for a single LOS analysis.
+ * Focuses on FSO/OWC technology. No RF, Fresnel, fiber recommendations,
+ * earth curvature, percentages, or grading language.
+ *
+ * @param analysisResult - The LOS analysis result
+ * @param fiberResult - Optional fiber path result
+ * @param includeDeviceInfo - Whether to include device compatibility narrative
+ * @returns A professional narrative string
+ */
 export function generateNarrative(
     analysisResult: AnalysisResult,
     fiberResult?: FiberPathResult | null,
+    includeDeviceInfo: boolean = true,
 ): string {
     const c = getCtx(analysisResult, fiberResult);
     let narrative = '';
@@ -239,16 +317,15 @@ export function generateNarrative(
     } else if (c.distanceKm > 10) {
         narrative = longDistance(c);
     } else if (c.losPossible) {
-        const margin = (c.minClearance ?? 0) - c.threshold;
-        if (margin > c.threshold) {
-            narrative = clearLargeMargin(c);
-        } else if (margin >= 3) {
-            narrative = clearAdequateMargin(c);
+        const headroom = (c.minClearance ?? 0) - c.threshold;
+        if (headroom > c.threshold) {
+            narrative = clearLargeClearance(c);
+        } else if (headroom >= 3) {
+            narrative = clearAdequateClearance(c);
         } else {
-            narrative = clearMarginal(c);
+            narrative = clearLimited(c);
         }
     } else {
-        // Blocked
         const deficit = c.additionalHeight ?? 0;
         if (deficit <= 5) {
             narrative = blockedSmallDeficit(c);
@@ -265,6 +342,11 @@ export function generateNarrative(
     narrative += highTowerFragment(c);
     narrative += zeroTowerFragment(c);
 
+    // ── Append device info ──
+    if (includeDeviceInfo) {
+        narrative += deviceFragment(c);
+    }
+
     return narrative;
 }
 
@@ -272,19 +354,25 @@ export function generateNarrative(
 // SHORT SUMMARY — one-line for table/combined reports
 // ═══════════════════════════════════════════════════════
 
+/**
+ * Generates a one-line summary for table rows and combined report listings.
+ *
+ * @param analysisResult - The LOS analysis result
+ * @returns A concise summary string
+ */
 export function generateShortSummary(
     analysisResult: AnalysisResult,
 ): string {
     const c = getCtx(analysisResult);
 
     if (c.losPossible) {
-        const margin = (c.minClearance ?? 0) - c.threshold;
-        if (margin > c.threshold) {
+        const headroom = (c.minClearance ?? 0) - c.threshold;
+        if (headroom > c.threshold) {
             return `Clear with excellent ${c.minClearance?.toFixed(1)}m clearance over ${distStr(c.distanceKm)}.`;
-        } else if (margin >= 3) {
+        } else if (headroom >= 3) {
             return `Clear with adequate ${c.minClearance?.toFixed(1)}m clearance over ${distStr(c.distanceKm)}.`;
         } else {
-            return `Clear but marginal -- only ${margin.toFixed(1)}m above threshold over ${distStr(c.distanceKm)}.`;
+            return `Clear but limited -- only ${headroom.toFixed(1)}m above threshold over ${distStr(c.distanceKm)}.`;
         }
     } else {
         return `Blocked -- needs ${c.additionalHeight?.toFixed(1)}m additional height over ${distStr(c.distanceKm)}.`;

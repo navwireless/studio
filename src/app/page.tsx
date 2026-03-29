@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, AlertTriangle, WifiOff } from 'lucide-react';
 
 import { useToast } from '@/hooks/use-toast';
-import { performLosAnalysis, generateCombinedPdfReportAction } from '@/app/actions';
+import { performLosAnalysis } from '@/app/actions';
 import type { AnalysisFormValues, MapNavigationTarget, MapContextMenuState, SavedLink } from '@/types';
 import { AnalysisFormSchema, defaultFormStateValues } from '@/lib/form-schema';
 
@@ -36,6 +36,10 @@ import { useCredits } from '@/hooks/use-credits';
 import CreditWarning from '@/components/credit-warning';
 import ProUpsellModal from '@/components/pro-upsell-modal';
 
+// Export config modal for PDF downloads
+import { ExportConfigModal } from '@/components/fso/export-config-modal';
+import type { ExportConfig } from '@/tools/report-generator/types';
+
 export default function Home() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
@@ -45,6 +49,9 @@ export default function Home() {
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [mapNavigationTarget, setMapNavigationTarget] = useState<MapNavigationTarget | null>(null);
   const [contextMenu, setContextMenu] = useState<MapContextMenuState>({ isOpen: false, x: 0, y: 0, lat: 0, lng: 0 });
+
+  // State to hold links pending combined PDF export (for modal)
+  const [combinedExportLinks, setCombinedExportLinks] = useState<SavedLink[]>([]);
 
   // Credit management
   const { refreshCredits } = useCredits();
@@ -116,10 +123,13 @@ export default function Home() {
   // ── Handle credit errors from server ──
   useEffect(() => {
     const rawState = analysis.rawServerState;
-    if (rawState && 'error' in rawState && typeof rawState.error === 'string') {
-      const errorMsg = rawState.error;
-      if (errorMsg.includes('Not enough credits') || errorMsg.includes('Credit check failed')) {
-        setShowZeroCreditModal(true);
+    if (rawState && typeof rawState === 'object' && 'error' in rawState) {
+      const errorObj = rawState as Record<string, unknown>;
+      if (typeof errorObj.error === 'string') {
+        const errorMsg = errorObj.error;
+        if (errorMsg.includes('Not enough credits') || errorMsg.includes('Credit check failed')) {
+          setShowZeroCreditModal(true);
+        }
       }
     }
   }, [analysis.rawServerState]);
@@ -145,6 +155,12 @@ export default function Home() {
     formData.append('pointB.lng', data.pointB.lng);
     formData.append('pointB.height', data.pointB.height.toString());
     formData.append('clearanceThreshold', data.clearanceThreshold);
+
+    // ── Include selected device ID in FormData (Phase 6C) ──
+    const currentDeviceId = analysisRef.current.selectedDeviceId;
+    if (currentDeviceId) {
+      formData.append('selectedDeviceId', currentDeviceId);
+    }
 
     React.startTransition(() => {
       analysisRef.current.formAction(formData);
@@ -259,7 +275,7 @@ export default function Home() {
     toast({ title: `Navigated to ${name}` });
   }, [toast]);
 
-  // ── Save link ──
+  // ── Save link (Phase 6C: includes selectedDeviceId) ──
   const handleSaveLink = useCallback(() => {
     if (!analysis.analysisResult || analysis.isStale) {
       toast({ title: "Cannot Save", description: "Run analysis first.", variant: "destructive" });
@@ -269,11 +285,12 @@ export default function Home() {
       analysisResult: analysis.analysisResult,
       fiberPathResult: fiber.fiberPathResult,
       clearanceThreshold: parseFloat(watch('clearanceThreshold')),
+      selectedDeviceId: analysis.selectedDeviceId ?? undefined,
     });
     toast({ title: "Link Saved", description: `"${link.name}" saved to library.` });
-  }, [analysis.analysisResult, analysis.isStale, fiber.fiberPathResult, saved, toast, watch]);
+  }, [analysis.analysisResult, analysis.isStale, analysis.selectedDeviceId, fiber.fiberPathResult, saved, toast, watch]);
 
-  // ── Load saved link ──
+  // ── Load saved link (Phase 6C: restores selectedDeviceId) ──
   const handleLoadSavedLink = useCallback((link: SavedLink) => {
     setValue('pointA.name', link.pointA.name, { shouldDirty: true });
     setValue('pointA.lat', link.pointA.lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
@@ -285,6 +302,9 @@ export default function Home() {
     setValue('pointB.height', link.pointB.towerHeight, { shouldDirty: true, shouldValidate: true });
     setValue('clearanceThreshold', link.clearanceThreshold.toString(), { shouldDirty: true, shouldValidate: true });
 
+    // Restore device selection from saved link
+    analysis.setSelectedDeviceId(link.selectedDeviceId ?? null);
+
     const midLat = (link.pointA.lat + link.pointB.lat) / 2;
     const midLng = (link.pointA.lng + link.pointB.lng) / 2;
     setMapNavigationTarget({ lat: midLat, lng: midLng, zoom: 12, timestamp: Date.now() });
@@ -294,7 +314,7 @@ export default function Home() {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsSidePanelOpen(false);
     }
-  }, [setValue, toast]);
+  }, [setValue, toast, analysis]);
 
   // ── Context menu handlers ──
   const handleContextMenu = useCallback((state: MapContextMenuState) => setContextMenu(state), []);
@@ -324,6 +344,38 @@ export default function Home() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleContextWhatsHere = useCallback((_lat: number, _lng: number) => {
   }, []);
+
+  // ══════════════════════════════════════════════════════
+  // PDF DOWNLOAD — Single report: opens export config modal
+  // ══════════════════════════════════════════════════════
+
+  /** Opens the export config modal instead of downloading directly */
+  const handlePdfButtonClick = useCallback(() => {
+    if (!analysis.analysisResult || analysis.isStale) {
+      toast({ title: "No Results", description: "Run analysis first to generate a PDF.", variant: "destructive" });
+      return;
+    }
+    pdfDownload.openExportModal();
+  }, [analysis.analysisResult, analysis.isStale, pdfDownload, toast]);
+
+  /** Called when user confirms download from the single export config modal */
+  const handleExportConfigConfirm = useCallback((config: ExportConfig) => {
+    pdfDownload.handleDownloadWithConfig(
+      analysis.analysisResult,
+      toast,
+      config,
+      fiber.fiberPathResult,
+    );
+  }, [analysis.analysisResult, fiber.fiberPathResult, pdfDownload, toast]);
+
+  /** Called when user confirms download from the combined export config modal */
+  const handleCombinedExportConfigConfirm = useCallback((config: ExportConfig) => {
+    pdfDownload.handleDownloadCombinedWithConfig(
+      combinedExportLinks,
+      toast,
+      config,
+    );
+  }, [combinedExportLinks, pdfDownload, toast]);
 
   // ── Export handlers ──
   const handleExportKmz = useCallback(async (links: SavedLink[]) => {
@@ -359,41 +411,16 @@ export default function Home() {
     }
   }, [toast]);
 
+  /** Combined PDF: opens export config modal instead of downloading directly */
   const handleExportPdf = useCallback(async (links: SavedLink[]) => {
-    try {
-      const MAX_DETAIL_LINKS = 15;
-      const linksForExport = links.length <= MAX_DETAIL_LINKS
-        ? links
-        : links.map(l => ({
-          ...l,
-          analysisResult: { ...l.analysisResult, profile: [] },
-        }));
-
-      const result = await generateCombinedPdfReportAction(JSON.stringify(linksForExport));
-      if (!result.success) {
-        toast({ title: "PDF Failed", description: result.error, variant: "destructive" });
-        return;
-      }
-      const byteCharacters = atob(result.data.base64Pdf);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = result.data.fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast({ title: "PDF Exported", description: `${links.length} link(s) exported to PDF report.` });
-    } catch (e) {
-      console.error('PDF export failed:', e);
-      toast({ title: "Export Failed", description: e instanceof Error ? e.message : "PDF export failed.", variant: "destructive" });
+    if (!links.length) {
+      toast({ title: "No Links", description: "No links to export.", variant: "destructive" });
+      return;
     }
-  }, [toast]);
+    // Store the links and open the combined export config modal
+    setCombinedExportLinks(links);
+    pdfDownload.openCombinedExportModal();
+  }, [toast, pdfDownload]);
 
   // ── Keyboard shortcuts ──
   const toggleSidePanel = useCallback(() => setIsSidePanelOpen(prev => !prev), []);
@@ -424,6 +451,12 @@ export default function Home() {
     if (analysis.analysisResult) setIsProfileExpanded(true);
   }, [analysis.analysisResult]);
 
+  // ── Determine if device data is available (for export modals) ──
+  const hasDeviceData = !!(analysis.analysisResult?.deviceCompatibility);
+  const combinedHasDeviceData = combinedExportLinks.some(
+    l => !!(l.analysisResult.deviceCompatibility || l.selectedDeviceId)
+  );
+
   return (
     <>
       <ProgressBar isActive={analysis.isActionPending || fiber.isFiberCalculating} />
@@ -437,6 +470,40 @@ export default function Home() {
         onOpenChange={setShowZeroCreditModal}
         blocking={latestCredits <= 0}
         trigger="zero_credits"
+      />
+
+      {/* ══════════════════════════════════════════════════
+          Export Config Modal for single-link PDF
+          ══════════════════════════════════════════════════ */}
+      <ExportConfigModal
+        open={pdfDownload.isExportModalOpen}
+        onOpenChange={(open) => {
+          if (!open) pdfDownload.closeExportModal();
+        }}
+        onConfirm={handleExportConfigConfirm}
+        isLoading={pdfDownload.isGeneratingPdf}
+        defaultTitle="LOS Feasibility Report"
+        userName=""
+        isCombinedReport={false}
+        hasDeviceData={hasDeviceData}
+        formatLabel="PDF Report"
+      />
+
+      {/* ══════════════════════════════════════════════════
+          Export Config Modal for combined/bulk PDF
+          ══════════════════════════════════════════════════ */}
+      <ExportConfigModal
+        open={pdfDownload.isCombinedExportModalOpen}
+        onOpenChange={(open) => {
+          if (!open) pdfDownload.closeCombinedExportModal();
+        }}
+        onConfirm={handleCombinedExportConfigConfirm}
+        isLoading={pdfDownload.isGeneratingPdf}
+        defaultTitle="LOS Feasibility Analysis"
+        userName=""
+        isCombinedReport={true}
+        hasDeviceData={combinedHasDeviceData}
+        formatLabel="Combined PDF Report"
       />
 
       <div aria-live="polite" aria-atomic="true" className="sr-only">
@@ -471,7 +538,7 @@ export default function Home() {
           isActionPending={analysis.isActionPending}
           analysisResult={analysis.analysisResult}
           isStale={analysis.isStale}
-          onDownloadPdf={() => pdfDownload.handleDownloadPdf(analysis.analysisResult, toast, fiber.fiberPathResult)}
+          onDownloadPdf={handlePdfButtonClick}
           isGeneratingPdf={pdfDownload.isGeneratingPdf}
           fiberPathResult={fiber.fiberPathResult}
           isFiberCalculating={fiber.isFiberCalculating}
@@ -504,6 +571,9 @@ export default function Home() {
           historyList={analysis.historyList}
           onLoadHistoryItem={analysis.loadFromHistory}
           onClearHistory={handleClearHistory}
+          selectedDeviceId={analysis.selectedDeviceId}
+          onSelectDevice={analysis.setSelectedDeviceId}
+          currentDistanceKm={mapInteraction.liveDistanceKm}
         />
 
         {/* Map + Bottom Profile */}
@@ -570,6 +640,7 @@ export default function Home() {
                 onContextMenu={handleContextMenu}
                 savedLinks={saved.savedLinks}
                 onSavedLinkClick={handleLoadSavedLink}
+                selectedDeviceId={analysis.selectedDeviceId}
               />
             </MapErrorBoundary>
 
@@ -601,11 +672,12 @@ export default function Home() {
                 serverFormErrors={analysis.fieldErrors ?? undefined}
                 isActionPending={analysis.isActionPending}
                 onTowerHeightChangeFromGraph={handleTowerHeightChangeFromGraph}
-                onDownloadPdf={() => pdfDownload.handleDownloadPdf(analysis.analysisResult, toast, fiber.fiberPathResult)}
+                onDownloadPdf={handlePdfButtonClick}
                 isGeneratingPdf={pdfDownload.isGeneratingPdf}
                 fiberPathResult={fiber.fiberPathResult}
                 isFiberCalculating={fiber.isFiberCalculating}
                 fiberPathError={fiber.fiberPathError}
+                selectedDeviceId={analysis.selectedDeviceId}
               />
             </ErrorBoundary>
           )}

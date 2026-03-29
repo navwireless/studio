@@ -24,6 +24,45 @@ export interface MapContextMenuState {
   lng: number;
 }
 
+// ============================================
+// Device Compatibility Types (for AnalysisResult storage)
+// ============================================
+
+/** Device compatibility data stored within an AnalysisResult */
+export interface DeviceCompatibilityData {
+  selectedDevice?: {
+    deviceId: string;
+    deviceName: string;
+    isCompatible: boolean;
+    utilizationPercent: number;
+    marginMeters: number;
+    reliabilityRating: string;
+  };
+  recommendation: {
+    recommendedDeviceId: string | null;
+    recommendedDeviceName: string | null;
+    compatibleDevices: Array<{
+      deviceId: string;
+      deviceName: string;
+      bandwidth: string;
+      maxRangeKm: number;
+      utilizationPercent: number;
+      reliabilityRating: string;
+    }>;
+    incompatibleDevices: Array<{
+      deviceId: string;
+      deviceName: string;
+      maxRangeKm: number;
+      shortfallMeters: number;
+    }>;
+    reasoning: string;
+  };
+}
+
+// ============================================
+// Saved Links
+// ============================================
+
 /** Saved link for the library */
 export interface SavedLink {
   id: string;
@@ -45,6 +84,8 @@ export interface SavedLink {
   fiberPathResult?:
   | import("@/tools/fiberPathCalculator/types").FiberPathResult
   | null;
+  /** Device selected when this link was saved (Phase 6) */
+  selectedDeviceId?: string;
   createdAt: number;
   color: string;
 }
@@ -106,6 +147,20 @@ export type AnalysisResult = {
   pointB: PointCoordinates & { towerHeight: number; name?: string };
   clearanceThresholdUsed: number;
   timestamp: number;
+
+  // ── Phase 6 additions (all optional for backward compatibility) ──
+
+  /** User-selected device ID (if any) */
+  selectedDeviceId?: string;
+
+  /** Device compatibility analysis results */
+  deviceCompatibility?: DeviceCompatibilityData;
+
+  /** Fresnel zone radius at the worst clearance point (meters) */
+  fresnelZoneRadiusAtWorstPoint?: number;
+
+  /** K-factor used for Earth curvature refraction (default 1.333) */
+  kFactor?: number;
 };
 
 // ============================================

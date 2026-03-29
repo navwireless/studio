@@ -33,6 +33,8 @@ interface BottomPanelProps {
   fiberPathResult: FiberPathResult | null;
   isFiberCalculating: boolean;
   fiberPathError: string | null;
+  /** Selected device ID for chart range indicator (Phase 6C) */
+  selectedDeviceId?: string | null;
 }
 
 const BottomPanel = React.memo(function BottomPanel({
@@ -40,6 +42,7 @@ const BottomPanel = React.memo(function BottomPanel({
   isStale, control, isActionPending,
   onTowerHeightChangeFromGraph,
   fiberPathResult, isFiberCalculating, isGeneratingPdf,
+  selectedDeviceId,
 }: BottomPanelProps) {
 
   const pointAName = useWatch({ control, name: 'pointA.name', defaultValue: "Site A" });
@@ -56,8 +59,8 @@ const BottomPanel = React.memo(function BottomPanel({
     const sig = p.length > 0
       ? `${p[0].distance}-${p[0].terrainElevation}-${p[0].losHeight}-${p[p.length - 1].distance}-${p[p.length - 1].terrainElevation}-${p[p.length - 1].losHeight}`
       : 'empty';
-    return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${sig}-${minRequiredClearance}`;
-  }, [analysisResult, minRequiredClearance]);
+    return `${analysisResult.distanceKm}-${analysisResult.pointA?.towerHeight}-${analysisResult.pointB?.towerHeight}-${sig}-${minRequiredClearance}-${selectedDeviceId ?? 'none'}`;
+  }, [analysisResult, minRequiredClearance, selectedDeviceId]);
 
   const anyPending = isActionPending || isGeneratingPdf || isFiberCalculating;
 
@@ -108,23 +111,19 @@ const BottomPanel = React.memo(function BottomPanel({
       const now = Date.now();
       const dt = now - s.lastTime;
 
-      // Track velocity (pixels per ms, positive = downward)
       if (dt > 0) {
         s.velocity = (t.clientY - s.lastY) / dt;
       }
       s.lastY = t.clientY;
       s.lastTime = now;
 
-      const dy = t.clientY - s.startY; // positive = dragging down
+      const dy = t.clientY - s.startY;
       const expandedH = getExpandedHeight();
 
       if (s.startExpanded) {
-        // Started expanded: dragging down reduces height
         const h = Math.max(0, expandedH - dy);
         dragHeightRef.current = Math.max(0, Math.min(expandedH, h));
       } else {
-        // Started collapsed: dragging up increases height
-        // dy is negative when dragging up
         const h = Math.max(0, -dy);
         dragHeightRef.current = Math.min(expandedH, h);
       }
@@ -140,19 +139,15 @@ const BottomPanel = React.memo(function BottomPanel({
       const expandedH = getExpandedHeight();
       const currentH = dragHeightRef.current ?? (isContentExpanded ? expandedH : 0);
 
-      // Velocity-based snap: fast flick overrides position
-      const VELOCITY_THRESHOLD = 0.4; // px/ms
+      const VELOCITY_THRESHOLD = 0.4;
 
       let shouldExpand: boolean;
       if (Math.abs(s.velocity) > VELOCITY_THRESHOLD) {
-        // Fast flick: negative velocity = upward = expand
         shouldExpand = s.velocity < 0;
       } else {
-        // Slow drag: snap to nearest
         shouldExpand = currentH > expandedH / 2;
       }
 
-      // Haptic feedback
       if (navigator.vibrate) navigator.vibrate(15);
 
       dragHeightRef.current = null;
@@ -160,7 +155,6 @@ const BottomPanel = React.memo(function BottomPanel({
       dragState.current = null;
       forceRender(c => c + 1);
 
-      // Toggle if needed
       if (shouldExpand !== isContentExpanded) {
         onToggleContentExpansion();
       }
@@ -185,7 +179,6 @@ const BottomPanel = React.memo(function BottomPanel({
     ? (window.innerWidth < 768 ? EXPANDED_HEIGHT_MOBILE : EXPANDED_HEIGHT_DESKTOP)
     : EXPANDED_HEIGHT_DESKTOP;
 
-  // Determine chart area height
   const isCurrentlyDragging = isDraggingRef.current && dragHeightRef.current !== null;
   const chartHeight = isCurrentlyDragging
     ? dragHeightRef.current!
@@ -299,6 +292,7 @@ const BottomPanel = React.memo(function BottomPanel({
                 totalDistanceKm={analysisResult.distanceKm}
                 isActionPending={anyPending}
                 onTowerHeightChangeFromGraph={onTowerHeightChangeFromGraph}
+                selectedDeviceId={selectedDeviceId}
               />
             </Suspense>
           ) : (

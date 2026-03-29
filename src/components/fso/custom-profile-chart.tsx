@@ -1,10 +1,10 @@
-
 // src/components/fso/custom-profile-chart.tsx
 "use client";
 
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import type { LOSPoint } from '@/types';
 import { cn } from '@/lib/utils';
+import { getDeviceById } from '@/config/devices';
 
 interface CustomProfileChartProps {
   data: LOSPoint[];
@@ -14,24 +14,32 @@ interface CustomProfileChartProps {
   totalDistanceKm?: number;
   isActionPending?: boolean;
   onTowerHeightChangeFromGraph: (siteId: 'pointA' | 'pointB', newHeight: number) => void;
+  /** Selected device ID for range indicator line (Phase 6C) */
+  selectedDeviceId?: string | null;
 }
 
 // Adjusted Padding for more chart space
-const PADDING_BASE = { top: 30, right: 20, bottom: 30, left: 45 }; 
-const TEXT_COLOR = 'hsl(210, 25%, 90%)'; 
-const GRID_COLOR = 'hsla(217, 30%, 50%, 0.4)'; 
+const PADDING_BASE = { top: 30, right: 20, bottom: 30, left: 45 };
+const TEXT_COLOR = 'hsl(210, 25%, 90%)';
+const GRID_COLOR = 'hsla(217, 30%, 50%, 0.4)';
 
-const TERRAIN_FILL_COLOR = 'hsla(217, 70%, 60%, 0.25)'; 
-const TERRAIN_STROKE_COLOR = 'hsla(217, 70%, 60%, 0.5)'; 
+const TERRAIN_FILL_COLOR = 'hsla(217, 70%, 60%, 0.25)';
+const TERRAIN_STROKE_COLOR = 'hsla(217, 70%, 60%, 0.5)';
 const LOS_LINE_COLOR = 'hsl(180, 70%, 65%)'; // Bright Cyan
 const OBSTRUCTION_DOT_COLOR = 'hsl(0, 80%, 60%)'; // Bright Red
 const TOWER_LINE_COLOR = 'hsl(45, 90%, 60%)'; // Bright Yellow/Amber
 const HOVER_GUIDE_LINE_COLOR = 'hsla(210, 25%, 80%, 0.5)';
 const HOVER_DOT_COLOR = LOS_LINE_COLOR;
 
-const TOOLTIP_BG_COLOR = 'hsla(222, 40%, 15%, 0.9)'; // Slightly lighter than default popover
-const TOOLTIP_TEXT_COLOR = 'hsl(210, 40%, 95%)'; 
-const TOOLTIP_BORDER_COLOR = 'hsl(217, 33%, 35%)'; 
+// Device range indicator colors
+const DEVICE_RANGE_IN_COLOR = 'hsla(140, 65%, 55%, 0.5)'; // Green — within range
+const DEVICE_RANGE_OUT_COLOR = 'hsla(0, 75%, 55%, 0.5)'; // Red — exceeds range
+const DEVICE_RANGE_LABEL_COLOR_IN = 'hsl(140, 65%, 70%)';
+const DEVICE_RANGE_LABEL_COLOR_OUT = 'hsl(0, 75%, 70%)';
+
+const TOOLTIP_BG_COLOR = 'hsla(222, 40%, 15%, 0.9)';
+const TOOLTIP_TEXT_COLOR = 'hsl(210, 40%, 95%)';
+const TOOLTIP_BORDER_COLOR = 'hsl(217, 33%, 35%)';
 const MIN_TOWER_HEIGHT = 0;
 const MAX_TOWER_HEIGHT = 100;
 const TOWER_HANDLE_RADIUS_VISUAL = 6;
@@ -55,23 +63,23 @@ function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, wi
 interface ChartMetrics {
   padding: typeof PADDING_BASE;
   canvasRect: DOMRect | null;
-  chartPixelWidth: number; 
+  chartPixelWidth: number;
   chartPixelHeight: number;
-  effectivePixelWidth: number; 
-  xOffsetPx: number; 
+  effectivePixelWidth: number;
+  xOffsetPx: number;
   minYData: number;
   maxYData: number;
   maxXKm: number;
   getPixelXFromKm: (distanceKm: number) => number;
   getPixelYFromElevation: (elevation: number) => number;
   getElevationFromPixelY: (pixelY: number) => number;
-  getKmFromPixelX: (pixelX: number) => number; 
+  getKmFromPixelX: (pixelX: number) => number;
 }
 
 interface LiveDragVisuals {
   site: 'A' | 'B';
-  currentLosY_px_ChartArea: number; 
-  currentHeightMeters: number; 
+  currentLosY_px_ChartArea: number;
+  currentHeightMeters: number;
 }
 
 
@@ -82,7 +90,8 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
   isStale,
   totalDistanceKm,
   isActionPending,
-  onTowerHeightChangeFromGraph
+  onTowerHeightChangeFromGraph,
+  selectedDeviceId,
 }: CustomProfileChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hoverData, setHoverData] = useState<{ xPx: number; yPx: number; point: LOSPoint & { distanceMeters: number } } | null>(null);
@@ -90,16 +99,23 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
 
   const [draggingTower, setDraggingTower] = useState<'A' | 'B' | null>(null);
   const [dragStartInfo, setDragStartInfo] = useState<{
-    clientY: number; 
-    initialTowerHeightMeters: number; 
-    siteTerrainElevation: number; 
-    initialLosY_px_ChartArea: number; 
+    clientY: number;
+    initialTowerHeightMeters: number;
+    siteTerrainElevation: number;
+    initialLosY_px_ChartArea: number;
   } | null>(null);
 
   const [liveDragVisuals, setLiveDragVisuals] = useState<LiveDragVisuals | null>(null);
   const isInteractingByDrag = !!draggingTower;
 
   const chartMetricsRef = useRef<ChartMetrics | null>(null);
+
+  // Resolve device max range for the range indicator
+  const deviceMaxRangeKm = useMemo(() => {
+    if (!selectedDeviceId) return null;
+    const device = getDeviceById(selectedDeviceId);
+    return device ? device.maxRangeKm : null;
+  }, [selectedDeviceId]);
 
   const drawChart = useCallback(() => {
     const canvas = canvasRef.current;
@@ -111,7 +127,7 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     const rect = canvas.getBoundingClientRect();
 
     if (rect.width === 0 || rect.height === 0) {
-      requestAnimationFrame(drawChart); 
+      requestAnimationFrame(drawChart);
       return;
     }
 
@@ -122,7 +138,7 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     const PADDING = PADDING_BASE;
     const chartWidth = rect.width - PADDING.left - PADDING.right;
     const chartHeight = rect.height - PADDING.top - PADDING.bottom;
-    
+
     const xOffsetPx = chartWidth * HORIZONTAL_PADDING_PERCENTAGE;
     const effectiveChartWidthPx = chartWidth * (1 - 2 * HORIZONTAL_PADDING_PERCENTAGE);
 
@@ -130,16 +146,16 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     ctx.clearRect(0, 0, rect.width, rect.height);
 
     const originalTransform = ctx.getTransform();
-    ctx.translate(PADDING.left, PADDING.top); 
+    ctx.translate(PADDING.left, PADDING.top);
 
     const elevations = data.flatMap(p => [p.terrainElevation, p.losHeight]);
     let minY = Math.min(...elevations);
     let maxY = Math.max(...elevations);
     const yDataRange = maxY - minY;
-    minY -= yDataRange * 0.15; // Add some padding to Y-axis
+    minY -= yDataRange * 0.15;
     maxY += yDataRange * 0.15;
-    if (maxY === minY) { maxY += 10; minY -= 10; } // Avoid division by zero if all elevations are same
-    if (maxY < minY) [maxY, minY] = [minY, maxY]; // Ensure minY < maxY
+    if (maxY === minY) { maxY += 10; minY -= 10; }
+    if (maxY < minY) [maxY, minY] = [minY, maxY];
 
 
     const maxXKmActual = totalDistanceKm;
@@ -147,12 +163,12 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     const getX = (distanceKm: number) => xOffsetPx + (distanceKm / maxXKmActual) * effectiveChartWidthPx;
     const getY = (elevation: number) => chartHeight - ((elevation - minY) / (maxY - minY)) * chartHeight;
     const getElevationFromY = (pixelY_ChartArea: number) => minY + ((chartHeight - pixelY_ChartArea) / chartHeight) * (maxY - minY);
-    const getKmFromX = (pixelX_ChartArea_relative_to_padding_left: number) => { 
-        const effectivePx = pixelX_ChartArea_relative_to_padding_left - xOffsetPx;
-        if (effectiveChartWidthPx === 0) return 0; 
-        return (effectivePx / effectiveChartWidthPx) * maxXKmActual;
+    const getKmFromX = (pixelX_ChartArea_relative_to_padding_left: number) => {
+      const effectivePx = pixelX_ChartArea_relative_to_padding_left - xOffsetPx;
+      if (effectiveChartWidthPx === 0) return 0;
+      return (effectivePx / effectiveChartWidthPx) * maxXKmActual;
     };
-    
+
     chartMetricsRef.current = {
       padding: PADDING, canvasRect: rect, chartPixelWidth: chartWidth, chartPixelHeight: chartHeight,
       effectivePixelWidth: effectiveChartWidthPx, xOffsetPx: xOffsetPx,
@@ -178,17 +194,69 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     ctx.textAlign = "center"; ctx.textBaseline = "top";
     for (let i = 0; i <= numXTicks; i++) {
       const distKm = (i / numXTicks) * maxXKmActual;
-      const xPx = getX(distKm); 
+      const xPx = getX(distKm);
       ctx.beginPath(); ctx.moveTo(xPx, 0); ctx.lineTo(xPx, chartHeight); ctx.stroke();
       ctx.fillText((distKm * 1000).toFixed(0) + "m", xPx, chartHeight + 8);
+    }
+
+    // ── Device Range Indicator ──
+    if (deviceMaxRangeKm !== null && maxXKmActual > 0) {
+      const withinRange = totalDistanceKm <= deviceMaxRangeKm;
+      // const rangeXPx = getX(Math.min(deviceMaxRangeKm, maxXKmActual * 1.05));
+
+      // Only draw if the device range line falls within the visible chart area
+      if (deviceMaxRangeKm <= maxXKmActual * 1.1) {
+        const actualRangeXPx = getX(deviceMaxRangeKm);
+
+        // Dashed vertical line at device max range
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = withinRange ? DEVICE_RANGE_IN_COLOR : DEVICE_RANGE_OUT_COLOR;
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(actualRangeXPx, 0);
+        ctx.lineTo(actualRangeXPx, chartHeight);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // Label at top of the range line
+        ctx.save();
+        ctx.font = "bold 8px Inter, sans-serif";
+        ctx.fillStyle = withinRange ? DEVICE_RANGE_LABEL_COLOR_IN : DEVICE_RANGE_LABEL_COLOR_OUT;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        const rangeLabel = withinRange
+          ? `${deviceMaxRangeKm}km max`
+          : `Exceeds ${deviceMaxRangeKm}km`;
+        ctx.fillText(rangeLabel, actualRangeXPx, -4);
+        ctx.restore();
+
+        // If link exceeds range, shade the area beyond the device range in red
+        if (!withinRange) {
+          ctx.save();
+          ctx.fillStyle = 'hsla(0, 75%, 55%, 0.06)';
+          ctx.fillRect(actualRangeXPx, 0, chartWidth - actualRangeXPx + xOffsetPx, chartHeight);
+          ctx.restore();
+        }
+      } else {
+        // Device range is well beyond the chart — show a small label at top-right
+        ctx.save();
+        ctx.font = "8px Inter, sans-serif";
+        ctx.fillStyle = DEVICE_RANGE_LABEL_COLOR_IN;
+        ctx.textAlign = "right";
+        ctx.textBaseline = "top";
+        ctx.fillText(`Device: ${deviceMaxRangeKm}km ✓`, chartWidth - 4, 4);
+        ctx.restore();
+      }
     }
 
     // Draw Terrain Area
     ctx.beginPath();
     ctx.moveTo(getX(data[0].distance), getY(data[0].terrainElevation));
     data.forEach(p => ctx.lineTo(getX(p.distance), getY(p.terrainElevation)));
-    ctx.lineTo(getX(data[data.length - 1].distance), chartHeight); // Close area to bottom
-    ctx.lineTo(getX(data[0].distance), chartHeight); // Close area to bottom
+    ctx.lineTo(getX(data[data.length - 1].distance), chartHeight);
+    ctx.lineTo(getX(data[0].distance), chartHeight);
     ctx.closePath();
     ctx.fillStyle = TERRAIN_FILL_COLOR; ctx.fill();
     // Draw Terrain Stroke
@@ -218,68 +286,61 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     ctx.moveTo(xA_px_ChartArea, yLosA_px_ChartArea);
     ctx.lineTo(xB_px_ChartArea, yLosB_px_ChartArea);
     ctx.strokeStyle = LOS_LINE_COLOR; ctx.lineWidth = 1.5; ctx.stroke();
-    
+
     // Display Aerial Distance
     if (totalDistanceKm !== undefined) {
-        const midXLos = (xA_px_ChartArea + xB_px_ChartArea) / 2;
-        const midYLos = (yLosA_px_ChartArea + yLosB_px_ChartArea) / 2;
-        ctx.fillStyle = TEXT_COLOR;
-        ctx.font = "10px Inter, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
-        const distanceText = totalDistanceKm < 1 ? `${(totalDistanceKm * 1000).toFixed(0)}m` : `${totalDistanceKm.toFixed(1)}km`;
-        ctx.fillText(`Aerial Dist: ${distanceText}`, midXLos, midYLos - 5);
+      const midXLos = (xA_px_ChartArea + xB_px_ChartArea) / 2;
+      const midYLos = (yLosA_px_ChartArea + yLosB_px_ChartArea) / 2;
+      ctx.fillStyle = TEXT_COLOR;
+      ctx.font = "10px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      const distanceText = totalDistanceKm < 1 ? `${(totalDistanceKm * 1000).toFixed(0)}m` : `${totalDistanceKm.toFixed(1)}km`;
+      ctx.fillText(`Aerial Dist: ${distanceText}`, midXLos, midYLos - 5);
     }
 
 
     // Draw Obstruction Dots
-    // Ensure maxXKmActual and effectiveChartWidthPx are positive to avoid issues
     if (data.length > 1 && maxXKmActual > 0 && effectiveChartWidthPx > 0) {
-        for (let px_on_effective_width = 0; px_on_effective_width <= effectiveChartWidthPx; px_on_effective_width++) {
-            const currentX_on_chart_area = xOffsetPx + px_on_effective_width;
-            
-            // Calculate currentKm based on the pixel's position within the effective drawing width
-            const currentKm = (px_on_effective_width / effectiveChartWidthPx) * maxXKmActual;
+      for (let px_on_effective_width = 0; px_on_effective_width <= effectiveChartWidthPx; px_on_effective_width++) {
+        const currentX_on_chart_area = xOffsetPx + px_on_effective_width;
 
-            // Calculate LOS Y position at currentX_on_chart_area
-            const losSlope = (xB_px_ChartArea - xA_px_ChartArea) === 0 ? 0 : (yLosB_px_ChartArea - yLosA_px_ChartArea) / (xB_px_ChartArea - xA_px_ChartArea); 
-            const los_y_at_currentX = yLosA_px_ChartArea + losSlope * (currentX_on_chart_area - xA_px_ChartArea);
+        const currentKm = (px_on_effective_width / effectiveChartWidthPx) * maxXKmActual;
 
-            // Interpolate terrain elevation at currentKm
-            let terrain_elevation_at_currentKm = data[0].terrainElevation; // Default to first point
-            if (data.length > 1) {
-                // Find segment for currentKm
-                for (let j = 0; j < data.length - 1; j++) {
-                    if (currentKm >= data[j].distance && currentKm <= data[j+1].distance) {
-                        const d1 = data[j].distance;
-                        const d2 = data[j+1].distance;
-                        const e1 = data[j].terrainElevation;
-                        const e2 = data[j+1].terrainElevation;
-                        if (d2 - d1 === 0) { // Avoid division by zero if points are at same distance
-                            terrain_elevation_at_currentKm = e1;
-                        } else {
-                            const t_interp = (currentKm - d1) / (d2 - d1);
-                            terrain_elevation_at_currentKm = e1 + t_interp * (e2 - e1);
-                        }
-                        break; // Found the segment
-                    } else if (currentKm > data[data.length-1].distance && j === data.length - 2) { // If beyond last segment but iterating
-                        terrain_elevation_at_currentKm = data[data.length-1].terrainElevation;
-                    }
-                }
-            } else { // Only one data point, terrain is flat at that elevation for the whole path
-                 terrain_elevation_at_currentKm = data[0].terrainElevation;
+        const losSlope = (xB_px_ChartArea - xA_px_ChartArea) === 0 ? 0 : (yLosB_px_ChartArea - yLosA_px_ChartArea) / (xB_px_ChartArea - xA_px_ChartArea);
+        const los_y_at_currentX = yLosA_px_ChartArea + losSlope * (currentX_on_chart_area - xA_px_ChartArea);
+
+        let terrain_elevation_at_currentKm = data[0].terrainElevation;
+        if (data.length > 1) {
+          for (let j = 0; j < data.length - 1; j++) {
+            if (currentKm >= data[j].distance && currentKm <= data[j + 1].distance) {
+              const d1 = data[j].distance;
+              const d2 = data[j + 1].distance;
+              const e1 = data[j].terrainElevation;
+              const e2 = data[j + 1].terrainElevation;
+              if (d2 - d1 === 0) {
+                terrain_elevation_at_currentKm = e1;
+              } else {
+                const t_interp = (currentKm - d1) / (d2 - d1);
+                terrain_elevation_at_currentKm = e1 + t_interp * (e2 - e1);
+              }
+              break;
+            } else if (currentKm > data[data.length - 1].distance && j === data.length - 2) {
+              terrain_elevation_at_currentKm = data[data.length - 1].terrainElevation;
             }
-            const terrain_y_at_currentX = getY(terrain_elevation_at_currentKm);
-
-            // Check for obstruction (LOS line Y is >= Terrain line Y, since Y increases downwards)
-            // Add a small tolerance (e.g., 1 pixel) to catch near-touches
-            if (los_y_at_currentX >= terrain_y_at_currentX -1) { 
-                ctx.beginPath();
-                ctx.arc(currentX_on_chart_area, los_y_at_currentX, 2.5, 0, 2 * Math.PI); // Draw dot on the LOS line
-                ctx.fillStyle = OBSTRUCTION_DOT_COLOR;
-                ctx.fill();
-            }
+          }
+        } else {
+          terrain_elevation_at_currentKm = data[0].terrainElevation;
         }
+        const terrain_y_at_currentX = getY(terrain_elevation_at_currentKm);
+
+        if (los_y_at_currentX >= terrain_y_at_currentX - 1) {
+          ctx.beginPath();
+          ctx.arc(currentX_on_chart_area, los_y_at_currentX, 2.5, 0, 2 * Math.PI);
+          ctx.fillStyle = OBSTRUCTION_DOT_COLOR;
+          ctx.fill();
+        }
+      }
     }
 
 
@@ -289,7 +350,7 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     ctx.beginPath(); ctx.moveTo(xA_px_ChartArea, yTerrainA_px_ChartArea); ctx.lineTo(xA_px_ChartArea, yLosA_px_ChartArea); ctx.stroke();
     ctx.beginPath(); ctx.arc(xA_px_ChartArea, yLosA_px_ChartArea, TOWER_HANDLE_RADIUS_VISUAL, 0, 2 * Math.PI);
     ctx.fillStyle = TOWER_LINE_COLOR; ctx.fill();
-    ctx.strokeStyle = TOOLTIP_BG_COLOR; ctx.lineWidth = 1.5; ctx.stroke(); // Border for handle
+    ctx.strokeStyle = TOOLTIP_BG_COLOR; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = TEXT_COLOR; ctx.font = "bold 10px Inter, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
     ctx.fillText(pointAName, xA_px_ChartArea, yLosA_px_ChartArea - (TOWER_HANDLE_RADIUS_VISUAL + 2));
 
@@ -298,7 +359,7 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     ctx.beginPath(); ctx.moveTo(xB_px_ChartArea, yTerrainB_px_ChartArea); ctx.lineTo(xB_px_ChartArea, yLosB_px_ChartArea); ctx.stroke();
     ctx.beginPath(); ctx.arc(xB_px_ChartArea, yLosB_px_ChartArea, TOWER_HANDLE_RADIUS_VISUAL, 0, 2 * Math.PI);
     ctx.fillStyle = TOWER_LINE_COLOR; ctx.fill();
-    ctx.strokeStyle = TOOLTIP_BG_COLOR; ctx.lineWidth = 1.5; ctx.stroke(); // Border for handle
+    ctx.strokeStyle = TOOLTIP_BG_COLOR; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = TEXT_COLOR;
     ctx.fillText(pointBName, xB_px_ChartArea, yLosB_px_ChartArea - (TOWER_HANDLE_RADIUS_VISUAL + 2));
 
@@ -321,39 +382,39 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
 
     // Draw Hover Guides & Tooltip
     if (hoverData && !isInteractingByDrag) {
-      const hxPx_Canvas = hoverData.xPx; 
-      const hyPxLos_Canvas = hoverData.yPx; 
+      const hxPx_Canvas = hoverData.xPx;
+      const hyPxLos_Canvas = hoverData.yPx;
       const hxPx_ChartArea = hxPx_Canvas - PADDING.left;
 
       // Vertical hover line
       ctx.beginPath(); ctx.setLineDash([3, 3]); ctx.strokeStyle = HOVER_GUIDE_LINE_COLOR; ctx.lineWidth = 1;
       ctx.moveTo(hxPx_ChartArea, 0); ctx.lineTo(hxPx_ChartArea, chartHeight); ctx.stroke();
       ctx.setLineDash([]);
-      
+
       // Dot on LOS line at hover point
       const hyPxLos_ChartArea = hyPxLos_Canvas - PADDING.top;
       ctx.beginPath(); ctx.arc(hxPx_ChartArea, hyPxLos_ChartArea, 4, 0, 2 * Math.PI);
       ctx.fillStyle = HOVER_DOT_COLOR; ctx.fill();
-      ctx.strokeStyle = TOOLTIP_BG_COLOR; ctx.lineWidth = 1.5; ctx.stroke(); // Border for hover dot
+      ctx.strokeStyle = TOOLTIP_BG_COLOR; ctx.lineWidth = 1.5; ctx.stroke();
     }
 
     // Restore transform before drawing tooltip (which uses canvas coordinates)
-    ctx.setTransform(originalTransform); 
+    ctx.setTransform(originalTransform);
 
     // Draw Tooltip (uses original canvas coordinates with mousePosition)
     if (hoverData && mousePosition && !isInteractingByDrag) {
       const p = hoverData.point;
       const lines = [
-        `Distance to Site: ${(p.distance * 1000).toFixed(0)} m`, 
-        `Line of Sight (AGL): ${p.losHeight.toFixed(1)} m`,
+        `Distance: ${(p.distance * 1000).toFixed(0)} m`,
+        `LOS Height: ${p.losHeight.toFixed(1)} m`,
         `Terrain (AMSL): ${p.terrainElevation.toFixed(1)} m`,
-        `Fresnel Clearance: ${p.clearance.toFixed(1)} m`
+        `Clearance: ${p.clearance.toFixed(1)} m`
       ];
       ctx.font = "10px Inter, sans-serif";
       const lineHeight = 14; const tooltipPadding = 6;
       const textWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
       const tooltipWidth = textWidth + 2 * tooltipPadding;
-      const tooltipHeight = lines.length * lineHeight + 2 * tooltipPadding - (lineHeight - 10); // Adjust for line spacing
+      const tooltipHeight = lines.length * lineHeight + 2 * tooltipPadding - (lineHeight - 10);
       const cornerRadius = 4;
       let tipX = mousePosition.x + 15; let tipY = mousePosition.y - tooltipHeight - 5;
       if (tipX + tooltipWidth > rect.width - PADDING.right / 2) tipX = mousePosition.x - tooltipWidth - 15;
@@ -366,11 +427,11 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
       ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1.0;
       ctx.textAlign = "left"; ctx.textBaseline = "middle";
       lines.forEach((line, i) => {
-        ctx.fillStyle = line.startsWith("Line of Sight") ? LOS_LINE_COLOR : TOOLTIP_TEXT_COLOR;
+        ctx.fillStyle = line.startsWith("LOS Height") ? LOS_LINE_COLOR : TOOLTIP_TEXT_COLOR;
         ctx.fillText(line, tipX + tooltipPadding, tipY + tooltipPadding + (i * lineHeight) + (lineHeight / 2));
       });
     }
-  }, [data, totalDistanceKm, pointAName, pointBName, hoverData, mousePosition, isInteractingByDrag, liveDragVisuals]);
+  }, [data, totalDistanceKm, pointAName, pointBName, hoverData, mousePosition, isInteractingByDrag, liveDragVisuals, deviceMaxRangeKm]);
 
   // Effect for initial draw and resize
   useEffect(() => {
@@ -380,7 +441,7 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
     // Mouse move for tooltips
     const handleMouseMoveForTooltip = (event: MouseEvent) => {
       if (isInteractingByDrag || !chartMetricsRef.current || !data || data.length < 2) {
-        if (hoverData) setHoverData(null); // Clear hover data if dragging or no chart metrics
+        if (hoverData) setHoverData(null);
         return;
       }
       const { canvasRect, padding, getPixelXFromKm, getPixelYFromElevation, getKmFromPixelX, xOffsetPx, effectivePixelWidth } = chartMetricsRef.current;
@@ -391,49 +452,47 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
       setMousePosition({ x: mouseCanvasX, y: mouseCanvasY });
 
       const mouseXInChartArea = mouseCanvasX - padding.left;
-      
-      // Check if mouse is within the effective drawing area for X
+
       if (mouseXInChartArea >= xOffsetPx && mouseXInChartArea <= xOffsetPx + effectivePixelWidth) {
-        const distanceKmHovered = getKmFromPixelX(mouseXInChartArea); 
-        // Find the closest data point to the hovered distance for tooltip info
+        const distanceKmHovered = getKmFromPixelX(mouseXInChartArea);
         let closestPoint = data[0];
         let minDiff = Math.abs(data[0].distance - distanceKmHovered);
 
         for (let i = 0; i < data.length; i++) {
-            const diff = Math.abs(data[i].distance - distanceKmHovered);
-            if (diff < minDiff) {
-                minDiff = diff;
-                closestPoint = data[i];
-            }
+          const diff = Math.abs(data[i].distance - distanceKmHovered);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestPoint = data[i];
+          }
         }
-        if(closestPoint) { // Ensure closestPoint is not undefined
-            setHoverData({
-            xPx: getPixelXFromKm(closestPoint.distance) + padding.left, // X on canvas for hover dot
-            yPx: getPixelYFromElevation(closestPoint.losHeight) + padding.top, // Y on canvas for hover dot
+        if (closestPoint) {
+          setHoverData({
+            xPx: getPixelXFromKm(closestPoint.distance) + padding.left,
+            yPx: getPixelYFromElevation(closestPoint.losHeight) + padding.top,
             point: { ...closestPoint, distanceMeters: closestPoint.distance * 1000 }
-            });
+          });
         } else {
-            setHoverData(null);
+          setHoverData(null);
         }
       } else {
         setHoverData(null);
       }
     };
-    const handleMouseOutForTooltip = () => { if (!isInteractingByDrag) { setHoverData(null); setMousePosition(null); }};
+    const handleMouseOutForTooltip = () => { if (!isInteractingByDrag) { setHoverData(null); setMousePosition(null); } };
 
     canvas.addEventListener('mousemove', handleMouseMoveForTooltip);
     canvas.addEventListener('mouseout', handleMouseOutForTooltip);
 
     const resizeObserver = new ResizeObserver(() => requestAnimationFrame(drawChart));
     resizeObserver.observe(canvas);
-    drawChart(); // Initial draw
+    drawChart();
 
     return () => {
       resizeObserver.unobserve(canvas);
       canvas.removeEventListener('mousemove', handleMouseMoveForTooltip);
       canvas.removeEventListener('mouseout', handleMouseOutForTooltip);
     };
-  }, [drawChart, data, isInteractingByDrag, hoverData]); // Ensure drawChart is stable or dependencies are correct
+  }, [drawChart, data, isInteractingByDrag, hoverData]);
 
   // Effect for handling tower drag mouse down
   useEffect(() => {
@@ -461,7 +520,7 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
           siteTerrainElevation: data[0].terrainElevation,
           initialLosY_px_ChartArea: towerAy_px_ChartArea,
         });
-        setLiveDragVisuals(null); // Reset live visuals at start of new drag
+        setLiveDragVisuals(null);
         if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
         event.preventDefault(); return;
       }
@@ -487,45 +546,38 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
 
     canvas.addEventListener('mousedown', handleCanvasMouseDown);
     return () => canvas.removeEventListener('mousedown', handleCanvasMouseDown);
-  }, [data, onTowerHeightChangeFromGraph]); // Re-bind if data changes to get new tower positions
+  }, [data, onTowerHeightChangeFromGraph]);
 
   // Effect for handling global mouse move and mouse up during drag
   useEffect(() => {
     if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) {
-      // Reset cursor if it was set to grabbing and drag ended prematurely
       if (canvasRef.current && canvasRef.current.style.cursor === 'grabbing') canvasRef.current.style.cursor = 'crosshair';
       return;
     }
     const { getElevationFromPixelY, chartPixelHeight, getPixelYFromElevation: getPixelY } = chartMetricsRef.current;
-    
+
     let animationFrameId: number;
 
     const handleGlobalMouseMove = (event: MouseEvent) => {
       if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) return;
-      
+
       const clientYDelta = event.clientY - dragStartInfo.clientY;
-      
+
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
-      
-      animationFrameId = requestAnimationFrame(() => {
-        // New tower LOS Y position in chart area coordinates (Y=0 at top)
-        let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta; 
 
-        // Clamp Y within chart boundaries
+      animationFrameId = requestAnimationFrame(() => {
+        let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta;
+
         newTowerLosY_px_ChartArea = Math.max(0, Math.min(chartPixelHeight, newTowerLosY_px_ChartArea));
-        
-        // Convert pixel Y back to absolute elevation
+
         const newTowerAbsoluteElevation = getElevationFromPixelY(newTowerLosY_px_ChartArea);
-        // Calculate height relative to terrain
         let currentHeightMeters = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
-        
-        // Clamp and round height
+
         currentHeightMeters = Math.round(currentHeightMeters);
         currentHeightMeters = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, currentHeightMeters));
 
-        // Recalculate LOS Y pixel from clamped height for visual consistency
         const clampedAbsoluteElevation = currentHeightMeters + dragStartInfo.siteTerrainElevation;
         newTowerLosY_px_ChartArea = getPixelY(clampedAbsoluteElevation);
 
@@ -539,28 +591,28 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
 
     const handleGlobalMouseUp = (event: MouseEvent) => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      
-      if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) { // Safety check
-          setDraggingTower(null); setDragStartInfo(null); setLiveDragVisuals(null);
-          if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
-          return;
+
+      if (!draggingTower || !dragStartInfo || !chartMetricsRef.current) {
+        setDraggingTower(null); setDragStartInfo(null); setLiveDragVisuals(null);
+        if (canvasRef.current) canvasRef.current.style.cursor = 'crosshair';
+        return;
       }
       let finalNewTowerHeightRelativeToTerrain: number;
       if (liveDragVisuals) {
         finalNewTowerHeightRelativeToTerrain = liveDragVisuals.currentHeightMeters;
-      } else { // Fallback if mouseup occurs before any mousemove triggered liveDragVisuals
+      } else {
         const clientYDelta = event.clientY - dragStartInfo.clientY;
-        let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta; 
+        let newTowerLosY_px_ChartArea = dragStartInfo.initialLosY_px_ChartArea - clientYDelta;
         newTowerLosY_px_ChartArea = Math.max(0, Math.min(chartMetricsRef.current.chartPixelHeight, newTowerLosY_px_ChartArea));
         const newTowerAbsoluteElevation = chartMetricsRef.current.getElevationFromPixelY(newTowerLosY_px_ChartArea);
         finalNewTowerHeightRelativeToTerrain = newTowerAbsoluteElevation - dragStartInfo.siteTerrainElevation;
-        
+
         finalNewTowerHeightRelativeToTerrain = Math.round(finalNewTowerHeightRelativeToTerrain);
         finalNewTowerHeightRelativeToTerrain = Math.max(MIN_TOWER_HEIGHT, Math.min(MAX_TOWER_HEIGHT, finalNewTowerHeightRelativeToTerrain));
       }
-      
+
       onTowerHeightChangeFromGraph(draggingTower === 'A' ? 'pointA' : 'pointB', finalNewTowerHeightRelativeToTerrain);
-      
+
       setDraggingTower(null);
       setDragStartInfo(null);
       setLiveDragVisuals(null);
@@ -574,20 +626,19 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      // Ensure cursor is reset if component unmounts during drag
       if (canvas && canvas.style.cursor === 'grabbing') {
         canvas.style.cursor = 'crosshair';
       }
     };
-  }, [draggingTower, dragStartInfo, onTowerHeightChangeFromGraph, data, liveDragVisuals]); // Add liveDragVisuals to dependencies if its state is read inside
+  }, [draggingTower, dragStartInfo, onTowerHeightChangeFromGraph, data, liveDragVisuals]);
 
   // Re-draw chart when liveDragVisuals change
   useEffect(() => {
-    drawChart(); 
+    drawChart();
   }, [liveDragVisuals, drawChart]);
 
 
-  if (isActionPending && !isInteractingByDrag) { 
+  if (isActionPending && !isInteractingByDrag) {
     return (
       <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md pointer-events-none")}>
         <p className="text-muted-foreground text-xs text-center">Analyzing...</p>
@@ -596,13 +647,13 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
   }
 
   if (!data || data.length < 2 || totalDistanceKm === undefined || totalDistanceKm === null) {
-     if (isActionPending) { 
-        return (
-            <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md")}>
-                <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
-            </div>
-        );
-     }
+    if (isActionPending) {
+      return (
+        <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md")}>
+          <p className="text-muted-foreground text-xs text-center">Loading analysis data...</p>
+        </div>
+      );
+    }
     return (
       <div className={cn("h-full flex items-center justify-center p-2 bg-muted/30 rounded-md")}>
         <p className="text-muted-foreground text-xs text-center">Not enough data to display profile.</p>
@@ -612,10 +663,10 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
 
   return (
     <div className={cn(
-        "w-full h-full relative", 
-        isStale && !isInteractingByDrag && "opacity-50", 
-        isActionPending && !isInteractingByDrag && "pointer-events-none" 
-      )}
+      "w-full h-full relative",
+      isStale && !isInteractingByDrag && "opacity-50",
+      isActionPending && !isInteractingByDrag && "pointer-events-none"
+    )}
     >
       <canvas
         ref={canvasRef}
@@ -657,4 +708,3 @@ const CustomProfileChart = React.memo(function CustomProfileChart({
 });
 
 export default CustomProfileChart;
-

@@ -1,11 +1,11 @@
 // src/tools/report-generator/reportUtils.ts
 //
-// This file now contains:
+// This file contains:
 // 1. Data formatting functions (shared between PDF and DOCX)
 // 2. DOCX-specific helpers (header, footer)
 //
-// PDF-specific drawing utilities have moved to pdfStyles.ts
-// Logo fetching has moved to pdfStyles.ts (fetchLogoBytes)
+// PDF-specific drawing utilities are in pdfStyles.ts
+// Logo fetching is in pdfStyles.ts (fetchLogoBytes)
 
 import {
     AlignmentType,
@@ -27,22 +27,19 @@ import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 
 // ═══════════════════════════════════════════════════════
 // Re-export legacy constants for backward compatibility
-// (any code still importing from reportUtils gets these)
 // ═══════════════════════════════════════════════════════
 export {
     BRANDING as DEFAULT_COMPANY_NAME_OBJ,
     COLORS,
-    // REMOVED: fetchLogoBytes as fetchLogoImageBytes — local legacy wrapper below handles this
 } from './pdfStyles';
 
-// Legacy named exports — mapped to new BRANDING object
 import { BRANDING } from './pdfStyles';
 export const DEFAULT_COMPANY_NAME = BRANDING.companyName;
 export const DEFAULT_REPORT_TITLE = BRANDING.reportTitle;
 export const DEFAULT_FIBER_REPORT_TITLE = BRANDING.fiberReportTitle;
 export const DEFAULT_LOGO_URL = BRANDING.logoUrl;
 
-// Legacy color re-exports for any code still using them
+// Legacy color re-exports
 import { rgb } from 'pdf-lib';
 export const BRAND_COLOR_PRIMARY_RGB = rgb(63 / 255, 81 / 255, 181 / 255);
 export const BRAND_COLOR_ACCENT_RGB = rgb(0 / 255, 150 / 255, 136 / 255);
@@ -59,8 +56,6 @@ export {
 // ═══════════════════════════════════════════════════════
 // Legacy addHeaderToPdfPage / addFooterToPdfPage
 // Kept for backward compatibility with generateFiberPdfReport
-// and generateWordReport if they still import from here.
-// These wrap the old signatures.
 // ═══════════════════════════════════════════════════════
 import type { PDFPage, PDFFont, PDFDocument } from 'pdf-lib';
 
@@ -141,11 +136,12 @@ export function addFooterToPdfPage(
     font: PDFFont,
     pageNumber: number,
     totalPages: number,
-    companyName: string = BRANDING.companyName,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _companyName: string = BRANDING.companyName,
 ) {
     const { width } = page.getSize();
     const margin = 40;
-    const footerText = `Page ${pageNumber} of ${totalPages} | ${companyName} | ${BRANDING.madeBy} | ${new Date().toLocaleDateString()}`;
+    const footerText = `Page ${pageNumber} of ${totalPages} | ${BRANDING.footerText}`;
     const textSize = 9;
     const textWidth = font.widthOfTextAtSize(footerText, textSize);
 
@@ -201,15 +197,15 @@ export function formatAnalysisDataForReportTable(
         { key: 'Point B Tower Height', value: `${analysisResult.pointB.towerHeight} m` },
         { key: 'Aerial Distance', value: `${analysisResult.distanceKm.toFixed(2)} km` },
         {
-            key: 'Required Clearance (Fresnel)',
+            key: 'Clearance Threshold',
             value: `${analysisResult.clearanceThresholdUsed} m`,
         },
         {
-            key: 'Line-of-Sight Possible',
+            key: 'Line-of-Sight Feasible',
             value: analysisResult.losPossible ? 'Yes' : 'No',
         },
         {
-            key: 'Minimum Actual Clearance',
+            key: 'Minimum Clearance',
             value:
                 analysisResult.minClearance !== null
                     ? `${analysisResult.minClearance.toFixed(1)} m`
@@ -222,7 +218,7 @@ export function formatAnalysisDataForReportTable(
                     ? `${analysisResult.additionalHeightNeeded.toFixed(1)} m`
                     : 'N/A',
         },
-        { key: 'Overall Message', value: analysisResult.message },
+        { key: 'Result', value: analysisResult.message },
     ];
 }
 
@@ -371,7 +367,7 @@ export function createDocxFooter(): Footer {
                         size: 16,
                     }),
                     new TextRun({
-                        text: ` | ${DEFAULT_COMPANY_NAME} | ${BRANDING.madeBy} | ${new Date().toLocaleDateString()}`,
+                        text: ` | ${BRANDING.footerText}`,
                         size: 16,
                     }),
                 ],

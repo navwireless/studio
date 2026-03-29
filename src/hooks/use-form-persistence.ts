@@ -18,11 +18,46 @@ export const LOCAL_STORAGE_KEYS = {
   POINT_B_LNG: 'homePointBLng',
   POINT_B_HEIGHT: 'homePointBHeight',
   CLEARANCE_THRESHOLD: 'homeClearanceThreshold',
-};
+} as const;
 
 /**
- * Persists form values to localStorage on every change,
- * and restores them on mount.
+ * Safely reads a value from localStorage. Returns null if the key doesn't exist
+ * or if localStorage is unavailable (SSR).
+ * @param key - The localStorage key to read
+ * @returns The stored string value, or null
+ */
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely writes a value to localStorage. Silently fails if localStorage
+ * is unavailable or quota is exceeded.
+ * @param key - The localStorage key to write
+ * @param value - The string value to store
+ */
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn(`Failed to write localStorage key "${key}":`, e);
+  }
+}
+
+/**
+ * Persists analysis form values to localStorage on every change,
+ * and restores them on mount. Handles SSR gracefully by deferring
+ * all localStorage access until the component is mounted on the client.
+ *
+ * @param form - The react-hook-form instance to persist
+ *
+ * @example
+ * const form = useForm<AnalysisFormValues>({ defaultValues });
+ * useFormPersistence(form);
  */
 export function useFormPersistence(
   form: UseFormReturn<AnalysisFormValues>
@@ -37,63 +72,71 @@ export function useFormPersistence(
 
   // On client load, restore defaults from localStorage
   useEffect(() => {
-    if (isClient) {
-      const initialFormValues: AnalysisFormValues = {
-        pointA: {
-          name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_NAME) || defaultFormStateValues.pointA.name,
-          lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LAT) || defaultFormStateValues.pointA.lat,
-          lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_LNG) || defaultFormStateValues.pointA.lng,
-          height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT) || defaultFormStateValues.pointA.height.toString(), 10),
-        },
-        pointB: {
-          name: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_NAME) || defaultFormStateValues.pointB.name,
-          lat: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LAT) || defaultFormStateValues.pointB.lat,
-          lng: localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_LNG) || defaultFormStateValues.pointB.lng,
-          height: parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT) || defaultFormStateValues.pointB.height.toString(), 10),
-        },
-        clearanceThreshold: localStorage.getItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD) || defaultFormStateValues.clearanceThreshold,
-      };
-      
-      reset(initialFormValues);
-    }
+    if (!isClient) return;
+
+    const storedHeight = safeGetItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT);
+    const parsedHeightA = storedHeight !== null ? parseInt(storedHeight, 10) : NaN;
+
+    const storedHeightB = safeGetItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT);
+    const parsedHeightB = storedHeightB !== null ? parseInt(storedHeightB, 10) : NaN;
+
+    const initialFormValues: AnalysisFormValues = {
+      pointA: {
+        name: safeGetItem(LOCAL_STORAGE_KEYS.POINT_A_NAME) || defaultFormStateValues.pointA.name,
+        lat: safeGetItem(LOCAL_STORAGE_KEYS.POINT_A_LAT) || defaultFormStateValues.pointA.lat,
+        lng: safeGetItem(LOCAL_STORAGE_KEYS.POINT_A_LNG) || defaultFormStateValues.pointA.lng,
+        height: !isNaN(parsedHeightA) ? parsedHeightA : defaultFormStateValues.pointA.height,
+      },
+      pointB: {
+        name: safeGetItem(LOCAL_STORAGE_KEYS.POINT_B_NAME) || defaultFormStateValues.pointB.name,
+        lat: safeGetItem(LOCAL_STORAGE_KEYS.POINT_B_LAT) || defaultFormStateValues.pointB.lat,
+        lng: safeGetItem(LOCAL_STORAGE_KEYS.POINT_B_LNG) || defaultFormStateValues.pointB.lng,
+        height: !isNaN(parsedHeightB) ? parsedHeightB : defaultFormStateValues.pointB.height,
+      },
+      clearanceThreshold:
+        safeGetItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD) || defaultFormStateValues.clearanceThreshold,
+    };
+
+    reset(initialFormValues);
   }, [isClient, reset]);
 
   // Watch fields and persist changes using subscription
   useEffect(() => {
     if (!isClient) return;
+
     const subscription = watch((value, { name }) => {
-      // Directed updates
-      if (name?.startsWith('pointA.')) {
-        if (value.pointA?.name !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_NAME, value.pointA.name);
-        if (value.pointA?.lat !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_LAT, value.pointA.lat!);
-        if (value.pointA?.lng !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_LNG, value.pointA.lng!);
-        if (value.pointA?.height !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT, value.pointA.height.toString());
+      // Directed updates for specific field changes
+      if (name?.startsWith('pointA.') && value.pointA) {
+        if (value.pointA.name !== undefined) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_NAME, value.pointA.name);
+        if (value.pointA.lat !== undefined && value.pointA.lat !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_LAT, value.pointA.lat);
+        if (value.pointA.lng !== undefined && value.pointA.lng !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_LNG, value.pointA.lng);
+        if (value.pointA.height !== undefined && value.pointA.height !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT, value.pointA.height.toString());
       }
-      if (name?.startsWith('pointB.')) {
-        if (value.pointB?.name !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_NAME, value.pointB.name);
-        if (value.pointB?.lat !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_LAT, value.pointB.lat!);
-        if (value.pointB?.lng !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_LNG, value.pointB.lng!);
-        if (value.pointB?.height !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT, value.pointB.height.toString());
+      if (name?.startsWith('pointB.') && value.pointB) {
+        if (value.pointB.name !== undefined) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_NAME, value.pointB.name);
+        if (value.pointB.lat !== undefined && value.pointB.lat !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_LAT, value.pointB.lat);
+        if (value.pointB.lng !== undefined && value.pointB.lng !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_LNG, value.pointB.lng);
+        if (value.pointB.height !== undefined && value.pointB.height !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT, value.pointB.height.toString());
       }
       if (name === 'clearanceThreshold') {
-        if (value.clearanceThreshold !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD, value.clearanceThreshold);
+        if (value.clearanceThreshold !== undefined) safeSetItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD, value.clearanceThreshold);
       }
-      
-      // Fallback for full object resets
+
+      // Fallback for full object resets (name is undefined when reset() is called)
       if (!name) {
-          if (value.pointA) {
-            if (value.pointA.name) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_NAME, value.pointA.name);
-            if (value.pointA.lat !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_LAT, value.pointA.lat);
-            if (value.pointA.lng !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_LNG, value.pointA.lng);
-            if (value.pointA.height !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT, value.pointA.height.toString());
-          }
-          if (value.pointB) {
-            if (value.pointB.name) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_NAME, value.pointB.name);
-            if (value.pointB.lat !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_LAT, value.pointB.lat);
-            if (value.pointB.lng !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_LNG, value.pointB.lng);
-            if (value.pointB.height !== undefined) localStorage.setItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT, value.pointB.height.toString());
-          }
-          if (value.clearanceThreshold) localStorage.setItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD, value.clearanceThreshold);
+        if (value.pointA) {
+          if (value.pointA.name) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_NAME, value.pointA.name);
+          if (value.pointA.lat !== undefined && value.pointA.lat !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_LAT, value.pointA.lat);
+          if (value.pointA.lng !== undefined && value.pointA.lng !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_LNG, value.pointA.lng);
+          if (value.pointA.height !== undefined && value.pointA.height !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_A_HEIGHT, value.pointA.height.toString());
+        }
+        if (value.pointB) {
+          if (value.pointB.name) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_NAME, value.pointB.name);
+          if (value.pointB.lat !== undefined && value.pointB.lat !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_LAT, value.pointB.lat);
+          if (value.pointB.lng !== undefined && value.pointB.lng !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_LNG, value.pointB.lng);
+          if (value.pointB.height !== undefined && value.pointB.height !== null) safeSetItem(LOCAL_STORAGE_KEYS.POINT_B_HEIGHT, value.pointB.height.toString());
+        }
+        if (value.clearanceThreshold) safeSetItem(LOCAL_STORAGE_KEYS.CLEARANCE_THRESHOLD, value.clearanceThreshold);
       }
     });
 
