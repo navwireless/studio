@@ -1,0 +1,48 @@
+env:
+  - variable: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+    secret: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+
+  - variable: NEXT_PUBLIC_RAZORPAY_KEY_ID
+    availability:
+      - BUILD
+      - RUNTIME
+    secret: NEXT_PUBLIC_RAZORPAY_KEY_ID
+
+  - variable: GOOGLE_CLIENT_ID
+    secret: GOOGLE_CLIENT_ID
+
+  - variable: GOOGLE_CLIENT_SECRET
+    secret: GOOGLE_CLIENT_SECRET
+
+  - variable: NEXTAUTH_URL
+    value: https://findlos.com
+
+  - variable: NEXTAUTH_SECRET
+    secret: NEXTAUTH_SECRET
+
+  - variable: FIREBASE_PROJECT_ID
+    secret: FIREBASE_PROJECT_ID
+
+  - variable: FIREBASE_CLIENT_EMAIL
+    secret: FIREBASE_CLIENT_EMAIL
+
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: FIREBASE_PRIVATE_KEY
+
+  - variable: GOOGLE_ELEVATION_API_KEY
+    secret: GOOGLE_ELEVATION_API_KEY
+
+  - variable: GOOGLE_DIRECTIONS_API_KEY
+    secret: GOOGLE_DIRECTIONS_API_KEY
+
+  - variable: RAZORPAY_KEY_ID
+    secret: RAZORPAY_KEY_ID
+
+  - variable: RAZORPAY_KEY_SECRET
+    secret: RAZORPAY_KEY_SECRET
+
+  - variable: RAZORPAY_WEBHOOK_SECRET
+    secret: RAZORPAY_WEBHOOK_SECRET
