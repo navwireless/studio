@@ -11,7 +11,7 @@ import React, { Suspense, useRef, useEffect, useCallback } from 'react';
 
 const CustomProfileChart = React.lazy(() => import('./custom-profile-chart'));
 
-const EXPANDED_HEIGHT_MOBILE = 200;
+const EXPANDED_HEIGHT_MOBILE = 260;
 const EXPANDED_HEIGHT_DESKTOP = 220;
 
 interface BottomPanelProps {
@@ -194,7 +194,7 @@ const BottomPanel = React.memo(function BottomPanel({
     : (isContentExpanded ? expandedH : 0);
 
   return (
-    <div className="border-t border-slate-700/40 bg-slate-900/95 backdrop-blur-lg flex flex-col pb-safe">
+    <div className="relative z-20 border-t border-slate-700/40 bg-slate-900/95 backdrop-blur-lg flex flex-col pb-safe">
 
       {/* Peek bar — always visible, acts as drag handle on mobile */}
       <button
@@ -285,7 +285,7 @@ const BottomPanel = React.memo(function BottomPanel({
         )}
         style={{ height: chartHeight }}
       >
-        <div className="h-full px-2 py-1">
+        <div className="h-full px-2 py-1 pb-safe">
           {analysisResult ? (
             <Suspense fallback={
               <div className="h-full flex items-center justify-center text-xs text-muted-foreground">

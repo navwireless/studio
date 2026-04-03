@@ -71,6 +71,28 @@ export interface UseMapToolsReturn {
   isToolActive: boolean;
   /** Whether the grid overlay is visible */
   gridVisible: boolean;
+  /** Whether active tool supports an explicit finish action */
+  canFinishActiveTool: boolean;
+  /** Explicitly finish current tool flow (mobile-friendly replacement for double-click) */
+  finishActiveTool: () => void;
+  /** Results with stable keys and current visibility state for drawing manager UI */
+  managedResults: Array<{ key: string; result: ToolResult; visible: boolean }>;
+  /** Toggle visibility of a saved tool result overlay set */
+  toggleResultVisibility: (key: string) => void;
+  /** Remove one saved tool result overlay set */
+  removeResult: (key: string) => void;
+}
+
+function getResultKey(result: ToolResult): string {
+  return `${result.toolId}:${result.timestamp}`;
+}
+
+function setOverlaysMap(overlays: google.maps.MVCObject[], map: google.maps.Map | null): void {
+  overlays.forEach((overlay) => {
+    if ('setMap' in overlay && typeof (overlay as google.maps.Marker).setMap === 'function') {
+      (overlay as google.maps.Marker).setMap(map);
+    }
+  });
 }
 
 // ─── Handler Resolution ─────────────────────────────────────────────
@@ -129,6 +151,7 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
 
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [latestResult, setLatestResult] = useState<ToolResult | null>(null);
+  const [hiddenResultKeys, setHiddenResultKeys] = useState<Set<string>>(new Set());
 
   // Handler cache — created lazily
   const handlersRef = useRef<Map<MapToolId, ToolHandler>>(new Map());
@@ -312,8 +335,65 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
       ...prev,
       results: [],
     }));
+    setHiddenResultKeys(new Set());
     setLatestResult(null);
   }, [state.results]);
+
+  const toggleResultVisibility = useCallback((key: string) => {
+    const map = config.getMap();
+    const target = state.results.find((r) => getResultKey(r) === key);
+    if (!target) return;
+
+    setHiddenResultKeys((prev) => {
+      const next = new Set(prev);
+      const willHide = !next.has(key);
+      if (willHide) {
+        setOverlaysMap(target.overlays, null);
+        next.add(key);
+      } else {
+        setOverlaysMap(target.overlays, map ?? null);
+        next.delete(key);
+      }
+      return next;
+    });
+  }, [config, state.results]);
+
+  const removeResult = useCallback((key: string) => {
+    const target = state.results.find((r) => getResultKey(r) === key);
+    if (!target) return;
+
+    cleanupOverlays(target.overlays);
+    setState((prev) => ({
+      ...prev,
+      results: prev.results.filter((r) => getResultKey(r) !== key),
+    }));
+    setHiddenResultKeys((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    setLatestResult((prev) => (prev && getResultKey(prev) === key ? null : prev));
+  }, [state.results]);
+
+  const canFinishActiveTool = !!(
+    state.activeTool && handlersRef.current.get(state.activeTool)?.handleDoubleClick
+  );
+
+  const finishActiveTool = useCallback(() => {
+    if (!state.activeTool) return;
+    const handler = handlersRef.current.get(state.activeTool);
+    if (!handler?.handleDoubleClick) return;
+
+    const options = buildActivateOptions();
+    if (!options) return;
+
+    const map = config.getMap();
+    const fallbackPoint = map?.getCenter();
+    const lastPoint = state.clickPoints[state.clickPoints.length - 1] ?? fallbackPoint;
+    if (!lastPoint) return;
+
+    handler.handleDoubleClick(lastPoint, options);
+  }, [state.activeTool, state.clickPoints, buildActivateOptions, config]);
 
   const getToolCursor = useCallback((): string => {
     if (!state.activeTool) return '';
@@ -323,6 +403,14 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
 
   const isToolActive = state.activeTool !== null;
   const gridVisible = state.gridVisible;
+  const managedResults = state.results.map((result) => {
+    const key = getResultKey(result);
+    return {
+      key,
+      result,
+      visible: !hiddenResultKeys.has(key),
+    };
+  });
 
   return {
     state,
@@ -337,5 +425,10 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
     getToolCursor,
     isToolActive,
     gridVisible,
+    canFinishActiveTool,
+    finishActiveTool,
+    managedResults,
+    toggleResultVisibility,
+    removeResult,
   };
 }

@@ -454,6 +454,23 @@ body {
   opacity: 1;
 }
 
+/* Prevent iOS image-callout/context menu on Google Maps tiles during long press. */
+.ios-map-no-callout,
+.ios-map-no-callout * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Prevent iOS auto-zoom on focused text inputs. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* =============================================================================
    Mobile Bottom Sheet (Context Menu)
    ============================================================================= */

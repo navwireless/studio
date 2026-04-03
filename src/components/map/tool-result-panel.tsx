@@ -131,6 +131,11 @@ function ToolResultContent({ result }: { result: ToolResult }) {
                 <ResultRow label="Gain" value={(data.elevation as Record<string, string>).elevationGain} compact />
                 <ResultRow label="Slope" value={(data.elevation as Record<string, string>).slopePercent} compact />
               </div>
+              {Array.isArray((data.elevation as Record<string, unknown>).profile) && (
+                <ElevationSparkline
+                  profile={(data.elevation as Record<string, unknown>).profile as Array<{ elevation: number }>}
+                />
+              )}
             </div>
           )}
         </div>
@@ -208,25 +213,35 @@ function ToolResultContent({ result }: { result: ToolResult }) {
       );
 
     case 'range-rings': {
-      const rings = data.rings as Array<{ percent: string; radius: string }>;
       return (
         <div className="space-y-1.5">
-          <ResultRow label="Device" value={data.deviceName as string} large />
-          <ResultRow label="Max Range" value={data.maxRange as string} copyable onCopy={copyToClipboard} />
+          <ResultRow label="Radius" value={data.radius as string} large copyable onCopy={copyToClipboard} />
+          <ResultRow label="Diameter" value={data.diameter as string} copyable onCopy={copyToClipboard} />
           <ResultRow label="Center" value={data.center as string} copyable onCopy={copyToClipboard} />
-          {rings?.length > 0 && (
-            <div className="pt-1 border-t border-surface-border">
-              <div className="text-[0.6rem] text-text-brand-muted mb-1">Rings</div>
-              <div className="space-y-0.5">
-                {rings.map((r) => (
-                  <div key={r.percent} className="flex justify-between text-[0.6rem] text-text-brand-secondary">
-                    <span>{r.percent}</span>
-                    <span className="font-mono">{r.radius}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <ResultRow label="Edge" value={data.edge as string} copyable onCopy={copyToClipboard} />
+          <ResultRow label="Area" value={data.area as string} />
+        </div>
+      );
+    }
+
+    case 'weather-probe': {
+      if (data.error) {
+        return <ResultRow label="Error" value={String(data.error)} />;
+      }
+      const weather = (data.weather as Record<string, string>) ?? {};
+      const impact = (data.fsoImpact as { level?: string; note?: string }) ?? {};
+      return (
+        <div className="space-y-1.5">
+          <ResultRow label="Location" value={data.location as string} copyable onCopy={copyToClipboard} />
+          <ResultRow label="Condition" value={weather.condition ?? 'N/A'} large />
+          <ResultRow label="Temp" value={weather.temperature ?? 'N/A'} compact />
+          <ResultRow label="Humidity" value={weather.humidity ?? 'N/A'} compact />
+          <ResultRow label="Wind" value={weather.wind ?? 'N/A'} compact />
+          <ResultRow label="Cloud Cover" value={weather.cloudCover ?? 'N/A'} compact />
+          <div className="pt-1 border-t border-surface-border">
+            <ResultRow label="FSO Impact" value={(impact.level ?? 'unknown').toUpperCase()} compact />
+            <p className="text-[0.6rem] text-text-brand-muted mt-1 leading-relaxed">{impact.note ?? 'No impact assessment available.'}</p>
+          </div>
         </div>
       );
     }
@@ -249,6 +264,41 @@ function ToolResultContent({ result }: { result: ToolResult }) {
         </div>
       );
   }
+}
+
+function ElevationSparkline({ profile }: { profile: Array<{ elevation: number }> }) {
+  if (!profile.length) return null;
+
+  const values = profile.map((p) => p.elevation);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(1, max - min);
+
+  const points = values
+    .map((value, i) => {
+      const x = (i / Math.max(1, values.length - 1)) * 100;
+      const y = 100 - ((value - min) / range) * 100;
+      return `${x},${y}`;
+    })
+    .join(' ');
+
+  return (
+    <div className="mt-2 rounded-md border border-surface-border bg-surface-overlay/50 p-1.5">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-14">
+        <polyline
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="text-brand-400"
+          points={points}
+        />
+      </svg>
+      <div className="flex justify-between text-[0.55rem] text-text-brand-muted mt-1">
+        <span>{min.toFixed(1)} m</span>
+        <span>{max.toFixed(1)} m</span>
+      </div>
+    </div>
+  );
 }
 
 // Reusable result row

@@ -19,7 +19,7 @@ import {
   ChevronRight,
   Trash2,
   X,
-  Wrench,
+  Sparkles,
   Sun,
   Cloud,
   StickyNote,
@@ -53,6 +53,8 @@ interface MapToolbarProps {
   gridVisible: boolean;
   isMobile: boolean;
   statusMessage: string | null;
+  canFinishActiveTool?: boolean;
+  onFinishActiveTool?: () => void;
 }
 
 export function MapToolbar({
@@ -63,13 +65,16 @@ export function MapToolbar({
   gridVisible,
   isMobile,
   statusMessage,
+  canFinishActiveTool = false,
+  onFinishActiveTool,
 }: MapToolbarProps) {
   const [isCollapsed, setIsCollapsed] = useState(isMobile);
   const [tooltipToolId, setTooltipToolId] = useState<MapToolId | null>(null);
 
-  const visibleTools = isMobile
+  const visibleTools = (isMobile
     ? MAP_TOOLS.filter((t) => t.mobileSupported)
-    : MAP_TOOLS;
+    : MAP_TOOLS
+  ).filter((t) => t.id !== 'elevation-probe');
 
   const groupedTools = visibleTools.reduce(
     (acc, tool) => {
@@ -95,20 +100,26 @@ export function MapToolbar({
   // ── Collapsed: single compact button ──
   if (isCollapsed) {
     return (
-      <div className="absolute top-20 right-3 z-30" data-tour="map-toolbar">
+      <div
+        className="absolute top-3 z-30"
+        style={{ right: 'calc(0.75rem + var(--sai-right))' }}
+        data-tour="map-toolbar"
+      >
         <button
           onClick={() => setIsCollapsed(false)}
           className={cn(
-            'flex items-center justify-center rounded-xl shadow-lg',
-            'bg-surface-card/95 backdrop-blur-xl border border-surface-border',
-            'text-text-brand-secondary hover:text-text-brand-primary',
-            'hover:shadow-xl transition-all touch-manipulation active:scale-95',
-            isMobile ? 'w-9 h-9' : 'w-10 h-10',
+            'relative flex items-center justify-center rounded-xl border backdrop-blur-xl',
+            'bg-surface-card/95 border-surface-border text-text-brand-secondary hover:text-text-brand-primary',
+            'shadow-[0_12px_28px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_32px_rgba(0,0,0,0.45)] transition-all touch-manipulation active:scale-95',
+            'w-11 h-11',
             activeTool && 'ring-1 ring-brand-500/40'
           )}
           aria-label="Open map tools"
         >
-          <Wrench className={cn(isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4', activeTool && 'text-brand-400')} />
+          <Sparkles className={cn(isMobile ? 'h-4 w-4' : 'h-4.5 w-4.5', activeTool && 'text-brand-400')} />
+          {activeTool && (
+            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-brand-500 shadow-[0_0_0_2px_hsl(var(--surface-card))]" />
+          )}
         </button>
       </div>
     );
@@ -118,9 +129,10 @@ export function MapToolbar({
   return (
     <div
       className={cn(
-        'absolute top-20 right-3 z-30 flex flex-col gap-1.5',
+        'absolute top-3 z-30 flex flex-col gap-1.5',
         'animate-in fade-in slide-in-from-right-2 duration-200'
       )}
+      style={{ right: 'calc(0.75rem + var(--sai-right))' }}
       data-tour="map-toolbar"
     >
       {/* Single unified card */}
@@ -278,6 +290,14 @@ export function MapToolbar({
               <X className="h-3 w-3" />
             </button>
           </div>
+          {canFinishActiveTool && onFinishActiveTool && (
+            <button
+              onClick={onFinishActiveTool}
+              className="mt-1.5 w-full h-7 rounded-md border border-brand-500/35 bg-brand-500/12 text-[0.62rem] font-semibold text-brand-300 hover:bg-brand-500/20 transition-colors touch-manipulation"
+            >
+              Finish Line / Polygon
+            </button>
+          )}
           {isProcessing && (
             <div className="mt-1.5 h-0.5 rounded-full bg-surface-overlay overflow-hidden">
               <div className="h-full bg-brand-500 rounded-full animate-shimmer w-1/2" />

@@ -67,9 +67,9 @@ export const MAP_TOOLS: MapTool[] = [
   // ── Measure ──
   {
     id: 'multi-measure',
-    name: 'Multi-Measure',
-    shortName: 'Measure',
-    description: 'Distance + bearing + compass for each segment. Double-click to finish.',
+    name: 'Ruler + Profile',
+    shortName: 'Ruler',
+    description: 'Draw a line between two points for aerial distance and elevation profile.',
     icon: 'Ruler',
     shortcutKey: 'M',
     category: 'measure',
@@ -91,9 +91,9 @@ export const MAP_TOOLS: MapTool[] = [
   },
   {
     id: 'range-rings',
-    name: 'Range Rings',
-    shortName: 'Range',
-    description: 'Concentric range circles showing device coverage zones.',
+    name: 'Radius Circle',
+    shortName: 'Radius',
+    description: 'Draw center and edge points to create a radius circle.',
     icon: 'Target',
     shortcutKey: 'R',
     category: 'measure',
@@ -103,15 +103,15 @@ export const MAP_TOOLS: MapTool[] = [
   },
   {
     id: 'elevation-probe',
-    name: 'Elevation Probe',
-    shortName: 'Elevation',
-    description: 'Click points to compare ground elevation. Multi-point.',
+    name: 'Elevation Probe (Legacy)',
+    shortName: 'Elev Legacy',
+    description: 'Legacy point elevation tool. Use Ruler + Profile for line profiles.',
     icon: 'Mountain',
     shortcutKey: 'E',
     category: 'measure',
     requiresClicks: 1,
     persistent: true,
-    mobileSupported: true,
+    mobileSupported: false,
   },
   // ── Mark ──
   {

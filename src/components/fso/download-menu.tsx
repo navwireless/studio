@@ -184,7 +184,7 @@ export function DownloadMenu({
             sideOffset={4}
             align="center"
             className={cn(
-              'z-50 w-[var(--radix-dropdown-menu-trigger-width)]',
+              'z-[650] w-[var(--radix-dropdown-menu-trigger-width)]',
               'bg-surface-elevated border border-surface-border-light',
               'rounded-xl shadow-xl',
               'py-1',

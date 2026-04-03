@@ -40,12 +40,12 @@ export default function AppHeader({ compact = false, className }: AppHeaderProps
               className="flex items-center flex-shrink-0 rounded-lg p-1 hover:bg-surface-overlay/50 transition-colors"
               aria-label="FindLOS — Go to homepage"
             >
-              {/* Full logo on desktop, icon only on mobile */}
+              {/* Full logo on desktop and mobile to keep branding visible */}
               <span className="hidden md:block">
                 <FindLOSLogo variant="full" size="sm" />
               </span>
               <span className="block md:hidden">
-                <FindLOSLogo variant="icon" size="sm" />
+                <FindLOSLogo variant="full" size="sm" className="w-[108px]" />
               </span>
             </Link>
 

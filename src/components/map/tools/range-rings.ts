@@ -1,22 +1,16 @@
 // src/components/map/tools/range-rings.ts
-// Phase 12B — Replaces range-circle.ts
-// Single click → concentric rings at 25%, 50%, 75%, 100% of device max range.
+// Phase 12B/13 — Radius circle tool
+// Click center, then click edge to create a single radius circle.
 
-import type { ToolHandler, ToolActivateOptions } from '@/types/map-tools';
+import type { ToolHandler, ToolActivateOptions, ToolResult } from '@/types/map-tools';
 import {
   formatDistance,
   formatDD,
   ddToDMS,
   createVertexMarker,
+  haversineDistance,
   TOOL_COLORS,
 } from './tool-utils';
-
-// ─── Constants ──────────────────────────────────────────────────────
-
-const DEFAULT_RANGE_KM = 5;
-const RING_PERCENTAGES = [0.25, 0.50, 0.75, 1.0];
-const RING_OPACITIES = [0.15, 0.20, 0.25, 0.35];
-const RING_WEIGHTS = [1, 1, 1.5, 2];
 
 // ─── Label Factory (lazy) ───────────────────────────────────────────
 
@@ -27,7 +21,7 @@ interface LabelHandle {
 function createRingLabel(
   position: google.maps.LatLng,
   text: string,
-  percent: string,
+  title: string,
   mapInstance: google.maps.Map,
 ): LabelHandle {
   const overlay = new google.maps.OverlayView();
@@ -49,7 +43,7 @@ function createRingLabel(
     });
     div.innerHTML = `
       <div style="font-size:10px;font-weight:600;color:${TOOL_COLORS.range.stroke};line-height:1.2">
-        ${percent}
+        ${title}
       </div>
       <div style="font-size:9px;color:rgba(255,255,255,0.65);line-height:1.2">
         ${text}
@@ -80,9 +74,11 @@ function createRingLabel(
 // ─── Module State ───────────────────────────────────────────────────
 
 let _map: google.maps.Map | null = null;
-let _circles: google.maps.Circle[] = [];
+let _circle: google.maps.Circle | null = null;
 let _centerMarker: google.maps.Marker | null = null;
+let _edgeMarker: google.maps.Marker | null = null;
 let _labelOverlays: LabelHandle[] = [];
+let _centerPoint: google.maps.LatLng | null = null;
 
 // ─── Internal Helpers ───────────────────────────────────────────────
 
@@ -93,42 +89,52 @@ function offsetNorth(center: google.maps.LatLng, meters: number): google.maps.La
   return new google.maps.LatLng(newLat, center.lng());
 }
 
-function getDeviceRangeKm(): { rangeKm: number; deviceName: string } {
-  try {
-    const mapContainer = _map?.getDiv();
-    const rangeAttr = mapContainer?.getAttribute('data-device-range-km');
-    const nameAttr = mapContainer?.getAttribute('data-device-name');
-    if (rangeAttr) {
-      const parsed = parseFloat(rangeAttr);
-      if (!isNaN(parsed) && parsed > 0) {
-        return {
-          rangeKm: parsed,
-          deviceName: nameAttr || 'Selected Device',
-        };
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return { rangeKm: DEFAULT_RANGE_KM, deviceName: `Default (${DEFAULT_RANGE_KM} km)` };
-}
-
 function clearAll(): void {
-  _circles.forEach((c) => c.setMap(null));
-  _circles = [];
+  if (_circle) {
+    _circle.setMap(null);
+    _circle = null;
+  }
   _labelOverlays.forEach((l) => l.remove());
   _labelOverlays = [];
   if (_centerMarker) {
     _centerMarker.setMap(null);
     _centerMarker = null;
   }
+  if (_edgeMarker) {
+    _edgeMarker.setMap(null);
+    _edgeMarker = null;
+  }
+  _centerPoint = null;
 }
 
 function collectOverlays(): google.maps.MVCObject[] {
   return [
-    ..._circles,
+    ...(_circle ? [_circle] : []),
     ...(_centerMarker ? [_centerMarker] : []),
+    ...(_edgeMarker ? [_edgeMarker] : []),
   ];
+}
+
+function buildResult(center: google.maps.LatLng, edge: google.maps.LatLng): ToolResult {
+  const radiusMeters = haversineDistance(center, edge);
+  const centerDms = ddToDMS(center.lat(), center.lng());
+  const edgeDms = ddToDMS(edge.lat(), edge.lng());
+
+  return {
+    toolId: 'range-rings',
+    timestamp: Date.now(),
+    data: {
+      center: formatDD(center.lat(), center.lng()),
+      centerDMS: `${centerDms.lat}, ${centerDms.lng}`,
+      edge: formatDD(edge.lat(), edge.lng()),
+      edgeDMS: `${edgeDms.lat}, ${edgeDms.lng}`,
+      radius: formatDistance(radiusMeters),
+      radiusRaw: Math.round(radiusMeters * 100) / 100,
+      diameter: formatDistance(radiusMeters * 2),
+      area: `${(Math.PI * radiusMeters * radiusMeters).toFixed(1)} m²`,
+    },
+    overlays: collectOverlays(),
+  };
 }
 
 // ─── Tool Handler ───────────────────────────────────────────────────
@@ -137,8 +143,7 @@ export const rangeRings: ToolHandler = {
   activate(options: ToolActivateOptions): void {
     clearAll();
     _map = options.map;
-    const { rangeKm, deviceName } = getDeviceRangeKm();
-    options.onStatusChange(`Click to place range rings (${deviceName}: ${rangeKm} km).`);
+    options.onStatusChange('Click circle center, then click edge to set radius.');
   },
 
   deactivate(): void {
@@ -149,73 +154,41 @@ export const rangeRings: ToolHandler = {
   handleClick(latLng: google.maps.LatLng, options: ToolActivateOptions): void {
     if (!_map) return;
 
-    clearAll();
+    // First click: center point.
+    if (!_centerPoint) {
+      clearAll();
+      _centerPoint = latLng;
+      _centerMarker = createVertexMarker(latLng, _map, TOOL_COLORS.range.stroke, 'C');
+      options.onStatusChange('Center set. Click edge point to complete radius circle.');
+      return;
+    }
 
-    const { rangeKm, deviceName } = getDeviceRangeKm();
-    const maxRangeMeters = rangeKm * 1000;
+    // Second click: edge point and final circle.
+    _edgeMarker = createVertexMarker(latLng, _map, TOOL_COLORS.range.stroke, 'R');
+    const radiusMeters = haversineDistance(_centerPoint, latLng);
 
-    _centerMarker = createVertexMarker(
-      latLng,
-      _map,
-      TOOL_COLORS.range.stroke,
-      '⊕',
-    );
-
-    const ringData: { percent: number; radius: number }[] = [];
-
-    RING_PERCENTAGES.forEach((pct, i) => {
-      const radius = maxRangeMeters * pct;
-
-      const circle = new google.maps.Circle({
-        map: _map!,
-        center: latLng,
-        radius,
-        strokeColor: TOOL_COLORS.range.stroke,
-        strokeOpacity: RING_OPACITIES[i],
-        strokeWeight: RING_WEIGHTS[i],
-        fillColor: TOOL_COLORS.range.fill,
-        fillOpacity: i === 0 ? 0.04 : 0,
-        clickable: false,
-      });
-
-      _circles.push(circle);
-      ringData.push({ percent: pct, radius });
-
-      const labelPos = offsetNorth(latLng, radius);
-      const pctLabel = `${Math.round(pct * 100)}%`;
-      const distLabel = formatDistance(radius);
-      _labelOverlays.push(createRingLabel(labelPos, distLabel, pctLabel, _map!));
+    _circle = new google.maps.Circle({
+      map: _map,
+      center: _centerPoint,
+      radius: radiusMeters,
+      strokeColor: TOOL_COLORS.range.stroke,
+      strokeOpacity: 0.95,
+      strokeWeight: 2,
+      fillColor: TOOL_COLORS.range.fill,
+      fillOpacity: 0.16,
+      clickable: false,
     });
 
-    const bounds = _circles[_circles.length - 1]?.getBounds();
+    const labelPos = offsetNorth(_centerPoint, radiusMeters);
+    _labelOverlays.push(createRingLabel(labelPos, formatDistance(radiusMeters), 'Radius', _map));
+
+    const bounds = _circle.getBounds();
     if (bounds) {
       _map.fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 60 });
     }
 
-    const dms = ddToDMS(latLng.lat(), latLng.lng());
-    options.onStatusChange(
-      `${deviceName} — ${rangeKm} km range at ${formatDD(latLng.lat(), latLng.lng())}`,
-    );
-
-    options.onResult({
-      toolId: 'range-rings',
-      timestamp: Date.now(),
-      data: {
-        center: formatDD(latLng.lat(), latLng.lng()),
-        centerLat: latLng.lat(),
-        centerLng: latLng.lng(),
-        centerDMS: `${dms.lat}, ${dms.lng}`,
-        deviceName,
-        maxRange: formatDistance(maxRangeMeters),
-        maxRangeKm: rangeKm,
-        rings: ringData.map((r) => ({
-          percent: `${Math.round(r.percent * 100)}%`,
-          radius: formatDistance(r.radius),
-          radiusRaw: Math.round(r.radius),
-        })),
-      },
-      overlays: collectOverlays(),
-    });
+    options.onStatusChange(`Radius circle created: ${formatDistance(radiusMeters)}`);
+    options.onResult(buildResult(_centerPoint, latLng));
   },
 
   getCursor(): string {

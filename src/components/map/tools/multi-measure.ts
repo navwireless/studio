@@ -85,6 +85,7 @@ let _points: google.maps.LatLng[] = [];
 let _markers: google.maps.Marker[] = [];
 let _polyline: google.maps.Polyline | null = null;
 let _labels: LabelHandle[] = [];
+let _isFinishing = false;
 
 // ─── Internal Helpers ───────────────────────────────────────────────
 
@@ -139,6 +140,7 @@ function clearAll(): void {
     _polyline = null;
   }
   _points = [];
+  _isFinishing = false;
 }
 
 function collectOverlays(): google.maps.MVCObject[] {
@@ -225,6 +227,23 @@ function buildResult(
   };
 }
 
+async function finalizeMeasure(options: ToolActivateOptions): Promise<void> {
+  if (!_map || _points.length < 2 || _isFinishing) return;
+
+  _isFinishing = true;
+  options.onStatusChange('Fetching elevation profile...');
+  options.onProcessingChange(true);
+
+  const profile = await fetchElevationProfile();
+
+  options.onProcessingChange(false);
+  options.onStatusChange(
+    `Done — ${formatDistance(polylineDistance(_points))}`,
+  );
+  options.onResult(buildResult(true, profile));
+  _isFinishing = false;
+}
+
 // ─── Tool Handler ───────────────────────────────────────────────────
 
 export const multiMeasure: ToolHandler = {
@@ -243,7 +262,7 @@ export const multiMeasure: ToolHandler = {
       clickable: false,
     });
 
-    options.onStatusChange('Click to start measuring. Double-click to finish.');
+    options.onStatusChange('Click point A, then point B to draw ruler line.');
   },
 
   deactivate(): void {
@@ -253,6 +272,21 @@ export const multiMeasure: ToolHandler = {
 
   handleClick(latLng: google.maps.LatLng, options: ToolActivateOptions): void {
     if (!_map) return;
+
+    // Ruler flow: keep only 2 endpoints active per measurement.
+    if (_points.length >= 2) {
+      clearAll();
+      _map = options.map;
+      _polyline = new google.maps.Polyline({
+        map: _map,
+        path: [],
+        strokeColor: TOOL_COLORS.distance.stroke,
+        strokeOpacity: 1,
+        strokeWeight: 3,
+        geodesic: true,
+        clickable: false,
+      });
+    }
 
     const idx = _points.length;
     _points.push(latLng);
@@ -275,15 +309,16 @@ export const multiMeasure: ToolHandler = {
 
     const total = polylineDistance(_points);
     if (_points.length === 1) {
-      options.onStatusChange('Click next point. Double-click to finish.');
+      options.onStatusChange('Point A set. Click point B to finish ruler line.');
     } else {
       options.onStatusChange(
-        `${_points.length} pts · ${formatDistance(total)}. Double-click to finish.`,
+        `${formatDistance(total)}. Building elevation profile...`,
       );
     }
 
     if (_points.length >= 2) {
       options.onResult(buildResult(false));
+      void finalizeMeasure(options);
     }
   },
 
@@ -291,19 +326,7 @@ export const multiMeasure: ToolHandler = {
     _latLng: google.maps.LatLng,
     options: ToolActivateOptions,
   ): Promise<void> {
-    if (!_map || _points.length < 2) return;
-
-    options.onStatusChange('Fetching elevation profile…');
-    options.onProcessingChange(true);
-
-    const profile = await fetchElevationProfile();
-
-    options.onProcessingChange(false);
-    options.onStatusChange(
-      `Done — ${_points.length} pts · ${formatDistance(polylineDistance(_points))}`,
-    );
-
-    options.onResult(buildResult(true, profile));
+    await finalizeMeasure(options);
   },
 
   getCursor(): string {

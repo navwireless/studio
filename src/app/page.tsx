@@ -48,6 +48,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useMapTools } from '@/hooks/use-map-tools';
 import { MapToolbar } from '@/components/map/map-toolbar';
 import { ToolResultPanel } from '@/components/map/tool-result-panel';
+import { DrawingsManager } from '@/components/map/drawings-manager';
 import { getDeviceById } from '@/config/devices';
 
 // Phase 12C: Solar Analyzer
@@ -382,7 +383,14 @@ export default function Home() {
     setValue('clearanceThreshold', String(Math.round(value * 100) / 100), { shouldValidate: true, shouldDirty: true });
   }, [setValue]);
 
-  const toggleProfileExpansion = useCallback(() => setIsProfileExpanded(prev => !prev), []);
+  const isAnyExportModalOpen = pdfDownload.isExportModalOpen || pdfDownload.isCombinedExportModalOpen;
+
+  const handleToggleProfileExpansion = useCallback(() => {
+    if (isMobile) {
+      setSheetSnapPoint('collapsed');
+    }
+    setIsProfileExpanded(prev => !prev);
+  }, [isMobile]);
 
   // ── Search navigation ──
   const handleSearchNavigate = useCallback((lat: number, lng: number, name: string) => {
@@ -504,6 +512,8 @@ export default function Home() {
       toast({ title: "No Results", description: "Run analysis first to generate a PDF.", variant: "destructive" });
       return;
     }
+    setIsSidePanelOpen(false);
+    setSheetSnapPoint('collapsed');
     setDownloadingType('pdf');
     pdfDownload.openExportModal();
     onboarding.markFeatureUsed('exportConfig');
@@ -533,6 +543,8 @@ export default function Home() {
       toast({ title: "No Links", description: "No links to export.", variant: "destructive" });
       return;
     }
+    setIsSidePanelOpen(false);
+    setSheetSnapPoint('collapsed');
     setCombinedExportLinks(links);
     setDownloadingType('combined-pdf');
     pdfDownload.openCombinedExportModal();
@@ -835,7 +847,13 @@ export default function Home() {
         <div className="flex-1 flex flex-col min-w-0 relative">
 
           {/* Floating Search Bar — dark themed, over the map */}
-          <div className="absolute top-3 left-3 right-14 z-20 pointer-events-none">
+          <div
+            className="absolute top-3 z-20 pointer-events-none"
+            style={{
+              left: 'calc(0.75rem + var(--sai-left))',
+              right: 'calc(3.75rem + var(--sai-right))',
+            }}
+          >
             <div className="pointer-events-auto">
               <MapSearchBar
                 onPlaceSelected={handleSearchNavigate}
@@ -927,6 +945,16 @@ export default function Home() {
                 gridVisible={mapTools.gridVisible}
                 isMobile={!!isMobile}
                 statusMessage={mapTools.statusMessage}
+                canFinishActiveTool={mapTools.canFinishActiveTool}
+                onFinishActiveTool={mapTools.finishActiveTool}
+              />
+            )}
+
+            {isClient && (
+              <DrawingsManager
+                results={mapTools.managedResults}
+                onToggleVisibility={mapTools.toggleResultVisibility}
+                onRemove={mapTools.removeResult}
               />
             )}
 
@@ -952,7 +980,7 @@ export default function Home() {
           </div>
 
           {/* Bottom Profile Strip */}
-          {isClient && (
+          {isClient && (!isMobile || isProfileExpanded) && (
             <ErrorBoundary
               fallbackRender={({ error, resetErrorBoundary }) => (
                 <div className="bg-red-950/95 border-t border-red-500/30 p-4 flex items-center justify-between pb-safe">
@@ -968,7 +996,7 @@ export default function Home() {
                 analysisResult={analysis.analysisResult}
                 isPanelGloballyVisible={!!analysis.analysisResult || analysis.isActionPending}
                 isContentExpanded={isProfileExpanded}
-                onToggleContentExpansion={toggleProfileExpansion}
+                onToggleContentExpansion={handleToggleProfileExpansion}
                 isStale={analysis.isStale}
                 control={control} register={register}
                 handleSubmit={handleSubmit} processSubmit={processSubmit}
@@ -989,7 +1017,7 @@ export default function Home() {
       </div>
 
       {/* Mobile Bottom Sheet */}
-      {isMobile && isClient && (
+      {isMobile && isClient && !isProfileExpanded && !isAnyExportModalOpen && (
         <MobileBottomSheet
           collapsedSummary={collapsedSummary}
           snapPoint={sheetSnapPoint}
@@ -1072,6 +1100,18 @@ export default function Home() {
                   isFiberCalculating={fiber.isFiberCalculating}
                   fiberPathError={fiber.fiberPathError}
                 />
+
+                <Button
+                  onClick={() => {
+                    setSheetSnapPoint('collapsed');
+                    setIsProfileExpanded(true);
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="w-full h-9 text-xs border-surface-border-light text-text-brand-secondary hover:text-text-brand-primary touch-manipulation"
+                >
+                  Reopen Elevation Profile
+                </Button>
 
                 <DownloadMenu
                   analysisResult={analysis.analysisResult}

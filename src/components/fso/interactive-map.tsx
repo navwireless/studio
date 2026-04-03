@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
-import { Layers } from 'lucide-react';
+import { Layers, PersonStanding } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult, PlacementMode, MapNavigationTarget, MapContextMenuState, SavedLink } from '@/types';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import type { MapToolId } from '@/types/map-tools'; // Phase 11
@@ -101,8 +101,15 @@ function InteractiveMapInner({
   const mapRef = useRef<google.maps.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const projectionOverlayRef = useRef<google.maps.OverlayView | null>(null);
-  const [mapTypeId, setMapTypeId] = useState<"roadmap" | "hybrid">("hybrid");
+  const [mapTypeId, setMapTypeId] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('hybrid');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [isStreetViewModeEnabled, setIsStreetViewModeEnabled] = useState(false);
+  const [layerVisibility, setLayerVisibility] = useState({
+    labels: true,
+    roads: true,
+    borders: true,
+    places: true,
+  });
   const { isLoaded: isMapApiLoaded } = useGoogleMapsLoader();
 
   const losPolylineRef = useRef<google.maps.Polyline | null>(null);
@@ -110,6 +117,7 @@ function InteractiveMapInner({
   const savedLinkPolylinesRef = useRef<{ polyline: google.maps.Polyline; linkId: string }[]>([]);
   const savedLinkListenersRef = useRef<google.maps.MapsEventListener[]>([]);
   const deviceRangeCircleRef = useRef<google.maps.Circle | null>(null);
+  const streetViewCoverageLayerRef = useRef<google.maps.StreetViewCoverageLayer | null>(null);
   const flashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
   const lastNavTimestampRef = useRef<number>(0);
@@ -171,6 +179,56 @@ function InteractiveMapInner({
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, [showLayerMenu]);
+
+  useEffect(() => {
+    if (!isMapApiLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    if (isStreetViewModeEnabled) {
+      if (!streetViewCoverageLayerRef.current) {
+        streetViewCoverageLayerRef.current = new google.maps.StreetViewCoverageLayer();
+      }
+      streetViewCoverageLayerRef.current.setMap(map);
+      map.setOptions({
+        streetViewControl: true,
+      });
+      return;
+    }
+
+    if (streetViewCoverageLayerRef.current) {
+      streetViewCoverageLayerRef.current.setMap(null);
+    }
+
+    const panorama = map.getStreetView();
+    if (panorama.getVisible()) {
+      panorama.setVisible(false);
+    }
+
+    map.setOptions({
+      streetViewControl: false,
+    });
+  }, [isMapApiLoaded, isStreetViewModeEnabled]);
+
+  useEffect(() => {
+    if (!isMapApiLoaded || !mapRef.current) return;
+
+    const styles: google.maps.MapTypeStyle[] = [];
+
+    if (!layerVisibility.labels) {
+      styles.push({ elementType: 'labels', stylers: [{ visibility: 'off' }] });
+    }
+    if (!layerVisibility.roads) {
+      styles.push({ featureType: 'road', elementType: 'all', stylers: [{ visibility: 'off' }] });
+    }
+    if (!layerVisibility.borders) {
+      styles.push({ featureType: 'administrative', elementType: 'all', stylers: [{ visibility: 'off' }] });
+    }
+    if (!layerVisibility.places) {
+      styles.push({ featureType: 'poi', elementType: 'all', stylers: [{ visibility: 'off' }] });
+    }
+
+    mapRef.current.setOptions({ styles: styles.length > 0 ? styles : null });
+  }, [isMapApiLoaded, layerVisibility]);
 
   useEffect(() => {
     if (analysisResult) {
@@ -305,10 +363,10 @@ function InteractiveMapInner({
       e.preventDefault();
     };
 
-    el.addEventListener('touchstart', onTouchStart, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: true });
-    el.addEventListener('touchend', onTouchEnd, { passive: true });
-    el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: false });
+    el.addEventListener('touchcancel', onTouchEnd, { passive: false });
     el.addEventListener('contextmenu', onNativeContextMenu);
 
     return () => {
@@ -331,6 +389,9 @@ function InteractiveMapInner({
         mapTypeControl: false,
         zoomControl: false,
         streetViewControl: false,
+        streetViewControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_CENTER,
+        },
         fullscreenControl: false,
         rotateControl: false,
         scaleControl: false,
@@ -352,6 +413,10 @@ function InteractiveMapInner({
     if (deviceRangeCircleRef.current) {
       deviceRangeCircleRef.current.setMap(null);
       deviceRangeCircleRef.current = null;
+    }
+    if (streetViewCoverageLayerRef.current) {
+      streetViewCoverageLayerRef.current.setMap(null);
+      streetViewCoverageLayerRef.current = null;
     }
     // Phase 11: Notify parent that map is gone
     onMapReady?.(null);
@@ -631,12 +696,22 @@ function InteractiveMapInner({
     };
   }, [savedLinks, isMapApiLoaded]);
 
-  const handleMapTypeChange = useCallback((type: "roadmap" | "hybrid") => {
+  const handleMapTypeChange = useCallback((type: 'roadmap' | 'satellite' | 'hybrid' | 'terrain') => {
     if (!mapRef.current) return;
     setMapTypeId(type);
     mapRef.current.setMapTypeId(type);
     setShowLayerMenu(false);
   }, []);
+
+  const handleLayerToggle = useCallback((key: 'labels' | 'roads' | 'borders' | 'places') => {
+    setLayerVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
+
+  const handleStreetViewToggle = useCallback(() => {
+    if (!mapRef.current || !isMapApiLoaded) return;
+    setIsStreetViewModeEnabled((prev) => !prev);
+    setShowLayerMenu(false);
+  }, [isMapApiLoaded]);
 
   // Phase 11: Apply tool cursor style
   const cursorStyle = activeMapTool && toolCursor ? toolCursor : undefined;
@@ -644,7 +719,7 @@ function InteractiveMapInner({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full touch-manipulation"
+      className="relative w-full h-full touch-manipulation ios-map-no-callout"
       style={cursorStyle ? { cursor: cursorStyle } : undefined}
       onMouseEnter={handleMouseOver}
       onMouseLeave={handleMouseOut}
@@ -658,7 +733,22 @@ function InteractiveMapInner({
         onRightClick={handleRightClick}
         onMouseMove={handleMouseMove}
         options={{
+          disableDefaultUI: true,
+          gestureHandling: 'greedy',
+          clickableIcons: false,
+          mapTypeControl: false,
+          zoomControl: false,
+          streetViewControl: isStreetViewModeEnabled,
+          streetViewControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_CENTER,
+          },
+          fullscreenControl: false,
+          rotateControl: false,
+          scaleControl: false,
+          keyboardShortcuts: false,
+          cameraControl: false,
           disableDoubleClickZoom: !!activeMapTool, // Phase 11: disable zoom on dblclick when tool active
+          mapTypeId,
         }}
       >
         {formPointA && pALat !== undefined && pALng !== undefined && markerIconA && (
@@ -741,13 +831,42 @@ function InteractiveMapInner({
         <div className="absolute inset-0 pointer-events-none z-10 rounded-sm border-2 border-brand-500/30 transition-colors duration-300" />
       )}
 
+      {/* ── Street View button ── */}
+      <div
+        className="absolute top-[4.25rem] z-30"
+        style={{ right: 'calc(0.75rem + var(--sai-right))' }}
+      >
+        <button
+          onClick={handleStreetViewToggle}
+          className={cn(
+            "w-11 h-11 rounded-xl border backdrop-blur-xl flex items-center justify-center transition-all touch-manipulation active:scale-95",
+            isStreetViewModeEnabled
+              ? "bg-brand-500/20 border-brand-500/50 text-brand-300 shadow-[0_12px_28px_rgba(0,0,0,0.45)]"
+              : "bg-surface-card/95 border-surface-border text-text-brand-secondary shadow-[0_12px_28px_rgba(0,0,0,0.35)] hover:text-text-brand-primary"
+          )}
+          aria-label="Toggle Street View mode"
+          title="Street View mode"
+        >
+          <PersonStanding className="h-5 w-5" />
+        </button>
+      </div>
+
       {/* ── Layers button (bottom-right, single button) ── */}
-      <div className="absolute bottom-20 right-3 z-10">
+      <div
+        className="absolute top-[7.5rem] z-30"
+        style={{ right: 'calc(0.75rem + var(--sai-right))' }}
+      >
         <div className="relative">
           <button
             onClick={(e) => { e.stopPropagation(); setShowLayerMenu(prev => !prev); }}
-            className="w-11 h-11 rounded-full bg-white shadow-md shadow-black/20 flex items-center justify-center text-gray-700 hover:shadow-lg transition-all touch-manipulation active:scale-95"
+            className={cn(
+              "w-11 h-11 rounded-xl border backdrop-blur-xl flex items-center justify-center transition-all touch-manipulation active:scale-95",
+              showLayerMenu
+                ? "bg-brand-500/20 border-brand-500/50 text-brand-300 shadow-[0_12px_28px_rgba(0,0,0,0.45)]"
+                : "bg-surface-card/95 border-surface-border text-text-brand-secondary shadow-[0_12px_28px_rgba(0,0,0,0.35)] hover:text-text-brand-primary"
+            )}
             aria-label="Map layers"
+            title="Map layers"
           >
             <Layers className="h-5 w-5" />
           </button>
@@ -755,50 +874,123 @@ function InteractiveMapInner({
           {/* Layer menu popup */}
           {showLayerMenu && (
             <div
-              className="absolute bottom-14 right-0 bg-white rounded-2xl shadow-xl shadow-black/20 border border-gray-100 p-2 min-w-[140px] animate-in fade-in slide-in-from-bottom-2 duration-150"
+              className="absolute bottom-14 right-0 rounded-2xl border border-surface-border bg-surface-card/95 backdrop-blur-xl p-2 min-w-[156px] shadow-[0_18px_40px_rgba(0,0,0,0.45)] animate-in fade-in slide-in-from-bottom-2 duration-150"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="text-[0.6rem] font-semibold text-gray-400 uppercase tracking-wider px-3 pt-1 pb-2">
+              <p className="text-[0.6rem] font-semibold text-text-brand-muted uppercase tracking-wider px-3 pt-1 pb-2">
                 Map Type
               </p>
               <button
-                onClick={() => handleMapTypeChange('hybrid')}
+                onClick={() => handleMapTypeChange('satellite')}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all touch-manipulation",
-                  mapTypeId === 'hybrid'
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:bg-gray-50"
+                  mapTypeId === 'satellite'
+                    ? "bg-brand-500/20 text-brand-300"
+                    : "text-text-brand-secondary hover:bg-white/[0.04]"
                 )}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold",
-                  mapTypeId === 'hybrid'
-                    ? "border-blue-500 bg-blue-100 text-blue-600"
-                    : "border-gray-200 bg-gray-100 text-gray-400"
+                  mapTypeId === 'satellite'
+                    ? "border-brand-500/60 bg-brand-500/20 text-brand-300"
+                    : "border-surface-border bg-surface-overlay text-text-brand-muted"
                 )}>
                   🛰
                 </div>
                 Satellite
               </button>
               <button
+                onClick={() => handleMapTypeChange('hybrid')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all touch-manipulation",
+                  mapTypeId === 'hybrid'
+                    ? "bg-brand-500/20 text-brand-300"
+                    : "text-text-brand-secondary hover:bg-white/[0.04]"
+                )}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold",
+                  mapTypeId === 'hybrid'
+                    ? "border-brand-500/60 bg-brand-500/20 text-brand-300"
+                    : "border-surface-border bg-surface-overlay text-text-brand-muted"
+                )}>
+                  🌐
+                </div>
+                Hybrid
+              </button>
+              <button
                 onClick={() => handleMapTypeChange('roadmap')}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all touch-manipulation",
                   mapTypeId === 'roadmap'
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-brand-500/20 text-brand-300"
+                    : "text-text-brand-secondary hover:bg-white/[0.04]"
                 )}
               >
                 <div className={cn(
                   "w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold",
                   mapTypeId === 'roadmap'
-                    ? "border-blue-500 bg-blue-100 text-blue-600"
-                    : "border-gray-200 bg-gray-100 text-gray-400"
+                    ? "border-brand-500/60 bg-brand-500/20 text-brand-300"
+                    : "border-surface-border bg-surface-overlay text-text-brand-muted"
                 )}>
                   🗺
                 </div>
                 Road Map
               </button>
+              <button
+                onClick={() => handleMapTypeChange('terrain')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all touch-manipulation",
+                  mapTypeId === 'terrain'
+                    ? "bg-brand-500/20 text-brand-300"
+                    : "text-text-brand-secondary hover:bg-white/[0.04]"
+                )}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-lg border-2 flex items-center justify-center text-xs font-bold",
+                  mapTypeId === 'terrain'
+                    ? "border-brand-500/60 bg-brand-500/20 text-brand-300"
+                    : "border-surface-border bg-surface-overlay text-text-brand-muted"
+                )}>
+                  ⛰
+                </div>
+                Terrain
+              </button>
+
+              <div className="my-2 h-px bg-surface-border" />
+              <p className="text-[0.6rem] font-semibold text-text-brand-muted uppercase tracking-wider px-3 pb-1">
+                Layers
+              </p>
+
+              {([
+                ['labels', 'Labels'],
+                ['roads', 'Roads'],
+                ['borders', 'Borders'],
+                ['places', 'Places'],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => handleLayerToggle(key)}
+                  className={cn(
+                    'w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all touch-manipulation',
+                    layerVisibility[key]
+                      ? 'text-text-brand-primary bg-white/[0.03]'
+                      : 'text-text-brand-muted hover:bg-white/[0.04]'
+                  )}
+                >
+                  <span>{label}</span>
+                  <span
+                    className={cn(
+                      'inline-flex h-4 w-7 items-center rounded-full border transition-colors',
+                      layerVisibility[key]
+                        ? 'border-brand-500/60 bg-brand-500/30 justify-end'
+                        : 'border-surface-border bg-surface-overlay justify-start'
+                    )}
+                  >
+                    <span className="h-3 w-3 rounded-full bg-white mx-0.5" />
+                  </span>
+                </button>
+              ))}
             </div>
           )}
         </div>

@@ -69,24 +69,28 @@ async function fetchWeather(lat: number, lng: number): Promise<WeatherData | nul
   }
 
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover,weather_code,is_day&forecast_days=1`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
     if (!res.ok) return null;
 
     const json = await res.json();
-    const c = json.current;
+    const c = json.current ?? json.current_weather;
+    if (!c) return null;
 
     const data: WeatherData = {
-      temperature: c.temperature_2m,
-      humidity: c.relative_humidity_2m,
-      windSpeed: c.wind_speed_10m,
-      windDirection: c.wind_direction_10m,
+      temperature: c.temperature_2m ?? c.temperature ?? 0,
+      humidity: c.relative_humidity_2m ?? 0,
+      windSpeed: c.wind_speed_10m ?? c.windspeed ?? 0,
+      windDirection: c.wind_direction_10m ?? c.winddirection ?? 0,
       visibility: 10000, // Open-Meteo free tier doesn't include visibility
-      pressure: c.surface_pressure,
-      cloudCover: c.cloud_cover,
-      weatherCode: c.weather_code,
-      weatherDesc: getWeatherDescription(c.weather_code),
-      isDay: c.is_day === 1,
+      pressure: c.surface_pressure ?? 1013,
+      cloudCover: c.cloud_cover ?? 0,
+      weatherCode: c.weather_code ?? 0,
+      weatherDesc: getWeatherDescription(c.weather_code ?? 0),
+      isDay: (c.is_day ?? 1) === 1,
     };
 
     _cache.set(key, { data, timestamp: Date.now() });
