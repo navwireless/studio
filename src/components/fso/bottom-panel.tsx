@@ -173,7 +173,16 @@ const BottomPanel = React.memo(function BottomPanel({
     };
   }, [isContentExpanded, onToggleContentExpansion, getExpandedHeight]);
 
-  if (!isPanelGloballyVisible) return null;
+  if (!isPanelGloballyVisible) {
+    return (
+      <div className="border-t border-slate-700/40 bg-slate-900/95 backdrop-blur-lg pb-safe">
+        <div className="flex items-center justify-center px-4 py-2 text-xs text-text-brand-muted gap-2">
+          <ChevronUp className="h-3 w-3" />
+          <span>Run analysis to view elevation profile</span>
+        </div>
+      </div>
+    );
+  }
 
   const expandedH = typeof window !== 'undefined'
     ? (window.innerWidth < 768 ? EXPANDED_HEIGHT_MOBILE : EXPANDED_HEIGHT_DESKTOP)

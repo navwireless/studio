@@ -16,9 +16,9 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <div className="flex h-screen overflow-hidden bg-surface-base">
             <AdminSidebar />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-auto custom-scrollbar">{children}</main>
         </div>
     );
 }

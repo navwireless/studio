@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, AlertTriangle, WifiOff } from 'lucide-react';
@@ -14,8 +14,16 @@ import InteractiveMap from '@/components/fso/interactive-map';
 import BottomPanel from '@/components/fso/bottom-panel';
 import SidePanel from '@/components/fso/side-panel';
 import MapContextMenu from '@/components/fso/map-context-menu';
-import MapHeader from '@/components/layout/map-header';
+import { MapHintOverlay } from '@/components/map/map-hint-overlay';
+import MapSearchBar from '@/components/fso/map-search-bar';
+import AppHeader from '@/components/layout/app-header';
+import { SiteInputCard } from '@/components/fso/site-input-card';
+import { ConfigSection } from '@/components/fso/config-section';
+import { AnalysisButton } from '@/components/fso/analysis-button';
+import { ResultsCard } from '@/components/fso/results-card';
+import { DownloadMenu } from '@/components/fso/download-menu';
 import KeyboardHint from '@/components/fso/keyboard-hint';
+import { MobileBottomSheet, type SheetSnapPoint } from '@/components/fso/mobile-bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { MapErrorBoundary } from '@/components/map-error-boundary';
@@ -32,6 +40,29 @@ import { useOnlineStatus } from '@/hooks/use-online-status';
 import { useSavedLinks } from '@/hooks/use-saved-links';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useCredits } from '@/hooks/use-credits';
+import { useFlowState } from '@/hooks/use-flow-state';
+import { useWhatsAppShare } from '@/components/fso/whatsapp-share';
+import { useIsMobile } from '@/hooks/use-mobile';
+
+// Phase 11: Map tools
+import { useMapTools } from '@/hooks/use-map-tools';
+import { MapToolbar } from '@/components/map/map-toolbar';
+import { ToolResultPanel } from '@/components/map/tool-result-panel';
+import { getDeviceById } from '@/config/devices';
+
+// Phase 12C: Solar Analyzer
+import { SolarPanel } from '@/components/map/solar-panel';
+import { setSolarAnalysisData } from '@/components/map/tools/solar-analyzer';
+import { setAlignmentAnalysisData } from '@/components/map/tools/alignment-guide';
+import type { SolarAnalysisResult } from '@/lib/solar-position';
+
+// Onboarding
+import { useSession } from 'next-auth/react';
+import { useOnboarding } from '@/hooks/use-onboarding';
+import { useHints } from '@/hooks/use-hints';
+import { useHelpPanel } from '@/hooks/use-help-panel';
+import { GuidedTour } from '@/components/onboarding/guided-tour';
+import { HintBadge } from '@/components/ui/hint-badge';
 
 import CreditWarning from '@/components/credit-warning';
 import ProUpsellModal from '@/components/pro-upsell-modal';
@@ -44,20 +75,40 @@ export default function Home() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const isOnline = useOnlineStatus();
+  const isMobile = useIsMobile();
 
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [mapNavigationTarget, setMapNavigationTarget] = useState<MapNavigationTarget | null>(null);
   const [contextMenu, setContextMenu] = useState<MapContextMenuState>({ isOpen: false, x: 0, y: 0, lat: 0, lng: 0 });
 
+  // Mobile bottom sheet state
+  const [sheetSnapPoint, setSheetSnapPoint] = useState<SheetSnapPoint>('collapsed');
+
   // State to hold links pending combined PDF export (for modal)
   const [combinedExportLinks, setCombinedExportLinks] = useState<SavedLink[]>([]);
+
+  // Download tracking state (for download menu)
+  const [downloadingType, setDownloadingType] = useState<string | null>(null);
 
   // Credit management
   const { refreshCredits } = useCredits();
   const [creditWarningTrigger, setCreditWarningTrigger] = useState(false);
   const [latestCredits, setLatestCredits] = useState<number>(999);
   const [showZeroCreditModal, setShowZeroCreditModal] = useState(false);
+
+  // ── Onboarding ──
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  const onboarding = useOnboarding(userId);
+  const helpPanel = useHelpPanel();
+
+  // ── Phase 11: Map instance ref for tools ──
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+
+  const handleMapReady = useCallback((map: google.maps.Map | null) => {
+    mapInstanceRef.current = map;
+  }, []);
 
   useEffect(() => { setIsClient(true); }, []);
 
@@ -66,6 +117,19 @@ export default function Home() {
       setIsSidePanelOpen(false);
     }
   }, []);
+
+  // Auto-start tour for first-time users (1.5s delay)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (onboarding.isLoading || !isClient) return;
+    if (!onboarding.shouldShowTour) return;
+
+    const timer = setTimeout(() => {
+      onboarding.startTour();
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [onboarding.isLoading, onboarding.shouldShowTour, isClient, onboarding.startTour]);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(AnalysisFormSchema),
@@ -84,7 +148,7 @@ export default function Home() {
     serverAction: performLosAnalysis,
     form,
     isAnalysisPanelGloballyOpen: true,
-    setIsAnalysisPanelGloballyOpen: () => { },
+    setIsAnalysisPanelGloballyOpen: () => {},
     setIsBottomPanelContentExpanded: setIsProfileExpanded,
     toast
   });
@@ -96,12 +160,77 @@ export default function Home() {
     rawServerState: analysis.rawServerState
   });
 
+  const whatsApp = useWhatsAppShare({ toast });
+
+  // ── Watched form values ──
+  const watchedPointALat = watch('pointA.lat');
+  const watchedPointALng = watch('pointA.lng');
+  const watchedPointAName = watch('pointA.name');
+  const watchedPointAHeight = watch('pointA.height');
+  const watchedPointBLat = watch('pointB.lat');
+  const watchedPointBLng = watch('pointB.lng');
+  const watchedPointBName = watch('pointB.name');
+  const watchedPointBHeight = watch('pointB.height');
+  const watchedClearance = watch('clearanceThreshold');
+
+  const isValidNumericString = (val: string) => val && !isNaN(parseFloat(val));
+  const hasPointA = !!(watchedPointALat && isValidNumericString(watchedPointALat) && watchedPointALng && isValidNumericString(watchedPointALng));
+  const hasPointB = !!(watchedPointBLat && isValidNumericString(watchedPointBLat) && watchedPointBLng && isValidNumericString(watchedPointBLng));
+
+  // ── Flow State ──
+  const flow = useFlowState(
+    hasPointA ? { lat: watchedPointALat, lng: watchedPointALng } : null,
+    hasPointB ? { lat: watchedPointBLat, lng: watchedPointBLng } : null,
+    !!analysis.analysisResult,
+    analysis.isActionPending,
+    analysis.isStale,
+  );
+
+  // ── Phase 11: Map Tools ──
+  const mapTools = useMapTools({
+    getMap: () => mapInstanceRef.current,
+    onToolActiveChange: (isActive) => {
+      // When a tool activates, cancel placement mode
+      if (isActive && mapInteraction.placementMode) {
+        mapInteraction.setPlacementMode(null);
+      }
+    },
+    getDeviceRangeMeters: () => {
+      if (!analysis.selectedDeviceId) return 5000;
+      const device = getDeviceById(analysis.selectedDeviceId);
+      return device?.maxRange ?? 5000;
+    },
+    getDeviceName: () => {
+      if (!analysis.selectedDeviceId) return null;
+      const device = getDeviceById(analysis.selectedDeviceId);
+      return device?.name ?? null;
+    },
+  });
+    //hints
+    const hints = useHints({
+    analysisCount: onboarding.analysisCount,
+    creditsRemaining: latestCredits,
+    getHintShowCount: onboarding.getHintShowCount,
+    onDismiss: onboarding.dismissHint,
+    isFeatureUsed: onboarding.isFeatureUsed,
+    isTourActive: onboarding.isTourActive,
+    isHelpPanelOpen: helpPanel.isOpen,
+  });
+
   const analysisRef = useRef(analysis);
   analysisRef.current = analysis;
   const fiberRef = useRef(fiber);
   fiberRef.current = fiber;
 
-  // ── Handle credit updates after analysis ──
+  // ── Track analysis count for hints ──
+  useEffect(() => {
+    if (analysis.analysisResult && !analysis.isStale) {
+      onboarding.incrementAnalysisCount();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysis.analysisResult?.id]);
+
+  // ── Handle credit updates after analysis (BUILD FIX: corrected braces) ──
   useEffect(() => {
     const result = analysis.analysisResult;
     if (result && !analysis.isStale && 'creditsRemaining' in result) {
@@ -109,12 +238,9 @@ export default function Home() {
       if (typeof remaining === 'number') {
         setLatestCredits(remaining);
         setCreditWarningTrigger(true);
-
         if (remaining <= 0) {
           setShowZeroCreditModal(true);
         }
-
-        // Refresh session to update header credits
         refreshCredits();
       }
     }
@@ -156,7 +282,6 @@ export default function Home() {
     formData.append('pointB.height', data.pointB.height.toString());
     formData.append('clearanceThreshold', data.clearanceThreshold);
 
-    // ── Include selected device ID in FormData (Phase 6C) ──
     const currentDeviceId = analysisRef.current.selectedDeviceId;
     if (currentDeviceId) {
       formData.append('selectedDeviceId', currentDeviceId);
@@ -176,18 +301,21 @@ export default function Home() {
   }, [setValue, handleSubmit, processSubmit, form, toast]);
 
   const handleAnalyzeClick = useCallback(() => {
+    // Phase 11: Deactivate tool before analyzing
+    if (mapTools.isToolActive) mapTools.deactivateTool();
+
     form.trigger().then(isValid => {
       if (isValid) handleSubmit(processSubmit)();
       else toast({ title: "Input Error", description: "Please set both site locations before analyzing.", variant: "destructive" });
     });
-  }, [form, handleSubmit, processSubmit, toast]);
+  }, [form, handleSubmit, processSubmit, toast, mapTools]);
 
   const handleClearHistory = useCallback(() => {
     analysis.setHistoryList([]);
     toast({ title: "History Cleared" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, [toast, analysis]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleClearMap = useCallback(() => {
     reset(defaultFormStateValues);
     if (isClient) {
@@ -200,10 +328,12 @@ export default function Home() {
     fiberRef.current.setFiberPathResult(null);
     fiberRef.current.setFiberPathError(null);
     mapInteraction.setPlacementMode(null);
+    mapTools.deactivateTool();
+    mapTools.clearAllOverlays();
     setMapNavigationTarget(null);
     toast({ title: "Map Cleared", description: "Form reset to default values." });
     setIsProfileExpanded(false);
-  }, [reset, isClient, toast, mapInteraction]);
+  }, [reset, isClient, toast, mapInteraction, mapTools]);
 
   const handleNewLink = useCallback(() => {
     reset(defaultFormStateValues);
@@ -217,16 +347,39 @@ export default function Home() {
     fiberRef.current.setFiberPathResult(null);
     fiberRef.current.setFiberPathError(null);
     mapInteraction.setPlacementMode('A');
+    mapTools.deactivateTool();
     setMapNavigationTarget(null);
     setIsProfileExpanded(false);
     toast({ title: "Ready for New Link", description: "Place Site A to begin." });
-  }, [reset, isClient, toast, mapInteraction]);
+  }, [reset, isClient, toast, mapInteraction, mapTools]);
 
-  const handleClearanceChange = useCallback((value: number[]) => {
-    const numValue = value[0];
-    if (typeof numValue === 'number') {
-      setValue('clearanceThreshold', String(Math.round(numValue * 100) / 100), { shouldValidate: true, shouldDirty: true });
-    }
+  // ── Site clear handlers ──
+  const handleClearSiteA = useCallback(() => {
+    setValue('pointA.lat', '', { shouldDirty: true, shouldValidate: true });
+    setValue('pointA.lng', '', { shouldDirty: true, shouldValidate: true });
+    setValue('pointA.name', 'Site A', { shouldDirty: true });
+    setValue('pointA.height', 20, { shouldDirty: true });
+  }, [setValue]);
+
+  const handleClearSiteB = useCallback(() => {
+    setValue('pointB.lat', '', { shouldDirty: true, shouldValidate: true });
+    setValue('pointB.lng', '', { shouldDirty: true, shouldValidate: true });
+    setValue('pointB.name', 'Site B', { shouldDirty: true });
+    setValue('pointB.height', 20, { shouldDirty: true });
+  }, [setValue]);
+
+  // ── Tower height change handlers ──
+  const handleSiteATowerHeightChange = useCallback((height: number) => {
+    setValue('pointA.height', height, { shouldDirty: true, shouldValidate: true });
+  }, [setValue]);
+
+  const handleSiteBTowerHeightChange = useCallback((height: number) => {
+    setValue('pointB.height', height, { shouldDirty: true, shouldValidate: true });
+  }, [setValue]);
+
+  // ── Clearance threshold handler ──
+  const handleClearanceChange = useCallback((value: number) => {
+    setValue('clearanceThreshold', String(Math.round(value * 100) / 100), { shouldValidate: true, shouldDirty: true });
   }, [setValue]);
 
   const toggleProfileExpansion = useCallback(() => setIsProfileExpanded(prev => !prev), []);
@@ -241,7 +394,7 @@ export default function Home() {
       if (name && name !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) setValue('pointA.name', name, { shouldDirty: true });
       mapInteraction.setPlacementMode('B');
       toast({ title: `Site A set to ${name}`, description: 'Now place Site B.' });
-    } else if (mapInteraction.placementMode === 'B') {
+    } else  if (mapInteraction.placementMode === 'B') {
       setValue('pointB.lat', lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
       setValue('pointB.lng', lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
       if (name && name !== `${lat.toFixed(6)}, ${lng.toFixed(6)}`) setValue('pointB.name', name, { shouldDirty: true });
@@ -275,7 +428,7 @@ export default function Home() {
     toast({ title: `Navigated to ${name}` });
   }, [toast]);
 
-  // ── Save link (Phase 6C: includes selectedDeviceId) ──
+  // ── Save link ──
   const handleSaveLink = useCallback(() => {
     if (!analysis.analysisResult || analysis.isStale) {
       toast({ title: "Cannot Save", description: "Run analysis first.", variant: "destructive" });
@@ -290,7 +443,7 @@ export default function Home() {
     toast({ title: "Link Saved", description: `"${link.name}" saved to library.` });
   }, [analysis.analysisResult, analysis.isStale, analysis.selectedDeviceId, fiber.fiberPathResult, saved, toast, watch]);
 
-  // ── Load saved link (Phase 6C: restores selectedDeviceId) ──
+  // ── Load saved link ──
   const handleLoadSavedLink = useCallback((link: SavedLink) => {
     setValue('pointA.name', link.pointA.name, { shouldDirty: true });
     setValue('pointA.lat', link.pointA.lat.toFixed(6), { shouldDirty: true, shouldValidate: true });
@@ -301,18 +454,16 @@ export default function Home() {
     setValue('pointB.lng', link.pointB.lng.toFixed(6), { shouldDirty: true, shouldValidate: true });
     setValue('pointB.height', link.pointB.towerHeight, { shouldDirty: true, shouldValidate: true });
     setValue('clearanceThreshold', link.clearanceThreshold.toString(), { shouldDirty: true, shouldValidate: true });
-
-    // Restore device selection from saved link
     analysis.setSelectedDeviceId(link.selectedDeviceId ?? null);
 
     const midLat = (link.pointA.lat + link.pointB.lat) / 2;
     const midLng = (link.pointA.lng + link.pointB.lng) / 2;
     setMapNavigationTarget({ lat: midLat, lng: midLng, zoom: 12, timestamp: Date.now() });
-
     toast({ title: "Link Loaded", description: `"${link.name}" restored. Click Analyze to refresh.` });
 
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsSidePanelOpen(false);
+      setSheetSnapPoint('collapsed');
     }
   }, [setValue, toast, analysis]);
 
@@ -342,23 +493,22 @@ export default function Home() {
   }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleContextWhatsHere = useCallback((_lat: number, _lng: number) => {
-  }, []);
+  const handleContextWhatsHere = useCallback((_lat: number, _lng: number) => {}, []);
 
   // ══════════════════════════════════════════════════════
-  // PDF DOWNLOAD — Single report: opens export config modal
+  // PDF / DOWNLOAD HANDLERS
   // ══════════════════════════════════════════════════════
 
-  /** Opens the export config modal instead of downloading directly */
   const handlePdfButtonClick = useCallback(() => {
     if (!analysis.analysisResult || analysis.isStale) {
       toast({ title: "No Results", description: "Run analysis first to generate a PDF.", variant: "destructive" });
       return;
     }
+    setDownloadingType('pdf');
     pdfDownload.openExportModal();
-  }, [analysis.analysisResult, analysis.isStale, pdfDownload, toast]);
+    onboarding.markFeatureUsed('exportConfig');
+  }, [analysis.analysisResult, analysis.isStale, pdfDownload, toast, onboarding]);
 
-  /** Called when user confirms download from the single export config modal */
   const handleExportConfigConfirm = useCallback((config: ExportConfig) => {
     pdfDownload.handleDownloadWithConfig(
       analysis.analysisResult,
@@ -366,19 +516,30 @@ export default function Home() {
       config,
       fiber.fiberPathResult,
     );
+    setTimeout(() => setDownloadingType(null), 500);
   }, [analysis.analysisResult, fiber.fiberPathResult, pdfDownload, toast]);
 
-  /** Called when user confirms download from the combined export config modal */
   const handleCombinedExportConfigConfirm = useCallback((config: ExportConfig) => {
     pdfDownload.handleDownloadCombinedWithConfig(
       combinedExportLinks,
       toast,
       config,
     );
+    setTimeout(() => setDownloadingType(null), 500);
   }, [combinedExportLinks, pdfDownload, toast]);
 
-  // ── Export handlers ──
+  const handleDownloadCombinedPdf = useCallback((links: SavedLink[]) => {
+    if (!links.length) {
+      toast({ title: "No Links", description: "No links to export.", variant: "destructive" });
+      return;
+    }
+    setCombinedExportLinks(links);
+    setDownloadingType('combined-pdf');
+    pdfDownload.openCombinedExportModal();
+  }, [toast, pdfDownload]);
+
   const handleExportKmz = useCallback(async (links: SavedLink[]) => {
+    setDownloadingType('kmz');
     try {
       const { exportSavedLinksAsKmz } = await import('@/lib/saved-link-exports');
       await exportSavedLinksAsKmz(links);
@@ -386,10 +547,13 @@ export default function Home() {
     } catch (e) {
       console.error('KMZ export failed:', e);
       toast({ title: "Export Failed", description: e instanceof Error ? e.message : "KMZ export failed.", variant: "destructive" });
+    } finally {
+      setDownloadingType(null);
     }
   }, [toast]);
 
   const handleExportExcel = useCallback(async (links: SavedLink[]) => {
+    setDownloadingType('excel');
     try {
       const { exportSavedLinksAsExcel } = await import('@/lib/saved-link-exports');
       await exportSavedLinksAsExcel(links);
@@ -397,10 +561,13 @@ export default function Home() {
     } catch (e) {
       console.error('Excel export failed:', e);
       toast({ title: "Export Failed", description: e instanceof Error ? e.message : "Excel export failed.", variant: "destructive" });
+    } finally {
+      setDownloadingType(null);
     }
   }, [toast]);
 
   const handleExportCsv = useCallback(async (links: SavedLink[]) => {
+    setDownloadingType('csv');
     try {
       const { exportSavedLinksAsCsv } = await import('@/lib/saved-link-exports');
       await exportSavedLinksAsCsv(links);
@@ -408,19 +575,23 @@ export default function Home() {
     } catch (e) {
       console.error('CSV export failed:', e);
       toast({ title: "Export Failed", description: e instanceof Error ? e.message : "CSV export failed.", variant: "destructive" });
+    } finally {
+      setDownloadingType(null);
     }
   }, [toast]);
 
-  /** Combined PDF: opens export config modal instead of downloading directly */
-  const handleExportPdf = useCallback(async (links: SavedLink[]) => {
-    if (!links.length) {
-      toast({ title: "No Links", description: "No links to export.", variant: "destructive" });
+  const handleShareWhatsApp = useCallback(async () => {
+    if (!analysis.analysisResult || analysis.isStale) {
+      toast({ title: "No Results", description: "Run analysis first.", variant: "destructive" });
       return;
     }
-    // Store the links and open the combined export config modal
-    setCombinedExportLinks(links);
-    pdfDownload.openCombinedExportModal();
-  }, [toast, pdfDownload]);
+    setDownloadingType('whatsapp');
+    try {
+      await whatsApp.shareViaWhatsApp(analysis.analysisResult, fiber.fiberPathResult);
+    } finally {
+      setDownloadingType(null);
+    }
+  }, [analysis.analysisResult, analysis.isStale, fiber.fiberPathResult, whatsApp, toast]);
 
   // ── Keyboard shortcuts ──
   const toggleSidePanel = useCallback(() => setIsSidePanelOpen(prev => !prev), []);
@@ -433,38 +604,140 @@ export default function Home() {
     placementMode: mapInteraction.placementMode,
     isActionPending: analysis.isActionPending,
     hasAnalysisResult: !!analysis.analysisResult && !analysis.isStale,
+    // Phase 11: Map tool shortcuts
+    onToggleMapTool: mapTools.toggleTool,
+    onDeactivateMapTool: mapTools.deactivateTool,
+    isMapToolActive: mapTools.isToolActive,
   });
-
-  // ── Watched form values ──
-  const isValidNumericString = (val: string) => val && !isNaN(parseFloat(val));
-  const watchedPointALat = watch('pointA.lat');
-  const watchedPointALng = watch('pointA.lng');
-  const watchedPointAName = watch('pointA.name');
-  const watchedPointBLat = watch('pointB.lat');
-  const watchedPointBLng = watch('pointB.lng');
-  const watchedPointBName = watch('pointB.name');
-
-  const hasPointA = !!(watchedPointALat && isValidNumericString(watchedPointALat) && watchedPointALng && isValidNumericString(watchedPointALng));
-  const hasPointB = !!(watchedPointBLat && isValidNumericString(watchedPointBLat) && watchedPointBLng && isValidNumericString(watchedPointBLng));
 
   useEffect(() => {
     if (analysis.analysisResult) setIsProfileExpanded(true);
   }, [analysis.analysisResult]);
 
-  // ── Determine if device data is available (for export modals) ──
+  // ── Phase 12C: Feed analysis data to solar tool ──
+  const [solarResult, setSolarResult] = useState<SolarAnalysisResult | null>(null);
+  const [showSolarPanel, setShowSolarPanel] = useState(false);
+
+  useEffect(() => {
+    setSolarAnalysisData(analysis.analysisResult ?? null);
+    setAlignmentAnalysisData(analysis.analysisResult ?? null);
+  }, [analysis.analysisResult]);
+
+  // Watch for solar tool result
+  useEffect(() => {
+    if (mapTools.latestResult?.toolId === 'solar-analyzer') {
+      const data = mapTools.latestResult.data;
+      if (data.solarResult) {
+        setSolarResult(data.solarResult as SolarAnalysisResult);
+        setShowSolarPanel(true);
+      } else if (data.error) {
+        setSolarResult(null);
+        setShowSolarPanel(false);
+      }
+    }
+  }, [mapTools.latestResult]);
+
+  // ── Collapse mobile sheet when map is tapped ──
+  const handleMapClickWrapper = useCallback(
+    (event: google.maps.MapMouseEvent, pointId: 'pointA' | 'pointB') => {
+      mapInteraction.handleMapClick(event, pointId);
+      if (isMobile && sheetSnapPoint !== 'collapsed') {
+        setSheetSnapPoint('collapsed');
+      }
+    },
+    [mapInteraction, isMobile, sheetSnapPoint]
+  );
+
+  // ── Device data flags for export modals ──
   const hasDeviceData = !!(analysis.analysisResult?.deviceCompatibility);
   const combinedHasDeviceData = combinedExportLinks.some(
     l => !!(l.analysisResult.deviceCompatibility || l.selectedDeviceId)
   );
 
+  // ── Collapsed summary for mobile bottom sheet ──
+  const collapsedSummary = useMemo(() => {
+    if (analysis.analysisResult && !analysis.isStale) {
+      const r = analysis.analysisResult;
+      return (
+        <span className="flex items-center gap-2">
+          <span className={r.losPossible ? 'text-emerald-400' : 'text-red-400'}>
+            {r.losPossible ? '✓ PASS' : '✗ FAIL'}
+          </span>
+          <span className="text-text-brand-muted">—</span>
+          <span>{r.distanceKm.toFixed(1)} km</span>
+        </span>
+      );
+    }
+    if (flow.bothSitesPlaced) {
+      return <span>✓ Both sites placed — ready to analyze</span>;
+    }
+    if (flow.siteAPlaced) {
+      return <span>📍 Site A placed — tap map for Site B</span>;
+    }
+    return <span>📍 Tap map to place Site A</span>;
+  }, [analysis.analysisResult, analysis.isStale, flow]);
+
+  // ── Shared side panel props ──
+  const sidePanelProps = {
+    flow,
+    siteAName: watchedPointAName,
+    siteALat: watchedPointALat,
+    siteALng: watchedPointALng,
+    siteATowerHeight: watchedPointAHeight,
+    onSiteATowerHeightChange: handleSiteATowerHeightChange,
+    onClearSiteA: handleClearSiteA,
+    siteBName: watchedPointBName,
+    siteBLat: watchedPointBLat,
+    siteBLng: watchedPointBLng,
+    siteBTowerHeight: watchedPointBHeight,
+    onSiteBTowerHeightChange: handleSiteBTowerHeightChange,
+    onClearSiteB: handleClearSiteB,
+    placementMode: mapInteraction.placementMode,
+    onSetPlacementMode: mapInteraction.setPlacementMode,
+    clearanceThreshold: parseFloat(watchedClearance) || 10,
+    onClearanceThresholdChange: handleClearanceChange,
+    selectedDeviceId: analysis.selectedDeviceId,
+    onSelectDevice: analysis.setSelectedDeviceId,
+    currentDistanceKm: mapInteraction.liveDistanceKm,
+    onAnalyze: handleAnalyzeClick,
+    isActionPending: analysis.isActionPending,
+    analysisResult: analysis.analysisResult,
+    isStale: analysis.isStale,
+    creditsRemaining: latestCredits,
+    fiberPathResult: fiber.fiberPathResult,
+    isFiberCalculating: fiber.isFiberCalculating,
+    fiberPathError: fiber.fiberPathError,
+    onSaveLink: handleSaveLink,
+    onNewLink: handleNewLink,
+    onDownloadPdf: handlePdfButtonClick,
+    onDownloadCombinedPdf: handleDownloadCombinedPdf,
+    onExportKmz: handleExportKmz,
+    onExportExcel: handleExportExcel,
+    onExportCsv: handleExportCsv,
+    onShareWhatsApp: handleShareWhatsApp,
+    isDownloading: pdfDownload.isGeneratingPdf || downloadingType !== null,
+    downloadingType,
+    savedLinks: saved.savedLinks,
+    onLoadSavedLink: handleLoadSavedLink,
+    onDeleteSavedLink: saved.deleteLink,
+    onDeleteMultipleSavedLinks: saved.deleteMultipleLinks,
+    onClearAllSavedLinks: saved.clearAllLinks,
+    selectedLinkIds: saved.selectedLinkIds,
+    onToggleLinkSelection: saved.toggleLinkSelection,
+    onSelectAllLinks: saved.selectAllLinks,
+    onDeselectAllLinks: saved.deselectAllLinks,
+    isSelectionMode: saved.isSelectionMode,
+    onSetSelectionMode: saved.setIsSelectionMode,
+    historyList: analysis.historyList,
+    onLoadHistoryItem: analysis.loadFromHistory,
+    onClearHistory: handleClearHistory,
+    onSearchNavigate: handleSearchNavigate,
+  };
+
   return (
     <>
       <ProgressBar isActive={analysis.isActionPending || fiber.isFiberCalculating} />
-
-      {/* Credit warning toasts */}
       <CreditWarning credits={latestCredits} trigger={creditWarningTrigger} />
-
-      {/* Zero-credit blocking modal */}
       <ProUpsellModal
         open={showZeroCreditModal}
         onOpenChange={setShowZeroCreditModal}
@@ -472,13 +745,14 @@ export default function Home() {
         trigger="zero_credits"
       />
 
-      {/* ══════════════════════════════════════════════════
-          Export Config Modal for single-link PDF
-          ══════════════════════════════════════════════════ */}
+      {/* Export Config Modal — single */}
       <ExportConfigModal
         open={pdfDownload.isExportModalOpen}
         onOpenChange={(open) => {
-          if (!open) pdfDownload.closeExportModal();
+          if (!open) {
+            pdfDownload.closeExportModal();
+            setDownloadingType(null);
+          }
         }}
         onConfirm={handleExportConfigConfirm}
         isLoading={pdfDownload.isGeneratingPdf}
@@ -489,13 +763,14 @@ export default function Home() {
         formatLabel="PDF Report"
       />
 
-      {/* ══════════════════════════════════════════════════
-          Export Config Modal for combined/bulk PDF
-          ══════════════════════════════════════════════════ */}
+      {/* Export Config Modal — combined */}
       <ExportConfigModal
         open={pdfDownload.isCombinedExportModalOpen}
         onOpenChange={(open) => {
-          if (!open) pdfDownload.closeCombinedExportModal();
+          if (!open) {
+            pdfDownload.closeCombinedExportModal();
+            setDownloadingType(null);
+          }
         }}
         onConfirm={handleCombinedExportConfigConfirm}
         isLoading={pdfDownload.isGeneratingPdf}
@@ -516,83 +791,75 @@ export default function Home() {
 
       {!isOnline && (
         <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[70] bg-red-500/95 text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2 backdrop-blur-sm pt-safe">
-          <WifiOff className="h-3.5 w-3.5" /> Offline &mdash; analysis requires internet
+          <WifiOff className="h-3.5 w-3.5" /> Offline — analysis requires internet
         </div>
       )}
 
-      {/* ── MAIN LAYOUT ── */}
-      <div className="flex h-full w-full overflow-hidden">
-
-        {/* Side Panel */}
-        <SidePanel
-          isOpen={isSidePanelOpen}
-          onClose={() => setIsSidePanelOpen(false)}
-          control={control} register={register}
-          clientFormErrors={clientFormErrors}
-          serverFormErrors={analysis.fieldErrors ?? undefined}
-          placementMode={mapInteraction.placementMode}
-          onSetPlacementMode={mapInteraction.setPlacementMode}
-          onAnalyze={handleAnalyzeClick}
-          onClearMap={handleClearMap}
-          onNewLink={handleNewLink}
-          isActionPending={analysis.isActionPending}
-          analysisResult={analysis.analysisResult}
-          isStale={analysis.isStale}
-          onDownloadPdf={handlePdfButtonClick}
-          isGeneratingPdf={pdfDownload.isGeneratingPdf}
-          fiberPathResult={fiber.fiberPathResult}
-          isFiberCalculating={fiber.isFiberCalculating}
-          fiberPathError={fiber.fiberPathError}
-          isFiberPathEnabled={fiber.calculateFiberPathEnabled}
-          onToggleFiberPath={fiber.handleToggleFiberPath}
-          snapRadius={parseInt(fiber.localSnapRadiusInput, 10)}
-          onSnapRadiusChange={fiber.setLocalSnapRadiusInput}
-          onApplySnapRadius={fiber.handleApplySnapRadius}
-          clearanceThreshold={parseFloat(watch('clearanceThreshold'))}
-          onClearanceThresholdChange={handleClearanceChange}
-          isPending={analysis.isActionPending || fiber.isFiberCalculating}
-          onSearchNavigate={handleSearchNavigate}
-          savedLinks={saved.savedLinks}
-          onSaveLink={handleSaveLink}
-          onLoadSavedLink={handleLoadSavedLink}
-          onDeleteSavedLink={saved.deleteLink}
-          onDeleteMultipleSavedLinks={saved.deleteMultipleLinks}
-          onClearAllSavedLinks={saved.clearAllLinks}
-          selectedLinkIds={saved.selectedLinkIds}
-          onToggleLinkSelection={saved.toggleLinkSelection}
-          onSelectAllLinks={saved.selectAllLinks}
-          onDeselectAllLinks={saved.deselectAllLinks}
-          isSelectionMode={saved.isSelectionMode}
-          onSetSelectionMode={saved.setIsSelectionMode}
-          onExportKmz={handleExportKmz}
-          onExportExcel={handleExportExcel}
-          onExportCsv={handleExportCsv}
-          onExportPdf={handleExportPdf}
-          historyList={analysis.historyList}
-          onLoadHistoryItem={analysis.loadFromHistory}
-          onClearHistory={handleClearHistory}
-          selectedDeviceId={analysis.selectedDeviceId}
-          onSelectDevice={analysis.setSelectedDeviceId}
-          currentDistanceKm={mapInteraction.liveDistanceKm}
+      {/* ── GUIDED TOUR ── */}
+      {isClient && (
+        <GuidedTour
+          isActive={onboarding.isTourActive}
+          currentStep={onboarding.currentTourStep}
+          onNext={onboarding.nextStep}
+          onPrev={onboarding.prevStep}
+          onSkip={onboarding.skipTour}
+          onComplete={onboarding.completeTour}
         />
+      )}
+
+      {/* ── MICRO-HINT ── */}
+      {isClient && hints.activeHint && !onboarding.isTourActive && (
+        <HintBadge
+          hint={hints.activeHint}
+          interpolations={{ credits: String(latestCredits) }}
+          onDismiss={hints.dismissCurrentHint}
+        />
+      )}
+
+      {/* ── GLOBAL HEADER ── */}
+      <AppHeader compact />
+
+      {/* ── MAIN LAYOUT ── */}
+      <div className="flex h-below-header w-full overflow-hidden">
+
+        {/* Side Panel — desktop only */}
+        {!isMobile && (
+          <SidePanel
+            isOpen={isSidePanelOpen}
+            onClose={() => setIsSidePanelOpen(false)}
+            {...sidePanelProps}
+          />
+        )}
 
         {/* Map + Bottom Profile */}
         <div className="flex-1 flex flex-col min-w-0 relative">
 
-          {/* ── MapHeader: Google Maps-style floating header ── */}
-          <MapHeader
-            onToggleSidePanel={() => setIsSidePanelOpen(true)}
-            showHamburger={!isSidePanelOpen}
-            onSearchPlaceSelected={handleSearchNavigate}
-            onSearchPlaceA={handleSearchPlaceA}
-            onSearchPlaceB={handleSearchPlaceB}
-            onSearchNavigateOnly={handleSearchNavigateOnly}
-            placementMode={mapInteraction.placementMode}
+          {/* Floating Search Bar — dark themed, over the map */}
+          <div className="absolute top-3 left-3 right-14 z-20 pointer-events-none">
+            <div className="pointer-events-auto">
+              <MapSearchBar
+                onPlaceSelected={handleSearchNavigate}
+                onPlaceASelected={handleSearchPlaceA}
+                onPlaceBSelected={handleSearchPlaceB}
+                onNavigateOnly={handleSearchNavigateOnly}
+                placementMode={mapInteraction.placementMode ?? null}
+              />
+            </div>
+          </div>
+
+          {/* Map Hint Overlay */}
+          <MapHintOverlay
+            currentStep={flow.currentStep}
+            siteAPlaced={flow.siteAPlaced}
+            siteBPlaced={flow.siteBPlaced}
+            hasResults={flow.hasResults}
+            isAnalyzing={flow.isAnalyzing}
+            isStale={flow.isStale}
           />
 
           {/* Placement indicator */}
-          {mapInteraction.placementMode && (
-            <div className="absolute top-[7.5rem] sm:top-[5.5rem] left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-2 max-w-[90vw] pointer-events-none">
+          {mapInteraction.placementMode && !mapTools.isToolActive && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 animate-in fade-in slide-in-from-bottom-2 max-w-[90vw] pointer-events-none">
               <div className={cn("flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl border backdrop-blur-xl pointer-events-auto",
                 mapInteraction.placementMode === 'A' ? "bg-emerald-950/80 border-emerald-500/30 text-emerald-300" : "bg-blue-950/80 border-blue-500/30 text-blue-300")}>
                 <div className="h-3.5 w-3.5 rounded-full bg-current animate-pulse" />
@@ -608,9 +875,9 @@ export default function Home() {
 
           {/* Loading pill */}
           {(analysis.isActionPending || fiber.isFiberCalculating) && (
-            <div className="absolute top-[7.5rem] sm:top-[5.5rem] left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-slate-950/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl border border-white/[0.06] pointer-events-none">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span className="text-xs font-medium text-white/80">
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 bg-surface-base/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-2xl border border-surface-border pointer-events-none">
+              <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
+              <span className="text-xs font-medium text-text-brand-secondary">
                 {analysis.isActionPending ? "Analyzing link..." : "Computing fiber path..."}
               </span>
             </div>
@@ -623,13 +890,13 @@ export default function Home() {
           )}
 
           {/* Map */}
-          <div className="flex-1 min-h-0 relative">
+          <div className="flex-1 min-h-0 relative" data-tour="map-area">
             <MapErrorBoundary>
               <InteractiveMap
                 pointA={hasPointA ? { lat: parseFloat(watchedPointALat), lng: parseFloat(watchedPointALng), name: watchedPointAName } : undefined}
                 pointB={hasPointB ? { lat: parseFloat(watchedPointBLat), lng: parseFloat(watchedPointBLng), name: watchedPointBName } : undefined}
                 placementMode={mapInteraction.placementMode}
-                onMapClick={mapInteraction.handleMapClick}
+                onMapClick={handleMapClickWrapper}
                 onMarkerDrag={mapInteraction.handleMarkerDrag}
                 mapContainerClassName="w-full h-full"
                 analysisResult={analysis.analysisResult}
@@ -641,8 +908,45 @@ export default function Home() {
                 savedLinks={saved.savedLinks}
                 onSavedLinkClick={handleLoadSavedLink}
                 selectedDeviceId={analysis.selectedDeviceId}
+                // Phase 11: Map tools props
+                onMapReady={handleMapReady}
+                activeMapTool={mapTools.state.activeTool}
+                onToolMapClick={mapTools.handleToolClick}
+                onToolMapDoubleClick={mapTools.handleToolDoubleClick}
+                toolCursor={mapTools.getToolCursor()}
               />
             </MapErrorBoundary>
+
+            {/* Phase 11: Map Toolbar */}
+            {isClient && (
+              <MapToolbar
+                activeTool={mapTools.state.activeTool}
+                onToggleTool={mapTools.toggleTool}
+                onClearAll={mapTools.clearAllOverlays}
+                isProcessing={mapTools.state.isProcessing}
+                gridVisible={mapTools.gridVisible}
+                isMobile={!!isMobile}
+                statusMessage={mapTools.statusMessage}
+              />
+            )}
+
+            {/* Phase 11: Tool Result Panel */}
+            {isClient && (
+              <ToolResultPanel
+                result={mapTools.latestResult}
+                onClose={mapTools.clearLatestResult}
+                isMobile={!!isMobile}
+              />
+            )}
+
+            {/* Phase 12C: Solar Interference Panel */}
+            {isClient && showSolarPanel && solarResult && (
+              <SolarPanel
+                result={solarResult}
+                onClose={() => setShowSolarPanel(false)}
+                isMobile={!!isMobile}
+              />
+            )}
 
             <KeyboardHint show={isClient && typeof window !== 'undefined' && window.innerWidth >= 1024} />
           </div>
@@ -683,6 +987,121 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Mobile Bottom Sheet */}
+      {isMobile && isClient && (
+        <MobileBottomSheet
+          collapsedSummary={collapsedSummary}
+          snapPoint={sheetSnapPoint}
+          onSnapPointChange={setSheetSnapPoint}
+          isVisible={true}
+        >
+          <div className="space-y-3 py-2">
+            {/* Sites */}
+            <div className="space-y-2">
+              <span className="text-[0.6rem] font-semibold uppercase tracking-wider text-text-brand-muted">
+                Sites
+              </span>
+              <SiteInputCard
+                site="A"
+                label={watchedPointAName || 'Site A'}
+                siteName={watchedPointAName}
+                lat={watchedPointALat}
+                lng={watchedPointALng}
+                towerHeight={watchedPointAHeight}
+                onTowerHeightChange={handleSiteATowerHeightChange}
+                onClear={handleClearSiteA}
+                onActivatePlacement={() => {
+                  mapInteraction.setPlacementMode(mapInteraction.placementMode === 'A' ? null : 'A');
+                  setSheetSnapPoint('collapsed');
+                }}
+                onCancelPlacement={() => mapInteraction.setPlacementMode(null)}
+                isPlacementActive={mapInteraction.placementMode === 'A'}
+                isPlaced={flow.siteAPlaced}
+              />
+              <SiteInputCard
+                site="B"
+                label={watchedPointBName || 'Site B'}
+                siteName={watchedPointBName}
+                lat={watchedPointBLat}
+                lng={watchedPointBLng}
+                towerHeight={watchedPointBHeight}
+                onTowerHeightChange={handleSiteBTowerHeightChange}
+                onClear={handleClearSiteB}
+                onActivatePlacement={() => {
+                  mapInteraction.setPlacementMode(mapInteraction.placementMode === 'B' ? null : 'B');
+                  setSheetSnapPoint('collapsed');
+                }}
+                onCancelPlacement={() => mapInteraction.setPlacementMode(null)}
+                isPlacementActive={mapInteraction.placementMode === 'B'}
+                isPlaced={flow.siteBPlaced}
+              />
+            </div>
+
+            {/* Configure */}
+            {flow.bothSitesPlaced && (
+              <ConfigSection
+                clearanceThreshold={parseFloat(watchedClearance) || 10}
+                onClearanceThresholdChange={handleClearanceChange}
+                selectedDeviceId={analysis.selectedDeviceId}
+                onSelectDevice={analysis.setSelectedDeviceId}
+                currentDistanceKm={mapInteraction.liveDistanceKm}
+                hasAnalysisResult={!!analysis.analysisResult}
+              />
+            )}
+
+            {/* Analyze */}
+            {flow.bothSitesPlaced && (
+              <AnalysisButton
+                canAnalyze={flow.canAnalyze}
+                isAnalyzing={analysis.isActionPending}
+                isStale={analysis.isStale}
+                hasResults={flow.hasResults}
+                creditsRemaining={latestCredits}
+                onClick={handleAnalyzeClick}
+              />
+            )}
+
+            {/* Results */}
+            {analysis.analysisResult && !analysis.isStale && (
+              <div className="space-y-3">
+                <ResultsCard
+                  result={analysis.analysisResult}
+                  clearanceThreshold={parseFloat(watchedClearance) || 10}
+                  fiberPathResult={fiber.fiberPathResult}
+                  isFiberCalculating={fiber.isFiberCalculating}
+                  fiberPathError={fiber.fiberPathError}
+                />
+
+                <DownloadMenu
+                  analysisResult={analysis.analysisResult}
+                  savedLinks={saved.savedLinks}
+                  onDownloadPdf={handlePdfButtonClick}
+                  onDownloadCombinedPdf={handleDownloadCombinedPdf}
+                  onExportKmz={handleExportKmz}
+                  onExportExcel={handleExportExcel}
+                  onExportCsv={handleExportCsv}
+                  onShareWhatsApp={handleShareWhatsApp}
+                  isDownloading={pdfDownload.isGeneratingPdf || downloadingType !== null}
+                  downloadingType={downloadingType}
+                  canDownloadSingle={flow.canDownload}
+                />
+
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveLink} size="sm" variant="outline"
+                    className="flex-1 h-9 text-xs border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 touch-manipulation">
+                    Save Link
+                  </Button>
+                  <Button onClick={handleNewLink} size="sm" variant="outline"
+                    className="flex-1 h-9 text-xs border-surface-border-light text-text-brand-muted touch-manipulation">
+                    New Link
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </MobileBottomSheet>
+      )}
 
       {/* Context Menu */}
       <MapContextMenu

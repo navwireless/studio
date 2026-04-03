@@ -298,8 +298,8 @@ export default function FiberCalculatorPage() {
         trigger="zero_credits"
       />
 
-      <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden h-[calc(100vh-theme(spacing.11))]">
-        <div className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-auto md:h-full overflow-y-auto custom-scrollbar bg-card/80 backdrop-blur-sm shadow-lg border-t md:border-t-0 md:border-r border-border p-1 print:hidden">
+      <div className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden h-below-header">
+        <div className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] h-auto md:h-full overflow-y-auto custom-scrollbar bg-surface-card shadow-lg border-t md:border-t-0 md:border-r border-surface-border p-1 print:hidden">
           <ErrorBoundary>
             <FiberInputPanel
               control={control}
@@ -338,15 +338,15 @@ export default function FiberCalculatorPage() {
 
         {anyOperationPending && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
-            <Card className="p-6 shadow-2xl bg-card/90">
+            <Card className="p-6 shadow-2xl bg-surface-card border-surface-border">
               <CardContent className="flex flex-col items-center text-center">
-                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-lg font-semibold text-foreground">
+                <Loader2 className="h-12 w-12 animate-spin text-brand-500 mb-4" />
+                <p className="text-lg font-semibold text-text-brand-primary">
                   {isCalculating ? "Calculating Fiber Path..." :
                     isGeneratingPdf ? "Generating PDF Report..." :
                       isGeneratingKmz ? "Generating KMZ File..." : "Processing..."}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-text-brand-muted mt-1">
                   {isCalculating ? "Accessing road network data..." : "Please wait..."}
                 </p>
               </CardContent>

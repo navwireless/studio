@@ -34,7 +34,7 @@ function getActionBadge(action: string) {
         bulk_reject: "bg-red-500/10 text-red-400 border-red-500/20",
     };
     const className =
-        colorMap[action] || "bg-white/5 text-white/40 border-white/10";
+        colorMap[action] || "bg-surface-elevated text-text-brand-muted border-surface-border";
     return (
         <Badge variant="outline" className={`text-[0.6rem] ${className}`}>
             {action.replace(/_/g, " ")}
@@ -115,29 +115,29 @@ export default function AuditLogPage() {
                     <Shield className="h-5 w-5 text-purple-400" />
                 </div>
                 <div>
-                    <h1 className="text-xl font-bold text-white">Admin Audit Log</h1>
-                    <p className="text-sm text-white/40 mt-0.5">
+                    <h1 className="text-xl font-bold text-text-brand-primary">Admin Audit Log</h1>
+                    <p className="text-sm text-text-brand-muted mt-0.5">
                         All admin actions ({total} total) — read-only
                     </p>
                 </div>
             </div>
 
             {/* Table */}
-            <Card className="bg-card/80 backdrop-blur-sm border-white/[0.06]">
+            <Card className="bg-surface-card border-surface-border">
                 <CardHeader className="pb-0">
-                    <CardTitle className="text-sm font-semibold text-white">
+                    <CardTitle className="text-sm font-semibold text-text-brand-primary">
                         Actions
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
                     {isLoading ? (
                         <div className="text-center py-12">
-                            <div className="h-6 w-6 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin mx-auto" />
-                            <p className="text-sm text-white/30 mt-3">Loading audit log...</p>
+                            <div className="h-6 w-6 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin mx-auto" />
+                            <p className="text-sm text-text-brand-disabled mt-3">Loading audit log...</p>
                         </div>
                     ) : items.length === 0 ? (
                         <div className="text-center py-12">
-                            <p className="text-sm text-white/40">
+                            <p className="text-sm text-text-brand-muted">
                                 No admin actions recorded yet.
                             </p>
                         </div>
@@ -145,14 +145,14 @@ export default function AuditLogPage() {
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="border-white/[0.06] hover:bg-transparent">
-                                        <TableHead className="text-xs text-white/40">Date</TableHead>
-                                        <TableHead className="text-xs text-white/40">Admin</TableHead>
-                                        <TableHead className="text-xs text-white/40">Action</TableHead>
-                                        <TableHead className="text-xs text-white/40">
+                                    <TableRow className="border-surface-border hover:bg-transparent">
+                                        <TableHead className="text-xs text-text-brand-muted">Date</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted">Admin</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted">Action</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted">
                                             Target User
                                         </TableHead>
-                                        <TableHead className="text-xs text-white/40">
+                                        <TableHead className="text-xs text-text-brand-muted">
                                             Details
                                         </TableHead>
                                     </TableRow>
@@ -161,9 +161,9 @@ export default function AuditLogPage() {
                                     {items.map((item) => (
                                         <TableRow
                                             key={item.id}
-                                            className="border-white/[0.03] hover:bg-white/[0.02]"
+                                            className="border-surface-border hover:bg-surface-elevated/50"
                                         >
-                                            <TableCell className="text-xs text-white/50 whitespace-nowrap">
+                                            <TableCell className="text-xs text-text-brand-muted whitespace-nowrap">
                                                 {format(new Date(item.createdAt), "MMM d, h:mm a")}
                                             </TableCell>
                                             <TableCell className="text-xs text-purple-400 whitespace-nowrap">
@@ -174,15 +174,15 @@ export default function AuditLogPage() {
                                                 {item.targetUserId ? (
                                                     <Link
                                                         href={`/admin/users/${item.targetUserId}`}
-                                                        className="text-xs text-teal-400 hover:text-teal-300 hover:underline truncate max-w-[160px] block"
+                                                        className="text-xs text-brand-400 hover:text-brand-300 hover:underline truncate max-w-[160px] block"
                                                     >
                                                         {item.targetUserEmail || item.targetUserId}
                                                     </Link>
                                                 ) : (
-                                                    <span className="text-xs text-white/30">—</span>
+                                                    <span className="text-xs text-text-brand-disabled">—</span>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-xs text-white/40 max-w-[300px] truncate">
+                                            <TableCell className="text-xs text-text-brand-muted max-w-[300px] truncate">
                                                 {formatDetails(item.details)}
                                             </TableCell>
                                         </TableRow>
@@ -195,7 +195,7 @@ export default function AuditLogPage() {
                     {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between pt-4">
-                            <p className="text-xs text-white/30">
+                            <p className="text-xs text-text-brand-disabled">
                                 Showing {(page - 1) * pageSize + 1}–
                                 {Math.min(page * pageSize, total)} of {total}
                             </p>
@@ -205,11 +205,11 @@ export default function AuditLogPage() {
                                     variant="ghost"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={page === 1}
-                                    className="h-7 w-7 p-0 text-white/40 hover:text-white"
+                                    className="h-7 w-7 p-0 text-text-brand-muted hover:text-text-brand-primary"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
-                                <span className="text-xs text-white/50 px-2">
+                                <span className="text-xs text-text-brand-muted px-2">
                                     {page} / {totalPages}
                                 </span>
                                 <Button
@@ -217,7 +217,7 @@ export default function AuditLogPage() {
                                     variant="ghost"
                                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                     disabled={page === totalPages}
-                                    className="h-7 w-7 p-0 text-white/40 hover:text-white"
+                                    className="h-7 w-7 p-0 text-text-brand-muted hover:text-text-brand-primary"
                                 >
                                     <ChevronRight className="h-4 w-4" />
                                 </Button>

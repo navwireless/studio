@@ -3,81 +3,97 @@
 
 import React from "react";
 import { signOut } from "next-auth/react";
-import { Ban, Mail, LogOut } from "lucide-react";
+import { AlertTriangle, Mail, LogOut, Database, ShieldOff, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
+import { PageShell } from "@/components/layout/page-shell";
+import { BRAND } from "@/styles/design-tokens";
 
 export default function SuspendedPage() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Logo */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white tracking-wide">
-            FindLOS
+    <PageShell maxWidth="sm" showFooter>
+      <div className="flex flex-col items-center text-center py-8 md:py-16 space-y-8">
+        {/* Status icon */}
+        <div className="w-20 h-20 rounded-full bg-status-warning/10 border-2 border-status-warning/30 flex items-center justify-center">
+          <AlertTriangle className="h-10 w-10 text-status-warning" />
+        </div>
+
+        {/* Title + description */}
+        <div className="space-y-3 max-w-sm">
+          <h1 className="text-2xl font-bold text-text-brand-primary">
+            Account Suspended
           </h1>
-          <p className="text-xs text-white/40 mt-1">
-            by Nav Wireless Technologies Pvt. Ltd.
+          <p className="text-sm text-text-brand-secondary leading-relaxed">
+            Your account has been temporarily suspended by an administrator.
+            Please contact support to resolve this matter.
           </p>
         </div>
 
-        {/* Main Card */}
-        <Card className="bg-slate-900/80 border-red-500/20 backdrop-blur-xl shadow-2xl">
-          <CardContent className="pt-8 pb-8 px-6 text-center space-y-6">
-            {/* Icon */}
-            <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <Ban className="h-8 w-8 text-red-400" />
-            </div>
+        {/* User info */}
+        <div className="w-full max-w-sm bg-surface-card rounded-xl border border-surface-border p-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-brand-muted flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </span>
+            <span className="text-text-brand-primary font-medium truncate ml-4">
+              {user?.email || "—"}
+            </span>
+          </div>
+        </div>
 
-            {/* Title */}
-            <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-white">
-                Account Suspended
-              </h2>
-              <p className="text-sm text-white/50 leading-relaxed">
-                Your account has been suspended. If you believe this is an
-                error, please contact our support team for assistance.
-              </p>
-            </div>
+        {/* What this means */}
+        <div className="w-full max-w-sm bg-surface-card rounded-xl border border-surface-border p-5 text-left">
+          <h3 className="text-xs font-semibold text-text-brand-secondary uppercase tracking-wider mb-3">
+            What this means
+          </h3>
+          <ul className="space-y-2.5">
+            {[
+              { icon: Database, text: "Your saved data is preserved" },
+              { icon: ShieldOff, text: "You cannot run analyses or download reports" },
+              { icon: MessageSquare, text: "Contact the administrator to resolve this" },
+            ].map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-start gap-2.5">
+                <Icon className="h-4 w-4 text-status-warning mt-0.5 flex-shrink-0" />
+                <span className="text-sm text-text-brand-secondary">{text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-            {/* User info */}
-            <div className="bg-white/[0.03] rounded-xl border border-white/[0.06] p-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-white/40 flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5" />
-                  Email
-                </span>
-                <span className="text-white/80 font-medium truncate ml-4">
-                  {user?.email || "—"}
-                </span>
-              </div>
-            </div>
+        {/* Actions */}
+        <div className="w-full max-w-sm space-y-3">
+          <Button
+            variant="outline"
+            asChild
+            className="w-full border-surface-border-light text-text-brand-secondary hover:text-text-brand-primary hover:bg-surface-overlay"
+          >
+            <a href={`mailto:${BRAND.adminEmail}`}>Contact Admin</a>
+          </Button>
 
-            {/* Actions */}
-            <div className="space-y-3">
-              <Button
-                variant="outline"
-                asChild
-                className="w-full border-white/10 text-white/70 hover:text-white hover:bg-white/5"
-              >
-                <a href="mailto:support@findlos.com">Contact Support</a>
-              </Button>
+          <Button
+            variant="ghost"
+            onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+            className="w-full text-text-brand-muted hover:text-text-brand-secondary hover:bg-surface-overlay"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
 
-              <Button
-                variant="ghost"
-                onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-                className="w-full text-white/40 hover:text-white/70 hover:bg-white/5"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Support */}
+        <p className="text-xs text-text-brand-disabled">
+          Need help? Contact{" "}
+          <a
+            href={`mailto:${BRAND.supportEmail}`}
+            className="text-brand-400 hover:text-brand-300 underline underline-offset-2"
+          >
+            {BRAND.supportEmail}
+          </a>
+        </p>
       </div>
-    </div>
+    </PageShell>
   );
 }

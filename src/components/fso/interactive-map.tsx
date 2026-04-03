@@ -5,6 +5,7 @@ import { GoogleMap, Marker, OverlayView } from '@react-google-maps/api';
 import { Layers } from 'lucide-react';
 import type { PointCoordinates, AnalysisResult, PlacementMode, MapNavigationTarget, MapContextMenuState, SavedLink } from '@/types';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
+import type { MapToolId } from '@/types/map-tools'; // Phase 11
 import { cn } from '@/lib/utils';
 import { useGoogleMapsLoader, GoogleMapsScriptGuard } from '@/components/GoogleMapsLoaderProvider';
 import { decodePolyline } from '@/lib/polyline-decoder';
@@ -39,6 +40,18 @@ interface InteractiveMapProps {
   onSavedLinkClick?: (link: SavedLink) => void;
   /** Selected device ID for range circle (Phase 6C) */
   selectedDeviceId?: string | null;
+
+  // ── Phase 11: Map tools integration ──
+  /** Callback when Google Map instance is ready or unmounted */
+  onMapReady?: (map: google.maps.Map | null) => void;
+  /** Currently active map tool ID */
+  activeMapTool?: MapToolId | null;
+  /** Callback for map clicks when a tool is active */
+  onToolMapClick?: (latLng: google.maps.LatLng) => void;
+  /** Callback for map double-clicks when a tool is active */
+  onToolMapDoubleClick?: (latLng: google.maps.LatLng) => void;
+  /** Cursor style override from active tool */
+  toolCursor?: string;
 }
 
 const defaultCenter = { lat: 20.5937, lng: 78.9629 };
@@ -82,6 +95,8 @@ function InteractiveMapInner({
   analysisResult, isStale, currentDistanceKm, fiberPathResult,
   mapNavigationTarget, onContextMenu, savedLinks, onSavedLinkClick,
   selectedDeviceId,
+  // Phase 11 props
+  onMapReady, activeMapTool, onToolMapClick, onToolMapDoubleClick, toolCursor,
 }: Omit<InteractiveMapProps, 'mapContainerClassName'>) {
   const mapRef = useRef<google.maps.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,6 +136,14 @@ function InteractiveMapInner({
 
   const savedLinksRef = useRef(savedLinks);
   savedLinksRef.current = savedLinks;
+
+  // Phase 11: Keep refs for tool callbacks to avoid stale closures
+  const onToolMapClickRef = useRef(onToolMapClick);
+  onToolMapClickRef.current = onToolMapClick;
+  const onToolMapDoubleClickRef = useRef(onToolMapDoubleClick);
+  onToolMapDoubleClickRef.current = onToolMapDoubleClick;
+  const activeMapToolRef = useRef(activeMapTool);
+  activeMapToolRef.current = activeMapTool;
 
   // Resolve device max range in meters
   const deviceMaxRangeMeters = useMemo(() => {
@@ -317,20 +340,23 @@ function InteractiveMapInner({
         projectionOverlayRef.current = createProjectionOverlay(mapInstance);
       } catch { /* projection will use fallback */ }
     }
-  }, []);
+    // Phase 11: Notify parent that map is ready
+    onMapReady?.(mapInstance);
+  }, [onMapReady]);
 
   const handleMapUnmount = useCallback(() => {
     if (projectionOverlayRef.current) {
       projectionOverlayRef.current.setMap(null);
       projectionOverlayRef.current = null;
     }
-    // Clean up device range circle
     if (deviceRangeCircleRef.current) {
       deviceRangeCircleRef.current.setMap(null);
       deviceRangeCircleRef.current = null;
     }
+    // Phase 11: Notify parent that map is gone
+    onMapReady?.(null);
     mapRef.current = null;
-  }, []);
+  }, [onMapReady]);
 
   const handleInternalMapClick = useCallback((event: google.maps.MapMouseEvent) => {
     if (suppressNextClickRef.current) {
@@ -339,12 +365,27 @@ function InteractiveMapInner({
     }
     setHoveredLinkInfo(null);
     setShowLayerMenu(false);
+
+    // Phase 11: If a tool is active, delegate click to tool handler
+    if (activeMapToolRef.current && event.latLng && onToolMapClickRef.current) {
+      onToolMapClickRef.current(event.latLng);
+      return; // Don't process as placement click
+    }
+
     if (!onMapClick) return;
     if (placementMode === null || placementMode === undefined) return;
     const pointId = placementMode === 'B' ? 'pointB' : 'pointA';
     onMapClick(event, pointId);
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
   }, [onMapClick, placementMode]);
+
+  // Phase 11: Handle double-click for multi-click tools
+  const handleInternalMapDoubleClick = useCallback((event: google.maps.MapMouseEvent) => {
+    if (activeMapToolRef.current && event.latLng && onToolMapDoubleClickRef.current) {
+      event.stop?.();
+      onToolMapDoubleClickRef.current(event.latLng);
+    }
+  }, []);
 
   const handleRightClick = useCallback((event: google.maps.MapMouseEvent) => {
     if (!onContextMenu || !event.latLng) return;
@@ -452,13 +493,11 @@ function InteractiveMapInner({
     if (!isMapApiLoaded || !mapRef.current) return;
     const map = mapRef.current;
 
-    // Clean up existing circle
     if (deviceRangeCircleRef.current) {
       deviceRangeCircleRef.current.setMap(null);
       deviceRangeCircleRef.current = null;
     }
 
-    // Draw new circle if device is selected and point A exists
     if (deviceMaxRangeMeters !== null && pALat !== undefined && pALng !== undefined) {
       const circleColor = isPointBOutsideRange ? DEVICE_RANGE_CIRCLE_OUT_COLOR : DEVICE_RANGE_CIRCLE_COLOR;
 
@@ -474,10 +513,6 @@ function InteractiveMapInner({
         clickable: false,
         zIndex: 0,
       });
-
-      // Use dash pattern via icons for dashed border effect
-      // Google Maps Circle doesn't support dashed lines natively,
-      // so we use a lower opacity solid line which looks clean
     }
 
     return () => {
@@ -603,10 +638,14 @@ function InteractiveMapInner({
     setShowLayerMenu(false);
   }, []);
 
+  // Phase 11: Apply tool cursor style
+  const cursorStyle = activeMapTool && toolCursor ? toolCursor : undefined;
+
   return (
     <div
       ref={containerRef}
       className="relative w-full h-full touch-manipulation"
+      style={cursorStyle ? { cursor: cursorStyle } : undefined}
       onMouseEnter={handleMouseOver}
       onMouseLeave={handleMouseOut}
     >
@@ -615,9 +654,12 @@ function InteractiveMapInner({
         center={defaultCenter} zoom={defaultZoom}
         onLoad={handleActualMapLoad} onUnmount={handleMapUnmount}
         onClick={handleInternalMapClick}
+        onDblClick={handleInternalMapDoubleClick}
         onRightClick={handleRightClick}
         onMouseMove={handleMouseMove}
-        options={{}}
+        options={{
+          disableDoubleClickZoom: !!activeMapTool, // Phase 11: disable zoom on dblclick when tool active
+        }}
       >
         {formPointA && pALat !== undefined && pALng !== undefined && markerIconA && (
           <>
@@ -689,9 +731,14 @@ function InteractiveMapInner({
       <CursorCoordinates lat={cursorLat} lng={cursorLng} isVisible={isCursorOnMap} />
 
       {/* Placement mode edge glow */}
-      {placementMode && (
+      {placementMode && !activeMapTool && (
         <div className={cn("absolute inset-0 pointer-events-none z-10 rounded-sm border-2 transition-colors duration-300",
           placementMode === 'A' ? "border-emerald-500/40" : "border-blue-500/40")} />
+      )}
+
+      {/* Phase 11: Tool active edge glow */}
+      {activeMapTool && (
+        <div className="absolute inset-0 pointer-events-none z-10 rounded-sm border-2 border-brand-500/30 transition-colors duration-300" />
       )}
 
       {/* ── Layers button (bottom-right, single button) ── */}
@@ -783,6 +830,9 @@ const InteractiveMap = React.memo(function InteractiveMap({ mapContainerClassNam
   if (prevProps.pointB?.lat !== nextProps.pointB?.lat) return false;
   if (prevProps.pointB?.lng !== nextProps.pointB?.lng) return false;
   if (prevProps.pointB?.name !== nextProps.pointB?.name) return false;
+  // Phase 11: Also re-render when tool state changes
+  if (prevProps.activeMapTool !== nextProps.activeMapTool) return false;
+  if (prevProps.toolCursor !== nextProps.toolCursor) return false;
   return true;
 });
 

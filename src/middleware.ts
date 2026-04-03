@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/api/razorpay/webhook",
   "/terms",
   "/privacy",
+  "/globe",
 ];
 
 // Routes accessible by any authenticated user regardless of approval status

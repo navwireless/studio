@@ -76,6 +76,32 @@ body {
     --sai-right: env(safe-area-inset-right, 0px);
     --sai-bottom: env(safe-area-inset-bottom, 0px);
     --sai-left: env(safe-area-inset-left, 0px);
+
+    /* =========================================================================
+       Brand Design Tokens — CSS Custom Properties (Phase 8A)
+       ========================================================================= */
+    --brand-500: #0066FF;
+    --brand-600: #0052CC;
+
+    --surface-bg: #060A10;
+    --surface-base: #0A0F18;
+    --surface-card: #111827;
+    --surface-elevated: #1A2332;
+    --surface-overlay: #243044;
+    --surface-border: #1E293B;
+    --surface-border-light: #334155;
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-muted: #64748B;
+    --text-disabled: #475569;
+    --text-inverse: #0F172A;
+
+    --header-height: 56px;
+    --header-height-mobile: 48px;
+    --page-max-width: 1400px;
+    --page-padding-x: 1.5rem;
+    --page-padding-x-mobile: 1rem;
   }
 
   .dark {
@@ -224,6 +250,101 @@ body {
 
 .text-los-failure-foreground {
   color: hsl(var(--los-failure-foreground));
+}
+
+/* =============================================================================
+   Brand Layout Utilities (Phase 8A)
+   ============================================================================= */
+
+/* Height accounting for header — use on content below the global header */
+.h-below-header {
+  height: calc(100vh - var(--header-height));
+  height: calc(100dvh - var(--header-height));
+}
+
+.min-h-below-header {
+  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100dvh - var(--header-height));
+}
+
+@media (max-width: 767px) {
+  .h-below-header {
+    height: calc(100vh - var(--header-height-mobile));
+    height: calc(100dvh - var(--header-height-mobile));
+  }
+
+  .min-h-below-header {
+    min-height: calc(100vh - var(--header-height-mobile));
+    min-height: calc(100dvh - var(--header-height-mobile));
+  }
+}
+
+/* Page content container */
+.page-container {
+  max-width: var(--page-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--page-padding-x);
+  padding-right: var(--page-padding-x);
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    padding-left: var(--page-padding-x-mobile);
+    padding-right: var(--page-padding-x-mobile);
+  }
+}
+
+/* Brand surface backgrounds */
+.bg-surface-bg {
+  background-color: var(--surface-bg);
+}
+
+.bg-surface-base {
+  background-color: var(--surface-base);
+}
+
+.bg-surface-card {
+  background-color: var(--surface-card);
+}
+
+.bg-surface-elevated {
+  background-color: var(--surface-elevated);
+}
+
+.bg-surface-overlay {
+  background-color: var(--surface-overlay);
+}
+
+/* Brand surface borders */
+.border-surface {
+  border-color: var(--surface-border);
+}
+
+.border-surface-light {
+  border-color: var(--surface-border-light);
+}
+
+/* Brand text colors */
+.text-brand-primary {
+  color: var(--text-primary);
+}
+
+.text-brand-secondary {
+  color: var(--text-secondary);
+}
+
+.text-brand-muted {
+  color: var(--text-muted);
+}
+
+.text-brand-disabled {
+  color: var(--text-disabled);
+}
+
+/* Pro badge gradient */
+.bg-pro-gradient {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
 }
 
 /* =============================================================================
@@ -615,4 +736,49 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Phase 9 — Custom Animations
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    border-color: currentColor;
+    opacity: 1;
+  }
+  50% {
+    border-color: currentColor;
+    opacity: 0.7;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 102, 255, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 102, 255, 0.3);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
 }

@@ -88,13 +88,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     return (
                         <div
                             key={item.href}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/20 cursor-not-allowed"
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-brand-disabled cursor-not-allowed"
                         >
                             {item.icon}
                             <span className="text-sm">{item.label}</span>
                             <Badge
                                 variant="outline"
-                                className="ml-auto text-[0.55rem] h-4 px-1.5 border-white/10 text-white/20"
+                                className="ml-auto text-[0.55rem] h-4 px-1.5 border-surface-border text-text-brand-disabled"
                             >
                                 Soon
                             </Badge>
@@ -112,8 +112,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                         className={cn(
                             "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                             active
-                                ? "bg-white/10 text-white border border-white/10"
-                                : "text-white/50 hover:text-white/80 hover:bg-white/5 border border-transparent"
+                                ? "bg-surface-overlay text-text-brand-primary border border-surface-border-light"
+                                : "text-text-brand-muted hover:text-text-brand-secondary hover:bg-surface-elevated border border-transparent"
                         )}
                     >
                         {item.icon}
@@ -138,39 +138,39 @@ export default function AdminSidebar() {
                     <SheetTrigger asChild>
                         <Button
                             size="icon"
-                            className="h-10 w-10 rounded-full bg-slate-800 border border-white/10 shadow-lg hover:bg-slate-700"
+                            className="h-10 w-10 rounded-full bg-surface-card border border-surface-border shadow-lg hover:bg-surface-elevated"
                         >
                             {open ? (
-                                <X className="h-4 w-4 text-white" />
+                                <X className="h-4 w-4 text-text-brand-primary" />
                             ) : (
-                                <Menu className="h-4 w-4 text-white" />
+                                <Menu className="h-4 w-4 text-text-brand-primary" />
                             )}
                         </Button>
                     </SheetTrigger>
                     <SheetContent
                         side="left"
-                        className="w-64 bg-slate-900 border-r border-white/[0.06] p-0"
+                        className="w-64 bg-surface-card border-r border-surface-border p-0"
                     >
                         <SheetHeader className="px-4 pt-4 pb-2">
-                            <SheetTitle className="text-sm font-semibold text-white/70">
+                            <SheetTitle className="text-sm font-semibold text-text-brand-secondary">
                                 Admin Panel
                             </SheetTitle>
                         </SheetHeader>
-                        <Separator className="bg-white/[0.06]" />
+                        <Separator className="bg-surface-border" />
                         <SidebarNav onNavigate={() => setOpen(false)} />
                     </SheetContent>
                 </Sheet>
             </div>
 
             {/* Desktop sidebar */}
-            <aside className="hidden lg:flex flex-col w-56 flex-shrink-0 bg-slate-900/60 border-r border-white/[0.04]">
+            <aside className="hidden lg:flex flex-col w-56 flex-shrink-0 bg-surface-card/60 border-r border-surface-border">
                 <div className="px-4 py-3">
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                    <p className="text-xs font-semibold text-text-brand-muted uppercase tracking-wider">
                         Admin Panel
                     </p>
                 </div>
-                <Separator className="bg-white/[0.06]" />
-                <div className="flex-1 overflow-y-auto">
+                <Separator className="bg-surface-border" />
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <SidebarNav />
                 </div>
             </aside>

@@ -57,7 +57,7 @@ function getTypeBadge(type: string) {
     };
     const s = map[type] || {
         label: type.replace(/_/g, " "),
-        className: "bg-white/5 text-white/40 border-white/10",
+        className: "bg-surface-elevated text-text-brand-muted border-surface-border",
     };
     return (
         <Badge variant="outline" className={`text-[0.6rem] ${s.className}`}>
@@ -126,8 +126,8 @@ export default function CreditLogsPage() {
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-xl font-bold text-white">Credit Logs</h1>
-                <p className="text-sm text-white/40 mt-1">
+                <h1 className="text-xl font-bold text-text-brand-primary">Credit Logs</h1>
+                <p className="text-sm text-text-brand-muted mt-1">
                     All credit transactions across the platform ({total} total)
                 </p>
             </div>
@@ -140,13 +140,13 @@ export default function CreditLogsPage() {
                         value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 flex-1"
+                        className="bg-surface-elevated border-surface-border-light text-text-brand-primary placeholder:text-text-brand-disabled flex-1"
                     />
                     <Button
                         onClick={handleSearch}
                         size="sm"
                         variant="outline"
-                        className="border-white/10 text-white/60 hover:text-white"
+                        className="border-surface-border-light text-text-brand-secondary hover:text-text-brand-primary"
                     >
                         <Search className="h-4 w-4" />
                     </Button>
@@ -158,7 +158,7 @@ export default function CreditLogsPage() {
                         setPage(1);
                     }}
                 >
-                    <SelectTrigger className="w-[160px] h-9 text-xs bg-white/5 border-white/10 text-white">
+                    <SelectTrigger className="w-[160px] h-9 text-xs bg-surface-elevated border-surface-border-light text-text-brand-primary">
                         <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -173,49 +173,49 @@ export default function CreditLogsPage() {
             </div>
 
             {/* Table */}
-            <Card className="bg-card/80 backdrop-blur-sm border-white/[0.06]">
+            <Card className="bg-surface-card border-surface-border">
                 <CardHeader className="pb-0">
-                    <CardTitle className="text-sm font-semibold text-white">
+                    <CardTitle className="text-sm font-semibold text-text-brand-primary">
                         Transactions
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4">
                     {isLoading ? (
                         <div className="text-center py-12">
-                            <div className="h-6 w-6 border-2 border-teal-400/30 border-t-teal-400 rounded-full animate-spin mx-auto" />
-                            <p className="text-sm text-white/30 mt-3">Loading transactions...</p>
+                            <div className="h-6 w-6 border-2 border-brand-500/30 border-t-brand-500 rounded-full animate-spin mx-auto" />
+                            <p className="text-sm text-text-brand-disabled mt-3">Loading transactions...</p>
                         </div>
                     ) : items.length === 0 ? (
                         <div className="text-center py-12">
-                            <p className="text-sm text-white/40">No transactions found.</p>
+                            <p className="text-sm text-text-brand-muted">No transactions found.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="border-white/[0.06] hover:bg-transparent">
-                                        <TableHead className="text-xs text-white/40">Date</TableHead>
-                                        <TableHead className="text-xs text-white/40">User</TableHead>
-                                        <TableHead className="text-xs text-white/40">Type</TableHead>
-                                        <TableHead className="text-xs text-white/40 text-right">Amount</TableHead>
-                                        <TableHead className="text-xs text-white/40 text-right">Balance</TableHead>
-                                        <TableHead className="text-xs text-white/40">Reason</TableHead>
-                                        <TableHead className="text-xs text-white/40">By</TableHead>
+                                    <TableRow className="border-surface-border hover:bg-transparent">
+                                        <TableHead className="text-xs text-text-brand-muted">Date</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted">User</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted">Type</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted text-right">Amount</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted text-right">Balance</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted">Reason</TableHead>
+                                        <TableHead className="text-xs text-text-brand-muted">By</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {items.map((item) => (
                                         <TableRow
                                             key={item.id}
-                                            className="border-white/[0.03] hover:bg-white/[0.02]"
+                                            className="border-surface-border hover:bg-surface-elevated/50"
                                         >
-                                            <TableCell className="text-xs text-white/50 whitespace-nowrap">
+                                            <TableCell className="text-xs text-text-brand-muted whitespace-nowrap">
                                                 {format(new Date(item.createdAt), "MMM d, h:mm a")}
                                             </TableCell>
                                             <TableCell>
                                                 <Link
                                                     href={`/admin/users/${item.userId}`}
-                                                    className="text-xs text-teal-400 hover:text-teal-300 hover:underline truncate max-w-[160px] block"
+                                                    className="text-xs text-brand-400 hover:text-brand-300 hover:underline truncate max-w-[160px] block"
                                                 >
                                                     {item.userEmail}
                                                 </Link>
@@ -230,13 +230,13 @@ export default function CreditLogsPage() {
                                                     {item.amount}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-xs text-white/40 text-right whitespace-nowrap">
+                                            <TableCell className="text-xs text-text-brand-muted text-right whitespace-nowrap">
                                                 {item.balanceBefore} → {item.balanceAfter}
                                             </TableCell>
-                                            <TableCell className="text-xs text-white/50 max-w-[200px] truncate">
+                                            <TableCell className="text-xs text-text-brand-muted max-w-[200px] truncate">
                                                 {item.reason}
                                             </TableCell>
-                                            <TableCell className="text-xs text-white/30 whitespace-nowrap">
+                                            <TableCell className="text-xs text-text-brand-disabled whitespace-nowrap">
                                                 {item.performedBy || "System"}
                                             </TableCell>
                                         </TableRow>
@@ -249,7 +249,7 @@ export default function CreditLogsPage() {
                     {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between pt-4">
-                            <p className="text-xs text-white/30">
+                            <p className="text-xs text-text-brand-disabled">
                                 Showing {(page - 1) * pageSize + 1}–
                                 {Math.min(page * pageSize, total)} of {total}
                             </p>
@@ -259,11 +259,11 @@ export default function CreditLogsPage() {
                                     variant="ghost"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={page === 1}
-                                    className="h-7 w-7 p-0 text-white/40 hover:text-white"
+                                    className="h-7 w-7 p-0 text-text-brand-muted hover:text-text-brand-primary"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
                                 </Button>
-                                <span className="text-xs text-white/50 px-2">
+                                <span className="text-xs text-text-brand-muted px-2">
                                     {page} / {totalPages}
                                 </span>
                                 <Button
@@ -271,7 +271,7 @@ export default function CreditLogsPage() {
                                     variant="ghost"
                                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                     disabled={page === totalPages}
-                                    className="h-7 w-7 p-0 text-white/40 hover:text-white"
+                                    className="h-7 w-7 p-0 text-text-brand-muted hover:text-text-brand-primary"
                                 >
                                     <ChevronRight className="h-4 w-4" />
                                 </Button>

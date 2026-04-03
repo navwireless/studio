@@ -321,8 +321,8 @@ export default function BulkLosAnalyzerPage() {
 
   if (!isClient) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="w-full h-screen flex items-center justify-center bg-surface-base">
+        <Loader2 className="h-12 w-12 animate-spin text-brand-500" />
       </div>
     );
   }
@@ -340,12 +340,12 @@ export default function BulkLosAnalyzerPage() {
       />
 
       <ErrorBoundary>
-        <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-hidden">
+        <div className="flex-1 flex flex-col p-2 sm:p-4 md:p-6 lg:p-8 overflow-hidden bg-surface-base">
           <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
-            <Card className="shadow-xl bg-card/90 backdrop-blur-sm flex flex-col overflow-hidden max-h-[calc(100vh-theme(spacing.24))] overflow-y-auto custom-scrollbar">
+            <Card className="shadow-xl bg-surface-card border-surface-border flex flex-col overflow-hidden max-h-[calc(100vh-theme(spacing.24))] overflow-y-auto custom-scrollbar">
               <CardHeader>
-                <CardTitle className="text-xl md:text-2xl">Bulk Line-of-Sight Analyzer</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl md:text-2xl text-text-brand-primary">Bulk Line-of-Sight Analyzer</CardTitle>
+                <CardDescription className="text-text-brand-muted">
                   Upload a KMZ file, set parameters, and analyze LOS for multiple point pairs. Optionally calculate fiber paths.
                   {plan === 'free' && (
                     <span className="block mt-1 text-purple-400 font-medium">
@@ -388,8 +388,8 @@ export default function BulkLosAnalyzerPage() {
 
                 {kmzPlacemarks.length > 0 && (
                   <div className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-6 min-h-[50vh]">
-                    <Separator className="my-4 xl:col-span-2" />
-                    <h3 className="text-lg font-semibold mb-2 xl:col-span-2">Visualizations & Analytics</h3>
+                    <Separator className="my-4 xl:col-span-2 bg-surface-border" />
+                    <h3 className="text-lg font-semibold mb-2 xl:col-span-2 text-text-brand-primary">Visualizations & Analytics</h3>
                     <MapErrorBoundary>
                       <BulkAnalysisMap placemarks={kmzPlacemarks} results={bulkResults} />
                     </MapErrorBoundary>
@@ -399,7 +399,7 @@ export default function BulkLosAnalyzerPage() {
 
                 {bulkResults.length > 0 && !isProcessing && (
                   <div className="mt-6">
-                    <Separator className="my-4" />
+                    <Separator className="my-4 bg-surface-border" />
                     <BulkAnalysisResultsTable results={bulkResults} analysisParams={form.getValues()} />
                   </div>
                 )}
