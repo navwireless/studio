@@ -27,7 +27,7 @@ export const PointInputSchema = z.object({
       invalid_type_error: 'Tower height must be a number',
     })
     .min(0, 'Minimum tower height is 0m')
-    .max(100, 'Maximum tower height is 100m'),
+    .max(500, 'Maximum tower height is 500m'),
 });
 
 /**

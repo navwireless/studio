@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   MapToolId,
   ToolResult,
@@ -81,7 +81,24 @@ export interface UseMapToolsReturn {
   toggleResultVisibility: (key: string) => void;
   /** Remove one saved tool result overlay set */
   removeResult: (key: string) => void;
+  /** Update data fields of a saved tool result (e.g., rename placemark) */
+  updateResultData: (key: string, updates: Record<string, unknown>) => void;
 }
+
+interface PersistedToolResult {
+  toolId: MapToolId;
+  timestamp: number;
+  data: Record<string, unknown>;
+  hidden?: boolean;
+}
+
+const PERSIST_KEY = 'findlos_map_tool_results_v1';
+const PERSISTABLE_TOOL_IDS = new Set<MapToolId>([
+  'placemark',
+  'measure-area',
+  'range-rings',
+  'multi-measure',
+]);
 
 function getResultKey(result: ToolResult): string {
   return `${result.toolId}:${result.timestamp}`;
@@ -93,6 +110,186 @@ function setOverlaysMap(overlays: google.maps.MVCObject[], map: google.maps.Map 
       (overlay as google.maps.Marker).setMap(map);
     }
   });
+}
+
+function loadPersistedResults(): PersistedToolResult[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = localStorage.getItem(PERSIST_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((item): item is PersistedToolResult => {
+        if (!item || typeof item !== 'object') return false;
+        const candidate = item as Record<string, unknown>;
+        return (
+          typeof candidate.toolId === 'string' &&
+          typeof candidate.timestamp === 'number' &&
+          candidate.data !== null &&
+          typeof candidate.data === 'object'
+        );
+      })
+      .slice(0, MAX_TOOL_RESULTS);
+  } catch {
+    return [];
+  }
+}
+
+function persistResults(results: ToolResult[], hiddenKeys: Set<string>): void {
+  if (typeof window === 'undefined') return;
+
+  const serializable: PersistedToolResult[] = results
+    .filter((result) => {
+      if (!PERSISTABLE_TOOL_IDS.has(result.toolId)) return false;
+      const isFinal = result.data.isFinal as boolean | undefined;
+      return isFinal !== false;
+    })
+    .slice(0, MAX_TOOL_RESULTS)
+    .map((result) => {
+      const key = getResultKey(result);
+      return {
+        toolId: result.toolId,
+        timestamp: result.timestamp,
+        data: result.data,
+        hidden: hiddenKeys.has(key),
+      };
+    });
+
+  try {
+    localStorage.setItem(PERSIST_KEY, JSON.stringify(serializable));
+  } catch {
+    // Ignore quota/unavailable storage failures.
+  }
+}
+
+function restoreResultOverlays(
+  persisted: PersistedToolResult,
+  map: google.maps.Map,
+): google.maps.MVCObject[] {
+  const overlays: google.maps.MVCObject[] = [];
+  const data = persisted.data;
+
+  if (persisted.toolId === 'placemark') {
+    const placemarks = Array.isArray(data.allPlacemarks)
+      ? (data.allPlacemarks as Array<Record<string, unknown>>)
+      : [];
+
+    placemarks.forEach((placemark, index) => {
+      const lat = typeof placemark.lat === 'number' ? placemark.lat : null;
+      const lng = typeof placemark.lng === 'number' ? placemark.lng : null;
+      if (lat === null || lng === null) return;
+
+      const marker = new google.maps.Marker({
+        map,
+        position: { lat, lng },
+        label: {
+          text: String(index + 1),
+          color: '#ffffff',
+          fontSize: '11px',
+          fontWeight: 'bold',
+        },
+      });
+      overlays.push(marker);
+    });
+
+    return overlays;
+  }
+
+  if (persisted.toolId === 'measure-area') {
+    const vertices = Array.isArray(data.vertices)
+      ? (data.vertices as Array<Record<string, unknown>>)
+      : [];
+    const path = vertices
+      .map((v) => ({
+        lat: typeof v.lat === 'number' ? v.lat : null,
+        lng: typeof v.lng === 'number' ? v.lng : null,
+      }))
+      .filter((p): p is { lat: number; lng: number } => p.lat !== null && p.lng !== null);
+
+    if (path.length >= 3) {
+      const polygon = new google.maps.Polygon({
+        map,
+        paths: path,
+        strokeColor: '#22d3ee',
+        strokeOpacity: 1,
+        strokeWeight: 2,
+        fillColor: '#22d3ee33',
+        fillOpacity: 0.2,
+        clickable: false,
+      });
+      overlays.push(polygon);
+    }
+
+    return overlays;
+  }
+
+  if (persisted.toolId === 'range-rings') {
+    const centerLat = typeof data.centerLat === 'number' ? data.centerLat : null;
+    const centerLng = typeof data.centerLng === 'number' ? data.centerLng : null;
+    const radiusRaw = typeof data.radiusRaw === 'number' ? data.radiusRaw : null;
+
+    if (centerLat !== null && centerLng !== null && radiusRaw !== null && radiusRaw > 0) {
+      const circle = new google.maps.Circle({
+        map,
+        center: { lat: centerLat, lng: centerLng },
+        radius: radiusRaw,
+        strokeColor: '#f97316',
+        strokeOpacity: 0.95,
+        strokeWeight: 2,
+        fillColor: '#f9731633',
+        fillOpacity: 0.16,
+        clickable: false,
+      });
+      overlays.push(circle);
+    }
+
+    return overlays;
+  }
+
+  if (persisted.toolId === 'multi-measure') {
+    const points = Array.isArray(data.points)
+      ? (data.points as Array<Record<string, unknown>>)
+      : [];
+
+    const path = points
+      .map((p) => ({
+        lat: typeof p.lat === 'number' ? p.lat : null,
+        lng: typeof p.lng === 'number' ? p.lng : null,
+      }))
+      .filter((p): p is { lat: number; lng: number } => p.lat !== null && p.lng !== null);
+
+    if (path.length >= 2) {
+      const polyline = new google.maps.Polyline({
+        map,
+        path,
+        strokeColor: '#4ade80',
+        strokeOpacity: 1,
+        strokeWeight: 3,
+        clickable: false,
+      });
+      overlays.push(polyline);
+
+      path.forEach((point, index) => {
+        const marker = new google.maps.Marker({
+          map,
+          position: point,
+          label: {
+            text: String(index + 1),
+            color: '#ffffff',
+            fontSize: '10px',
+            fontWeight: 'bold',
+          },
+        });
+        overlays.push(marker);
+      });
+    }
+  }
+
+  return overlays;
 }
 
 // ─── Handler Resolution ─────────────────────────────────────────────
@@ -152,6 +349,7 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [latestResult, setLatestResult] = useState<ToolResult | null>(null);
   const [hiddenResultKeys, setHiddenResultKeys] = useState<Set<string>>(new Set());
+  const hydratedRef = useRef(false);
 
   // Handler cache — created lazily
   const handlersRef = useRef<Map<MapToolId, ToolHandler>>(new Map());
@@ -167,6 +365,54 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
     return handler;
   }, []);
 
+  useEffect(() => {
+    if (hydratedRef.current) return;
+
+    const map = config.getMap();
+    if (!map) return;
+
+    const persisted = loadPersistedResults();
+    const restored: ToolResult[] = persisted
+      .map((item) => {
+        const overlays = restoreResultOverlays(item, map);
+        if (!overlays.length) return null;
+
+        return {
+          toolId: item.toolId,
+          timestamp: item.timestamp,
+          data: item.data,
+          overlays,
+        } as ToolResult;
+      })
+      .filter((result): result is ToolResult => !!result)
+      .slice(0, MAX_TOOL_RESULTS);
+
+    const hidden = new Set(
+      persisted
+        .filter((item) => item.hidden)
+        .map((item) => `${item.toolId}:${item.timestamp}`),
+    );
+
+    restored.forEach((result) => {
+      const key = getResultKey(result);
+      if (hidden.has(key)) {
+        setOverlaysMap(result.overlays, null);
+      }
+    });
+
+    setState((prev) => ({
+      ...prev,
+      results: restored,
+    }));
+    setHiddenResultKeys(hidden);
+    hydratedRef.current = true;
+  }, [config]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    persistResults(state.results, hiddenResultKeys);
+  }, [state.results, hiddenResultKeys]);
+
   const buildActivateOptions = useCallback((): ToolActivateOptions | null => {
     const map = config.getMap();
     if (!map) return null;
@@ -175,6 +421,13 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
       map,
       onResult: (result: ToolResult) => {
         setLatestResult(result);
+
+        // Live inclinometer updates are high-frequency stream events.
+        // Keep them out of persisted/history state to prevent render churn.
+        if (result.toolId === 'level-tool' && result.data.live === true) {
+          return;
+        }
+
         setState((prev) => {
           const newResults = [result, ...prev.results].slice(0, MAX_TOOL_RESULTS);
 
@@ -235,6 +488,12 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
     (toolId: MapToolId) => {
       const map = config.getMap();
       if (!map) return;
+
+      // Ensure level sensor stream never survives when another tool is selected.
+      if (toolId !== 'level-tool') {
+        const levelHandler = handlersRef.current.get('level-tool');
+        levelHandler?.deactivate();
+      }
 
       // If same tool is active, deactivate it
       if (state.activeTool === toolId) {
@@ -304,7 +563,23 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
       const options = buildActivateOptions();
       if (!options) return;
 
-      handler.handleClick(latLng, options);
+      try {
+        handler.handleClick(latLng, options);
+      } catch (error) {
+        console.error(`Tool error (${state.activeTool}):`, error);
+        setStatusMessage('Tool error occurred. Please try again.');
+        setState((prev) => ({ ...prev, activeTool: null, isProcessing: false }));
+        
+        // Show error toast if available
+        if (typeof window !== 'undefined' && 'toast' in window) {
+          // @ts-expect-error - toast may be available globally
+          window.toast?.({
+            title: 'Tool Error',
+            description: 'An error occurred. The tool has been reset.',
+            variant: 'destructive',
+          });
+        }
+      }
     },
     [state.activeTool, buildActivateOptions],
   );
@@ -318,7 +593,13 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
       const options = buildActivateOptions();
       if (!options) return;
 
-      handler.handleDoubleClick(latLng, options);
+      try {
+        handler.handleDoubleClick(latLng, options);
+      } catch (error) {
+        console.error(`Tool error (${state.activeTool}):`, error);
+        setStatusMessage('Tool error occurred. Please try again.');
+        setState((prev) => ({ ...prev, activeTool: null, isProcessing: false }));
+      }
     },
     [state.activeTool, buildActivateOptions],
   );
@@ -337,6 +618,9 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
     }));
     setHiddenResultKeys(new Set());
     setLatestResult(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(PERSIST_KEY);
+    }
   }, [state.results]);
 
   const toggleResultVisibility = useCallback((key: string) => {
@@ -374,6 +658,25 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
     });
     setLatestResult((prev) => (prev && getResultKey(prev) === key ? null : prev));
   }, [state.results]);
+
+  // Phase 4: Update result data for inline editing (rename, color change)
+  const updateResultData = useCallback((key: string, updates: Record<string, unknown>) => {
+    setState((prev) => ({
+      ...prev,
+      results: prev.results.map((r) => {
+        if (getResultKey(r) !== key) return r;
+        return {
+          ...r,
+          data: { ...r.data, ...updates },
+        };
+      }),
+    }));
+    // Also update latest result if it matches
+    setLatestResult((prev) => {
+      if (!prev || getResultKey(prev) !== key) return prev;
+      return { ...prev, data: { ...prev.data, ...updates } };
+    });
+  }, []);
 
   const canFinishActiveTool = !!(
     state.activeTool && handlersRef.current.get(state.activeTool)?.handleDoubleClick
@@ -430,5 +733,6 @@ export function useMapTools(config: UseMapToolsConfig): UseMapToolsReturn {
     managedResults,
     toggleResultVisibility,
     removeResult,
+    updateResultData,
   };
 }

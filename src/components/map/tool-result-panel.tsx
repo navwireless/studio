@@ -246,6 +246,227 @@ function ToolResultContent({ result }: { result: ToolResult }) {
       );
     }
 
+    case 'level-tool': {
+      // Check if alignment mode is active
+      const alignmentMode = data.alignmentMode as boolean;
+      const availableLinks = data.availableLinks as Array<{
+        id: string;
+        name: string;
+        displayName: string;
+        pointA: { name: string; lat: number; lng: number; height: number };
+        pointB: { name: string; lat: number; lng: number; height: number };
+        distance: number;
+      }> | undefined;
+
+      // Basic inclinometer mode (no alignment)
+      if (!alignmentMode || !availableLinks || availableLinks.length === 0) {
+        if (data.sensorMode === false) {
+          // Desktop manual mode
+          return (
+            <div className="space-y-1.5">
+              <div className="text-[0.6rem] text-text-brand-muted mb-1">
+                {data.message as string}
+              </div>
+              {!!data.calculator && (
+                <div className="pt-1 border-t border-surface-border">
+                  <div className="text-[0.55rem] text-text-brand-muted mb-1">Manual Calculator</div>
+                  <p className="text-[0.6rem] text-text-brand-secondary leading-relaxed">
+                    {(data.calculator as Record<string, string>).description}
+                  </p>
+                </div>
+              )}
+              {Array.isArray(data.tips) && (
+                <div className="pt-1 border-t border-surface-border">
+                  <div className="text-[0.55rem] text-text-brand-muted mb-1">Tips</div>
+                  <ul className="space-y-0.5">
+                    {(data.tips as string[]).map((tip, i) => (
+                      <li key={i} className="text-[0.6rem] text-text-brand-secondary leading-relaxed">
+                        • {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Basic sensor mode
+        return (
+          <div className="space-y-1.5">
+            <ResultRow label="Pitch" value={data.pitch as string} />
+            <ResultRow label="Roll" value={data.roll as string} />
+            <ResultRow label="Tilt" value={data.tilt as string} large />
+            <ResultRow label="Heading" value={data.heading as string} />
+            <ResultRow label="Status" value={data.levelStatus as string} />
+          </div>
+        );
+      }
+
+      // Alignment mode with available links
+      // Desktop mode with target orientation
+      if (data.sensorMode === false && data.targetAzimuth !== undefined) {
+        return (
+          <div className="space-y-1.5">
+            <div className="text-[0.6rem] text-text-brand-muted mb-1">
+              Manual alignment mode - Use external tools
+            </div>
+            
+            {/* Target Orientation */}
+            <div className="pt-1 border-t border-surface-border">
+              <div className="text-[0.55rem] text-text-brand-muted mb-1">Target Orientation</div>
+              <ResultRow label="Azimuth" value={`${(data.targetAzimuth as number).toFixed(1)}° ${data.compassDirection || ''}`} large />
+              <ResultRow label="Elevation" value={`${(data.targetElevation as number).toFixed(1)}°`} large />
+              {!!data.alignmentDirection && (
+                <ResultRow label="Direction" value={data.alignmentDirection as string} compact />
+              )}
+            </div>
+            
+            {/* Manual Instructions */}
+            {Array.isArray(data.manualAlignmentInstructions) && (
+              <div className="pt-1 border-t border-surface-border">
+                <div className="text-[0.55rem] text-text-brand-muted mb-1">Instructions</div>
+                <ul className="space-y-0.5">
+                  {(data.manualAlignmentInstructions as string[]).map((instruction, i) => (
+                    <li key={i} className="text-[0.6rem] text-text-brand-secondary leading-relaxed">
+                      • {instruction}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {/* Available Links */}
+            {availableLinks && availableLinks.length > 0 && (
+              <div className="pt-1 border-t border-surface-border">
+                <div className="text-[0.55rem] text-text-brand-muted mb-1">Available Links ({availableLinks.length})</div>
+                <div className="space-y-0.5 max-h-20 overflow-y-auto">
+                  {availableLinks.map((link) => (
+                    <div
+                      key={link.id}
+                      className="text-[0.6rem] text-text-brand-secondary"
+                    >
+                      {link.displayName}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+      return (
+        <div className="space-y-1.5">
+          {/* Point Selection */}
+          <div className="pb-1 border-b border-surface-border">
+            <div className="text-[0.55rem] text-text-brand-muted mb-1">Available Links ({availableLinks.length})</div>
+            <div className="space-y-0.5 max-h-24 overflow-y-auto">
+              {availableLinks.map((link) => (
+                <div
+                  key={link.id}
+                  className="flex items-center justify-between text-[0.6rem] text-text-brand-secondary p-1 rounded hover:bg-surface-overlay/50 cursor-pointer"
+                >
+                  <span className="font-semibold">{link.displayName}</span>
+                  <span className="text-[0.55rem] text-text-brand-muted">
+                    {link.distance > 0 ? `${(link.distance / 1000).toFixed(2)} km` : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Current Sensor Readings */}
+          {!!data.sensorMode && (
+            <div className="space-y-0.5">
+              <div className="text-[0.55rem] text-text-brand-muted mb-1">Current Orientation</div>
+              <ResultRow label="Pitch" value={data.pitch as string} compact />
+              <ResultRow label="Roll" value={data.roll as string} compact />
+              <ResultRow label="Tilt" value={data.tilt as string} compact />
+              <ResultRow label="Heading" value={data.heading as string} compact />
+            </div>
+          )}
+
+          {/* Target Orientation (when link is selected) */}
+          {data.targetAzimuth !== undefined && data.targetElevation !== undefined && (
+            <div className="pt-1 border-t border-surface-border">
+              <div className="text-[0.55rem] text-text-brand-muted mb-1">Target Orientation</div>
+              <ResultRow label="Azimuth" value={`${(data.targetAzimuth as number).toFixed(1)}°`} large />
+              <ResultRow label="Elevation" value={`${(data.targetElevation as number).toFixed(1)}°`} large />
+              {!!data.alignmentDirection && (
+                <ResultRow label="Direction" value={data.alignmentDirection as string} compact />
+              )}
+            </div>
+          )}
+
+          {/* Real-Time Alignment Guidance */}
+          {data.currentAzimuth !== undefined && !!data.alignmentGuidance && (
+            <div className="pt-1 border-t border-surface-border">
+              <div className="text-[0.55rem] text-text-brand-muted mb-1">Alignment Guidance</div>
+              <ResultRow label="Current Azimuth" value={`${(data.currentAzimuth as number).toFixed(1)}°`} compact />
+              
+              {/* Alignment Status with Visual Feedback */}
+              {!!data.alignmentStatus && (
+                <div className={cn(
+                  "text-[0.65rem] font-semibold mt-1 p-1.5 rounded text-center",
+                  data.alignmentStatus === 'aligned' 
+                    ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+                    : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                )}>
+                  {data.alignmentStatus === 'aligned' ? '✅ Aligned!' : '⚠️ Adjusting...'}
+                </div>
+              )}
+              
+              {/* Adjustment Direction with Arrows */}
+              {!!data.adjustmentDirection && data.alignmentStatus !== 'aligned' && (
+                <div className="mt-1 p-1.5 rounded bg-surface-overlay/50 border border-surface-border">
+                  <div className="flex items-center gap-1.5">
+                    {/* Direction Arrow */}
+                    {data.azimuthDelta !== undefined && Math.abs(data.azimuthDelta as number) > 0.5 && (
+                      <span className="text-brand-400 text-sm">
+                        {(data.azimuthDelta as number) > 0 ? '↻' : '↺'}
+                      </span>
+                    )}
+                    {data.elevationDelta !== undefined && Math.abs(data.elevationDelta as number) > 0.5 && (
+                      <span className="text-brand-400 text-sm">
+                        {(data.elevationDelta as number) > 0 ? '↑' : '↓'}
+                      </span>
+                    )}
+                    <p className="text-[0.6rem] text-text-brand-secondary leading-relaxed">
+                      {data.adjustmentDirection as string}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Delta Display */}
+              {data.azimuthDelta !== undefined && data.elevationDelta !== undefined && (
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  <div className={cn(
+                    "text-center p-1 rounded text-[0.6rem]",
+                    Math.abs(data.azimuthDelta as number) <= 2.0
+                      ? "bg-green-500/10 text-green-400"
+                      : "bg-yellow-500/10 text-yellow-400"
+                  )}>
+                    <div className="text-[0.55rem] text-text-brand-muted">Azimuth Δ</div>
+                    <div className="font-mono font-semibold">{(data.azimuthDelta as number).toFixed(1)}°</div>
+                  </div>
+                  <div className={cn(
+                    "text-center p-1 rounded text-[0.6rem]",
+                    Math.abs(data.elevationDelta as number) <= 1.0
+                      ? "bg-green-500/10 text-green-400"
+                      : "bg-yellow-500/10 text-yellow-400"
+                  )}>
+                    <div className="text-[0.55rem] text-text-brand-muted">Elevation Δ</div>
+                    <div className="font-mono font-semibold">{(data.elevationDelta as number).toFixed(1)}°</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     default:
       // Fallback: show key-value pairs nicely instead of raw JSON
       return (

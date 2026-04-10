@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
-import { MapPin, Crosshair, Trash2 } from 'lucide-react';
+import { MapPin, Crosshair, Trash2, Pencil, Check, X } from 'lucide-react';
 
 // ============================================
 // Props
@@ -24,6 +24,8 @@ export interface SiteInputCardProps {
   towerHeight: number;
   /** Callback when tower height changes */
   onTowerHeightChange: (height: number) => void;
+  /** Callback when site name changes */
+  onNameChange?: (name: string) => void;
   /** Callback to clear this site's data */
   onClear: () => void;
   /** Callback when user clicks "Place on Map" — activates placement mode */
@@ -86,6 +88,7 @@ export function SiteInputCard({
   lng,
   towerHeight,
   onTowerHeightChange,
+  onNameChange,
   onClear,
   onActivatePlacement,
   onCancelPlacement,
@@ -94,6 +97,8 @@ export function SiteInputCard({
   disabled = false,
 }: SiteInputCardProps) {
   const styles = SITE_STYLES[site];
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
 
   const handleTowerHeightInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,32 +122,49 @@ export function SiteInputCard({
     [onTowerHeightChange]
   );
 
+  const handleStartEditName = useCallback(() => {
+    setEditedName(siteName || `Site ${site}`);
+    setIsEditingName(true);
+  }, [siteName, site]);
+
+  const handleSaveName = useCallback(() => {
+    if (onNameChange && editedName.trim()) {
+      onNameChange(editedName.trim());
+    }
+    setIsEditingName(false);
+  }, [onNameChange, editedName]);
+
+  const handleCancelEditName = useCallback(() => {
+    setIsEditingName(false);
+  }, []);
+
   // ── EMPTY STATE ──
   if (!isPlaced && !isPlacementActive) {
     return (
       <div
         className={cn(
-          'rounded-lg border p-3 transition-all duration-200',
+          'rounded-lg border p-4 transition-all duration-300',
           styles.emptyBorder,
-          'bg-transparent',
+          'bg-surface-card/50 backdrop-blur-sm',
+          'hover:bg-surface-card hover:shadow-md',
         )}
       >
         {/* Header */}
-        <div className="flex items-center gap-2 mb-2.5">
+        <div className="flex items-center gap-2 mb-3">
           <div
             className={cn(
-              'w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-black',
+              'w-6 h-6 rounded-full flex items-center justify-center text-[0.65rem] font-black',
               styles.badgeBg,
               styles.badgeText,
             )}
           >
             {site}
           </div>
-          <span className="text-xs font-semibold text-text-brand-secondary">{label}</span>
+          <span className="text-sm font-semibold text-text-brand-secondary">{label}</span>
         </div>
 
         {/* Empty content */}
-        <p className="text-[0.7rem] text-text-brand-muted italic mb-2.5 pl-7">
+        <p className="text-xs text-text-brand-muted italic mb-3 pl-8">
           Click map or search to place {label}
         </p>
 
@@ -152,15 +174,16 @@ export function SiteInputCard({
           onClick={onActivatePlacement}
           disabled={disabled}
           className={cn(
-            'ml-7 flex items-center gap-1.5 text-[0.7rem] font-medium',
-            'px-3 py-1.5 rounded-md transition-all duration-200',
-            'text-brand-400 hover:bg-brand-500/10 hover:text-brand-300',
-            'focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-500/50',
+            'ml-8 flex items-center gap-2 text-xs font-medium',
+            'px-3 py-2 rounded-lg transition-all duration-200',
+            'text-brand-400 hover:bg-brand-500/10 hover:text-brand-300 hover:scale-105',
+            'active:scale-95',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50',
             'touch-manipulation',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
         >
-          <MapPin className="h-3 w-3" />
+          <MapPin className="h-3.5 w-3.5" />
           Place on Map
         </button>
       </div>
@@ -225,73 +248,119 @@ export function SiteInputCard({
   return (
     <div
       className={cn(
-        'rounded-lg border border-l-[3px] p-3 transition-all duration-200',
+        'rounded-lg border border-l-[3px] p-4 transition-all duration-300',
         styles.accentColor,
         'border-surface-border bg-surface-elevated',
+        'hover:shadow-lg hover:border-surface-border-light',
       )}
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <div
             className={cn(
-              'w-5 h-5 rounded-full flex items-center justify-center text-[0.6rem] font-black flex-shrink-0',
+              'w-6 h-6 rounded-full flex items-center justify-center text-[0.65rem] font-black flex-shrink-0',
               styles.badgeBg,
               styles.badgeText,
             )}
           >
             {site}
           </div>
-          <span className="text-xs font-semibold text-text-brand-primary truncate">
-            {displayName || label}
-          </span>
+          {isEditingName ? (
+            <div className="flex items-center gap-1 flex-1 min-w-0">
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveName();
+                  if (e.key === 'Escape') handleCancelEditName();
+                }}
+                className="flex-1 min-w-0 text-sm px-2 py-0.5 rounded bg-surface-input border border-surface-border text-text-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-500"
+                autoFocus
+                maxLength={40}
+              />
+              <button
+                type="button"
+                onClick={handleSaveName}
+                className="p-1 rounded text-emerald-400 hover:bg-emerald-500/10"
+              >
+                <Check className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEditName}
+                className="p-1 rounded text-text-brand-muted hover:text-red-400"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 min-w-0 group/name">
+              <span className="text-sm font-semibold text-text-brand-primary truncate">
+                {displayName || label}
+              </span>
+              {onNameChange && (
+                <button
+                  type="button"
+                  onClick={handleStartEditName}
+                  disabled={disabled}
+                  className="p-1 rounded text-text-brand-muted opacity-0 group-hover/name:opacity-100 hover:text-brand-400 transition-all touch-manipulation"
+                  aria-label="Edit name"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
         <button
           type="button"
           onClick={onClear}
           disabled={disabled}
           className={cn(
-            'p-1.5 rounded-md transition-colors duration-200 touch-manipulation',
-            'text-text-brand-muted hover:text-danger hover:bg-danger-bg',
+            'p-2 rounded-lg transition-all duration-200 touch-manipulation flex-shrink-0',
+            'text-text-brand-muted hover:text-destructive hover:bg-destructive/10 hover:scale-110',
+            'active:scale-95',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
           aria-label={`Clear ${label}`}
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
 
       {/* Coordinates */}
-      <div className="mt-1.5 pl-7">
-        <p className="text-[0.65rem] font-mono text-text-brand-muted leading-none">
+      <div className="mt-2 pl-8">
+        <p className="text-xs font-mono text-text-brand-muted leading-none">
           {lat ? parseFloat(lat).toFixed(6) : '—'}, {lng ? parseFloat(lng).toFixed(6) : '—'}
         </p>
       </div>
 
       {/* Tower height */}
-      <div className="mt-2 pl-7 flex items-center gap-1.5">
-        <span className="text-[0.65rem] text-text-brand-muted">Tower:</span>
+      <div className="mt-3 pl-8 flex items-center gap-2">
+        <span className="text-xs text-text-brand-muted">Tower:</span>
         <input
           type="number"
           value={towerHeight}
           onChange={handleTowerHeightInput}
           onBlur={handleTowerHeightBlur}
           min={0}
-          max={100}
+          max={500}
           step={1}
           disabled={disabled}
           className={cn(
-            'w-14 h-6 px-1.5 text-[0.7rem] text-center font-medium rounded-md',
+            'w-16 h-7 px-2 text-xs text-center font-medium rounded-lg',
             'bg-surface-card border border-surface-border',
             'text-text-brand-primary',
-            'focus:outline-none focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/40',
-            'transition-colors duration-200',
+            'focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/40',
+            'transition-all duration-200',
             '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
           aria-label={`${label} tower height in meters`}
         />
-        <span className="text-[0.65rem] text-text-brand-muted">m</span>
+        <span className="text-xs text-text-brand-muted">m</span>
         <InfoTooltip text={TOWER_HEIGHT_TOOLTIP} side="right" />
       </div>
 
@@ -301,13 +370,14 @@ export function SiteInputCard({
         onClick={onActivatePlacement}
         disabled={disabled}
         className={cn(
-          'mt-2 ml-7 flex items-center gap-1 text-[0.6rem] font-medium',
-          'text-text-brand-muted hover:text-text-brand-secondary',
-          'transition-colors duration-200 touch-manipulation',
+          'mt-3 ml-8 flex items-center gap-1.5 text-xs font-medium',
+          'text-text-brand-muted hover:text-text-brand-secondary hover:scale-105',
+          'active:scale-95',
+          'transition-all duration-200 touch-manipulation',
           disabled && 'opacity-50 cursor-not-allowed',
         )}
       >
-        <Crosshair className="h-2.5 w-2.5" />
+        <Crosshair className="h-3 w-3" />
         Reposition
       </button>
     </div>

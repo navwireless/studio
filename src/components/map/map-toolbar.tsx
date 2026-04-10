@@ -23,6 +23,7 @@ import {
   Sun,
   Cloud,
   StickyNote,
+  Gauge,
 } from 'lucide-react';
 import type { MapToolId, MapToolCategory } from '@/types/map-tools';
 import { MAP_TOOLS, TOOL_CATEGORIES } from '@/types/map-tools';
@@ -43,6 +44,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Sun,
   Cloud,
   StickyNote,
+  Gauge,
 };
 
 interface MapToolbarProps {
@@ -152,14 +154,19 @@ export function MapToolbar({
         >
           {sortedCategories.map((category, catIdx) => (
             <React.Fragment key={category}>
-              {/* Category separator */}
+              {/* Category separator + label */}
               {catIdx > 0 && (
                 <div className={cn('mx-1', isMobile ? 'my-0.5' : 'my-1')}>
                   <div className="h-px bg-surface-border" />
                 </div>
               )}
-
-
+              {!isMobile && (
+                <div className="px-2 pt-1 pb-0.5">
+                  <span className="text-[0.5rem] font-semibold uppercase tracking-widest text-text-brand-disabled">
+                    {TOOL_CATEGORIES[category].label}
+                  </span>
+                </div>
+              )}
 
               {/* Tool buttons */}
               {groupedTools[category].map((tool) => {
@@ -295,7 +302,7 @@ export function MapToolbar({
               onClick={onFinishActiveTool}
               className="mt-1.5 w-full h-7 rounded-md border border-brand-500/35 bg-brand-500/12 text-[0.62rem] font-semibold text-brand-300 hover:bg-brand-500/20 transition-colors touch-manipulation"
             >
-              Finish Line / Polygon
+              {activeTool === 'measure-area' ? 'Finish Polygon' : 'Finish Line'}
             </button>
           )}
           {isProcessing && (

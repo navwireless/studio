@@ -125,8 +125,12 @@ function buildResult(center: google.maps.LatLng, edge: google.maps.LatLng): Tool
     timestamp: Date.now(),
     data: {
       center: formatDD(center.lat(), center.lng()),
+      centerLat: center.lat(),
+      centerLng: center.lng(),
       centerDMS: `${centerDms.lat}, ${centerDms.lng}`,
       edge: formatDD(edge.lat(), edge.lng()),
+      edgeLat: edge.lat(),
+      edgeLng: edge.lng(),
       edgeDMS: `${edgeDms.lat}, ${edgeDms.lng}`,
       radius: formatDistance(radiusMeters),
       radiusRaw: Math.round(radiusMeters * 100) / 100,

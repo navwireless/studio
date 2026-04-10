@@ -9,18 +9,18 @@ import { cn } from '@/lib/utils';
 
 import { timeAgo } from '@/hooks/use-saved-links';
 
-// New flow-based components
-import { StepIndicator } from './step-indicator';
+// Flow-based components
 import { SiteInputCard } from './site-input-card';
 import { ConfigSection } from './config-section';
 import { AnalysisButton } from './analysis-button';
 import { ResultsCard } from './results-card';
 import { DownloadMenu } from './download-menu';
+import { DrawingsSection, type ManagedResult } from './drawings-section';
 
 import {
   X, Save, Plus,
   ChevronDown, ChevronRight,
-  BookmarkPlus, History,
+  BookmarkPlus, History, FolderTree,
   Check, CheckCircle, XCircle, Cable,
   Globe2,
 } from 'lucide-react';
@@ -250,6 +250,7 @@ export interface SidePanelProps {
   siteALng: string;
   siteATowerHeight: number;
   onSiteATowerHeightChange: (height: number) => void;
+  onSiteANameChange?: (name: string) => void;
   onClearSiteA: () => void;
 
   // Site B data
@@ -258,6 +259,7 @@ export interface SidePanelProps {
   siteBLng: string;
   siteBTowerHeight: number;
   onSiteBTowerHeightChange: (height: number) => void;
+  onSiteBNameChange?: (name: string) => void;
   onClearSiteB: () => void;
 
   // Placement
@@ -318,6 +320,12 @@ export interface SidePanelProps {
 
   // Search
   onSearchNavigate?: (lat: number, lng: number, name: string) => void;
+
+  // Drawings (Phase 2: shapes & tool results)
+  drawings: ManagedResult[];
+  onToggleDrawingVisibility: (key: string) => void;
+  onRemoveDrawing: (key: string) => void;
+  onUpdateDrawing?: (key: string, updates: Record<string, unknown>) => void;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -332,12 +340,14 @@ export default function SidePanel({
   siteALng,
   siteATowerHeight,
   onSiteATowerHeightChange,
+  onSiteANameChange,
   onClearSiteA,
   siteBName,
   siteBLat,
   siteBLng,
   siteBTowerHeight,
   onSiteBTowerHeightChange,
+  onSiteBNameChange,
   onClearSiteB,
   placementMode,
   onSetPlacementMode,
@@ -379,6 +389,10 @@ export default function SidePanel({
   historyList,
   onLoadHistoryItem,
   onClearHistory,
+  drawings,
+  onToggleDrawingVisibility,
+  onRemoveDrawing,
+  onUpdateDrawing,
 }: SidePanelProps) {
   const anyPending = isActionPending || isFiberCalculating || isDownloading;
   const sortedHistory = useMemo(
@@ -481,7 +495,7 @@ export default function SidePanel({
 
   return (
     <>
-      {/* Backdrop (mobile) */}
+      {/* Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40 lg:hidden"
@@ -494,16 +508,17 @@ export default function SidePanel({
         ref={panelRef}
         className={cn(
           'flex flex-col bg-surface-card border-r border-surface-border z-50',
-          // Desktop: static sidebar
-          'lg:relative lg:w-[340px] lg:flex-shrink-0 lg:translate-x-0 lg:z-auto',
-          // Mobile: slide-out panel
-          'fixed inset-y-0 left-0 w-[340px]',
+          // Desktop: static sidebar (when open)
+          isOpen ? 'lg:relative lg:w-[340px] lg:flex-shrink-0 lg:z-auto' : '',
+          // Mobile & closed desktop: slide-out panel
+          !isOpen ? 'fixed inset-y-0 left-0 w-[340px]' : '',
+          isOpen ? 'fixed inset-y-0 left-0 w-[340px] lg:relative lg:inset-auto' : '',
           !swipeOffset && !isSwipeAnimating
             ? 'transition-transform duration-300 ease-out'
             : '',
           isSwipeAnimating ? 'transition-transform duration-250 ease-out' : '',
           isOpen && !swipeOffset && !isSwipeAnimating ? 'translate-x-0' : '',
-          !isOpen && !swipeOffset ? '-translate-x-full lg:translate-x-0' : '',
+          !isOpen && !swipeOffset ? '-translate-x-full' : '',
           'pt-safe pl-safe'
         )}
         style={
@@ -514,42 +529,18 @@ export default function SidePanel({
       >
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-surface-border">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-brand-500/20 flex items-center justify-center">
-              <svg
-                className="h-4 w-4 text-brand-400"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-text-brand-primary leading-none">
-                Link Analysis
-              </h2>
-              <p className="text-[0.6rem] text-text-brand-muted">
-                LOS Feasibility
-              </p>
-            </div>
-          </div>
+          <h2 className="text-sm font-bold text-text-brand-primary">
+            Link Analysis
+          </h2>
           <button
             onClick={onClose}
-            className="lg:hidden p-2 rounded-md hover:bg-surface-overlay text-text-brand-muted touch-manipulation"
+            className="p-2 rounded-md hover:bg-surface-overlay text-text-brand-muted touch-manipulation"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Search removed — using floating map search bar instead */}
-
-        {/* ── Step Indicator ── */}
-        <div className="px-4 border-b border-surface-border">
-          <StepIndicator currentStep={flow.currentStep} />
-        </div>
 
         {/* ── Scrollable Content ── */}
         <div
@@ -572,6 +563,7 @@ export default function SidePanel({
               lng={siteALng}
               towerHeight={siteATowerHeight}
               onTowerHeightChange={onSiteATowerHeightChange}
+              onNameChange={onSiteANameChange}
               onClear={onClearSiteA}
               onActivatePlacement={() =>
                 onSetPlacementMode(placementMode === 'A' ? null : 'A')
@@ -590,6 +582,7 @@ export default function SidePanel({
               lng={siteBLng}
               towerHeight={siteBTowerHeight}
               onTowerHeightChange={onSiteBTowerHeightChange}
+              onNameChange={onSiteBNameChange}
               onClear={onClearSiteB}
               onActivatePlacement={() =>
                 onSetPlacementMode(placementMode === 'B' ? null : 'B')
@@ -618,7 +611,7 @@ export default function SidePanel({
 
           {/* ⚡ ANALYZE BUTTON — Visible when both sites placed */}
           {flow.bothSitesPlaced && (
-            <div className="px-4">
+            <div className="px-4 sticky bottom-0 z-10 bg-surface-card/95 backdrop-blur-sm py-2 border-t border-surface-border">
               <AnalysisButton
                 canAnalyze={flow.canAnalyze}
                 isAnalyzing={isActionPending}
@@ -631,9 +624,14 @@ export default function SidePanel({
             </div>
           )}
 
-          {/* ③ RESULTS — Visible after analysis */}
-          {analysisResult && !isStale && (
-            <div className="px-4 pb-3 border-t border-surface-border pt-3">
+          {/* ③ RESULTS — Visible after analysis (dimmed when stale) */}
+          {analysisResult && (
+            <div className={cn('px-4 pb-3 border-t border-surface-border pt-3', isStale && 'opacity-60')}>
+              {isStale && (
+                <div className="mb-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[0.6rem] font-medium text-center">
+                  ⚠ Parameters changed — results may be outdated. Re-analyze above.
+                </div>
+              )}
               <ResultsCard
                 result={analysisResult}
                 clearanceThreshold={clearanceThreshold}
@@ -813,6 +811,27 @@ export default function SidePanel({
             )}
           </CollapsibleSection>
 
+          {/* ── DRAWINGS ── */}
+          <CollapsibleSection
+            title="Drawings"
+            icon={<FolderTree className="h-3.5 w-3.5" />}
+            defaultOpen={drawings.length > 0}
+            badge={
+              drawings.length > 0 ? (
+                <span className="text-[0.55rem] px-1.5 py-0.5 rounded-full bg-surface-overlay text-text-brand-secondary tabular-nums">
+                  {drawings.length}
+                </span>
+              ) : undefined
+            }
+          >
+            <DrawingsSection
+              results={drawings}
+              onToggleVisibility={onToggleDrawingVisibility}
+              onRemove={onRemoveDrawing}
+              onUpdateDrawing={onUpdateDrawing}
+            />
+          </CollapsibleSection>
+
           {/* ── HISTORY ── */}
           <CollapsibleSection
             title="History"
@@ -865,6 +884,16 @@ export default function SidePanel({
               </div>
             )}
           </CollapsibleSection>
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="px-4 py-3 border-t border-surface-border text-[0.55rem] text-text-brand-disabled flex items-center justify-between">
+          <span>© {new Date().getFullYear()} FindLOS</span>
+          <nav className="flex items-center gap-3">
+            <a href="/privacy" className="hover:text-text-brand-muted transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-text-brand-muted transition-colors">Terms</a>
+            <a href="/pricing" className="hover:text-text-brand-muted transition-colors">Pricing</a>
+          </nav>
         </div>
       </aside>
     </>

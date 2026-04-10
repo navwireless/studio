@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, AlertTriangle, WifiOff } from 'lucide-react';
+import { Loader2, AlertTriangle, WifiOff, PanelLeftOpen } from 'lucide-react';
 
 import { useToast } from '@/hooks/use-toast';
 import { performLosAnalysis } from '@/app/actions';
@@ -17,11 +17,9 @@ import MapContextMenu from '@/components/fso/map-context-menu';
 import { MapHintOverlay } from '@/components/map/map-hint-overlay';
 import MapSearchBar from '@/components/fso/map-search-bar';
 import AppHeader from '@/components/layout/app-header';
-import { SiteInputCard } from '@/components/fso/site-input-card';
-import { ConfigSection } from '@/components/fso/config-section';
+// SiteInputCard, ConfigSection, DownloadMenu — used inside SidePanel only
 import { AnalysisButton } from '@/components/fso/analysis-button';
 import { ResultsCard } from '@/components/fso/results-card';
-import { DownloadMenu } from '@/components/fso/download-menu';
 import KeyboardHint from '@/components/fso/keyboard-hint';
 import { MobileBottomSheet, type SheetSnapPoint } from '@/components/fso/mobile-bottom-sheet';
 import { Button } from '@/components/ui/button';
@@ -48,8 +46,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useMapTools } from '@/hooks/use-map-tools';
 import { MapToolbar } from '@/components/map/map-toolbar';
 import { ToolResultPanel } from '@/components/map/tool-result-panel';
-import { DrawingsManager } from '@/components/map/drawings-manager';
+// DrawingsManager removed — drawings are now in the side panel
 import { getDeviceById } from '@/config/devices';
+import { AlignmentPanel } from '@/components/map/alignment-panel';
 
 // Phase 12C: Solar Analyzer
 import { SolarPanel } from '@/components/map/solar-panel';
@@ -86,6 +85,15 @@ export default function Home() {
   // Mobile bottom sheet state
   const [sheetSnapPoint, setSheetSnapPoint] = useState<SheetSnapPoint>('collapsed');
 
+  // Phase 5: Alignment panel state
+  const [alignmentTarget, setAlignmentTarget] = useState<{
+    linkId: string;
+    linkName: string;
+    direction: 'A→B' | 'B→A';
+    azimuth: number;
+    elevation: number;
+  } | null>(null);
+
   // State to hold links pending combined PDF export (for modal)
   const [combinedExportLinks, setCombinedExportLinks] = useState<SavedLink[]>([]);
 
@@ -120,7 +128,6 @@ export default function Home() {
   }, []);
 
   // Auto-start tour for first-time users (1.5s delay)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (onboarding.isLoading || !isClient) return;
     if (!onboarding.shouldShowTour) return;
@@ -130,6 +137,7 @@ export default function Home() {
     }, 1500);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onboarding.isLoading, onboarding.shouldShowTour, isClient, onboarding.startTour]);
 
   const form = useForm<AnalysisFormValues>({
@@ -519,23 +527,29 @@ export default function Home() {
     onboarding.markFeatureUsed('exportConfig');
   }, [analysis.analysisResult, analysis.isStale, pdfDownload, toast, onboarding]);
 
-  const handleExportConfigConfirm = useCallback((config: ExportConfig) => {
-    pdfDownload.handleDownloadWithConfig(
-      analysis.analysisResult,
-      toast,
-      config,
-      fiber.fiberPathResult,
-    );
-    setTimeout(() => setDownloadingType(null), 500);
+  const handleExportConfigConfirm = useCallback(async (config: ExportConfig) => {
+    try {
+      await pdfDownload.handleDownloadWithConfig(
+        analysis.analysisResult,
+        toast,
+        config,
+        fiber.fiberPathResult,
+      );
+    } finally {
+      setDownloadingType(null);
+    }
   }, [analysis.analysisResult, fiber.fiberPathResult, pdfDownload, toast]);
 
-  const handleCombinedExportConfigConfirm = useCallback((config: ExportConfig) => {
-    pdfDownload.handleDownloadCombinedWithConfig(
-      combinedExportLinks,
-      toast,
-      config,
-    );
-    setTimeout(() => setDownloadingType(null), 500);
+  const handleCombinedExportConfigConfirm = useCallback(async (config: ExportConfig) => {
+    try {
+      await pdfDownload.handleDownloadCombinedWithConfig(
+        combinedExportLinks,
+        toast,
+        config,
+      );
+    } finally {
+      setDownloadingType(null);
+    }
   }, [combinedExportLinks, pdfDownload, toast]);
 
   const handleDownloadCombinedPdf = useCallback((links: SavedLink[]) => {
@@ -623,8 +637,20 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (analysis.analysisResult) setIsProfileExpanded(true);
-  }, [analysis.analysisResult]);
+    // Keep mobile controls visible after analysis so Analyze/Re-analyze remains accessible.
+    if (analysis.analysisResult && !isMobile) {
+      setIsProfileExpanded(true);
+    }
+  }, [analysis.analysisResult, isMobile]);
+
+  useEffect(() => {
+    // When parameters change while profile is expanded on mobile, return to the
+    // existing bottom-sheet controls so the Analyze button remains visible.
+    if (isMobile && analysis.isStale && isProfileExpanded) {
+      setIsProfileExpanded(false);
+      setSheetSnapPoint((prev) => (prev === 'collapsed' ? 'half' : prev));
+    }
+  }, [isMobile, analysis.isStale, isProfileExpanded]);
 
   // ── Phase 12C: Feed analysis data to solar tool ──
   const [solarResult, setSolarResult] = useState<SolarAnalysisResult | null>(null);
@@ -697,12 +723,14 @@ export default function Home() {
     siteALng: watchedPointALng,
     siteATowerHeight: watchedPointAHeight,
     onSiteATowerHeightChange: handleSiteATowerHeightChange,
+    onSiteANameChange: (name: string) => setValue('pointA.name', name),
     onClearSiteA: handleClearSiteA,
     siteBName: watchedPointBName,
     siteBLat: watchedPointBLat,
     siteBLng: watchedPointBLng,
     siteBTowerHeight: watchedPointBHeight,
     onSiteBTowerHeightChange: handleSiteBTowerHeightChange,
+    onSiteBNameChange: (name: string) => setValue('pointB.name', name),
     onClearSiteB: handleClearSiteB,
     placementMode: mapInteraction.placementMode,
     onSetPlacementMode: mapInteraction.setPlacementMode,
@@ -744,6 +772,11 @@ export default function Home() {
     onLoadHistoryItem: analysis.loadFromHistory,
     onClearHistory: handleClearHistory,
     onSearchNavigate: handleSearchNavigate,
+    // Phase 2: Drawings integration
+    drawings: mapTools.managedResults,
+    onToggleDrawingVisibility: mapTools.toggleResultVisibility,
+    onRemoveDrawing: mapTools.removeResult,
+    onUpdateDrawing: mapTools.updateResultData,
   };
 
   return (
@@ -834,17 +867,26 @@ export default function Home() {
       {/* ── MAIN LAYOUT ── */}
       <div className="flex h-below-header w-full overflow-hidden">
 
-        {/* Side Panel — desktop only */}
-        {!isMobile && (
-          <SidePanel
-            isOpen={isSidePanelOpen}
-            onClose={() => setIsSidePanelOpen(false)}
-            {...sidePanelProps}
-          />
-        )}
+        {/* Side Panel — all viewports (component handles responsive behavior internally) */}
+        <SidePanel
+          isOpen={isSidePanelOpen}
+          onClose={() => setIsSidePanelOpen(false)}
+          {...sidePanelProps}
+        />
 
         {/* Map + Bottom Profile */}
         <div className="flex-1 flex flex-col min-w-0 relative">
+
+          {/* Toggle side panel button — shown when panel is closed */}
+          {!isSidePanelOpen && (
+            <button
+              onClick={() => setIsSidePanelOpen(true)}
+              className="absolute top-3 left-3 z-30 p-2.5 rounded-lg bg-surface-card/90 backdrop-blur-sm border border-surface-border shadow-lg text-text-brand-muted hover:text-text-brand-primary hover:bg-surface-card transition-all touch-manipulation"
+              aria-label="Open side panel"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </button>
+          )}
 
           {/* Floating Search Bar — dark themed, over the map */}
           <div
@@ -950,13 +992,7 @@ export default function Home() {
               />
             )}
 
-            {isClient && (
-              <DrawingsManager
-                results={mapTools.managedResults}
-                onToggleVisibility={mapTools.toggleResultVisibility}
-                onRemove={mapTools.removeResult}
-              />
-            )}
+            {/* Phase 13: Drawings are now shown in the side panel Drawings section */}
 
             {/* Phase 11: Tool Result Panel */}
             {isClient && (
@@ -1016,7 +1052,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Mobile Bottom Sheet */}
+      {/* Mobile Bottom Sheet — compact summary + quick actions */}
       {isMobile && isClient && !isProfileExpanded && !isAnyExportModalOpen && (
         <MobileBottomSheet
           collapsedSummary={collapsedSummary}
@@ -1025,60 +1061,7 @@ export default function Home() {
           isVisible={true}
         >
           <div className="space-y-3 py-2">
-            {/* Sites */}
-            <div className="space-y-2">
-              <span className="text-[0.6rem] font-semibold uppercase tracking-wider text-text-brand-muted">
-                Sites
-              </span>
-              <SiteInputCard
-                site="A"
-                label={watchedPointAName || 'Site A'}
-                siteName={watchedPointAName}
-                lat={watchedPointALat}
-                lng={watchedPointALng}
-                towerHeight={watchedPointAHeight}
-                onTowerHeightChange={handleSiteATowerHeightChange}
-                onClear={handleClearSiteA}
-                onActivatePlacement={() => {
-                  mapInteraction.setPlacementMode(mapInteraction.placementMode === 'A' ? null : 'A');
-                  setSheetSnapPoint('collapsed');
-                }}
-                onCancelPlacement={() => mapInteraction.setPlacementMode(null)}
-                isPlacementActive={mapInteraction.placementMode === 'A'}
-                isPlaced={flow.siteAPlaced}
-              />
-              <SiteInputCard
-                site="B"
-                label={watchedPointBName || 'Site B'}
-                siteName={watchedPointBName}
-                lat={watchedPointBLat}
-                lng={watchedPointBLng}
-                towerHeight={watchedPointBHeight}
-                onTowerHeightChange={handleSiteBTowerHeightChange}
-                onClear={handleClearSiteB}
-                onActivatePlacement={() => {
-                  mapInteraction.setPlacementMode(mapInteraction.placementMode === 'B' ? null : 'B');
-                  setSheetSnapPoint('collapsed');
-                }}
-                onCancelPlacement={() => mapInteraction.setPlacementMode(null)}
-                isPlacementActive={mapInteraction.placementMode === 'B'}
-                isPlaced={flow.siteBPlaced}
-              />
-            </div>
-
-            {/* Configure */}
-            {flow.bothSitesPlaced && (
-              <ConfigSection
-                clearanceThreshold={parseFloat(watchedClearance) || 10}
-                onClearanceThresholdChange={handleClearanceChange}
-                selectedDeviceId={analysis.selectedDeviceId}
-                onSelectDevice={analysis.setSelectedDeviceId}
-                currentDistanceKm={mapInteraction.liveDistanceKm}
-                hasAnalysisResult={!!analysis.analysisResult}
-              />
-            )}
-
-            {/* Analyze */}
+            {/* Quick Analyze button — always visible when both sites placed */}
             {flow.bothSitesPlaced && (
               <AnalysisButton
                 canAnalyze={flow.canAnalyze}
@@ -1090,9 +1073,9 @@ export default function Home() {
               />
             )}
 
-            {/* Results */}
+            {/* Quick results summary */}
             {analysis.analysisResult && !analysis.isStale && (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <ResultsCard
                   result={analysis.analysisResult}
                   clearanceThreshold={parseFloat(watchedClearance) || 10}
@@ -1101,46 +1084,47 @@ export default function Home() {
                   fiberPathError={fiber.fiberPathError}
                 />
 
-                <Button
-                  onClick={() => {
-                    setSheetSnapPoint('collapsed');
-                    setIsProfileExpanded(true);
-                  }}
-                  size="sm"
-                  variant="outline"
-                  className="w-full h-9 text-xs border-surface-border-light text-text-brand-secondary hover:text-text-brand-primary touch-manipulation"
-                >
-                  Reopen Elevation Profile
-                </Button>
-
-                <DownloadMenu
-                  analysisResult={analysis.analysisResult}
-                  savedLinks={saved.savedLinks}
-                  onDownloadPdf={handlePdfButtonClick}
-                  onDownloadCombinedPdf={handleDownloadCombinedPdf}
-                  onExportKmz={handleExportKmz}
-                  onExportExcel={handleExportExcel}
-                  onExportCsv={handleExportCsv}
-                  onShareWhatsApp={handleShareWhatsApp}
-                  isDownloading={pdfDownload.isGeneratingPdf || downloadingType !== null}
-                  downloadingType={downloadingType}
-                  canDownloadSingle={flow.canDownload}
-                />
-
                 <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setSheetSnapPoint('collapsed');
+                      setIsProfileExpanded(true);
+                    }}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 h-9 text-xs border-surface-border-light text-text-brand-secondary hover:text-text-brand-primary touch-manipulation"
+                  >
+                    Elevation Profile
+                  </Button>
                   <Button onClick={handleSaveLink} size="sm" variant="outline"
                     className="flex-1 h-9 text-xs border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400 touch-manipulation">
                     Save Link
                   </Button>
-                  <Button onClick={handleNewLink} size="sm" variant="outline"
-                    className="flex-1 h-9 text-xs border-surface-border-light text-text-brand-muted touch-manipulation">
-                    New Link
-                  </Button>
                 </div>
               </div>
             )}
+
+            {/* Open full side panel button */}
+            <Button
+              onClick={() => {
+                setSheetSnapPoint('collapsed');
+                setIsSidePanelOpen(true);
+              }}
+              size="sm"
+              variant="outline"
+              className="w-full h-9 text-xs border-surface-border-light text-text-brand-secondary hover:text-text-brand-primary touch-manipulation"
+            >
+              Open Full Panel
+            </Button>
           </div>
         </MobileBottomSheet>
+      )}
+      {/* Phase 5: Device Alignment Panel */}
+      {alignmentTarget && (
+        <AlignmentPanel
+          target={alignmentTarget}
+          onClose={() => setAlignmentTarget(null)}
+        />
       )}
 
       {/* Context Menu */}

@@ -377,7 +377,7 @@ export function ResultsCard({
         additionalHeightNeeded={result.additionalHeightNeeded}
       />
 
-      {/* Metrics Grid */}
+      {/* Metrics Grid - 3 cells in 2 columns, with Towers spanning both columns */}
       <div className="grid grid-cols-2 gap-2">
         <MetricCell
           label="Distance"
@@ -396,11 +396,12 @@ export function ResultsCard({
           }
           valueColor={isClear ? 'text-emerald-400' : 'text-red-400'}
         />
-        <MetricCell
-          label="Towers"
-          value={`${result.pointA?.towerHeight}m / ${result.pointB?.towerHeight}m`}
-        />
-        <MetricCell label="Threshold" value={`${clearanceThreshold}m`} />
+        <div className="col-span-2">
+          <MetricCell
+            label="Towers"
+            value={`${result.pointA?.towerHeight}m / ${result.pointB?.towerHeight}m`}
+          />
+        </div>
       </div>
 
       {/* Height deficit warning */}

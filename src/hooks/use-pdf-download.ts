@@ -6,6 +6,37 @@ import type { AnalysisResult, SavedLink } from '@/types';
 import type { FiberPathResult } from '@/tools/fiberPathCalculator';
 import type { ExportConfig } from '@/tools/report-generator/types';
 
+async function base64ToPdfBlob(base64Pdf: string): Promise<Blob> {
+  const response = await fetch(`data:application/pdf;base64,${base64Pdf}`);
+  return response.blob();
+}
+
+async function saveBlobWithFallback(blob: Blob, fileName: string): Promise<void> {
+  try {
+    const { saveAs } = await import('file-saver');
+    saveAs(blob, fileName);
+    return;
+  } catch {
+    // Fallback below handles environments where file-saver fails to initialize.
+  }
+
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  // iOS Safari may ignore the download attribute; opening the blob URL still lets users save/share.
+  if (/iPad|iPhone|iPod/i.test(navigator.userAgent)) {
+    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+}
+
 export interface UsePdfDownloadReturn {
   /** Whether a PDF is currently being generated */
   isGeneratingPdf: boolean;
@@ -117,11 +148,7 @@ export function usePdfDownload(): UsePdfDownloadReturn {
     setReportSequence(currentSequence);
 
     try {
-      const [{ saveAs }, { generateSingleAnalysisPdfReportAction }] =
-        await Promise.all([
-          import('file-saver'),
-          import('@/app/actions'),
-        ]);
+      const { generateSingleAnalysisPdfReportAction } = await import('@/app/actions');
 
       // Build report options with export config and sequence number
       const reportOptions: Record<string, unknown> = {};
@@ -139,14 +166,8 @@ export function usePdfDownload(): UsePdfDownloadReturn {
 
       if (response.success) {
         const { base64Pdf, fileName } = response.data;
-        const byteCharacters = atob(base64Pdf);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        saveAs(blob, fileName);
+        const blob = await base64ToPdfBlob(base64Pdf);
+        await saveBlobWithFallback(blob, fileName);
         toast({
           title: 'Success',
           description: 'PDF report downloaded.',
@@ -245,16 +266,8 @@ export function usePdfDownload(): UsePdfDownloadReturn {
 
       if (result.success) {
         const { base64Pdf, fileName } = result.data;
-        const byteCharacters = atob(base64Pdf);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-
-        const { saveAs } = await import('file-saver');
-        saveAs(blob, fileName);
+        const blob = await base64ToPdfBlob(base64Pdf);
+        await saveBlobWithFallback(blob, fileName);
 
         toast({
           title: 'Combined PDF Exported',

@@ -120,11 +120,16 @@ function buildSegments(): Segment[] {
 function addLabel(a: google.maps.LatLng, b: google.maps.LatLng, seg: Segment): void {
   if (!_map) return;
   const mid = midpoint(a, b);
+  
+  // Format: "10.6 km | 120.71° ESE"
+  const primaryText = `${formatDistance(seg.distance)} | ${formatBearing(seg.bearing)}° ${seg.compass}`;
+  const secondaryText = `Segment ${seg.index}`;
+  
   _labels.push(
     createSegmentLabel(
       mid,
-      formatDistance(seg.distance),
-      `${formatBearing(seg.bearing)} ${seg.compass}`,
+      primaryText,
+      secondaryText,
       _map,
     ),
   );
@@ -206,6 +211,7 @@ function buildResult(
     toolId: 'multi-measure',
     timestamp: Date.now(),
     data: {
+      points: _points.map((p) => ({ lat: p.lat(), lng: p.lng() })),
       segments: segments.map((s) => ({
         index: s.index,
         from: formatDD(s.from.lat(), s.from.lng()),

@@ -43,10 +43,18 @@ export function DrawingsManager({ results, onToggleVisibility, onRemove }: Drawi
 
   return (
     <div
-      className="absolute z-30"
-      style={{ right: 'calc(3.75rem + var(--sai-right))', top: 'calc(0.75rem + var(--sai-top))' }}
+      className={cn(
+        "absolute z-30",
+        // Desktop: top-right, below toolbar
+        // Mobile: adjust to avoid search bar overlap
+        "right-3 md:right-[calc(3.75rem+0.75rem)]",
+        "top-20 md:top-3"
+      )}
+      style={{ 
+        maxWidth: 'calc(100vw - 6rem)', // Prevent overflow on small screens
+      }}
     >
-      <div className="rounded-xl border border-surface-border bg-surface-card/95 backdrop-blur-xl shadow-xl min-w-[220px]">
+      <div className="rounded-xl border border-surface-border bg-surface-card/95 backdrop-blur-xl shadow-xl min-w-[220px] max-w-sm">
         <button
           onClick={() => setOpen((prev) => !prev)}
           className="w-full px-3 py-2.5 flex items-center justify-between text-text-brand-secondary hover:text-text-brand-primary transition-colors"

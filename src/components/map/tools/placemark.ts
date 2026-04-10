@@ -9,7 +9,6 @@ import {
   formatDD,
   ddToDMS,
   ddToUTM,
-  getNextPinLabel,
   resetPinCounter,
 } from './tool-utils';
 
@@ -40,6 +39,22 @@ let _map: google.maps.Map | null = null;
 let _markers: google.maps.Marker[] = [];
 let _infoWindows: google.maps.InfoWindow[] = [];
 let _placemarkCount = 0;
+let _pendingPlacemark: {
+  position: google.maps.LatLng;
+  color: string;
+  defaultName: string;
+} | null = null;
+
+// Callback for naming dialog (set by parent component)
+let _onShowNamingDialog: ((data: {
+  defaultName: string;
+  onConfirm: (name: string) => void;
+  onCancel: () => void;
+}) => void) | null = null;
+
+export function setNamingDialogCallback(callback: typeof _onShowNamingDialog): void {
+  _onShowNamingDialog = callback;
+}
 
 // ─── Internal Helpers ───────────────────────────────────────────────
 
@@ -85,10 +100,16 @@ function buildInfoContent(
     const utm = ddToUTM(lat, lng);
 
     return `
-    <div style="font-family:system-ui,-apple-system,sans-serif;min-width:200px;color:#1a1a1a">
+    <div style="font-family:system-ui,-apple-system,sans-serif;min-width:200px;color:#1a1a1a;position:relative;padding-right:24px">
+      <button 
+        id="close-placemark-info" 
+        style="position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;font-size:18px;color:#666;padding:4px 8px;line-height:1"
+        title="Close (ESC)"
+        aria-label="Close"
+      >✕</button>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
         <div style="width:12px;height:12px;border-radius:50%;background:${color}"></div>
-        <strong style="font-size:13px">Placemark ${label}</strong>
+        <strong style="font-size:13px">${label}</strong>
       </div>
       <div style="font-size:11px;line-height:1.6;color:#444">
         <div><strong>DD:</strong> ${dd}</div>
@@ -106,11 +127,111 @@ export function clearAll(): void {
     _markers = [];
     _placemarkCount = 0;
     _colorIndex = 0;
+    _pendingPlacemark = null;
     resetPinCounter();
 }
 
 function collectOverlays(): google.maps.MVCObject[] {
     return [..._markers];
+}
+
+function createPlacemarkWithName(name: string, options: ToolActivateOptions): void {
+  if (!_map || !_pendingPlacemark) return;
+
+  const { position, color } = _pendingPlacemark;
+  const lat = position.lat();
+  const lng = position.lng();
+
+  // Create marker with custom name
+  const marker = createPlacemarkMarker(position, _map, name, color);
+  _markers.push(marker);
+
+  // Info window
+  const infoWindow = new google.maps.InfoWindow({
+    content: buildInfoContent(name, color, lat, lng),
+    maxWidth: 280,
+  });
+  _infoWindows.push(infoWindow);
+
+  // Auto-dismiss timer (3 seconds)
+  let dismissTimer: NodeJS.Timeout | null = setTimeout(() => {
+    infoWindow.close();
+    dismissTimer = null;
+  }, 3000);
+
+  // Click marker to toggle info
+  marker.addListener('click', () => {
+    // Close all other info windows first
+    _infoWindows.forEach((iw) => iw.close());
+    infoWindow.open(_map!, marker);
+    
+    // Reset dismiss timer
+    if (dismissTimer) clearTimeout(dismissTimer);
+    dismissTimer = setTimeout(() => {
+      infoWindow.close();
+      dismissTimer = null;
+    }, 3000);
+  });
+
+  // Close button handler
+  google.maps.event.addListener(infoWindow, 'domready', () => {
+    const closeBtn = document.getElementById('close-placemark-info');
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        infoWindow.close();
+        if (dismissTimer) {
+          clearTimeout(dismissTimer);
+          dismissTimer = null;
+        }
+      };
+    }
+  });
+
+  // Close on map drag
+  const dragListener = _map.addListener('drag', () => {
+    infoWindow.close();
+    if (dismissTimer) {
+      clearTimeout(dismissTimer);
+      dismissTimer = null;
+    }
+    google.maps.event.removeListener(dragListener);
+  });
+
+  // ESC key to close
+  const escListener = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      infoWindow.close();
+      if (dismissTimer) {
+        clearTimeout(dismissTimer);
+        dismissTimer = null;
+      }
+      document.removeEventListener('keydown', escListener);
+    }
+  };
+  document.addEventListener('keydown', escListener);
+
+  // Update info window content on drag
+  marker.addListener('dragend', () => {
+    const newPos = marker.getPosition();
+    if (!newPos) return;
+    infoWindow.setContent(
+      buildInfoContent(name, color, newPos.lat(), newPos.lng()),
+    );
+
+    // Re-emit result with updated position
+    options.onResult(buildPlacemarkResult(name, color, newPos));
+  });
+
+  // Open info window immediately
+  infoWindow.open(_map, marker);
+
+  options.onStatusChange(
+    `Placemark "${name}" placed. Click to add more.`,
+  );
+
+  options.onResult(buildPlacemarkResult(name, color, position));
+
+  _pendingPlacemark = null;
 }
 
 // ─── Tool Handler ───────────────────────────────────────────────────
@@ -127,60 +248,44 @@ export const placemark: ToolHandler = {
         options.onStatusChange('Click map to place a marker. Each click adds a new placemark.');
     },
 
-    // Replace the deactivate method (around line 150):
-  deactivate(): void {
-    // Close info windows but keep markers on map (persistent)
-    _infoWindows.forEach((iw) => iw.close());
-    _map = null;
-  },
+    deactivate(): void {
+      // Close info windows but keep markers on map (persistent)
+      _infoWindows.forEach((iw) => iw.close());
+      _map = null;
+      _pendingPlacemark = null;
+    },
 
     handleClick(latLng: google.maps.LatLng, options: ToolActivateOptions): void {
         if (!_map) return;
 
         _placemarkCount++;
-        const label = getNextPinLabel();
         const color = getNextColor();
-        const lat = latLng.lat();
-        const lng = latLng.lng();
+        const defaultName = `Placemark ${_placemarkCount}`;
 
-        // Create marker
-        const marker = createPlacemarkMarker(latLng, _map, label, color);
-        _markers.push(marker);
+        // Store pending placemark data
+        _pendingPlacemark = {
+          position: latLng,
+          color,
+          defaultName,
+        };
 
-        // Info window (click to show)
-        const infoWindow = new google.maps.InfoWindow({
-            content: buildInfoContent(label, color, lat, lng),
-            maxWidth: 280,
-        });
-        _infoWindows.push(infoWindow);
-
-        // Click marker to toggle info
-        marker.addListener('click', () => {
-            // Close all other info windows first
-            _infoWindows.forEach((iw) => iw.close());
-            infoWindow.open(_map!, marker);
-        });
-
-        // Update info window content on drag
-        marker.addListener('dragend', () => {
-            const newPos = marker.getPosition();
-            if (!newPos) return;
-            infoWindow.setContent(
-                buildInfoContent(label, color, newPos.lat(), newPos.lng()),
-            );
-
-            // Re-emit result with updated position
-            options.onResult(buildPlacemarkResult(label, color, newPos));
-        });
-
-        // Open info window immediately
-        infoWindow.open(_map, marker);
-
-        options.onStatusChange(
-            `Placemark ${label} placed. Click to add more.`,
-        );
-
-        options.onResult(buildPlacemarkResult(label, color, latLng));
+        // Show naming dialog if callback is set
+        if (_onShowNamingDialog) {
+          _onShowNamingDialog({
+            defaultName,
+            onConfirm: (name: string) => {
+              createPlacemarkWithName(name, options);
+            },
+            onCancel: () => {
+              _pendingPlacemark = null;
+              _placemarkCount--;
+              options.onStatusChange('Placemark cancelled. Click to place another.');
+            },
+          });
+        } else {
+          // Fallback: create with default name if no dialog callback
+          createPlacemarkWithName(defaultName, options);
+        }
     },
 
     getCursor(): string {

@@ -219,8 +219,9 @@ export function AnalysisButton({
         className={cn(
           'w-full h-12 rounded-lg flex items-center justify-center gap-2',
           'bg-brand-500 text-white',
-          'text-sm font-semibold',
-          'hover:bg-brand-600 active:scale-[0.99]',
+          'text-base font-semibold',
+          'hover:bg-brand-600 hover:shadow-xl hover:scale-[1.02]',
+          'active:scale-[0.98]',
           'transition-all duration-200',
           'touch-manipulation',
           'shadow-[0_0_20px_rgba(0,102,255,0.15)]',
@@ -230,7 +231,7 @@ export function AnalysisButton({
         )}
         title="Analyze line-of-sight feasibility (Ctrl+Enter)"
       >
-        <Zap className="h-4 w-4" />
+        <Zap className="h-5 w-5" />
         ANALYZE LOS
       </button>
       {isLowCredits && (

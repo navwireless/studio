@@ -128,21 +128,58 @@ export const measureArea: ToolHandler = {
     );
     _markers.push(marker);
 
-    // Update drawing polyline
-    _polyline?.setPath(_points);
+    // Auto-close on 3rd point (standard GIS behavior)
+    if (_points.length === 3) {
+      // Remove the drawing polyline
+      if (_polyline) {
+        _polyline.setMap(null);
+        _polyline = null;
+      }
 
-    // Status
-    if (_points.length < 3) {
-      options.onStatusChange(
-        `${_points.length} vertex${_points.length > 1 ? 'es' : ''}. Need ${3 - _points.length} more. Double-click to close.`,
-      );
-    } else {
+      // Create closed polygon with semi-transparent fill
+      _polygon = new google.maps.Polygon({
+        map: _map,
+        paths: _points,
+        strokeColor: TOOL_COLORS.area.stroke,
+        strokeOpacity: 1,
+        strokeWeight: 2,
+        fillColor: TOOL_COLORS.area.fill,
+        fillOpacity: 0.3, // Semi-transparent fill
+        geodesic: true,
+        clickable: false,
+        editable: false,
+      });
+
       const area = sphericalPolygonArea(_points);
+      const perimeter = getPerimeter(_points);
       options.onStatusChange(
-        `${_points.length} vertices · ${formatArea(area)}. Double-click to close.`,
+        `Polygon closed — ${formatArea(area)} · ${formatDistance(perimeter)} perimeter. Click to add more vertices or double-click to finish.`,
       );
-      // Emit intermediate result
+
       options.onResult(buildResult(false));
+      return;
+    }
+
+    // For 4+ points, update existing polygon
+    if (_points.length > 3 && _polygon) {
+      _polygon.setPath(_points);
+      
+      const area = sphericalPolygonArea(_points);
+      const perimeter = getPerimeter(_points);
+      options.onStatusChange(
+        `${_points.length} vertices · ${formatArea(area)} · ${formatDistance(perimeter)} perimeter. Double-click to finish.`,
+      );
+      
+      options.onResult(buildResult(false));
+      return;
+    }
+
+    // Update drawing polyline for points 1-2
+    if (_points.length <= 2) {
+      _polyline?.setPath(_points);
+      options.onStatusChange(
+        `${_points.length} vertex${_points.length > 1 ? 'es' : ''}. Need ${3 - _points.length} more to close polygon.`,
+      );
     }
   },
 
